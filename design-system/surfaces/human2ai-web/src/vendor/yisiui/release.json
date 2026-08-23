@@ -22,10 +22,10 @@
     "storybookCompiler": "@storybook/addon-webpack5-compiler-swc@4.0.3"
   },
   "compatibility": {
-    "integrationVersion": 3,
+    "integrationVersion": 5,
     "registrySchema": 1,
     "assetMarker": 1,
     "inspector": "0.3.0",
-    "skills": 3
+    "skills": 5
   }
 }

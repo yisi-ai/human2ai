@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "surface": "human2ai-web",
-  "status": "initial-empty",
-  "assetCount": 0,
+  "status": "candidate",
+  "assetCount": 2,
   "approvedByUser": false
 }

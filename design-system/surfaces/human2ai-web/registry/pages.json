@@ -1,5 +1,43 @@
 {
   "schemaVersion": 1,
   "surface": "human2ai-web",
-  "pages": []
+  "pages": [
+    {
+      "id": "composition-workbench",
+      "routes": [
+        "/composition"
+      ],
+      "surface": "human2ai-web",
+      "pattern": "composition-refinement-workbench",
+      "assets": [
+        "composition-workflow-view",
+        "composition-canvas",
+        "tab-switch",
+        "status-badge",
+        "basic-button",
+        "aspect-ratio-selector"
+      ],
+      "stateBoundary": "页面管理草图和加工工作流状态；本地视图只呈现已审计结果；Agent 决策和持久化由页面外的服务负责。",
+      "evidence": {
+        "files": [
+          "web/app/composition/page.tsx",
+          "src/domain/composition/workflow.ts",
+          "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx"
+        ],
+        "storyId": "human2ai-composition-workflow-view--ready"
+      },
+      "visualEvidence": {
+        "status": "pending-user-review",
+        "states": [
+          "waiting",
+          "processing",
+          "ready",
+          "stale",
+          "error",
+          "long-content",
+          "narrow"
+        ]
+      }
+    }
+  ]
 }

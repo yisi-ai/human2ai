@@ -4,6 +4,64 @@
     "yisiuiReady": "YisiUI 前端基线已就绪。"
   },
   "actions": {
-    "start": "开始"
+    "start": "开始",
+    "back": "返回首页",
+    "reset": "重置草图"
+  },
+  "composition": {
+    "kicker": "构图规划 · 第一版",
+    "title": "构图编辑器",
+    "description": "使用基础图形规划画面重心、主体占比与视觉方向，再由 Agent 判断适用的构图美学加工。",
+    "views": {
+      "draft": "用户草图",
+      "refined": "Agent 加工图",
+      "reference": "生图参考",
+      "switch": "构图视图",
+      "draftCanvas": "用户构图草图",
+      "refinedCanvas": "Agent 加工后的构图",
+      "referenceCanvas": "用于生图的结构参考"
+    },
+    "workflow": {
+      "waitingStatus": "等待 Agent",
+      "processingStatus": "Agent 加工中",
+      "readyStatus": "加工已通过",
+      "staleStatus": "加工已过期",
+      "errorStatus": "加工失败",
+      "waitingMessage": "草图已就绪，等待 Agent 查看草图并提交美学加工方案。",
+      "processingMessage": "Agent 正在判断适用的构图美学；页面不会自行选择加工方法。",
+      "staleMessage": "草图已修改，旧加工结果不再适用于当前草图，请让 Agent 重新判断。",
+      "errorMessage": "加工结果不可用，请检查 Agent 输出和防偏移审计。",
+      "draftReadyMessage": "Agent 加工已经通过防偏移审计，可切换查看结果与生图参考。",
+      "agentDecision": "Agent 判断",
+      "appliedMethods": "执行方法",
+      "protectionAudit": "防偏移审计",
+      "maximumFocusShift": "最大焦点位移",
+      "maximumAreaShift": "最大形状位移",
+      "maximumRotationShift": "最大旋转变化",
+      "referenceHint": "该视图弱化样式信息，仅保留画框、形状、焦点与方向关系，供生图阶段参考。"
+    },
+    "workspace": "画布工作区",
+    "tools": "构图工具",
+    "addElements": "添加元素",
+    "addFocus": "添加焦点",
+    "addCircle": "添加圆形",
+    "addTriangle": "添加三角形",
+    "addQuadrilateral": "添加四边形",
+    "addDirection": "添加方向线",
+    "deleteSelected": "删除所选",
+    "editSelected": "编辑所选",
+    "dragHint": "拖动元素调整位置；方向键微调，按住 Shift 可加速。",
+    "size": "面积",
+    "smaller": "缩小 10%",
+    "larger": "放大 10%",
+    "rotation": "旋转",
+    "rotateLeft": "左转 15°",
+    "rotateRight": "右转 15°",
+    "frameRatio": "画框比例",
+    "areaOverview": "面积概览",
+    "occupied": "画面占用",
+    "negativeSpace": "负空间",
+    "currentSelection": "当前选择",
+    "none": "无"
   }
 }

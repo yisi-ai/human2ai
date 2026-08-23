@@ -2,7 +2,7 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import Database from "better-sqlite3";
 
-type DatabaseConnection = InstanceType<typeof Database>;
+export type DatabaseConnection = InstanceType<typeof Database>;
 
 const migrationFilePattern = /^\d{4}_[a-z0-9][a-z0-9_-]*\.sql$/;
 

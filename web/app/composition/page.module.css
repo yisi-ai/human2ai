@@ -1,0 +1,178 @@
+.page {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: var(--yisiui-surface-desktop-web-page-padding);
+  color: var(--yisiui-color-text-primary);
+  font-family: var(--yisiui-font-family-sans);
+  background: var(--yisiui-color-surface-page);
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--yisiui-space-6);
+  max-width: var(--yisiui-surface-desktop-web-content-max-width);
+  margin: 0 auto var(--yisiui-space-5);
+}
+
+.header h1 {
+  margin: 0;
+  font: var(--yisiui-font-weight-bold) var(--yisiui-font-size-display) /
+    var(--yisiui-font-line-height-tight) var(--yisiui-font-family-sans);
+}
+
+.header :global(.ant-btn-link) {
+  height: auto;
+  margin: 0 0 var(--yisiui-space-3);
+  padding: 0;
+}
+
+.kicker {
+  margin: 0 0 var(--yisiui-space-2);
+  color: var(--yisiui-color-selection-text);
+  font-size: var(--yisiui-font-size-2xs);
+  font-weight: var(--yisiui-font-weight-semibold);
+  letter-spacing: var(--yisiui-font-letter-spacing-label);
+  text-transform: uppercase;
+}
+
+.description {
+  max-width: 700px;
+  margin: var(--yisiui-space-2) 0 0;
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-md);
+  line-height: var(--yisiui-font-line-height-normal);
+}
+
+.workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--yisiui-space-5);
+  align-items: start;
+  max-width: var(--yisiui-surface-desktop-web-content-max-width);
+  margin: 0 auto;
+}
+
+.stage,
+.panel {
+  box-sizing: border-box;
+  padding: var(--yisiui-surface-desktop-web-panel-padding);
+  background: var(--yisiui-color-surface-panel);
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-radius: var(--yisiui-radius-lg);
+  box-shadow: var(--yisiui-shadow-panel);
+}
+
+.panel {
+  display: grid;
+  gap: var(--yisiui-space-5);
+}
+
+.panel section + section {
+  padding-top: var(--yisiui-space-5);
+  border-top: 1px solid var(--yisiui-color-border-subtle);
+}
+
+.panel h2 {
+  margin: 0 0 var(--yisiui-space-3);
+  font-size: var(--yisiui-font-size-lg);
+  line-height: var(--yisiui-font-line-height-tight);
+}
+
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--yisiui-space-2);
+}
+
+.hint {
+  margin: 0 0 var(--yisiui-space-3);
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-xs);
+  line-height: var(--yisiui-font-line-height-normal);
+}
+
+.property {
+  display: grid;
+  gap: var(--yisiui-space-2);
+  padding: var(--yisiui-space-2) 0;
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-sm);
+}
+
+.property strong {
+  color: var(--yisiui-color-text-primary);
+  font-family: var(--yisiui-font-family-mono);
+  font-variant-numeric: var(--yisiui-font-variant-numeric-tabular);
+}
+
+.propertyActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--yisiui-space-2);
+}
+
+.metrics {
+  display: grid;
+  gap: var(--yisiui-space-2);
+  margin: 0;
+}
+
+.metrics div {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+}
+
+.metrics dt {
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-sm);
+}
+
+.metrics dd {
+  margin: 0;
+  font-family: var(--yisiui-font-family-mono);
+  font-size: var(--yisiui-font-size-sm);
+  font-variant-numeric: var(--yisiui-font-variant-numeric-tabular);
+}
+
+@media (max-width: 1024px) {
+  .workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .panel {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .panel section + section {
+    padding-top: 0;
+    padding-left: 0;
+    border-top: 0;
+    border-left: 0;
+  }
+}
+
+@media (max-width: 720px) {
+  .page {
+    padding: var(--yisiui-space-4);
+  }
+
+  .header {
+    flex-direction: column;
+    gap: var(--yisiui-space-3);
+  }
+
+  .workspace,
+  .panel {
+    grid-template-columns: 1fr;
+  }
+
+  .panel section + section {
+    padding-top: var(--yisiui-space-5);
+    padding-left: 0;
+    border-top: 1px solid var(--yisiui-color-border-subtle);
+    border-left: 0;
+  }
+}

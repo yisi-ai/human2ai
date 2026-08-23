@@ -2,5 +2,93 @@
   "schemaVersion": 1,
   "surface": "human2ai-web",
   "namespace": "human2ai",
-  "assets": []
+  "assets": [
+    {
+      "id": "composition-canvas",
+      "name": "CompositionCanvas",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CompositionCanvas.tsx",
+      "storyId": "human2ai-composition-canvas--canvas-only",
+      "capabilities": [
+        "composition-draft-rendering",
+        "mouse-selection",
+        "keyboard-selection",
+        "pointer-dragging",
+        "keyboard-nudging",
+        "area-resizing",
+        "shape-rotation",
+        "controlled-state",
+        "read-only-reference-rendering",
+        "responsive-svg"
+      ],
+      "slots": [
+        "draft",
+        "selection",
+        "draft-change"
+      ],
+      "aliases": [
+        "CompositionDraftCanvas"
+      ],
+      "useWhen": [
+        "在 human2ai 构图编辑器中渲染 composition-draft v1，并通过指针或键盘直接调整构图元素"
+      ],
+      "doNotUseWhen": [
+        "需要组件直接读取 API、保存会话或管理业务历史",
+        "需要通用图片裁剪或自由绘图画布"
+      ],
+      "differenceSummary": "项目本地受控 SVG Surface，把 composition-draft 领域模型映射为可访问的选择、拖动、缩放与旋转界面；领域状态继续由调用方管理，画框比例与精确操作继续组合 YisiUI 共享资产。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "AspectRatioSelector",
+        "BasicButton",
+        "Ant Design Image"
+      ]
+    },
+    {
+      "id": "composition-workflow-view",
+      "name": "CompositionWorkflowView",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CompositionWorkflowView.tsx",
+      "storyId": "human2ai-composition-workflow-view--ready",
+      "capabilities": [
+        "composition-view-switching",
+        "refinement-status-presentation",
+        "stale-result-guarding",
+        "audit-summary",
+        "generation-reference-rendering",
+        "controlled-state",
+        "responsive-layout"
+      ],
+      "slots": [
+        "draft",
+        "refinement-result",
+        "workflow-status",
+        "active-view",
+        "draft-change"
+      ],
+      "aliases": [
+        "CompositionRefinementWorkbench"
+      ],
+      "useWhen": [
+        "在 human2ai 构图流程中并列呈现用户草图、已审计的 Agent 加工图和生图结构参考"
+      ],
+      "doNotUseWhen": [
+        "需要组件自行选择构图美学算法或生成加工方案",
+        "需要组件直接调用 Agent、API 或持久化会话"
+      ],
+      "differenceSummary": "项目本地受控工作流视图，组合 CompositionCanvas、TabSwitch 与 StatusBadge；只展示调用方提供且匹配当前草图的审计结果，不拥有 Agent 决策和服务状态。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "UnderlineTabSwitch",
+        "StatusBadge",
+        "StatusCard",
+        "MessageComposer"
+      ]
+    }
+  ]
 }

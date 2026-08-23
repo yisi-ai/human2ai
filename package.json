@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "human2ai": "./dist/cli/main.js",
+    "h2a": "./dist/cli/main.js"
+  },
   "engines": {
     "node": ">=22"
   },
@@ -14,6 +18,7 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspace web",
+    "cli": "tsx src/cli/main.ts",
     "server:dev": "tsx src/server/start.ts",
     "build": "npm run build:server && npm run build:web",
     "build:server": "tsc -p tsconfig.build.json",
@@ -29,6 +34,7 @@
     "yisiui": "node .yisiui/launcher.mjs"
   },
   "dependencies": {
+    "ajv": "8.20.0",
     "better-sqlite3": "13.0.3",
     "fastify": "5.12.1"
   },

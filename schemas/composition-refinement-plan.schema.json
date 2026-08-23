@@ -1,0 +1,119 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yisi.local/schemas/composition-refinement-plan.schema.json",
+  "title": "Agent-authored Composition Refinement Plan",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "kind", "sourceFingerprint", "rationale", "operations"],
+  "properties": {
+    "version": { "const": 1 },
+    "kind": { "const": "composition-refinement-plan" },
+    "sourceFingerprint": {
+      "type": "string",
+      "pattern": "^draft-[0-9a-f]{8}$"
+    },
+    "rationale": { "type": "string", "minLength": 1, "maxLength": 2000 },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 16,
+      "items": {
+        "oneOf": [
+          { "$ref": "#/$defs/focusAnchor" },
+          { "$ref": "#/$defs/axisRelation" },
+          { "$ref": "#/$defs/rotationAlignment" }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "focusAnchor": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetFocusId",
+        "anchor",
+        "strength"
+      ],
+      "properties": {
+        "method": { "const": "focus-anchor" },
+        "methodVersion": { "const": 1 },
+        "targetFocusId": { "type": "string", "pattern": "^focus-[0-9]+$" },
+        "anchor": {
+          "enum": [
+            "optical-center",
+            "geometric-center",
+            "golden-right-upper",
+            "golden-left-upper",
+            "golden-right-lower",
+            "golden-left-lower",
+            "third-right-upper",
+            "third-left-upper",
+            "third-right-lower",
+            "third-left-lower"
+          ]
+        },
+        "strength": { "const": "subtle" }
+      }
+    },
+    "axisRelation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "focusIds",
+        "areaIds",
+        "relation",
+        "strength"
+      ],
+      "properties": {
+        "method": { "const": "axis-relation" },
+        "methodVersion": { "const": 1 },
+        "focusIds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^focus-[0-9]+$" }
+        },
+        "areaIds": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 2,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^area-[0-9]+$" }
+        },
+        "relation": { "enum": ["parallel", "perpendicular", "mirrored-cross"] },
+        "strength": { "const": "subtle" }
+      }
+    },
+    "rotationAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetAreaIds",
+        "axis",
+        "strength"
+      ],
+      "properties": {
+        "method": { "const": "rotation-alignment" },
+        "methodVersion": { "const": 1 },
+        "targetAreaIds": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "pattern": "^area-[0-9]+$" }
+        },
+        "axis": {
+          "enum": ["horizontal", "vertical", "rising-diagonal", "falling-diagonal"]
+        },
+        "strength": { "const": "subtle" }
+      }
+    }
+  }
+}

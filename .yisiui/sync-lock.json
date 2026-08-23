@@ -6,36 +6,54 @@
     "channel": "experimental"
   },
   "compatibility": {
-    "integrationVersion": 3,
+    "integrationVersion": 5,
     "registrySchema": 1,
     "assetMarker": 1,
     "inspector": "0.3.0",
-    "skills": 3
+    "skills": 5
   },
   "managedFiles": {
-    ".agents/skills/yisiui-compose-ui/SKILL.md": {
+    ".agents/skills/yisiui/yisiui-author-local-component/SKILL.md": {
+      "source": "distribution/consumer-skills/yisiui-author-local-component/SKILL.md",
+      "group": "skills",
+      "upstreamHash": "sha256:509f271315293a5b3e3c301f24cea81a2b2338fe7ae93461d4af136ef241076a",
+      "installedHash": "sha256:509f271315293a5b3e3c301f24cea81a2b2338fe7ae93461d4af136ef241076a"
+    },
+    ".agents/skills/yisiui/yisiui-compose-ui/SKILL.md": {
       "source": "distribution/consumer-skills/yisiui-compose-ui/SKILL.md",
       "group": "skills",
-      "upstreamHash": "sha256:5d2a7a94158d89ba5a18f8c639fb29abd01a9b59dfccadc6131ca1199ef17f85",
-      "installedHash": "sha256:5d2a7a94158d89ba5a18f8c639fb29abd01a9b59dfccadc6131ca1199ef17f85"
+      "upstreamHash": "sha256:1c707a38f5e1d3cc8dc0085ea30ac4377c838a54eab094e2ecb93764e979939a",
+      "installedHash": "sha256:1c707a38f5e1d3cc8dc0085ea30ac4377c838a54eab094e2ecb93764e979939a"
     },
-    ".agents/skills/yisiui-propose-component/SKILL.md": {
+    ".agents/skills/yisiui/yisiui-migrate-product-ui/SKILL.md": {
+      "source": "distribution/consumer-skills/yisiui-migrate-product-ui/SKILL.md",
+      "group": "skills",
+      "upstreamHash": "sha256:178a94096ddc29b2d6e391ba0c17b7344a0ef915e32da4b96c979f6eb7b90ad6",
+      "installedHash": "sha256:178a94096ddc29b2d6e391ba0c17b7344a0ef915e32da4b96c979f6eb7b90ad6"
+    },
+    ".agents/skills/yisiui/yisiui-propose-component/SKILL.md": {
       "source": "distribution/consumer-skills/yisiui-propose-component/SKILL.md",
       "group": "skills",
-      "upstreamHash": "sha256:fb0c22c501ea55f9ef332b69491d3a0811c06e50eda205fa1ebb5fcdbee0fd91",
-      "installedHash": "sha256:fb0c22c501ea55f9ef332b69491d3a0811c06e50eda205fa1ebb5fcdbee0fd91"
+      "upstreamHash": "sha256:c1ccabd6ff26cccb03ba8fbb48f0265435c0322e836834758ed5600e405d8225",
+      "installedHash": "sha256:c1ccabd6ff26cccb03ba8fbb48f0265435c0322e836834758ed5600e405d8225"
     },
-    ".agents/skills/yisiui-review-ui/SKILL.md": {
+    ".agents/skills/yisiui/yisiui-prototype-ui/SKILL.md": {
+      "source": "distribution/consumer-skills/yisiui-prototype-ui/SKILL.md",
+      "group": "skills",
+      "upstreamHash": "sha256:f32e0dc0a552b3070e9a76d2a87cd71f93a8e053c000057422e9ea5e9a27b920",
+      "installedHash": "sha256:f32e0dc0a552b3070e9a76d2a87cd71f93a8e053c000057422e9ea5e9a27b920"
+    },
+    ".agents/skills/yisiui/yisiui-review-ui/SKILL.md": {
       "source": "distribution/consumer-skills/yisiui-review-ui/SKILL.md",
       "group": "skills",
-      "upstreamHash": "sha256:37f3ca7490080dcf250a1df7e79731167dbca0ad3e6f4cbe041352470b0c97fc",
-      "installedHash": "sha256:37f3ca7490080dcf250a1df7e79731167dbca0ad3e6f4cbe041352470b0c97fc"
+      "upstreamHash": "sha256:1122ee02aa1f7ec0338dce439bf243407f07faf138d05815f3c5854d39e86be7",
+      "installedHash": "sha256:1122ee02aa1f7ec0338dce439bf243407f07faf138d05815f3c5854d39e86be7"
     },
-    ".agents/skills/yisiui-sync-ui/SKILL.md": {
+    ".agents/skills/yisiui/yisiui-sync-ui/SKILL.md": {
       "source": "distribution/consumer-skills/yisiui-sync-ui/SKILL.md",
       "group": "skills",
-      "upstreamHash": "sha256:9d0518e6ed32aacb42731d45184d2f0980e7cd8de81c7bfae147cd6cb9cf4ef9",
-      "installedHash": "sha256:9d0518e6ed32aacb42731d45184d2f0980e7cd8de81c7bfae147cd6cb9cf4ef9"
+      "upstreamHash": "sha256:98b3ad2d305b2b57ef6925e5039ac9d928f5176feacaa5e2085b79c69ef3cbc5",
+      "installedHash": "sha256:98b3ad2d305b2b57ef6925e5039ac9d928f5176feacaa5e2085b79c69ef3cbc5"
     },
     ".yisiui/launcher.mjs": {
       "source": "distribution/consumer-launcher.mjs",
@@ -88,8 +106,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/release.json": {
       "source": "generated:0.3.0-source-sync.json",
       "group": "release",
-      "upstreamHash": "sha256:3155410ec6bfb1120fff4d2917da02e70c8342911997c901dbc4c44b1b9df319",
-      "installedHash": "sha256:3155410ec6bfb1120fff4d2917da02e70c8342911997c901dbc4c44b1b9df319"
+      "upstreamHash": "sha256:98a85e9f23cb06cb41bca4414c027ed51f7daf19ed75810d2989d4572d9d0f16",
+      "installedHash": "sha256:98a85e9f23cb06cb41bca4414c027ed51f7daf19ed75810d2989d4572d9d0f16"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/assetMarker.ts": {
       "source": "packages/react/src/assetMarker.ts",
@@ -556,20 +574,26 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/tooling/inspector/index.ts": {
       "source": "packages/inspector/src/index.ts",
       "group": "inspector",
-      "upstreamHash": "sha256:5c8c026f71707cf8304eee7a2d5984f33ebaf4c94b10cb65b0aecc6bff5fbb60",
-      "installedHash": "sha256:d5d5df8bf478e08a7a3ef9d5ef3212498b3e873f983c6e113b99449d5d351022"
+      "upstreamHash": "sha256:a571c454bb67d7c2d77a6739b4d70a79796d66f8875fe8a7e1c7544cf59f4e24",
+      "installedHash": "sha256:5512e9a098739d0bc64ba0574ebea2ffc24f269e3eba2e6a3aebd5458dd93b51"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/tooling/inspector/registry.ts": {
       "source": "packages/inspector/src/registry.ts",
       "group": "inspector",
-      "upstreamHash": "sha256:689fe3988ee6013884195513fc2111ed8af683e5b8a9a1591cb37dbb6d12a235",
-      "installedHash": "sha256:23c03a902291ad21434e9b87bdb2d257965388447c7c568cb4e357e8ea454b15"
+      "upstreamHash": "sha256:eee40e40a52f00ee1bb394d69ed940614cb5b3dab38deb786d538363b6aac159",
+      "installedHash": "sha256:08a8c42770a9638cbb3af022a878a796f9b1c3d58901b11cac23bc2bb200b9ca"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/tooling/inspector/useDraggableInspectorControls.ts": {
+      "source": "packages/inspector/src/useDraggableInspectorControls.ts",
+      "group": "inspector",
+      "upstreamHash": "sha256:d003ebc5e91428e738fc7a6656f50880af477d4953a64cb558d3b27ad8b42947",
+      "installedHash": "sha256:d003ebc5e91428e738fc7a6656f50880af477d4953a64cb558d3b27ad8b42947"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/tooling/inspector/YisiUiInspector.tsx": {
       "source": "packages/inspector/src/YisiUiInspector.tsx",
       "group": "inspector",
-      "upstreamHash": "sha256:adde6588469883a2bb96cc9c14404995afc7b4961d4bfb7c232218293d60e1aa",
-      "installedHash": "sha256:7732c591895d24ccd5e642440e57c6b445cafdd8f75de659c7ae911fd2083d08"
+      "upstreamHash": "sha256:387fded7f19c16c5dc5e40a1f9673888ccf321e344c07448b965adb512153d25",
+      "installedHash": "sha256:aa4d359d4fe8fe6646bb73c702a0afde341ccc22905a339c8b4b35b814d407d7"
     }
   }
 }

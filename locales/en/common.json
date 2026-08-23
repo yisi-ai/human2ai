@@ -4,6 +4,64 @@
     "yisiuiReady": "The YisiUI frontend baseline is ready."
   },
   "actions": {
-    "start": "Start"
+    "start": "Start",
+    "back": "Back to home",
+    "reset": "Reset draft"
+  },
+  "composition": {
+    "kicker": "Composition planner · v1",
+    "title": "Composition editor",
+    "description": "Plan focal points, subject coverage, and visual direction, then let the Agent choose the appropriate aesthetic refinement.",
+    "views": {
+      "draft": "User draft",
+      "refined": "Agent refinement",
+      "reference": "Generation reference",
+      "switch": "Composition view",
+      "draftCanvas": "User composition draft",
+      "refinedCanvas": "Agent-refined composition",
+      "referenceCanvas": "Composition structure for image generation"
+    },
+    "workflow": {
+      "waitingStatus": "Waiting for Agent",
+      "processingStatus": "Agent processing",
+      "readyStatus": "Refinement passed",
+      "staleStatus": "Refinement outdated",
+      "errorStatus": "Refinement failed",
+      "waitingMessage": "The draft is ready for an Agent to inspect and submit an aesthetic refinement plan.",
+      "processingMessage": "The Agent is deciding which composition treatment applies; the page does not select a method.",
+      "staleMessage": "The draft changed, so the previous refinement no longer applies. Ask the Agent to reassess it.",
+      "errorMessage": "The refinement is unavailable. Check the Agent output and drift-protection audit.",
+      "draftReadyMessage": "The Agent refinement passed the drift-protection audit. You can inspect the result and generation reference.",
+      "agentDecision": "Agent decision",
+      "appliedMethods": "Applied methods",
+      "protectionAudit": "Drift-protection audit",
+      "maximumFocusShift": "Maximum focus shift",
+      "maximumAreaShift": "Maximum shape shift",
+      "maximumRotationShift": "Maximum rotation change",
+      "referenceHint": "This view suppresses styling and retains only the frame, shapes, focal points, and direction relationships for image generation."
+    },
+    "workspace": "Canvas workspace",
+    "tools": "Composition tools",
+    "addElements": "Add elements",
+    "addFocus": "Add focus",
+    "addCircle": "Add circle",
+    "addTriangle": "Add triangle",
+    "addQuadrilateral": "Add quadrilateral",
+    "addDirection": "Add direction line",
+    "deleteSelected": "Delete selected",
+    "editSelected": "Edit selected",
+    "dragHint": "Drag an element to move it; use arrow keys for precise movement and hold Shift to move faster.",
+    "size": "Area",
+    "smaller": "Shrink 10%",
+    "larger": "Grow 10%",
+    "rotation": "Rotation",
+    "rotateLeft": "Rotate left 15°",
+    "rotateRight": "Rotate right 15°",
+    "frameRatio": "Frame ratio",
+    "areaOverview": "Area overview",
+    "occupied": "Occupied",
+    "negativeSpace": "Negative space",
+    "currentSelection": "Current selection",
+    "none": "None"
   }
 }

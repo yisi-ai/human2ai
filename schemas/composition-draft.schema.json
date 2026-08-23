@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://yisi.local/schemas/composition-draft.schema.json",
+  "title": "User Composition Draft",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "kind", "frame", "focusPoints", "areas"],
+  "properties": {
+    "version": { "const": 1 },
+    "kind": { "const": "composition-draft" },
+    "frame": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width", "height"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 256, "maximum": 4096 },
+        "height": { "type": "integer", "minimum": 256, "maximum": 4096 }
+      }
+    },
+    "focusPoints": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/point" }
+    },
+    "directionLine": {
+      "oneOf": [
+        { "type": "null" },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["id", "x", "y", "rotation"],
+          "properties": {
+            "id": { "const": "direction-1" },
+            "x": { "type": "number", "minimum": 0, "maximum": 1 },
+            "y": { "type": "number", "minimum": 0, "maximum": 1 },
+            "rotation": { "type": "number" }
+          }
+        }
+      ]
+    },
+    "areas": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "primitive", "x", "y", "area", "aspect"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^area-[0-9]+$" },
+          "primitive": { "enum": ["circle", "triangle", "quadrilateral"] },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "area": { "type": "number", "exclusiveMinimum": 0 },
+          "aspect": { "enum": ["square", "free", "landscape", "portrait"] },
+          "rotation": { "type": "number" },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 }
+        },
+        "allOf": [
+          {
+            "if": { "properties": { "aspect": { "const": "free" } } },
+            "then": { "required": ["width", "height"] }
+          }
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "point": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "x", "y"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^focus-[0-9]+$" },
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    }
+  }
+}

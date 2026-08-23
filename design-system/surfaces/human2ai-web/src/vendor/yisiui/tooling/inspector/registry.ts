@@ -29,6 +29,8 @@ export interface MarkedAsset {
   status: string;
 }
 
+export type InspectorCopyMode = "name" | "page";
+
 export function mergeRegistries(
   registries: InspectorRegistry[],
 ): ReadonlyMap<string, InspectorAsset & { namespace: string }> {
@@ -68,6 +70,7 @@ export function readMarkedAsset(element: HTMLElement): MarkedAsset | null {
 }
 
 interface CopyDetails {
+  mode?: InspectorCopyMode;
   surface: string;
   page: string;
   instanceId: string;
@@ -77,6 +80,13 @@ interface CopyDetails {
 
 export function formatAssetCopyText(details: CopyDetails): string {
   const asset = details.registryAsset;
+  if (details.mode === "name") {
+    return [
+      `Category: ${asset?.category ?? details.marker.category}`,
+      `Name: ${asset?.name ?? details.marker.name}`,
+      `Asset: ${details.marker.key}`,
+    ].join("\n");
+  }
   return [
     `Surface: ${details.surface}`,
     `Asset: ${details.marker.key}`,
