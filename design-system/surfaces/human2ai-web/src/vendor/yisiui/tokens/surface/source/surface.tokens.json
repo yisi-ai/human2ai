@@ -1,0 +1,21 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "motion": {
+    "textSpeed": {
+      "slow": { "$type": "number", "$value": 0.6 },
+      "medium": { "$type": "number", "$value": 1 },
+      "fast": { "$type": "number", "$value": 1.6 }
+    }
+  },
+  "surface": {
+    "desktopWeb": {
+      "pageBackground": { "$type": "color", "$value": "{color.surface.page}" },
+      "contentBackground": { "$type": "color", "$value": "{color.surface.panel}" },
+      "sidebarWidth": { "$type": "dimension", "$value": "280px" },
+      "contentMaxWidth": { "$type": "dimension", "$value": "1400px" },
+      "pagePadding": { "$type": "dimension", "$value": "24px" },
+      "sectionGap": { "$type": "dimension", "$value": "20px" },
+      "panelPadding": { "$type": "dimension", "$value": "24px" }
+    }
+  }
+}

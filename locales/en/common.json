@@ -1,0 +1,9 @@
+{
+  "app": {
+    "title": "human2ai",
+    "yisiuiReady": "The YisiUI frontend baseline is ready."
+  },
+  "actions": {
+    "start": "Start"
+  }
+}

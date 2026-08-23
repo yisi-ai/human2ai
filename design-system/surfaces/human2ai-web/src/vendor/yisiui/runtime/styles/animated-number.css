@@ -1,0 +1,87 @@
+.yisi-animated-number {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--yisiui-color-text-primary);
+  font-family: var(--yisiui-typography-numeric-font-family);
+  font-size: var(--yisiui-typography-numeric-font-size);
+  font-variant-numeric: var(--yisiui-typography-numeric-font-variant-numeric);
+  font-weight: var(--yisiui-typography-numeric-font-weight);
+  line-height: var(--yisiui-typography-numeric-line-height);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-animated-number-motion-auto .yisi-animated-number-digit-track {
+    transition: none;
+  }
+}
+
+.yisi-animated-number-visual {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.yisi-animated-number-digit {
+  display: inline-block;
+  width: 0.62em;
+  height: 1em;
+  overflow: hidden;
+  vertical-align: bottom;
+}
+
+.yisi-animated-number-digit-track {
+  display: flex;
+  height: 10em;
+  flex-direction: column;
+  transform: translateY(0);
+  transition: transform var(--yisiui-animated-number-duration) cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+
+.yisi-animated-number-digit-glyph {
+  display: block;
+  height: 1em;
+  flex: 0 0 1em;
+  line-height: 1;
+  text-align: center;
+}
+
+.yisi-animated-number-static {
+  display: inline-block;
+  line-height: 1;
+}
+
+.yisi-animated-number-static-decimal {
+  width: 0.35em;
+  text-align: center;
+}
+
+.yisi-animated-number-static-sign {
+  width: 0.55em;
+  text-align: center;
+}
+
+.yisi-animated-number-unit {
+  align-self: flex-end;
+  margin-inline-start: var(--yisiui-space-1);
+  font-size: 0.75em;
+  line-height: 1;
+  transform: translateY(-0.12em);
+}
+
+.yisi-animated-number-accessible {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  border: 0;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+}
+
+.yisi-animated-number-motion-none .yisi-animated-number-digit-track {
+  transition: none;
+}

@@ -1,0 +1,5 @@
+{
+  "schemaVersion": 1,
+  "intents": {},
+  "note": "首批迁移资产的 intent 由 Registry capabilities、slots、aliases 和 use/do-not-use 契约表达；本文件只保留未来跨资产稳定 intent 的独立扩展点。"
+}

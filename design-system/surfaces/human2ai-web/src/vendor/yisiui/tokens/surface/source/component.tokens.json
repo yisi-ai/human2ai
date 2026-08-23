@@ -1,0 +1,88 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "component": {
+    "button": {
+      "height": { "$type": "dimension", "$value": "36px" },
+      "radius": { "$type": "dimension", "$value": "{radius.md}" },
+      "horizontalPadding": { "$type": "dimension", "$value": "14px" }
+    },
+    "input": {
+      "height": { "$type": "dimension", "$value": "36px" },
+      "radius": { "$type": "dimension", "$value": "{radius.md}" }
+    },
+    "card": {
+      "radius": { "$type": "dimension", "$value": "{radius.md}" },
+      "padding": { "$type": "dimension", "$value": "20px" },
+      "shadow": { "$type": "shadow", "$value": "{shadow.card}" }
+    },
+    "statusLight": {
+      "background": { "$type": "color", "$value": "#303030" },
+      "green": { "$type": "color", "$value": "#52C41A" },
+      "yellow": { "$type": "color", "$value": "#FADB14" },
+      "yellowOnLight": { "$type": "color", "$value": "#D0A003" },
+      "red": { "$type": "color", "$value": "#FF4D4F" }
+    },
+    "borderScan": {
+      "color": { "$type": "color", "$value": "{color.brand.primaryHover}" },
+      "duration": { "$type": "duration", "$value": "3200ms" },
+      "lineWidth": { "$type": "dimension", "$value": "3px" }
+    },
+    "textShine": {
+      "color": { "$type": "color", "$value": "{color.neutral.0}" },
+      "beamWidth": { "$type": "dimension", "$value": "216px" },
+      "beamAngle": { "$type": "dimension", "$value": "105deg" },
+      "baseVelocity": { "$type": "number", "$value": 96 }
+    },
+    "writingAgent": {
+      "main": { "$type": "color", "$value": "{color.brand.primary}" },
+      "logic": { "$type": "color", "$value": "#722ED1" },
+      "draft": { "$type": "color", "$value": "#08979C" },
+      "annotation": { "$type": "color", "$value": "#C41D7F" },
+      "support": { "$type": "color", "$value": "{color.neutral.600}" }
+    },
+    "contentGraph": {
+      "node": {
+        "actorFill": { "$type": "color", "$value": "#EAF4FF" },
+        "actorStroke": { "$type": "color", "$value": "{color.brand.primary}" },
+        "actorText": { "$type": "color", "$value": "#0958D9" },
+        "eventFill": { "$type": "color", "$value": "{color.status.successBg}" },
+        "eventStroke": { "$type": "color", "$value": "#389E0D" },
+        "eventText": { "$type": "color", "$value": "#135200" },
+        "conflictFill": { "$type": "color", "$value": "{color.status.warningBg}" },
+        "conflictStroke": { "$type": "color", "$value": "#D46B08" },
+        "conflictText": { "$type": "color", "$value": "#873800" },
+        "knowledgeFill": { "$type": "color", "$value": "#E6FFFB" },
+        "knowledgeStroke": { "$type": "color", "$value": "#08979C" },
+        "knowledgeText": { "$type": "color", "$value": "#006D75" },
+        "ruleFill": { "$type": "color", "$value": "#F9F0FF" },
+        "ruleStroke": { "$type": "color", "$value": "#722ED1" },
+        "ruleText": { "$type": "color", "$value": "#391085" },
+        "skeletonFill": { "$type": "color", "$value": "#F5F5F5" },
+        "skeletonStroke": { "$type": "color", "$value": "#8C8C8C" },
+        "skeletonText": { "$type": "color", "$value": "#434343" },
+        "defaultFill": { "$type": "color", "$value": "{color.neutral.50}" },
+        "defaultStroke": { "$type": "color", "$value": "#8B9BAE" },
+        "defaultText": { "$type": "color", "$value": "{color.neutral.900}" }
+      },
+      "edge": {
+        "causal": { "$type": "color", "$value": "#D46B08" },
+        "conflict": { "$type": "color", "$value": "{color.status.danger}" },
+        "state": { "$type": "color", "$value": "#13A8A8" },
+        "evidence": { "$type": "color", "$value": "#389E0D" },
+        "reader": { "$type": "color", "$value": "#722ED1" },
+        "timeline": { "$type": "color", "$value": "#8C8C8C" },
+        "default": { "$type": "color", "$value": "#7A8CA3" }
+      },
+      "label": {
+        "text": { "$type": "color", "$value": "{color.neutral.700}" },
+        "background": { "$type": "color", "$value": "rgba(255,255,255,0.92)" },
+        "border": { "$type": "color", "$value": "rgba(122,140,163,0.32)" }
+      },
+      "selection": { "$type": "color", "$value": "{color.brand.primary}" }
+    },
+    "focus": {
+      "outline": { "$type": "color", "$value": "{color.brand.primary}" },
+      "outlineWidth": { "$type": "dimension", "$value": "2px" }
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "app": {
+    "title": "human2ai",
+    "yisiuiReady": "YisiUI 前端基线已就绪。"
+  },
+  "actions": {
+    "start": "开始"
+  }
+}

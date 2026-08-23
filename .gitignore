@@ -1,0 +1,10 @@
+node_modules
+.next
+out
+dist
+coverage
+*.sqlite
+*.sqlite-*
+*.tsbuildinfo
+.env*.local
+storybook-static/

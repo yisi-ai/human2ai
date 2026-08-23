@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 2,
+  "id": "human2ai-web",
+  "runtime": "next-react",
+  "applicationRoot": "web",
+  "sharedSurface": "web-react",
+  "vendorRoot": "src/vendor/yisiui",
+  "localSourceRoot": "src/local",
+  "registry": {
+    "shared": "src/vendor/yisiui/registry/assets.json",
+    "assets": "registry/assets.json",
+    "pages": "registry/pages.json"
+  },
+  "governance": {
+    "baseline": "governance/baseline.json",
+    "exceptions": "governance/exceptions.json",
+    "inventory": "governance/inventory.json"
+  }
+}

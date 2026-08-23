@@ -1,0 +1,818 @@
+{
+  "$schema": "../../../tooling/schemas/registry.schema.json",
+  "schemaVersion": 1,
+  "surface": "web-react",
+  "namespace": "yisiui",
+  "assets": [
+    {
+      "id": "basic-button",
+      "name": "BasicButton",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/components/BasicButton.tsx",
+      "storyId": "buttons-basicbutton--default",
+      "capabilities": [
+        "action",
+        "icon-mode",
+        "token-colors",
+        "size"
+      ],
+      "slots": [
+        "icon",
+        "label"
+      ],
+      "aliases": [
+        "TokenButton",
+        "ActionButton"
+      ],
+      "useWhen": [
+        "需要统一的基础操作按钮",
+        "需要在资产层预览 Token 颜色和 Icon 模式"
+      ],
+      "doNotUseWhen": [
+        "复杂异步反馈",
+        "危险操作确认"
+      ],
+      "differenceSummary": "直接复用 Ant Design Button 的键盘、禁用、加载和尺寸行为，只增加 Token 颜色绑定、带 Icon/不带 Icon/纯 Icon 模式和资产层可视化契约。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "Ant Design Button",
+        "CopyAction",
+        "FormActions"
+      ]
+    },
+    {
+      "id": "composite-button",
+      "name": "CompositeButton",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/components/CompositeButton.tsx",
+      "storyId": "buttons-compositebutton--default",
+      "capabilities": [
+        "action",
+        "description",
+        "icon-actions",
+        "hover-state",
+        "full-width",
+        "collapsed-icon",
+        "collapsed-tooltip",
+        "inherited-collapse-state",
+        "typography"
+      ],
+      "slots": [
+        "icon",
+        "label",
+        "collapsedLabel",
+        "description",
+        "actions"
+      ],
+      "aliases": [
+        "ListActionButton",
+        "CompoundActionButton"
+      ],
+      "useWhen": [
+        "需要全宽、左对齐并带辅助说明和悬浮操作的行级按钮",
+        "需要在窄侧栏中收起为带名称 Tooltip 的纯 Icon 操作"
+      ],
+      "doNotUseWhen": [
+        "单一基础操作按钮",
+        "需要底色、阴影或大中号按钮",
+        "需要嵌套复杂表单"
+      ],
+      "differenceSummary": "直接管理主动作与纯 Icon 操作的 Ant Design Button，使用设计基础 Typography 呈现标签和说明；展开时是小号无底色无阴影全宽行按钮，收起时只保留主 Icon 并通过 Tooltip 和 aria-label 显示对应名称，可显式设置 collapsed 或继承组合容器的收起状态；说明文字和悬浮操作由 props 注入，不承担路由或业务状态。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "BasicButton",
+        "DirectoryNav",
+        "SelectableRecord"
+      ]
+    },
+    {
+      "id": "status-badge",
+      "name": "StatusBadge",
+      "category": "status",
+      "status": "experimental",
+      "source": "src/components/StatusBadge.tsx",
+      "storyId": "components-states-statusbadge--default",
+      "capabilities": [
+        "status-label",
+        "tone",
+        "icon",
+        "display-mode",
+        "tooltip"
+      ],
+      "slots": [
+        "label",
+        "icon"
+      ],
+      "aliases": [
+        "ArticleStatusBadge",
+        "RunStatusTag"
+      ],
+      "useWhen": [
+        "状态标签和小型结果提示"
+      ],
+      "doNotUseWhen": [
+        "完整错误详情"
+      ],
+      "differenceSummary": "只呈现已经由业务层判定的状态，不包含状态机；统一使用设计基础 typography.status，支持 icon+文字、纯文字和纯 icon 三种展示模式，并为状态提供 Tooltip 解释。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "EmptyState",
+        "ErrorState"
+      ]
+    },
+    {
+      "id": "status-light",
+      "name": "StatusLight",
+      "category": "status",
+      "status": "experimental",
+      "source": "src/components/StatusLight.tsx",
+      "storyId": "components-status-statuslight--default",
+      "capabilities": [
+        "status-indicator",
+        "active-color",
+        "blink",
+        "vertical-lamps",
+        "background-mode",
+        "reduced-motion",
+        "accessible-label"
+      ],
+      "slots": [],
+      "aliases": [
+        "TrafficLight",
+        "IndicatorLight"
+      ],
+      "useWhen": [
+        "需要用竖向绿、黄、红灯表达一个当前状态",
+        "需要切换亮灯颜色、底色模式或常亮/闪烁表现"
+      ],
+      "doNotUseWhen": [
+        "需要状态文字、图标或 Tooltip 的状态标签",
+        "需要展示多个独立指标或提供交互控制"
+      ],
+      "differenceSummary": "固定绿、黄、红顺序的竖向三灯组件，只让 activeColor 对应的灯高亮；支持 steady/blink 两种表现，并通过 backgroundMode 在默认无底色和黑底色之间切换，无底色黄灯使用 yellowOnLight（#D0A003），reduced-motion 下停用闪烁，不承担状态判断或业务轮询。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "StatusBadge",
+        "EmptyState",
+        "Ant Design Badge"
+      ]
+    },
+    {
+      "id": "status-card",
+      "name": "StatusCard",
+      "category": "card",
+      "status": "experimental",
+      "source": "src/components/StatusCard.tsx",
+      "storyId": "cards-statuscard--default",
+      "capabilities": [
+        "title-subtitle",
+        "status-light",
+        "status-light-config",
+        "running-state",
+        "measured-border-scan",
+        "responsive-geometry",
+        "interactive-hover",
+        "reduced-motion"
+      ],
+      "slots": [
+        "title",
+        "subtitle",
+        "statusLight"
+      ],
+      "aliases": [
+        "MonitorCard",
+        "IndicatorCard"
+      ],
+      "useWhen": [
+        "需要左侧标题/副标题和右侧 StatusLight 的状态卡片",
+        "需要用 running 状态表达 aria-busy 语义并自动叠加边框扫光"
+      ],
+      "doNotUseWhen": [
+        "需要资源记录的复杂 slots、标签或底部动作",
+        "需要交互选择、加载骨架或错误恢复流程"
+      ],
+      "differenceSummary": "固定左上粗体标题、左下小号浅色副标题和右侧 StatusLight 的卡片布局；state=running 提供状态 class 与 aria-busy 语义，并由组件内部通过 ResizeObserver 测量实际 border-box 尺寸后组合 BorderScan，尺寸变化时自动跟随，不要求调用方传宽高。传入 onClick 时自动进入可点击态，提供 pointer 光标和浅色 hover 背景；StatusLight 的亮灯颜色和 steady/blink 由 props 配置，组件不读取业务状态机。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "RecordCard",
+        "SelectableRecord",
+        "StatusLight",
+        "Ant Design Card"
+      ]
+    },
+    {
+      "id": "number-badge",
+      "name": "NumberBadge",
+      "category": "number",
+      "status": "experimental",
+      "source": "src/components/NumberBadge.tsx",
+      "storyId": "numbers-numberbadge--default",
+      "capabilities": [
+        "numeric-display",
+        "bounded-value",
+        "fixed-size",
+        "circular-background"
+      ],
+      "slots": [
+        "value"
+      ],
+      "aliases": [
+        "CountBadge",
+        "CircularNumber"
+      ],
+      "useWhen": [
+        "需要在固定尺寸的圆形底色中显示数字",
+        "需要数字位数变化时外圆仍保持固定尺寸"
+      ],
+      "doNotUseWhen": [
+        "需要显示 99 以上的完整数字",
+        "需要状态语义、图标或可交互通知徽标"
+      ],
+      "differenceSummary": "独立呈现 1–99 的数字圆标；value 在运行时限制到 1–99，size 以 px 同时锁定宽、高、最小和最大尺寸，因此不会因单/双位数字改变外圆几何；不承担状态判断、叠加定位或业务数据读取。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "StatusBadge",
+        "Ant Design Badge"
+      ]
+    },
+    {
+      "id": "animated-number",
+      "name": "AnimatedNumber",
+      "category": "number",
+      "status": "experimental",
+      "source": "src/components/AnimatedNumber.tsx",
+      "storyId": "numbers-animatednumber--default",
+      "capabilities": [
+        "numeric-display",
+        "digit-transition",
+        "unit-suffix",
+        "typography-control",
+        "reduced-motion"
+      ],
+      "slots": [
+        "value",
+        "unit"
+      ],
+      "aliases": [
+        "RollingNumber",
+        "MetricNumber"
+      ],
+      "useWhen": [
+        "需要以纯数字形式展示会变化的指标",
+        "需要数字逐位滚动、单位后缀和字号/颜色/字重配置"
+      ],
+      "doNotUseWhen": [
+        "需要固定圆形底色和 1–99 边界的数字徽标",
+        "需要组件管理数据轮询、业务状态或高频播报策略"
+      ],
+      "differenceSummary": "纯文本呈现任意有限数字，不使用背景容器；按从个位到高位递增的时长独立滚动发生变化的数字轨道，支持单位、小数精度、字号、颜色、字重、动画模式和 reduced-motion，不读取 API 或管理更新队列。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "NumberBadge",
+        "StatusBadge",
+        "Ant Design Statistic"
+      ]
+    },
+    {
+      "id": "border-scan",
+      "name": "BorderScan",
+      "category": "motion",
+      "status": "experimental",
+      "source": "src/components/BorderScan.tsx",
+      "storyId": "motion-borderscan--default",
+      "capabilities": [
+        "edge-scan",
+        "fixed-geometry",
+        "single-segment",
+        "direction",
+        "motion-control",
+        "reduced-motion",
+        "composition-wrapper"
+      ],
+      "slots": [
+        "children"
+      ],
+      "aliases": [
+        "EdgeScan",
+        "BorderSweep",
+        "ScanningBorder"
+      ],
+      "useWhen": [
+        "需要为已知固定宽高的矩形或圆角矩形组件叠加一条沿边框循环运动的扫光",
+        "需要扫光在循环接缝和圆角处保持单段连续"
+      ],
+      "doNotUseWhen": [
+        "目标组件宽高未知或需要自动跟随内容变化",
+        "目标边界不是矩形或圆角矩形",
+        "需要组件承担加载状态、业务轮询或内容布局"
+      ],
+      "differenceSummary": "保留 Compatibility Lab #73 使用 SVG 路径表达边框巡游的思路，但要求调用方明确提供固定 width 和 height。组件按确定几何生成一圈圆角路径，每帧沿该路径采样并直接更新唯一一条可见短路径，不使用 ResizeObserver、闭合路径 dash 或重复轨道，因此循环接缝处不会拆成两条线。组件不提供底色、边框、内容样式或业务状态。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "StatusCard",
+        "StatusLight",
+        "AnimatedNumber",
+        "Compatibility Lab #73 SVG EDGE SCAN"
+      ]
+    },
+    {
+      "id": "text-shine",
+      "name": "TextShine",
+      "category": "motion",
+      "status": "experimental",
+      "source": "src/components/TextShine.tsx",
+      "storyId": "motion-textshine--default",
+      "capabilities": [
+        "text-only-shine",
+        "angled-light-band",
+        "wide-light-band",
+        "continuous-loop",
+        "three-speed-presets",
+        "named-speed-control",
+        "shared-text-speed-token",
+        "width-aware-duration",
+        "light-color",
+        "motion-control",
+        "reduced-motion",
+        "viewport-scale-compensation"
+      ],
+      "slots": [
+        "text"
+      ],
+      "aliases": [
+        "TextSweep",
+        "TextScan",
+        "ShimmerText"
+      ],
+      "useWhen": [
+        "需要只在文字字形内部显示循环扫光提醒",
+        "需要不同文字宽度按通用文字动效的慢、中、快三档速度运动，并允许修改光带颜色"
+      ],
+      "doNotUseWhen": [
+        "需要为容器、卡片或边框添加扫光",
+        "需要富文本节点、图标或任意 ReactNode 参与扫光",
+        "需要调用方自定义速度或由组件读取业务状态"
+      ],
+      "differenceSummary": "BorderScan 沿固定矩形边界运动，AnimatedNumber 管理数字切换，StatusLight 表达状态；TextShine 只复制纯文字作为 aria-hidden 视觉层，并把 105deg、216px 的轻微倾斜超宽光带裁剪在字形内部。motion.textSpeed 提供可被扫光、打字机等文字动效复用的 slow、medium、fast 倍率，TextShine 再将倍率作用于自身的 px/s 基准速度并结合实际文字宽度、光带宽度和视口缩放计算运动进度；光带离开右侧后不等待，立即从左侧开始下一轮。调用方可选择命名档位，但不能传入任意数值速度或固定 duration。",
+      "sourceStatus": "experimental",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "BorderScan",
+        "AnimatedNumber",
+        "StatusLight",
+        "Context Learning Canvas pending title scan"
+      ]
+    },
+    {
+      "id": "tab-switch",
+      "name": "TabSwitch",
+      "category": "switching",
+      "status": "experimental",
+      "source": "src/components/TabSwitch.tsx",
+      "storyId": "switching-tabswitch--default",
+      "capabilities": [
+        "selection",
+        "keyboard-selection",
+        "disabled",
+        "display-mode",
+        "selected-text-color",
+        "unselected-text-color",
+        "selected-background",
+        "tab-background"
+      ],
+      "slots": [
+        "icon",
+        "label",
+        "item"
+      ],
+      "aliases": [
+        "SegmentedTabs",
+        "ViewSwitcher"
+      ],
+      "useWhen": [
+        "需要在两个或多个同级视图之间切换",
+        "需要统一配置 tab 底色、选中态底色、选中态文字颜色、未选中态文字颜色，并为子项配置 Icon/文字模式或 disabled"
+      ],
+      "doNotUseWhen": [
+        "需要由组件同时管理多个 tabpanel 的懒加载或内容缓存",
+        "单一布尔开关",
+        "需要路由描述和目录项说明的页面导航"
+      ],
+      "differenceSummary": "复用 Ant Design Segmented 的紧凑工作台外观、键盘选择和原生 disabled 行为，同时把子项的 Icon/文字显示模式、统一的 tab 底色、统一的选中底色、选中态文字色和未选中态文字色纳入稳定 props；组件只负责选择呈现和回调，不读取路由、API 或业务状态。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "Ant Design Segmented",
+        "StatusBadge",
+        "DirectoryNav"
+      ]
+    },
+    {
+      "id": "underline-tab-switch",
+      "name": "UnderlineTabSwitch",
+      "category": "switching",
+      "status": "experimental",
+      "source": "src/components/UnderlineTabSwitch.tsx",
+      "storyId": "switching-underlinetabswitch--default",
+      "capabilities": [
+        "selection",
+        "keyboard-selection",
+        "disabled",
+        "full-width",
+        "equal-width",
+        "active-color"
+      ],
+      "slots": [
+        "label",
+        "item"
+      ],
+      "aliases": [
+        "UnderlineTabs",
+        "FullWidthTabSwitch"
+      ],
+      "useWhen": [
+        "需要全宽、等分宽度的同级视图切换",
+        "需要使用文字和底部线条同时表达选中态"
+      ],
+      "doNotUseWhen": [
+        "需要 Segmented 的块状选中底色",
+        "需要组件同时管理 tabpanel 内容和懒加载"
+      ],
+      "differenceSummary": "采用原生 tablist/tab 语义和键盘切换，组件始终占满父级宽度并按子项数量等分，每个子项固定占一列；activeColor 同时控制选中文字和底部指示线，组件不管理 tabpanel、路由或业务状态。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "Ant Design Tabs",
+        "DirectoryNav"
+      ]
+    },
+    {
+      "id": "form-actions",
+      "name": "FormActions",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/patterns/FormActions.tsx",
+      "storyId": "buttons-formactions--default",
+      "capabilities": [
+        "submit",
+        "cancel",
+        "loading"
+      ],
+      "slots": [
+        "secondary",
+        "primary"
+      ],
+      "aliases": [
+        "EditorActions"
+      ],
+      "useWhen": [
+        "新建页和编辑页底部操作"
+      ],
+      "doNotUseWhen": [
+        "页面顶部动作"
+      ],
+      "differenceSummary": "稳定提交和取消位置，具体业务动作由 props 提供",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "ResourceListToolbar",
+        "DangerZone"
+      ]
+    },
+    {
+      "id": "copy-action",
+      "name": "CopyAction",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/components/CopyAction.tsx",
+      "storyId": "buttons-copyaction--default",
+      "capabilities": [
+        "copy",
+        "async-content",
+        "success-feedback",
+        "error-feedback"
+      ],
+      "slots": [
+        "label",
+        "content",
+        "actionProps"
+      ],
+      "aliases": [
+        "CopyContentButton",
+        "PromptCopyButton"
+      ],
+      "useWhen": [
+        "复制短文本、生成内容或异步读取的文本结果"
+      ],
+      "doNotUseWhen": [
+        "需要业务 API、权限或缓存策略的复制适配器"
+      ],
+      "differenceSummary": "只管理复制动作与反馈，业务数据读取和错误语义由容器适配器提供。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "Button",
+        "AsyncActionState"
+      ]
+    },
+    {
+      "id": "side-action-panel",
+      "name": "SideActionPanel",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/SideActionPanel.tsx",
+      "storyId": "modules-sideactionpanel--default",
+      "capabilities": [
+        "side-panel",
+        "icon-toolbar",
+        "collapsible",
+        "composite-button-collapse",
+        "height-preserving-collapse",
+        "controlled-state",
+        "intrinsic-height",
+        "configurable-width",
+        "keyboard-focus"
+      ],
+      "slots": [
+        "tools",
+        "children"
+      ],
+      "aliases": [
+        "SidePanel",
+        "ActionSidebar",
+        "CollapsibleActionPanel"
+      ],
+      "useWhen": [
+        "需要在页面或工作台一侧组织紧凑 Icon 工具与纵向行级操作",
+        "需要可控或非受控的窄侧边操作面板，并由调用方设置展开宽度、由内部内容自然撑开高度"
+      ],
+      "doNotUseWhen": [
+        "需要应用级持久导航和内容框架",
+        "需要带标题、状态和任意内容的通用工作区 pane",
+        "操作项不是行级动作或需要承载复杂表单"
+      ],
+      "differenceSummary": "AppShellFrame 负责应用级持久侧栏与内容区，WorkspacePanel 负责带标题的通用 pane，DirectoryNav 负责目录导航；SideActionPanel 只组合顶部 Icon 工具、独立收起/展开控制和 CompositeButton 行级操作区，展开宽度由 width prop 设置、高度由内容自然撑开且收起时保持不变；收起时通过组合上下文让内部 CompositeButton 自动切换为带名称 Tooltip 的纯 Icon 状态，支持受控与非受控状态，不读取路由、API 或业务数据。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "AppShellFrame",
+        "WorkspacePanel",
+        "CompositeButton",
+        "DirectoryNav",
+        "Ant Design Sider"
+      ]
+    },
+    {
+      "id": "asset-skeleton-tree",
+      "name": "AssetSkeletonTree",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/AssetSkeletonTree.tsx",
+      "storyId": "modules-assetskeletontree--article-list",
+      "capabilities": [
+        "hierarchy",
+        "view-mode",
+        "edit-mode",
+        "metadata-slots",
+        "change-state",
+        "selection",
+        "drag-reorder"
+      ],
+      "slots": [
+        "node-title",
+        "node-description",
+        "node-trailing",
+        "node-state"
+      ],
+      "aliases": [
+        "AssetHierarchyTree",
+        "SkeletonTree"
+      ],
+      "useWhen": [
+        "需要查看或编辑资产骨架层级",
+        "需要在文章列表和长篇资产列表中展示层级节点",
+        "需要在文章工作台中展示可选择的逻辑骨架节点目录",
+        "需要通过受控回调接入后续骨架拖拽编辑"
+      ],
+      "doNotUseWhen": [
+        "需要把 API、路由、持久化或业务状态机放入树组件",
+        "需要在树节点内直接承载完整编辑表单",
+        "普通扁平资源列表"
+      ],
+      "differenceSummary": "共享层级树 Pattern，提取当前资产骨架树的容器/内容节点、顺序号、状态、稿件、待办、锁定和变更标记，并统一组合 StatusBadge 呈现顺序数字、变更标记、状态纯图标和错误计数；组件内置变动节点底色及无障碍状态文本，内容节点的顺序数字使用 Ant Design Tree 原生 switcher 空间中的固定列，与上级容器展开小三角按层级对齐并在标题前真实占位，避免绝对定位覆盖标题；容器节点支持右对齐的轻量说明文字；采用设计基础紧凑字号、单行定长截断、无行背景/边框和容器点击展开，编辑模式内置锁定、删除和禁用节点不可拖动、调用方可按业务忙碌状态收紧节点拖拽；默认规则支持内容节点进入容器末尾或跨容器换位、在锁定内容节点后插入及可见落点提示，并根据新位置重算且跳过删除节点的顺序号；查看模式隐藏新增/删除标记，场景可过滤已删除节点；不读取 API、不决定路由，也不负责保存。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "WorkspacePanel",
+        "SelectableRecord",
+        "RecordCard",
+        "StatusBadge",
+        "Ant Design Tree"
+      ]
+    },
+    {
+      "id": "confirm-action",
+      "name": "ConfirmAction",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/patterns/ConfirmAction.tsx",
+      "storyId": "buttons-confirmaction--default",
+      "capabilities": [
+        "confirmation",
+        "danger",
+        "scope",
+        "async-confirm"
+      ],
+      "slots": [
+        "trigger",
+        "title",
+        "description",
+        "confirm",
+        "cancel"
+      ],
+      "aliases": [
+        "ConfirmDeleteAction",
+        "ScopedPopconfirm"
+      ],
+      "useWhen": [
+        "删除、忽略、覆盖或不可逆操作的就地确认"
+      ],
+      "doNotUseWhen": [
+        "复杂多步骤确认或需要表单输入的危险操作"
+      ],
+      "differenceSummary": "把确认范围和异步确认回调显式放在动作边界中，不实现业务删除逻辑。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "DangerZone",
+        "AsyncActionState"
+      ]
+    },
+    {
+      "id": "message-composer",
+      "name": "MessageComposer",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/MessageComposer.tsx",
+      "storyId": "modules-messagecomposer--default",
+      "capabilities": [
+        "controlled-message",
+        "single-line",
+        "single-line-auto-grow",
+        "multi-line",
+        "keyboard-submit",
+        "ime-safe-submit",
+        "quick-prompts",
+        "bottom-action-row",
+        "cancel",
+        "loading",
+        "disabled",
+        "read-only",
+        "error",
+        "autofocus",
+        "embedded-surface",
+        "long-content"
+      ],
+      "slots": [
+        "message-input",
+        "quick-prompts",
+        "footer-info",
+        "submit-action",
+        "error"
+      ],
+      "aliases": [
+        "ChatComposer",
+        "AIChatInput",
+        "AIPromptComposer"
+      ],
+      "useWhen": [
+        "需要向 AI 发送受控的单条消息，并统一输入、发送、加载、禁用和错误状态",
+        "需要在选区浮层中使用从一行增高到三行的紧凑输入，或在完整对话区使用自动增高的多行输入",
+        "需要由业务侧提供快捷语言及其实际发送文字"
+      ],
+      "doNotUseWhen": [
+        "需要组件管理消息历史、调用 AI、选择模型、上传附件或持久化会话",
+        "需要编辑长文正文、标记文字范围或决定选区浮层的位置"
+      ],
+      "differenceSummary": "Ant Design X Sender 提供通用 AI 输入基础，但项目仍需要紧凑输入从一行增高到三行、单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 只负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。MessageComposer 封装受控消息输入与发送行为，不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。",
+      "sourceStatus": "experimental",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "Ant Design X Sender",
+        "BasicButton",
+        "FormActions",
+        "TextMarkEditor",
+        "LongformTextEditor",
+        "AgentConversation composer",
+        "CompositeButton"
+      ]
+    },
+    {
+      "id": "aspect-ratio-selector",
+      "name": "AspectRatioSelector",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/AspectRatioSelector.tsx",
+      "storyId": "modules-aspectratioselector--default",
+      "capabilities": [
+        "selection",
+        "aspect-ratio-preview",
+        "keyboard-selection",
+        "controlled-state",
+        "disabled",
+        "long-label"
+      ],
+      "slots": [
+        "title",
+        "option-label"
+      ],
+      "aliases": [
+        "RatioPicker",
+        "CanvasRatioSelector",
+        "ImageRatioSelector"
+      ],
+      "useWhen": [
+        "需要从一组常用宽高比中选择一个比例，并同步查看所选比例的几何预览",
+        "需要在紧凑工具区内用环绕布局呈现最多七个比例选项"
+      ],
+      "doNotUseWhen": [
+        "需要输入任意宽高数值或裁剪图片",
+        "只需要线性排列的同级视图切换"
+      ],
+      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 负责线性同级视图切换，SelectableRecord 负责完整资源记录选择，Ant Design Radio.Group 不提供比例几何反馈；AspectRatioSelector 把最多七个比例按钮环绕在动态等比预览周围，支持受控/非受控值、方向键/Home/End、局部及整体禁用和长标签截断，不读取业务数据。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "distribution": "source-sync",
+      "release": "0.2.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "UnderlineTabSwitch",
+        "SelectableRecord",
+        "Ant Design Radio.Group"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "name": "human2ai",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "npm@11",
+  "workspaces": [
+    "web",
+    "design-system/surfaces/*",
+    "storybook"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace web",
+    "server:dev": "tsx src/server/start.ts",
+    "build": "npm run build:server && npm run build:web",
+    "build:server": "tsc -p tsconfig.build.json",
+    "build:web": "npm run build --workspace web",
+    "typecheck": "npm run typecheck:server && npm run typecheck:web && npm run storybook:typecheck",
+    "typecheck:server": "tsc --noEmit -p tsconfig.json",
+    "typecheck:web": "npm run typecheck --workspace web",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "storybook": "npm run storybook --workspace @human2ai/storybook",
+    "storybook:build": "npm run build --workspace @human2ai/storybook",
+    "storybook:typecheck": "npm run typecheck --workspace @human2ai/storybook",
+    "yisiui": "node .yisiui/launcher.mjs"
+  },
+  "dependencies": {
+    "better-sqlite3": "13.0.3",
+    "fastify": "5.12.1"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "9.6.0",
+    "@types/node": "22.15.3",
+    "tsx": "4.23.12",
+    "typescript": "5.8.3",
+    "vitest": "4.1.11"
+  }
+}

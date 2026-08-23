@@ -1,0 +1,15 @@
+{
+  "$schema": "https://design-tokens.github.io/community-group/format/",
+  "theme": {
+    "light": {
+      "page": { "$type": "color", "$value": "{color.neutral.100}" },
+      "panel": { "$type": "color", "$value": "{color.neutral.0}" },
+      "text": { "$type": "color", "$value": "{color.neutral.900}" }
+    },
+    "dark": {
+      "page": { "$type": "color", "$value": "#141414" },
+      "panel": { "$type": "color", "$value": "#1F1F1F" },
+      "text": { "$type": "color", "$value": "#F5F5F5" }
+    }
+  }
+}

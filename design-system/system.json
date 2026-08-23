@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 2,
+  "project": "human2ai",
+  "defaultSurface": "human2ai-web",
+  "sharedUi": {
+    "distribution": "source-sync",
+    "surface": "web-react",
+    "version": "0.3.0",
+    "lock": ".yisiui/sync-lock.json"
+  },
+  "surfaces": {
+    "human2ai-web": {
+      "manifest": "surfaces/human2ai-web/surface.json",
+      "status": "active"
+    }
+  }
+}
