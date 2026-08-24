@@ -1,9 +1,10 @@
 #!/usr/bin/env node
 
+import { realpathSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import process from "node:process";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath } from "node:url";
 import {
   RefinementConstraintError,
   applyRefinementPlan,
@@ -688,6 +689,7 @@ function errorMessage(error: unknown): string {
 function usage(): string {
   return [
     "Usage:",
+    "  human2ai web",
     ...projectUsage().split("\n").slice(1),
     ...sessionUsage().split("\n").slice(1),
     "  human2ai composition methods",
@@ -724,6 +726,10 @@ function sessionUsage(): string {
 
 async function main(): Promise<void> {
   try {
+    if (process.argv[2] === "web") {
+      await web(process.argv.slice(3));
+      return;
+    }
     const result = await executeCli(process.argv.slice(2));
     process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
   } catch (error) {
@@ -745,6 +751,50 @@ async function main(): Promise<void> {
   }
 }
 
-if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+async function web(args: string[]): Promise<void> {
+  if (args.length > 0) throw new Error(usage());
+
+  const { startHuman2AiWeb } = await import("../server/runtime.ts");
+  const running = await startHuman2AiWeb();
+  if (running.status === "already-running") {
+    process.stdout.write(
+      `${JSON.stringify({ status: running.status, url: running.url }, null, 2)}\n`,
+    );
+    return;
+  }
+  process.stdout.write(
+    `${JSON.stringify({ status: "listening", url: running.url }, null, 2)}\n`,
+  );
+
+  let closing = false;
+  const close = async () => {
+    if (closing) return;
+    closing = true;
+    try {
+      await running.server.close();
+    } catch (error) {
+      process.stderr.write(
+        `${JSON.stringify({ error: { code: "SHUTDOWN_FAILED", message: errorMessage(error) } }, null, 2)}\n`,
+      );
+      process.exitCode = 1;
+    }
+  };
+  process.once("SIGINT", () => void close());
+  process.once("SIGTERM", () => void close());
+}
+
+if (isMainModule()) {
   await main();
+}
+
+export function isMainModule(entryPath = process.argv[1]): boolean {
+  if (!entryPath) return false;
+  try {
+    return (
+      realpathSync(path.resolve(entryPath)) ===
+      realpathSync(fileURLToPath(import.meta.url))
+    );
+  } catch {
+    return false;
+  }
 }

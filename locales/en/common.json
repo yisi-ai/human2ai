@@ -6,12 +6,24 @@
   "actions": {
     "start": "Start",
     "back": "Back to home",
-    "reset": "Reset draft"
+    "reset": "Reset draft",
+    "saveForAgent": "Save for AI",
+    "savingForAgent": "Saving"
   },
   "composition": {
     "kicker": "Composition planner · v1",
     "title": "Composition editor",
     "description": "Plan focal points, subject coverage, and visual direction, then let the Agent choose the appropriate aesthetic refinement.",
+    "session": {
+      "new": "New composition session",
+      "untitled": "Untitled composition",
+      "revision": "Draft revision {{revision}}",
+      "notSaved": "Not saved",
+      "unsavedChanges": "Unsaved changes",
+      "revisionConflict": "Another operation updated this draft to revision {{revision}}. Reopen the session before editing it again.",
+      "typeMismatch": "This is not a composition session and cannot be opened in the composition editor.",
+      "serviceError": "Could not synchronize with Human2AI: {{message}}"
+    },
     "views": {
       "draft": "User draft",
       "refined": "Agent refinement",
@@ -42,6 +54,16 @@
     },
     "workspace": "Canvas workspace",
     "tools": "Composition tools",
+    "properties": "Composition properties",
+    "collapseTools": "Collapse composition toolbar",
+    "expandTools": "Expand composition toolbar",
+    "toolNames": {
+      "focus": "Focus",
+      "circle": "Circle",
+      "triangle": "Triangle",
+      "quadrilateral": "Quadrilateral",
+      "direction": "Direction line"
+    },
     "addElements": "Add elements",
     "addFocus": "Add focus",
     "addCircle": "Add circle",

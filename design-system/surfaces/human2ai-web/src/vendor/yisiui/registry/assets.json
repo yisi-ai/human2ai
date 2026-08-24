@@ -813,6 +813,130 @@
         "SelectableRecord",
         "Ant Design Radio.Group"
       ]
+    },
+    {
+      "id": "app-shell-frame",
+      "name": "AppShellFrame",
+      "category": "layout",
+      "status": "experimental",
+      "source": "src/layouts/AppShellFrame.tsx",
+      "storyId": "layouts-appshellframe--default",
+      "capabilities": [
+        "full-viewport-shell",
+        "persistent-sidebar",
+        "collapsible-sidebar",
+        "optional-right-panel",
+        "collapsible-right-panel",
+        "content-region",
+        "desktop-navigation",
+        "header-title",
+        "optional-back-action",
+        "controlled-state",
+        "localized-labels",
+        "long-content"
+      ],
+      "slots": [
+        "sidebar-title",
+        "sidebar-navigation",
+        "sidebar",
+        "header-title",
+        "back-action",
+        "sidebar-collapsed-actions",
+        "right-panel",
+        "children"
+      ],
+      "aliases": [
+        "ApplicationShell",
+        "DesktopAppShell",
+        "StudioShell"
+      ],
+      "useWhen": [
+        "桌面应用需要全屏壳层、持久侧栏、全局标题栏和独立滚动内容区",
+        "调用方需要注入导航、标题和操作，而不让壳层拥有路由或业务状态",
+        "侧栏需要受控或非受控地完全收起，并在收起时显示产品注入的恢复期操作",
+        "业务需要按需注入可独立控制的右侧面板，并从标题栏右上角统一收起或展开"
+      ],
+      "doNotUseWhen": [
+        "已有应用壳层内部只需要页面宽度和垂直节奏",
+        "需要页面内双栏编辑器、任意工作台 pane 或内容自然撑高的辅助操作面板",
+        "需要移动端导航壳层或组件自行读取路由、API 和持久化状态"
+      ],
+      "differenceSummary": "PageShell 只控制页面容器宽度与节奏，WorkspacePanel 只建立工作台内部 pane，SideActionPanel 是内容自然撑高的辅助操作栏；AppShellFrame 独立负责全视口桌面应用的持久/可收起左侧栏、可选且可独立收起的右侧面板、全局上下文标题栏和可滚动内容区。右侧面板只提供容器 slot 与标题栏右上角统一开关，内容和是否存在由业务决定；共享实现不读取路由、API、导航数据或业务状态。",
+      "sourceStatus": "stable",
+      "sourceRepository": "writer-harness",
+      "sourceProposal": "writer-harness/design-system/proposals/app-shell-frame.json",
+      "sourceComponent": "design-system/surfaces/desktop-web/src/local/layouts/AppShellFrame.tsx",
+      "distribution": "source-sync",
+      "release": "0.4.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "PageShell",
+        "WorkspacePanel",
+        "SideActionPanel",
+        "Ant Design Layout"
+      ]
+    },
+    {
+      "id": "section-navigation-panel",
+      "name": "SectionNavigationPanel",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/SectionNavigationPanel.tsx",
+      "storyId": "modules-sectionnavigationpanel--default",
+      "capabilities": [
+        "dismissible-panel",
+        "two-column-layout",
+        "section-navigation",
+        "controlled-selection",
+        "composite-button-navigation",
+        "content-region",
+        "independent-scroll",
+        "consumer-sized",
+        "minimum-size",
+        "two-eight-column-ratio",
+        "token-title-size",
+        "disabled",
+        "empty",
+        "long-content",
+        "localized-labels"
+      ],
+      "slots": [
+        "title",
+        "navigation-icon",
+        "navigation-label",
+        "content"
+      ],
+      "aliases": [
+        "MenuContentPanel",
+        "NavigationContentPanel",
+        "SettingsPanelFrame"
+      ],
+      "useWhen": [
+        "需要在一个有界区域内通过左侧 Icon 与文字导航切换右侧业务内容",
+        "需要标题、关闭请求、受控分区选择和可独立滚动的无边框双栏区域",
+        "需要由消费项目控制当前分区、内容、关闭行为和整体宽高"
+      ],
+      "doNotUseWhen": [
+        "需要组件自行提供遮罩、Portal、焦点锁定、Esc 关闭或焦点归还",
+        "需要组件读取路由、API、权限、持久化状态或管理内容缓存",
+        "只需要紧凑的同级视图切换、可收起操作侧栏或全视口应用壳层"
+      ],
+      "differenceSummary": "CompositeButton 只负责单个行级动作，TabSwitch 不承载内容容器，SideActionPanel 是可收起操作侧栏，AppShellFrame 是全视口应用壳层，Ant Design Modal 负责阻塞浮层语义；SectionNavigationPanel 组合 CompositeButton，独立负责使用 font.size.lg 的可关闭标题区、严格 2:8 的分区导航与内容布局、受控选择、最小尺寸和双区滚动，但不拥有浮层、路由或业务状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/section-navigation-panel.json",
+      "sourceComponent": "packages/react/src/patterns/SectionNavigationPanel.tsx",
+      "distribution": "source-sync",
+      "release": "0.5.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "CompositeButton",
+        "TabSwitch",
+        "SideActionPanel",
+        "AppShellFrame",
+        "Ant Design Tabs",
+        "Ant Design Modal"
+      ]
     }
   ]
 }

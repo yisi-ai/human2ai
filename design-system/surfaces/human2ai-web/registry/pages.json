@@ -15,12 +15,15 @@
         "tab-switch",
         "status-badge",
         "basic-button",
-        "aspect-ratio-selector"
+        "aspect-ratio-selector",
+        "side-action-panel",
+        "composite-button"
       ],
-      "stateBoundary": "页面管理草图和加工工作流状态；本地视图只呈现已审计结果；Agent 决策和持久化由页面外的服务负责。",
+      "stateBoundary": "页面应用层通过同源 API 加载会话、保存明确草图 revision 并轮询加工结果；本地视图只呈现调用方提供的受控草图与已审计结果；Agent 决策仍由 CLI/Skill 负责。",
       "evidence": {
         "files": [
           "web/app/composition/page.tsx",
+          "web/lib/human2ai-api.ts",
           "src/domain/composition/workflow.ts",
           "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx"
         ],
@@ -31,9 +34,12 @@
         "states": [
           "waiting",
           "processing",
+          "loading",
+          "saving",
           "ready",
           "stale",
           "error",
+          "revision-conflict",
           "long-content",
           "narrow"
         ]

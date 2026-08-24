@@ -1,8 +1,11 @@
+import { AimOutlined, ArrowRightOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
 
 import { AspectRatioSelector } from "@human2ai/ui/yisiui/aspect-ratio-selector";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
+import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
+import { SideActionPanel } from "@human2ai/ui/yisiui/side-action-panel";
 
 import {
   addArea,
@@ -96,19 +99,17 @@ function CompositionCanvasWorkbench() {
 
       <div className="composition-canvas-story__workspace">
         <section className="composition-canvas-story__stage" aria-label="画布工作区">
-          <CompositionCanvas
-            draft={draft}
-            selectedId={selectedId}
-            onDraftChange={setDraft}
-            onSelectionChange={setSelectedId}
-          />
-        </section>
-
-        <aside className="composition-canvas-story__panel" aria-label="构图工具">
-          <section>
-            <h2>添加元素</h2>
-            <div className="composition-canvas-story__actions">
-              <BasicButton
+          <div className="composition-canvas-story__stage-layout">
+            <SideActionPanel
+              width={144}
+              aria-label="构图工具"
+              collapseLabel="收起构图工具栏"
+              expandLabel="展开构图工具栏"
+            >
+              <CompositeButton
+                icon={<AimOutlined aria-hidden="true" />}
+                label="焦点"
+                collapsedLabel="添加焦点"
                 disabled={draft.focusPoints.length >= 3}
                 onClick={() =>
                   commit(
@@ -118,20 +119,23 @@ function CompositionCanvasWorkbench() {
                     }),
                   )
                 }
-              >
-                添加焦点
-              </BasicButton>
-              <BasicButton
+              />
+              <CompositeButton
+                icon={<span className="composition-canvas-story__tool-icon composition-canvas-story__tool-icon--circle" />}
+                label="圆形"
+                collapsedLabel="添加圆形"
                 onClick={() => commit(addArea(draft, { primitive: "circle", area: 0.08 }))}
-              >
-                添加圆形
-              </BasicButton>
-              <BasicButton
+              />
+              <CompositeButton
+                icon={<span className="composition-canvas-story__tool-icon composition-canvas-story__tool-icon--triangle" />}
+                label="三角形"
+                collapsedLabel="添加三角形"
                 onClick={() => commit(addArea(draft, { primitive: "triangle", area: 0.08 }))}
-              >
-                添加三角形
-              </BasicButton>
-              <BasicButton
+              />
+              <CompositeButton
+                icon={<span className="composition-canvas-story__tool-icon composition-canvas-story__tool-icon--quadrilateral" />}
+                label="四边形"
+                collapsedLabel="添加四边形"
                 onClick={() =>
                   commit(
                     addArea(draft, {
@@ -141,27 +145,39 @@ function CompositionCanvasWorkbench() {
                     }),
                   )
                 }
-              >
-                添加四边形
-              </BasicButton>
-              <BasicButton
+              />
+              <CompositeButton
+                icon={<ArrowRightOutlined aria-hidden="true" />}
+                label="方向线"
+                collapsedLabel="添加方向线"
                 disabled={Boolean(draft.directionLine)}
                 onClick={() => commit(addDirectionLine(draft))}
-              >
-                添加方向线
-              </BasicButton>
-              <BasicButton
-                danger
-                disabled={!selectedId}
-                onClick={() => {
-                  if (!selectedId) return;
-                  setDraft(removeItem(draft, selectedId));
-                  setSelectedId(null);
-                }}
-              >
-                删除所选
-              </BasicButton>
-            </div>
+              />
+            </SideActionPanel>
+
+            <CompositionCanvas
+              draft={draft}
+              selectedId={selectedId}
+              onDraftChange={setDraft}
+              onSelectionChange={setSelectedId}
+            />
+          </div>
+        </section>
+
+        <aside className="composition-canvas-story__panel" aria-label="构图工具">
+          <section>
+            <h2>编辑所选</h2>
+            <BasicButton
+              danger
+              disabled={!selectedId}
+              onClick={() => {
+                if (!selectedId) return;
+                setDraft(removeItem(draft, selectedId));
+                setSelectedId(null);
+              }}
+            >
+              删除所选
+            </BasicButton>
           </section>
 
           <section>
@@ -285,6 +301,8 @@ export const Interactive: Story = {
   play: async ({ canvasElement }) => {
     assertStorySelector(canvasElement, '[data-yisiui-asset="human2ai/composition-canvas"]');
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/basic-button"]');
+    assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/side-action-panel"]');
+    assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/composite-button"]');
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/aspect-ratio-selector"]');
     assertStoryRole(canvasElement, "group");
     assertStoryText(canvasElement, "构图画布");
@@ -300,7 +318,7 @@ export const Interactive: Story = {
       '[data-composition-item="area-2"][data-selected="true"][aria-pressed="true"]',
     );
 
-    findButton(canvasElement, "添加焦点").click();
+    findButton(canvasElement, "焦点").click();
     await nextFrame();
     assertStorySelector(
       canvasElement,
@@ -356,6 +374,18 @@ export const Interactive: Story = {
     squareRatio.click();
     await nextFrame();
     assertStorySelector(canvasElement, 'svg[viewBox="0 0 1024 1024"]');
+  },
+};
+
+export const NarrowToolbar: Story = {
+  name: "窄视口工具栏",
+  args: { draft: createExampleDraft() },
+  parameters: { viewport: { defaultViewport: "mobile1" } },
+  render: () => <CompositionCanvasWorkbench />,
+  play: ({ canvasElement }) => {
+    assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/side-action-panel"]');
+    assertStorySelector(canvasElement, '[data-yisiui-asset="human2ai/composition-canvas"]');
+    assertStoryText(canvasElement, "方向线");
   },
 };
 

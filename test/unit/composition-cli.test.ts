@@ -1,8 +1,8 @@
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { executeCli } from "../../src/cli/main.js";
+import { executeCli, isMainModule } from "../../src/cli/main.js";
 import {
   addArea,
   addFocus,
@@ -11,6 +11,17 @@ import {
 } from "../../src/domain/composition/index.js";
 
 describe("composition CLI", () => {
+  it("recognizes an npm-style symlink as the CLI entrypoint", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-cli-link-"));
+    const entrypoint = path.join(directory, "human2ai");
+    try {
+      await symlink(path.resolve("src/cli/main.ts"), entrypoint);
+      expect(isMainModule(entrypoint)).toBe(true);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
   it("lets an Agent inspect methods, view a draft, and apply an explicit plan", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-composition-cli-"));
     try {

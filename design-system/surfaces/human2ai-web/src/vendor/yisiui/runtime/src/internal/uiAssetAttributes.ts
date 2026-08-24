@@ -20,6 +20,8 @@ const ASSET_CATEGORIES = {
   "asset-skeleton-tree": "module",
   "message-composer": "module",
   "side-action-panel": "module",
+  "section-navigation-panel": "module",
+  "app-shell-frame": "layout",
 } as const;
 
 type SharedAssetId = keyof typeof ASSET_CATEGORIES;

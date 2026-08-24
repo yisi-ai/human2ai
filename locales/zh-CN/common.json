@@ -6,12 +6,24 @@
   "actions": {
     "start": "开始",
     "back": "返回首页",
-    "reset": "重置草图"
+    "reset": "重置草图",
+    "saveForAgent": "保存并交给 AI",
+    "savingForAgent": "正在保存"
   },
   "composition": {
     "kicker": "构图规划 · 第一版",
     "title": "构图编辑器",
     "description": "使用基础图形规划画面重心、主体占比与视觉方向，再由 Agent 判断适用的构图美学加工。",
+    "session": {
+      "new": "新构图会话",
+      "untitled": "未命名构图",
+      "revision": "草图版本 {{revision}}",
+      "notSaved": "尚未保存",
+      "unsavedChanges": "有未保存修改",
+      "revisionConflict": "草图已由其他操作更新到版本 {{revision}}。请重新打开该会话后再修改。",
+      "typeMismatch": "该会话不是构图会话，无法在构图编辑器中打开。",
+      "serviceError": "无法同步 Human2AI 服务：{{message}}"
+    },
     "views": {
       "draft": "用户草图",
       "refined": "Agent 加工图",
@@ -42,6 +54,16 @@
     },
     "workspace": "画布工作区",
     "tools": "构图工具",
+    "properties": "构图属性",
+    "collapseTools": "收起构图工具栏",
+    "expandTools": "展开构图工具栏",
+    "toolNames": {
+      "focus": "焦点",
+      "circle": "圆形",
+      "triangle": "三角形",
+      "quadrilateral": "四边形",
+      "direction": "方向线"
+    },
     "addElements": "添加元素",
     "addFocus": "添加焦点",
     "addCircle": "添加圆形",

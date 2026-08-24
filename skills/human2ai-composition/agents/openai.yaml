@@ -1,0 +1,3 @@
+interface:
+  display_name: "Human2AI Composition"
+  short_description: "Refine compositions through the local Human2AI CLI"

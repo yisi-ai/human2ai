@@ -1,3 +1,4 @@
+import fastifyStatic from "@fastify/static";
 import Fastify, { type FastifyInstance, type FastifyServerOptions } from "fastify";
 import type { CompositionSessionRepository } from "../database/composition-session-repository.ts";
 import type { ProjectSessionRepository } from "../database/project-session-repository.ts";
@@ -7,8 +8,9 @@ import { registerProjectSessionRoutes } from "./routes/project-sessions.ts";
 const healthResponseSchema = {
   type: "object",
   additionalProperties: false,
-  required: ["status"],
+  required: ["service", "status"],
   properties: {
+    service: { const: "human2ai" },
     status: { const: "ok" },
   },
 } as const;
@@ -16,6 +18,7 @@ const healthResponseSchema = {
 export interface ServerDependencies {
   compositionSessions?: CompositionSessionRepository;
   projectSessions?: ProjectSessionRepository;
+  webDirectory?: string;
 }
 
 export function buildServer(
@@ -43,7 +46,7 @@ export function buildServer(
         },
       },
     },
-    async () => ({ status: "ok" as const }),
+    async () => ({ service: "human2ai" as const, status: "ok" as const }),
   );
 
   if (dependencies.projectSessions) {
@@ -51,6 +54,21 @@ export function buildServer(
   }
   if (dependencies.compositionSessions) {
     registerCompositionSessionRoutes(server, dependencies.compositionSessions);
+  }
+  if (dependencies.webDirectory) {
+    server.register(fastifyStatic, {
+      root: dependencies.webDirectory,
+      redirect: true,
+      cacheControl: false,
+      setHeaders(reply, filename) {
+        reply.header(
+          "cache-control",
+          filename.includes("/_next/static/") || filename.includes("\\_next\\static\\")
+            ? "public, max-age=31536000, immutable"
+            : "no-cache",
+        );
+      },
+    });
   }
 
   return server;

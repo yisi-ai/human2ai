@@ -31,6 +31,8 @@ export * from "./patterns/AspectRatioSelector";
 export * from "./patterns/AssetSkeletonTree";
 export * from "./patterns/MessageComposer";
 export * from "./patterns/SideActionPanel";
+export * from "./patterns/SectionNavigationPanel";
+export * from "./layouts/AppShellFrame";
 export * from "./motion/textMotion";
 export { tokens } from "./tokens/tokens";
 export type { TokenName } from "./tokens/tokens";

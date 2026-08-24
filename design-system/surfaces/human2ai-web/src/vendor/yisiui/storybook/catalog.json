@@ -211,6 +211,22 @@
       "source": "apps/storybook/stories/AspectRatioSelector.stories.tsx"
     },
     {
+      "id": "layouts-appshellframe--default",
+      "title": "Layouts/AppShellFrame",
+      "kind": "experimental",
+      "assetKey": "yisiui/app-shell-frame",
+      "description": "桌面应用需要全屏壳层、持久侧栏、全局标题栏和独立滚动内容区",
+      "source": "apps/storybook/stories/AppShellFrame.stories.tsx"
+    },
+    {
+      "id": "modules-sectionnavigationpanel--default",
+      "title": "Modules/SectionNavigationPanel",
+      "kind": "experimental",
+      "assetKey": "yisiui/section-navigation-panel",
+      "description": "需要在一个有界区域内通过左侧 Icon 与文字导航切换右侧业务内容",
+      "source": "apps/storybook/stories/SectionNavigationPanel.stories.tsx"
+    },
+    {
       "id": "system-architecture-status--migration-candidate",
       "title": "System/Architecture Status",
       "kind": "supporting",
