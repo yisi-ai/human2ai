@@ -67,13 +67,6 @@
   box-shadow: var(--yisiui-shadow-panel);
 }
 
-.composition-canvas-story__stage-layout {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: var(--yisiui-space-4);
-  align-items: start;
-}
-
 .composition-canvas-story__tool-icon {
   display: inline-block;
   box-sizing: border-box;
@@ -110,6 +103,18 @@
   margin: 0 0 var(--yisiui-space-3);
   font-size: var(--yisiui-font-size-lg);
   line-height: var(--yisiui-font-line-height-tight);
+}
+
+.composition-canvas-story__setting {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+  font-size: var(--yisiui-font-size-sm);
+}
+
+.composition-canvas-story__setting label {
+  cursor: pointer;
 }
 
 .composition-canvas-story__metrics {
@@ -156,10 +161,6 @@
 @media (max-width: 720px) {
   .composition-canvas-story {
     padding: var(--yisiui-space-4);
-  }
-
-  .composition-canvas-story__stage-layout {
-    grid-template-columns: 1fr;
   }
 
   .composition-canvas-story__header {

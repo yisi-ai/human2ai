@@ -1,0 +1,12 @@
+.human2ai-canvas-placement {
+  cursor: crosshair;
+}
+
+.human2ai-canvas-placement__preview {
+  fill: color-mix(in srgb, var(--yisiui-component-focus-outline) 8%, transparent);
+  stroke: var(--yisiui-component-focus-outline);
+  stroke-width: var(--yisiui-component-focus-outline-width);
+  stroke-dasharray: 5 4;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}

@@ -43,3 +43,11 @@
     grid-template-columns: 1fr;
   }
 }
+
+.attachment {
+  padding: var(--yisiui-space-2) var(--yisiui-space-3);
+  border-radius: var(--yisiui-radius-md);
+  background: var(--yisiui-color-surface-active);
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-sm);
+}

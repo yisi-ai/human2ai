@@ -1,6 +1,6 @@
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import { MessageComposer } from "@human2ai/ui/yisiui";
 import { assertStorySelector, assertStoryText } from "../interactionChecks";
@@ -83,7 +83,7 @@ function InteractiveFixture() {
 
 const meta = {
   id: "modules-messagecomposer",
-  title: "Modules/MessageComposer",
+  title: "yisiui-Modules/MessageComposer",
   component: MessageComposer,
   parameters: { layout: "fullscreen" },
   argTypes: {
@@ -97,6 +97,12 @@ const meta = {
     onSubmit: { control: false },
     onCancel: { control: false },
     quickPrompts: { control: false },
+    topContent: { control: false },
+    topContentEnabled: { control: "boolean" },
+    topContentLabel: { control: "text" },
+    uploadEnabled: { control: "boolean" },
+    uploadLabel: { control: "text" },
+    onUpload: { control: false },
     footer: { control: false },
     error: { control: false },
   },
@@ -251,6 +257,62 @@ export const States: Story = {
           />
         </section>
       </div>
+    </main>
+  ),
+};
+
+function UploadFixture() {
+  const [value, setValue] = useState("");
+  const [files, setFiles] = useState(["项目背景说明.pdf", "本次访谈的完整记录.docx", "参考图片与设计说明.png"]);
+  const fileInput = useRef<HTMLInputElement>(null);
+  return (
+    <main className={styles.storyFrame}>
+      <input ref={fileInput} type="file" multiple hidden aria-label="选择附件"
+        onChange={(event) => {
+          setFiles(Array.from(event.target.files ?? [], (file) => file.name));
+          event.target.value = "";
+        }} />
+      <MessageComposer
+        value={value}
+        ariaLabel="带附件的消息"
+        uploadEnabled
+        onUpload={() => fileInput.current?.click()}
+        onChange={setValue}
+        onSubmit={() => setValue("")}
+        quickPrompts={EXAMPLE_QUICK_PROMPTS}
+        topContentEnabled
+        topContentLabel="已选附件"
+        topContent={files.map((name, index) => <span className={styles.attachment} key={`${name}:${index}`}>{name}</span>)}
+      />
+    </main>
+  );
+}
+
+export const UploadAndTopContent: Story = {
+  name: "上传入口与顶部附件容器",
+  render: () => <UploadFixture />,
+  play: ({ canvasElement }) => {
+    const top = canvasElement.querySelector<HTMLElement>("[data-message-composer-top-content]")!;
+    const style = getComputedStyle(top);
+    if (style.overflowX !== "auto" || style.scrollbarWidth !== "none" || top.scrollWidth <= top.clientWidth) {
+      throw new Error("附件区应支持横向滚动且隐藏滚动条");
+    }
+    for (const selector of ["[data-message-composer-upload]", "[data-message-composer-submit]", "[data-message-composer-quick-prompt] button"]) {
+      const button = canvasElement.querySelector<HTMLElement>(selector)!;
+      const expectedHeight = selector === "[data-message-composer-submit]" ? 44 : 32;
+      if (Math.abs(button.getBoundingClientRect().height - expectedHeight) > 0.5) throw new Error("底部操作尺寸与预期不符");
+    }
+  },
+};
+
+export const TopText: Story = {
+  name: "顶部业务文字与关闭上传",
+  render: () => (
+    <main className={styles.storyFrame}>
+      <MessageComposer ariaLabel="带上下文的消息" value="" onChange={() => undefined} onSubmit={() => undefined}
+        topContentEnabled
+        topContent={<span>当前引用：由业务项目提供的上下文说明，可以沿水平方向滚动查看完整内容。</span>}
+        quickPrompts={EXAMPLE_QUICK_PROMPTS} />
     </main>
   ),
 };

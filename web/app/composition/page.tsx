@@ -1,92 +1,106 @@
 "use client";
 
-import { AimOutlined, ArrowRightOutlined } from "@ant-design/icons";
+import { promptTranslationKey } from "../../../locales/promptKeys";
 import {
+  AimOutlined,
+  CameraOutlined,
+  BorderOutlined,
+  CopyOutlined,
+  DeleteOutlined,
+  FileTextOutlined,
+  FontSizeOutlined,
+  LineOutlined,
+  LockOutlined,
+  PictureOutlined,
+  TableOutlined,
+  UnlockOutlined,
+} from "@ant-design/icons";
+import {
+  COMPOSITION_FRAME_ID,
+  CompactDropdownSelect,
   CompositionWorkflowView,
-  type CompositionWorkflowViewKey,
+  UiSketchStateTabs,
+  SessionDetails,
+  CanvasHistoryControls,
+  buildCompositionPrompt,
+  copyCompositionSketchPng,
+  type CompositionPromptTranslator,
+  type CompositionCanvasViewportAction,
+  type CompositionPlacementTool,
 } from "@human2ai/ui";
-import { AspectRatioSelector } from "@human2ai/ui/yisiui/aspect-ratio-selector";
+import {
+  AspectRatioSelector,
+  type AspectRatioValue,
+} from "@human2ai/ui/yisiui/aspect-ratio-selector";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
-import { SideActionPanel } from "@human2ai/ui/yisiui/side-action-panel";
+import { ConfirmAction } from "@human2ai/ui/yisiui/confirm-action";
+import { LoadingState } from "@human2ai/ui/yisiui/loading-state";
+import { Input, Popover, Tooltip } from "antd";
 import type { TFunction } from "i18next";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, type SetStateAction } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type SetStateAction,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import {
-  addArea,
-  addDirectionLine,
-  addFocus,
   changeFrame,
-  createCompositionWorkflowState,
+  compositionFrameSizeForRatio,
   createDraft,
-  receiveCompositionRefinement,
-  removeItem,
-  resizeArea,
-  rotateArea,
-  rotateDirectionLine,
-  updateCompositionWorkflowDraft,
+  isCompositionFrameRatioSupported,
+  setProcessingSemantic,
+  validateDraft,
+  compositionStates,
+  createCompositionState,
+  selectCompositionState,
+  renameCompositionState,
+  reorderCompositionStates,
+  deleteCompositionState,
   visibleAreaMetrics,
   type CompositionDraft,
-  type CompositionFrame,
 } from "../../../src/domain/composition";
 import {
   Human2AiApiError,
   createCompositionSession,
   getSession,
+  imageAssetContentUrl,
+  readImageFile,
   listCompositionDrafts,
-  listCompositionRefinements,
   saveCompositionDraft,
+  uploadImageAsset,
   type CompositionDraftVersion,
-  type CompositionRefinementRun,
   type Human2AiSession,
 } from "../../lib/human2ai-api";
+import type { StyleProcessing } from "../../../src/domain/session";
+import { SessionStyleControl } from "../../components/SessionStyleControl";
+import { useSessionStyle } from "../../lib/use-session-style";
+import { useCompositionSpatialReferences } from "../../components/CompositionSpatialReferences";
+import { Human2AiShell } from "../../components/Human2AiShell";
+import { buildSessionCliCommand } from "../../lib/session-connection";
+import { useCanvasHistory } from "../../lib/use-canvas-history";
 import styles from "./page.module.css";
 
-const FRAME_OPTIONS = [
-  { key: "3:2", label: "3:2", width: 3, height: 2 },
-  { key: "1:1", label: "1:1", width: 1, height: 1 },
-  { key: "2:3", label: "2:3", width: 2, height: 3 },
-] as const;
+type CanvasViewportActionType = CompositionCanvasViewportAction["type"];
 
-const FRAMES: Record<(typeof FRAME_OPTIONS)[number]["key"], CompositionFrame> = {
-  "3:2": { width: 1200, height: 800 },
-  "1:1": { width: 1024, height: 1024 },
-  "2:3": { width: 800, height: 1200 },
-};
+const COMPACT_SIDE_ACTION_PANEL_WIDTH = 180;
+const AUTO_SAVE_DELAY_MS = 800;
+const DELIVERY_NOTICE_DURATION_MS = 2_000;
+const EXTERNAL_DRAFT_REFRESH_MS = 3_000;
 
-function createExampleDraft(): CompositionDraft {
-  let draft = addFocus(createDraft(), { x: 0.32, y: 0.28 }).draft;
-  draft = addArea(draft, {
-    primitive: "circle",
-    x: 0.28,
-    y: 0.38,
-    area: 0.1,
-  }).draft;
-  draft = addArea(draft, {
-    primitive: "triangle",
-    x: 0.68,
-    y: 0.32,
-    area: 0.08,
-    rotation: 12,
-  }).draft;
-  draft = addArea(draft, {
-    primitive: "quadrilateral",
-    aspect: "free",
-    x: 0.58,
-    y: 0.72,
-    area: 0.12,
-    rotation: 352,
-  }).draft;
-  const direction = addDirectionLine(draft);
-  return rotateDirectionLine(direction.draft, direction.id, 338);
-}
+type DeliveryNotice = {
+  type: "success" | "warning" | "error";
+  message: string;
+} | null;
 
 interface CompositionSessionSnapshot {
   session: Human2AiSession;
   draftVersion: CompositionDraftVersion | null;
-  refinement: CompositionRefinementRun | null;
 }
 
 async function loadCompositionSession(
@@ -96,27 +110,25 @@ async function loadCompositionSession(
   if (session.sessionType !== "image-composition") {
     throw new Error("SESSION_TYPE_MISMATCH");
   }
-  const [draftVersions, refinementRuns] = await Promise.all([
-    listCompositionDrafts(sessionId),
-    listCompositionRefinements(sessionId),
-  ]);
-  const draftVersion = draftVersions.at(-1) ?? null;
-  const refinement = draftVersion
-    ? refinementRuns.find(
-        (run) => run.sourceDraftRevision === draftVersion.revision,
-      ) ?? null
-    : null;
-  return { session, draftVersion, refinement };
+  const draftVersions = await listCompositionDrafts(sessionId);
+  return { session, draftVersion: draftVersions.at(-1) ?? null };
 }
 
-function frameKeyForDraft(draft: CompositionDraft): keyof typeof FRAMES {
-  const ratio = draft.frame.width / draft.frame.height;
-  return (Object.keys(FRAMES) as Array<keyof typeof FRAMES>).reduce((closest, key) =>
-    Math.abs(FRAMES[key].width / FRAMES[key].height - ratio) <
-    Math.abs(FRAMES[closest].width / FRAMES[closest].height - ratio)
-      ? key
-      : closest,
-  );
+function frameRatioForDraft(draft: CompositionDraft): AspectRatioValue {
+  const divisor = greatestCommonDivisor(draft.frame.width, draft.frame.height);
+  return {
+    width: draft.frame.width / divisor,
+    height: draft.frame.height / divisor,
+  };
+}
+
+function greatestCommonDivisor(left: number, right: number): number {
+  let dividend = Math.abs(left);
+  let divisor = Math.abs(right);
+  while (divisor !== 0) {
+    [dividend, divisor] = [divisor, dividend % divisor];
+  }
+  return dividend || 1;
 }
 
 function formatServiceError(error: unknown, t: TFunction): string {
@@ -126,72 +138,179 @@ function formatServiceError(error: unknown, t: TFunction): string {
         revision: error.details.actualLatestRevision,
       });
     }
-    return t("composition.session.serviceError", { message: error.message });
+    return t("errors.serviceSync", { message: error.message });
   }
   if (error instanceof Error && error.message === "SESSION_TYPE_MISMATCH") {
     return t("composition.session.typeMismatch");
   }
-  return t("composition.session.serviceError", {
+  return t("errors.serviceSync", {
     message: error instanceof Error ? error.message : String(error),
   });
 }
 
 export default function CompositionPage() {
-  const router = useRouter();
   const { t } = useTranslation();
-  const [workflow, setWorkflow] = useState(() =>
-    createCompositionWorkflowState(createExampleDraft()),
+
+  return (
+    <Suspense
+      fallback={(
+        <LoadingState
+          className={styles.routeLoading}
+          label={t("composition.session.loading")}
+          rows={10}
+        />
+      )}
+    >
+      <CompositionPageContent />
+    </Suspense>
   );
-  const [activeView, setActiveView] = useState<CompositionWorkflowViewKey>("draft");
-  const [selectedId, setSelectedId] = useState<string | null>("area-1");
-  const [frameKey, setFrameKey] = useState<keyof typeof FRAMES>("3:2");
+}
+
+function CompositionPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const requestedSessionId = searchParams.get("session");
+  const { t, i18n } = useTranslation();
+  const translatePrompt = useCallback<CompositionPromptTranslator>(
+    (key, values) => t(
+      promptTranslationKey("composition", key),
+      values,
+    ),
+    [t],
+  );
+  const [draft, setDraft] = useState(createDraft);
+  const [placementTool, setPlacementTool] = useState<CompositionPlacementTool | null>(null);
+  const [showDraftGuideGrid, setShowDraftGuideGrid] = useState(true);
+  const [frameLocked, setFrameLocked] = useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [canvasZoom, setCanvasZoom] = useState(1);
+  const [canvasViewportAction, setCanvasViewportAction] =
+    useState<CompositionCanvasViewportAction>({ id: 0, type: "fit-frame" });
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [frameRatio, setFrameRatio] = useState<AspectRatioValue>({ width: 16, height: 9 });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
+  const [sessionMetadata, setSessionMetadata] = useState<Human2AiSession | null>(null);
+  const [lastModifiedAt, setLastModifiedAt] = useState<string | null>(null);
   const [latestRevision, setLatestRevision] = useState(0);
-  const [observedRunId, setObservedRunId] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(true);
+  const [styleProcessing, setStyleProcessing] = useState<StyleProcessing>();
+  const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [serviceError, setServiceError] = useState<string | null>(null);
-  const draft = workflow.draft;
-  const editing = activeView === "draft" && !loading && !saving;
+  const [overallNoteOpen, setOverallNoteOpen] = useState(false);
+  const [deliveryNotice, setDeliveryNotice] = useState<DeliveryNotice>(null);
+  const [copyingPrompt, setCopyingPrompt] = useState(false);
+  const [copyingSketch, setCopyingSketch] = useState(false);
+  const draftChangeVersionRef = useRef(0);
+  const saveContextVersionRef = useRef(0);
+  const blockedAutoSaveVersionRef = useRef<number | null>(null);
+  const revisionConflictRef = useRef(false);
+  const locallyCreatedSessionIdRef = useRef<string | null>(null);
+  const sessionCreationRef = useRef<Promise<Human2AiSession> | null>(null);
+  const sessionStyle = useSessionStyle(sessionId, ensureCompositionSession, latestRevision);
+  const history = useCanvasHistory(draft, ({ draft: restored }) => {
+    draftChangeVersionRef.current += 1;
+    blockedAutoSaveVersionRef.current = null;
+    setDraft(restored);
+    setDirty(true);
+    setPlacementTool(null);
+    setOverallNoteOpen(false);
+    setSelectedIds([]);
+    setFrameRatio(frameRatioForDraft(restored));
+  }, loading || revisionConflictRef.current);
+  const spatialReferences = useCompositionSpatialReferences({ draft, sessionId, ensureSession: ensureCompositionSession, updateDraft });
+  const editing = !loading;
+  const states = compositionStates(draft);
+  const activeStateId = draft.activeStateId ?? states[0].id;
   const metrics = visibleAreaMetrics(draft);
-  const selectedArea = draft.areas.find((area) => area.id === selectedId);
-  const selectedDirection = draft.directionLine?.id === selectedId ? draft.directionLine : null;
-  const selectedRotation =
-    selectedArea?.primitive !== "circle"
-      ? selectedArea?.rotation
-      : selectedDirection?.rotation;
+  const selectedItemIds = selectedIds.filter((id) => id !== COMPOSITION_FRAME_ID);
+  const processingSemanticOptions = [
+    {
+      value: "scene-composition",
+      label: t("composition.mode.scene"),
+    },
+    {
+      value: "editorial-layout",
+      label: t("composition.mode.editorial"),
+    },
+  ];
 
   useEffect(() => {
-    const requestedSessionId = new URLSearchParams(window.location.search).get(
-      "session",
+    if (!deliveryNotice) return;
+    const timer = window.setTimeout(
+      () => setDeliveryNotice(null),
+      DELIVERY_NOTICE_DURATION_MS,
     );
+    return () => window.clearTimeout(timer);
+  }, [deliveryNotice]);
+
+  useEffect(() => {
+    if (
+      requestedSessionId &&
+      requestedSessionId === locallyCreatedSessionIdRef.current
+    ) {
+      locallyCreatedSessionIdRef.current = null;
+      return;
+    }
+
+    setPlacementTool(null);
+    saveContextVersionRef.current += 1;
+    draftChangeVersionRef.current = 0;
+    revisionConflictRef.current = false;
+    blockedAutoSaveVersionRef.current = null;
+    setDirty(false);
+
     if (!requestedSessionId) {
+      const empty = createDraft();
+      history.reset(empty);
+      setDraft(empty);
+      setShowDraftGuideGrid(true);
+      setFrameLocked(false);
+      setCanvasZoom(1);
+      requestCanvasViewport("fit-frame");
+      setSelectedIds([]);
+      setFrameRatio({ width: 16, height: 9 });
+      setSessionId(null);
+      setSessionTitle(null);
+      setSessionMetadata(null);
+      setLastModifiedAt(null);
+      setLatestRevision(0);
+      setStyleProcessing(undefined);
+      setServiceError(null);
       setLoading(false);
       return;
     }
 
     let cancelled = false;
+    setLoading(true);
+    setShowDraftGuideGrid(true);
+    setFrameLocked(false);
+    setCanvasZoom(1);
+    setSessionId(null);
+    setSessionTitle(null);
+    setSessionMetadata(null);
+    setLastModifiedAt(null);
+    setServiceError(null);
     void loadCompositionSession(requestedSessionId)
       .then((snapshot) => {
         if (cancelled) return;
-        const nextDraft = snapshot.draftVersion?.draft ?? createExampleDraft();
-        let nextWorkflow = createCompositionWorkflowState(nextDraft);
-        if (snapshot.refinement) {
-          nextWorkflow = receiveCompositionRefinement(
-            nextWorkflow,
-            snapshot.refinement.result,
-          );
-        }
-        setWorkflow(nextWorkflow);
+        const nextDraft = snapshot.draftVersion?.draft ?? createDraft();
+        history.reset(nextDraft);
+        setDraft(nextDraft);
         setSessionId(snapshot.session.id);
         setSessionTitle(snapshot.session.title);
+        setSessionMetadata(snapshot.session);
+        setLastModifiedAt(
+          snapshot.draftVersion?.createdAt ?? snapshot.session.updatedAt,
+        );
         setLatestRevision(snapshot.draftVersion?.revision ?? 0);
-        setObservedRunId(snapshot.refinement?.id ?? null);
-        setFrameKey(frameKeyForDraft(nextDraft));
-        setSelectedId(nextDraft.areas[0]?.id ?? nextDraft.focusPoints[0]?.id ?? null);
-        setDirty(snapshot.draftVersion === null);
+        setStyleProcessing(snapshot.draftVersion?.styleProcessing);
+        setFrameRatio(frameRatioForDraft(nextDraft));
+        const initialSelection = nextDraft.areas[0]?.id ?? nextDraft.focusPoints[0]?.id;
+        setSelectedIds(initialSelection ? [initialSelection] : []);
+        requestCanvasViewport("fit-frame");
+        setDirty(false);
         setServiceError(null);
       })
       .catch((error) => {
@@ -204,23 +323,96 @@ export default function CompositionPage() {
     return () => {
       cancelled = true;
     };
-  }, [t]);
+  }, [requestedSessionId, t]);
 
   useEffect(() => {
-    if (!sessionId || latestRevision === 0 || observedRunId) return;
+    const draftChangeVersion = draftChangeVersionRef.current;
+    if (
+      revisionConflictRef.current ||
+      loading ||
+      saving ||
+      !dirty ||
+      blockedAutoSaveVersionRef.current === draftChangeVersion
+    ) {
+      return;
+    }
+
+    const saveContextVersion = saveContextVersionRef.current;
+    const draftToSave = draft;
+    const timer = window.setTimeout(() => {
+      void (async () => {
+        setSaving(true);
+        setServiceError(null);
+        try {
+          let targetSessionId = sessionId;
+          if (!targetSessionId) {
+            targetSessionId = await ensureCompositionSession();
+            if (saveContextVersion !== saveContextVersionRef.current) return;
+          }
+
+          const saved = await saveCompositionDraft(
+            targetSessionId,
+            latestRevision,
+            draftToSave,
+          );
+          if (saveContextVersion !== saveContextVersionRef.current) return;
+
+          blockedAutoSaveVersionRef.current = null;
+          setLatestRevision(saved.revision);
+          setStyleProcessing(saved.styleProcessing);
+          setLastModifiedAt(saved.createdAt);
+          if (draftChangeVersionRef.current === draftChangeVersion) {
+            setDraft(saved.draft);
+            setDirty(false);
+          }
+        } catch (error) {
+          if (saveContextVersion !== saveContextVersionRef.current) return;
+
+          const actualLatestRevision =
+            error instanceof Human2AiApiError &&
+            error.code === "DRAFT_REVISION_CONFLICT"
+              ? error.details.actualLatestRevision
+              : null;
+          if (
+            typeof actualLatestRevision === "number" &&
+            Number.isInteger(actualLatestRevision)
+          ) {
+            revisionConflictRef.current = true;
+            history.reset(history.current());
+            setLatestRevision(actualLatestRevision);
+          } else {
+            blockedAutoSaveVersionRef.current = draftChangeVersionRef.current;
+          }
+          setServiceError(formatServiceError(error, t));
+        } finally {
+          setSaving(false);
+        }
+      })();
+    }, AUTO_SAVE_DELAY_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [dirty, draft, latestRevision, loading, router, saving, sessionId, t]);
+
+  useEffect(() => {
+    if (!sessionId || loading || dirty || saving) return;
     let cancelled = false;
 
-    const refreshRefinement = async () => {
+    const observedChangeVersion = draftChangeVersionRef.current;
+    const refreshDraft = async () => {
       try {
-        const runs = await listCompositionRefinements(sessionId);
-        const current = runs.find(
-          (run) => run.sourceDraftRevision === latestRevision,
-        );
-        if (!cancelled && current) {
-          setObservedRunId(current.id);
-          setWorkflow((state) =>
-            receiveCompositionRefinement(state, current.result),
-          );
+        const versions = await listCompositionDrafts(sessionId);
+        const latest = versions.at(-1);
+        if (!cancelled && observedChangeVersion === draftChangeVersionRef.current && latest && latest.revision > latestRevision) {
+          history.reset(latest.draft);
+          setDraft(latest.draft);
+          setLatestRevision(latest.revision);
+          setStyleProcessing(latest.styleProcessing);
+          setLastModifiedAt(latest.createdAt);
+          setFrameRatio(frameRatioForDraft(latest.draft));
+          const initialSelection = latest.draft.areas[0]?.id
+            ?? latest.draft.focusPoints[0]?.id;
+          setSelectedIds(initialSelection ? [initialSelection] : []);
+          blockedAutoSaveVersionRef.current = null;
           setServiceError(null);
         }
       } catch (error) {
@@ -228,305 +420,453 @@ export default function CompositionPage() {
       }
     };
 
-    void refreshRefinement();
-    const timer = window.setInterval(() => void refreshRefinement(), 3_000);
+    void refreshDraft();
+    const timer = window.setInterval(
+      () => void refreshDraft(),
+      EXTERNAL_DRAFT_REFRESH_MS,
+    );
     return () => {
       cancelled = true;
       window.clearInterval(timer);
     };
-  }, [latestRevision, observedRunId, sessionId, t]);
+  }, [dirty, latestRevision, loading, saving, sessionId, t]);
 
-  function commit(result: { draft: CompositionDraft; id: string }): void {
-    updateDraft(result.draft);
-    setSelectedId(result.id);
+  function armPlacement(tool: CompositionPlacementTool): void {
+    setOverallNoteOpen(false);
+    setPlacementTool((current) => current === tool ? null : tool);
   }
 
-  function updateDraft(action: SetStateAction<CompositionDraft>): void {
-    setWorkflow((current) => {
-      const nextDraft = typeof action === "function" ? action(current.draft) : action;
-      return updateCompositionWorkflowDraft(current, nextDraft);
-    });
-    setActiveView("draft");
+  async function ensureCompositionSession(): Promise<string> {
+    if (sessionId) return sessionId;
+    const pending = sessionCreationRef.current ?? createCompositionSession(
+      t("composition.session.untitled"),
+    );
+    sessionCreationRef.current = pending;
+    try {
+      const session = await pending;
+      locallyCreatedSessionIdRef.current = session.id;
+      setSessionId(session.id);
+      setSessionTitle(session.title);
+      setSessionMetadata(session);
+      setLastModifiedAt(session.updatedAt);
+      router.replace(`/composition?session=${encodeURIComponent(session.id)}`);
+      return session.id;
+    } finally {
+      if (sessionCreationRef.current === pending) sessionCreationRef.current = null;
+    }
+  }
+
+  async function uploadCanvasImage(file: File): Promise<string> {
+    const targetSessionId = await ensureCompositionSession();
+    return (await uploadImageAsset(targetSessionId, file)).id;
+  }
+
+  function updateDraft(
+    action: SetStateAction<CompositionDraft>,
+  ): void {
+    const nextDraft = validateDraft(typeof action === "function" ? action(history.current()) : action);
+    if (!history.record(nextDraft)) return;
+    draftChangeVersionRef.current += 1;
+    blockedAutoSaveVersionRef.current = null;
+    setDraft(nextDraft);
+    setFrameRatio(frameRatioForDraft(nextDraft));
     setDirty(true);
   }
 
   function resetDraft(): void {
-    setWorkflow(createCompositionWorkflowState(createExampleDraft()));
-    setActiveView("draft");
-    setSelectedId("area-1");
-    setFrameKey("3:2");
+    const empty = createDraft();
+    history.record(empty);
+    setPlacementTool(null);
+    draftChangeVersionRef.current += 1;
+    blockedAutoSaveVersionRef.current = null;
+    setDraft(empty);
+    setShowDraftGuideGrid(true);
+    setFrameLocked(false);
+    setCanvasZoom(1);
+    requestCanvasViewport("fit-frame");
+    setSelectedIds([]);
+    setFrameRatio({ width: 16, height: 9 });
     setDirty(true);
     setServiceError(null);
   }
 
-  async function saveForAgent(): Promise<void> {
-    setSaving(true);
-    setServiceError(null);
+  function requestCanvasViewport(type: CanvasViewportActionType): void {
+    setCanvasViewportAction((current) => ({ id: current.id + 1, type }));
+  }
+
+  function changeState(action: (current: CompositionDraft) => CompositionDraft): void {
+    updateDraft(action);
+    setPlacementTool(null);
+    setSelectedIds([]);
+    setOverallNoteOpen(false);
+    requestCanvasViewport("fit-frame");
+  }
+
+  async function copyPrompt(): Promise<void> {
+    setCopyingPrompt(true);
     try {
-      let targetSessionId = sessionId;
-      if (!targetSessionId) {
-        const session = await createCompositionSession(
-          t("composition.session.untitled"),
-        );
-        targetSessionId = session.id;
-        setSessionId(session.id);
-        setSessionTitle(session.title);
-        router.replace(`/composition/?session=${encodeURIComponent(session.id)}`);
+      if (!navigator.clipboard?.writeText) {
+        throw new Error(t("clipboard.promptUnsupported"));
       }
-      const saved = await saveCompositionDraft(
-        targetSessionId,
-        latestRevision,
-        draft,
-      );
-      setLatestRevision(saved.revision);
-      setObservedRunId(null);
-      setWorkflow(createCompositionWorkflowState(saved.draft));
-      setDirty(false);
+      const stylePrompt = await sessionStyle.readPromptLine();
+      await navigator.clipboard.writeText(buildCompositionPrompt(draft, translatePrompt, stylePrompt));
+      setDeliveryNotice({ type: "success", message: t("clipboard.copied") });
     } catch (error) {
-      setServiceError(formatServiceError(error, t));
+      setDeliveryNotice({
+        type: "error",
+        message: error instanceof Error && error.message === t("clipboard.promptUnsupported")
+          ? error.message
+          : t("clipboard.promptFailed"),
+      });
     } finally {
-      setSaving(false);
+      setCopyingPrompt(false);
     }
   }
 
-  function resizeSelected(multiplier: number): void {
-    if (!selectedArea) return;
-    updateDraft((current) => {
-      const area = current.areas.find((item) => item.id === selectedArea.id);
-      return area ? resizeArea(current, area.id, area.area * multiplier) : current;
-    });
+  async function copySketch(): Promise<void> {
+    setCopyingSketch(true);
+    try {
+      const result = await copyCompositionSketchPng(
+        draft,
+        sessionId ? (assetId) => imageAssetContentUrl(sessionId, assetId) : undefined,
+      );
+      setDeliveryNotice(
+        result === "downloaded"
+          ? { type: "warning", message: t("clipboard.previewDownloaded") }
+          : { type: "success", message: t("clipboard.copied") },
+      );
+    } catch {
+      setDeliveryNotice({ type: "error", message: t("clipboard.previewFailed") });
+    } finally {
+      setCopyingSketch(false);
+    }
   }
 
-  function rotateSelected(delta: number): void {
-    if (selectedRotation === undefined || !selectedId) return;
-    updateDraft((current) => {
-      const area = current.areas.find((item) => item.id === selectedId);
-      if (area && area.primitive !== "circle") {
-        return rotateArea(current, area.id, (area.rotation ?? 0) + delta);
-      }
-      return current.directionLine?.id === selectedId
-        ? rotateDirectionLine(current, selectedId, current.directionLine.rotation + delta)
-        : current;
-    });
-  }
+  const overallNoteEditor = (
+    <label className={styles.overallNoteEditor}>
+      <span>{t("composition.globalNote.title")}</span>
+      <Input.TextArea
+        name="overallNote"
+        autoFocus
+        autoSize={{ minRows: 4, maxRows: 8 }}
+        value={draft.overallNote}
+        placeholder={t("composition.globalNote.placeholder")}
+        aria-label={t("composition.globalNote.ariaLabel")}
+        disabled={!editing}
+        onChange={(event) => updateDraft(
+          (current) => ({
+            ...current,
+            overallNote: event.target.value,
+          }),
+        )}
+      />
+    </label>
+  );
+
+  const toolButtons = (
+    <div
+      className={styles.toolGroups}
+      role="group"
+      aria-label={t("canvas.tools.label")}
+      data-composition-tool-groups
+    >
+      <div className={styles.toolGroup} data-composition-tool-group="focus">
+        <CompositeButton
+          className={styles.capacityTool}
+          icon={<AimOutlined aria-hidden="true" />}
+          label={t("composition.toolNames.focus")}
+          description={t("composition.elementCapacity.compact", {
+            current: draft.focusPoints.length,
+            limit: 3,
+          })}
+          aria-label={t("composition.elementCapacity.ariaLabel", {
+            label: t("composition.toolNames.focus"),
+            current: draft.focusPoints.length,
+            limit: 3,
+          })}
+          disabled={!editing || draft.focusPoints.length >= 3}
+          aria-current={placementTool === "focus" ? true : undefined}
+          textColor={placementTool === "focus" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("focus")}
+        />
+      </div>
+
+      <div className={styles.toolGroup} data-composition-tool-group="direction">
+        <CompositeButton
+          className={styles.capacityTool}
+          icon={<LineOutlined rotate={-20} aria-hidden="true" />}
+          label={t("composition.flow.label")}
+          description={t("composition.elementCapacity.compact", {
+            current: draft.directionLine ? 1 : 0,
+            limit: 1,
+          })}
+          aria-label={t("composition.elementCapacity.ariaLabel", {
+            label: t("composition.flow.label"),
+            current: draft.directionLine ? 1 : 0,
+            limit: 1,
+          })}
+          disabled={!editing || Boolean(draft.directionLine)}
+          aria-current={placementTool === "direction" ? true : undefined}
+          textColor={placementTool === "direction" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("direction")}
+        />
+      </div>
+
+      <div className={styles.toolGroup} data-composition-tool-group="shapes">
+        <CompositeButton
+          icon={<span className={`${styles.shapeToolIcon} ${styles.circleToolIcon}`} />}
+          label={t("composition.toolNames.circle")}
+          disabled={!editing}
+          aria-current={placementTool === "circle" ? true : undefined}
+          textColor={placementTool === "circle" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("circle")}
+        />
+        <CompositeButton
+          icon={<span className={`${styles.shapeToolIcon} ${styles.triangleToolIcon}`} />}
+          label={t("composition.toolNames.triangle")}
+          disabled={!editing}
+          aria-current={placementTool === "triangle" ? true : undefined}
+          textColor={placementTool === "triangle" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("triangle")}
+        />
+        <CompositeButton
+          icon={(
+            <span
+              className={`${styles.shapeToolIcon} ${styles.quadrilateralToolIcon}`}
+            />
+          )}
+          label={t("composition.toolNames.quadrilateral")}
+          disabled={!editing}
+          aria-current={placementTool === "quadrilateral" ? true : undefined}
+          textColor={placementTool === "quadrilateral" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("quadrilateral")}
+        />
+        <CompositeButton
+          icon={<FontSizeOutlined aria-hidden="true" />}
+          label={t("composition.toolNames.textRegion")}
+          disabled={!editing}
+          aria-current={placementTool === "text" ? true : undefined}
+          textColor={placementTool === "text" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("text")}
+        />
+        <CompositeButton
+          icon={<PictureOutlined aria-hidden="true" />}
+          label={t("canvas.imageNode.label")}
+          collapsedLabel={t("canvas.imageNode.add")}
+          disabled={!editing}
+          aria-current={placementTool === "image" ? true : undefined}
+          textColor={placementTool === "image" ? "color.action.primary" : "color.text.primary"}
+          onClick={() => armPlacement("image")}
+        />
+        <CompositeButton icon={<CameraOutlined aria-hidden="true" />} label={t("spatial.reference")} collapsedLabel={t("spatial.addReference")} disabled={!editing} onClick={spatialReferences.openPicker} />
+      </div>
+
+      <div className={styles.toolGroup} data-composition-tool-group="overall-note">
+        <Popover
+          content={overallNoteEditor}
+          trigger="click"
+          placement="leftTop"
+          open={editing && overallNoteOpen}
+          onOpenChange={(open) => setOverallNoteOpen(open && editing)}
+        >
+          <span className={styles.toolAction}>
+            <CompositeButton
+              icon={<FileTextOutlined aria-hidden="true" />}
+              label={t("notes.global.label")}
+              disabled={!editing}
+            />
+          </span>
+        </Popover>
+      </div>
+
+      <div className={styles.toolGroup} data-composition-tool-group="copy">
+        <span className={styles.toolGroupTitle}>{t("clipboard.group")}</span>
+        <CompositeButton
+          icon={<CopyOutlined aria-hidden="true" />}
+          label={t("clipboard.copyPrompt")}
+          loading={copyingPrompt}
+          disabled={loading}
+          onClick={() => void copyPrompt()}
+        />
+        <CompositeButton
+          icon={<PictureOutlined aria-hidden="true" />}
+          label={t("clipboard.copyPreview")}
+          loading={copyingSketch}
+          disabled={loading}
+          onClick={() => void copySketch()}
+        />
+      </div>
+    </div>
+  );
 
   return (
-    <main className={styles.page}>
-      <header className={styles.header}>
-        <div>
-          <BasicButton
-            type="link"
-            textColor="color.text.primary"
-            onClick={() => router.push("/")}
-          >
-            ← {t("actions.back")}
-          </BasicButton>
-          <p className={styles.kicker}>{t("composition.kicker")}</p>
-          <h1>{t("composition.title")}</h1>
-          <p className={styles.description}>{t("composition.description")}</p>
-        </div>
-        <div className={styles.headerActions}>
-          <div className={styles.sessionState} aria-live="polite">
-            <strong>{sessionTitle ?? t("composition.session.new")}</strong>
-            <span>
-              {latestRevision > 0
-                ? t("composition.session.revision", { revision: latestRevision })
-                : t("composition.session.notSaved")}
-              {dirty ? ` · ${t("composition.session.unsavedChanges")}` : ""}
-            </span>
-          </div>
-          <div className={styles.headerButtons}>
-            <BasicButton disabled={loading || saving} onClick={resetDraft}>
-              {t("actions.reset")}
-            </BasicButton>
-            <BasicButton
-              type="primary"
-              loading={saving}
-              disabled={loading || (!dirty && latestRevision > 0)}
-              onClick={() => void saveForAgent()}
-            >
-              {saving ? t("actions.savingForAgent") : t("actions.saveForAgent")}
-            </BasicButton>
-          </div>
-        </div>
-      </header>
-
-      {serviceError ? (
-        <p className={styles.serviceError} role="alert">
-          {serviceError}
-        </p>
-      ) : null}
-
-      <div className={styles.workspace}>
-        <section className={styles.stage} aria-label={t("composition.workspace")}>
-          <div className={styles.canvasWorkspace}>
-            <SideActionPanel
-              className={styles.toolPanel}
-              width={144}
-              aria-label={t("composition.tools")}
-              collapseLabel={t("composition.collapseTools")}
-              expandLabel={t("composition.expandTools")}
-            >
-              <CompositeButton
-                icon={<AimOutlined aria-hidden="true" />}
-                label={t("composition.toolNames.focus")}
-                collapsedLabel={t("composition.addFocus")}
-                disabled={!editing || draft.focusPoints.length >= 3}
-                onClick={() =>
-                  commit(
-                    addFocus(draft, {
-                      x: 0.22 + draft.focusPoints.length * 0.14,
-                      y: 0.2 + draft.focusPoints.length * 0.12,
-                    }),
-                  )
-                }
-              />
-              <CompositeButton
-                icon={<span className={`${styles.shapeToolIcon} ${styles.circleToolIcon}`} />}
-                label={t("composition.toolNames.circle")}
-                collapsedLabel={t("composition.addCircle")}
-                disabled={!editing}
-                onClick={() => commit(addArea(draft, { primitive: "circle", area: 0.08 }))}
-              />
-              <CompositeButton
-                icon={<span className={`${styles.shapeToolIcon} ${styles.triangleToolIcon}`} />}
-                label={t("composition.toolNames.triangle")}
-                collapsedLabel={t("composition.addTriangle")}
-                disabled={!editing}
-                onClick={() => commit(addArea(draft, { primitive: "triangle", area: 0.08 }))}
-              />
-              <CompositeButton
-                icon={<span className={`${styles.shapeToolIcon} ${styles.quadrilateralToolIcon}`} />}
-                label={t("composition.toolNames.quadrilateral")}
-                collapsedLabel={t("composition.addQuadrilateral")}
-                disabled={!editing}
-                onClick={() =>
-                  commit(
-                    addArea(draft, {
-                      primitive: "quadrilateral",
-                      aspect: "free",
-                      area: 0.08,
-                    }),
-                  )
-                }
-              />
-              <CompositeButton
-                icon={<ArrowRightOutlined aria-hidden="true" />}
-                label={t("composition.toolNames.direction")}
-                collapsedLabel={t("composition.addDirection")}
-                disabled={!editing || Boolean(draft.directionLine)}
-                onClick={() => commit(addDirectionLine(draft))}
-              />
-            </SideActionPanel>
-
-            <CompositionWorkflowView
-              draft={draft}
-              status={workflow.status}
-              refinement={workflow.refinement}
-              activeView={activeView}
-              onViewChange={setActiveView}
-              selectedId={selectedId}
-              onDraftChange={updateDraft}
-              onSelectionChange={setSelectedId}
-              errorMessage={workflow.errorMessage}
-              labels={{
-                draftView: t("composition.views.draft"),
-                refinedView: t("composition.views.refined"),
-                referenceView: t("composition.views.reference"),
-                viewSwitch: t("composition.views.switch"),
-                draftCanvas: t("composition.views.draftCanvas"),
-                refinedCanvas: t("composition.views.refinedCanvas"),
-                referenceCanvas: t("composition.views.referenceCanvas"),
-                waitingStatus: t("composition.workflow.waitingStatus"),
-                processingStatus: t("composition.workflow.processingStatus"),
-                readyStatus: t("composition.workflow.readyStatus"),
-                staleStatus: t("composition.workflow.staleStatus"),
-                errorStatus: t("composition.workflow.errorStatus"),
-                waitingMessage: t("composition.workflow.waitingMessage"),
-                processingMessage: t("composition.workflow.processingMessage"),
-                staleMessage: t("composition.workflow.staleMessage"),
-                errorMessage: t("composition.workflow.errorMessage"),
-                draftReadyMessage: t("composition.workflow.draftReadyMessage"),
-                agentDecision: t("composition.workflow.agentDecision"),
-                appliedMethods: t("composition.workflow.appliedMethods"),
-                protectionAudit: t("composition.workflow.protectionAudit"),
-                maximumFocusShift: t("composition.workflow.maximumFocusShift"),
-                maximumAreaShift: t("composition.workflow.maximumAreaShift"),
-                maximumRotationShift: t("composition.workflow.maximumRotationShift"),
-                referenceHint: t("composition.workflow.referenceHint"),
-              }}
+    <Human2AiShell
+      currentSessionId={requestedSessionId}
+      onCurrentSessionRename={setSessionTitle}
+      title={sessionTitle ?? t("composition.session.new")}
+      rightPanelOpen={rightPanelOpen}
+      onRightPanelOpenChange={setRightPanelOpen}
+      rightPanel={(
+        <div
+          className={`${styles.panel} ${loading ? styles.panelIsLoading : ""}`}
+          data-canvas-editor
+        >
+          {loading ? (
+            <LoadingState
+              className={styles.panelLoading}
+              label={t("composition.session.loading")}
+              rows={8}
+              compact
             />
-          </div>
-        </section>
-
-        <aside className={styles.panel} aria-label={t("composition.properties")}>
-          {selectedId ? (
-            <section>
-              <h2>{t("composition.editSelected")}</h2>
-              <p className={styles.hint}>{t("composition.dragHint")}</p>
-              <div className={styles.property}>
-                <span>
-                  {t("composition.currentSelection")}: <strong>{selectedId}</strong>
-                </span>
-              </div>
-              {selectedArea ? (
-                <div className={styles.property}>
-                  <span>
-                    {t("composition.size")}: <strong>{Math.round(selectedArea.area * 100)}%</strong>
-                  </span>
-                  <div className={styles.propertyActions}>
-                    <BasicButton disabled={!editing} size="small" onClick={() => resizeSelected(0.9)}>
-                      {t("composition.smaller")}
-                    </BasicButton>
-                    <BasicButton disabled={!editing} size="small" onClick={() => resizeSelected(1.1)}>
-                      {t("composition.larger")}
-                    </BasicButton>
-                  </div>
-                </div>
-              ) : null}
-              {selectedRotation !== undefined ? (
-                <div className={styles.property}>
-                  <span>
-                    {t("composition.rotation")}: <strong>{Math.round(selectedRotation)}°</strong>
-                  </span>
-                  <div className={styles.propertyActions}>
-                    <BasicButton disabled={!editing} size="small" onClick={() => rotateSelected(-15)}>
-                      {t("composition.rotateLeft")}
-                    </BasicButton>
-                    <BasicButton disabled={!editing} size="small" onClick={() => rotateSelected(15)}>
-                      {t("composition.rotateRight")}
-                    </BasicButton>
-                  </div>
-                </div>
-              ) : null}
-              <BasicButton
-                danger
-                backgroundColor="color.status.danger"
-                textColor="color.brand.onPrimary"
-                disabled={!editing}
-                onClick={() => {
-                  updateDraft(removeItem(draft, selectedId));
-                  setSelectedId(null);
+          ) : rightPanelOpen ? (
+            <>
+              <SessionDetails
+                primaryItem={{
+                  label: t("composition.mode.label"),
+                  value: (
+                    <CompactDropdownSelect
+                      className={styles.processingSemanticSelect}
+                      value={draft.processingSemantic ?? undefined}
+                      options={processingSemanticOptions}
+                      aria-label={t("composition.mode.label")}
+                      placeholder={t("composition.mode.placeholder")}
+                      disabled={!editing}
+                      onChange={(value) => {
+                        if (
+                          value !== "scene-composition"
+                          && value !== "editorial-layout"
+                        ) return;
+                        updateDraft((current) => setProcessingSemantic(current, value));
+                      }}
+                    />
+                  ),
                 }}
-              >
-                {t("composition.deleteSelected")}
-              </BasicButton>
-            </section>
+                createdAt={sessionMetadata?.createdAt ?? null}
+                updatedAt={lastModifiedAt}
+                nodeCount={
+                  draft.areas.length
+                  + draft.images.length
+                  + draft.focusPoints.length
+                  + (draft.directionLine ? 1 : 0)
+                }
+                agentCommand={sessionId ? async () => t("sessionDetails.agentCommand", {
+                  command: buildSessionCliCommand(sessionId, window.location.origin),
+                }) : null}
+                locale={i18n.resolvedLanguage ?? i18n.language}
+                labels={{
+                  title: t("sessionDetails.title"),
+                  created: t("sessionDetails.created"),
+                  updated: t("sessionDetails.updated"),
+                  nodes: t("sessionDetails.nodes"),
+                  agent: t("sessionDetails.agent"),
+                  copyCommand: t("sessionDetails.copyCommand"),
+                  copying: t("sessionDetails.copying"),
+                  copied: t("clipboard.copied"),
+                  copyFailed: t("sessionDetails.copyFailed"),
+                  emptyValue: t("sessionDetails.emptyValue"),
+                }}
+              />
+              <SessionStyleControl controller={sessionStyle} category="visual" processing={styleProcessing} disabled={loading || saving} />
+              <section>
+                <div className={styles.sectionHeading}>
+                  <h2>{t("canvas.tools.label")}</h2>
+                  <div className={styles.sectionHeadingActions}>
+                    <Tooltip title={t("composition.clearCanvas")}>
+                      <span>
+                        <ConfirmAction
+                          type="text"
+                          size="small"
+                          icon={<DeleteOutlined aria-hidden="true" />}
+                          aria-label={t("composition.clearCanvas")}
+                          title={t("composition.clearCanvasConfirmTitle")}
+                          description={t("composition.clearCanvasConfirmDescription")}
+                          confirmLabel={t("composition.clearCanvas")}
+                          cancelLabel={t("actions.cancel")}
+                          disabled={loading || saving}
+                          onConfirm={resetDraft}
+                          data-composition-clear-canvas-action
+                        >
+                          {null}
+                        </ConfirmAction>
+                      </span>
+                    </Tooltip>
+                  </div>
+                </div>
+                {toolButtons}
+              </section>
+            </>
           ) : null}
 
           <section>
-            <h2>{t("composition.frameRatio")}</h2>
-            <AspectRatioSelector
-              options={FRAME_OPTIONS}
-              value={frameKey}
-              disabled={!editing}
-              onChange={(key) => {
-                const nextKey = key as keyof typeof FRAMES;
-                setFrameKey(nextKey);
-                updateDraft((current) => changeFrame(current, FRAMES[nextKey]));
-              }}
-              aria-label={t("composition.frameRatio")}
-            />
+            <div className={styles.sectionHeading}>
+              <h2>{t("composition.frameRatio")}</h2>
+              <div className={styles.sectionHeadingActions}>
+                <BasicButton
+                  mode="icon-only"
+                  size="small"
+                  icon={showDraftGuideGrid ? <TableOutlined /> : <BorderOutlined />}
+                  iconLabel={
+                    showDraftGuideGrid
+                      ? t("composition.hideGuideGrid")
+                      : t("composition.showGuideGrid")
+                  }
+                  title={
+                    showDraftGuideGrid
+                      ? t("composition.hideGuideGrid")
+                      : t("composition.showGuideGrid")
+                  }
+                  aria-pressed={showDraftGuideGrid}
+                  backgroundColor={
+                    showDraftGuideGrid ? "color.action.primaryActive" : "none"
+                  }
+                  textColor={
+                    showDraftGuideGrid ? "color.text.onPrimary" : "color.text.secondary"
+                  }
+                  disabled={!editing}
+                  onClick={() => setShowDraftGuideGrid((visible) => !visible)}
+                />
+                <BasicButton
+                  mode="icon-only"
+                  size="small"
+                  icon={frameLocked ? <LockOutlined /> : <UnlockOutlined />}
+                  iconLabel={
+                    frameLocked
+                      ? t("composition.unlockFrame")
+                      : t("composition.lockFrame")
+                  }
+                  title={
+                    frameLocked
+                      ? t("composition.unlockFrame")
+                      : t("composition.lockFrame")
+                  }
+                  aria-pressed={frameLocked}
+                  backgroundColor={frameLocked ? "color.action.primaryActive" : "none"}
+                  textColor={frameLocked ? "color.text.onPrimary" : "color.text.secondary"}
+                  disabled={!editing}
+                  onClick={() => setFrameLocked((locked) => !locked)}
+                />
+              </div>
+            </div>
+            <div className={styles.aspectRatioSelector}>
+              <AspectRatioSelector
+                ratio={frameRatio}
+                disabled={!editing || frameLocked}
+                onRatioChange={(ratio) => {
+                  if (!isCompositionFrameRatioSupported(ratio.width, ratio.height)) return;
+                  setFrameRatio(ratio);
+                  updateDraft((current) =>
+                    changeFrame(
+                      current,
+                      compositionFrameSizeForRatio(ratio.width, ratio.height),
+                    ),
+                  );
+                }}
+                title={t("composition.aspectRatioTitle")}
+                widthLabel={t("dimensions.width")}
+                heightLabel={t("dimensions.height")}
+                aria-label={t("composition.frameRatio")}
+              />
+            </div>
           </section>
 
           <section>
@@ -542,12 +882,221 @@ export default function CompositionPage() {
               </div>
               <div>
                 <dt>{t("composition.currentSelection")}</dt>
-                <dd>{selectedId ?? t("composition.none")}</dd>
+                <dd>{selectedItemIds.join(", ") || t("composition.none")}</dd>
               </div>
             </dl>
           </section>
-        </aside>
-      </div>
-    </main>
+        </div>
+      )}
+    >
+      <main className={styles.page} data-canvas-editor>
+        {deliveryNotice ? (
+          <div
+            className={`${styles.deliveryNotice} ${
+              deliveryNotice.type === "success"
+                ? styles.deliveryNoticeSuccess
+                : deliveryNotice.type === "warning"
+                  ? styles.deliveryNoticeWarning
+                  : styles.deliveryNoticeError
+            }`}
+            role="status"
+          >
+            {deliveryNotice.message}
+          </div>
+        ) : null}
+        {serviceError ? (
+          <p className={styles.serviceError} role="alert">
+            {serviceError}
+          </p>
+        ) : null}
+
+        <div className={styles.workspace}>
+          {spatialReferences.picker}
+          <section className={styles.stage} aria-label={t("composition.workspace")}>
+            <CanvasHistoryControls {...history} labels={{ undo: t("canvasHistory.undo"), redo: t("canvasHistory.redo"), label: t("canvasHistory.label") }} />
+            {loading ? (
+              <LoadingState
+                className={styles.workspaceLoading}
+                label={t("composition.session.loading")}
+                rows={10}
+              />
+            ) : (
+              <CompositionWorkflowView
+              className={styles.workflow}
+              interactionResetKey={history.restoreToken}
+              draft={draft}
+              status="waiting"
+              activeView="draft"
+              onViewChange={() => undefined}
+              stateControls={(
+                  <UiSketchStateTabs
+                    items={states.map((state) => ({ id: state.id,
+                      label: state.name ?? t("uiSketch.states.defaultName", { number: state.number }) }))}
+                    value={activeStateId}
+                    labels={{
+                      switch: t("canvasStates.switch"),
+                      add: t("uiSketch.views.enableMotion"),
+                      rename: t("actions.rename"),
+                      name: t("uiSketch.states.name"),
+                      new: t("uiSketch.states.new"),
+                      delete: t("uiSketch.states.delete"),
+                      cancel: t("actions.cancel"),
+                      reorderHint: t("uiSketch.states.reorderHint"),
+                      actions: (name) => t("uiSketch.states.actions", { name }),
+                      deleteTitle: (name) => t("uiSketch.states.deleteTitle", { name }),
+                    }}
+                    onChange={(id) => changeState((current) => selectCompositionState(current, id))}
+                    onCreate={(sourceId) => {
+                      const id = crypto.randomUUID();
+                      changeState((current) => createCompositionState(current, sourceId, id));
+                    }}
+                    onRename={(id, name) => updateDraft((current) => renameCompositionState(current, id, name))}
+                    onReorder={(ids) => updateDraft((current) => reorderCompositionStates(current, ids))}
+                    onDelete={(id) => changeState((current) => deleteCompositionState(current, id))}
+                  />
+              )}
+              showDraftGuideGrid={showDraftGuideGrid}
+              frameLocked={frameLocked}
+              canvasZoom={canvasZoom}
+              canvasViewportAction={canvasViewportAction}
+              onCanvasZoomChange={setCanvasZoom}
+              canvasBackgroundPattern="dots"
+              showCanvasViewportControls={!loading}
+              canvasViewportLabels={{
+                zoomOut: t("composition.zoomOut"),
+                zoomIn: t("composition.zoomIn"),
+                currentZoom: t("composition.canvasZoom"),
+                fitAll: t("composition.fitAll"),
+                help: t("canvas.viewport.help"),
+                interactionHelp: t("canvas.viewport.instructions"),
+                sideActions: t("canvas.tools.label"),
+                collapseSideActions: t("composition.collapseTools"),
+                expandSideActions: t("composition.expandTools"),
+              }}
+              canvasLayerLabels={{
+                  bringToFront: t("canvasLayers.bringToFront"),
+                  bringForward: t("canvasLayers.bringForward"),
+                  sendBackward: t("canvasLayers.sendBackward"),
+                  sendToBack: t("canvasLayers.sendToBack"),
+              }}
+              directionControlLabels={[
+                t("composition.flow.controlPoint", { number: 1 }),
+                t("composition.flow.controlPoint", { number: 2 }),
+              ]}
+              nodeEditorLabels={{
+                title: t("canvasNodeEditor.title"),
+                note: t("notes.element.label"),
+                notePlaceholder: t("notes.element.nodePlaceholder"),
+                shotScale: t("composition.depth.label"),
+                shotScaleAuto: t("composition.depth.auto"),
+                shotScaleForeground: t("composition.depth.foreground"),
+                shotScaleMidground: t("composition.depth.midground"),
+                shotScaleBackground: t("composition.depth.background"),
+                deleteNode: t("actions.deleteNode"),
+                confirmDeleteNode: t("confirmations.deleteNode"),
+                cancelDelete: t("actions.keep"),
+                shapeKind: t("canvasNodeEditor.shapeKind"),
+                pointKind: t("canvasNodeEditor.pointKind"),
+                lineKind: t("composition.flow.label"),
+                textKind: t("composition.toolNames.textRegion"),
+                imageKind: t("canvas.imageNode.label"),
+                nodeDescription: t("canvas.node.nodeDescription"),
+                originUser: t("canvas.node.originUser"),
+                originAgent: t("canvas.node.originAgent"),
+                originImport: t("canvas.node.originImport"),
+              }}
+              areaEditorLabels={{
+                lightSource: t("composition.lightSource.toggle"),
+                displayText: t("textContent.label"),
+                displayTextPlaceholder: t("textContent.compositionPlaceholder"),
+                visualWeight: t("visualWeight.label"),
+                weightAuto: t("visualWeight.auto"),
+                weightHigh: t("visualWeight.high"),
+                weightMedium: t("visualWeight.medium"),
+                weightLow: t("visualWeight.low"),
+                weightDecorative: t("visualWeight.decorative"),
+              }}
+              imageEditorLabels={{
+                content: t("canvas.imageEditor.content"),
+                upload: t("canvas.imageEditor.upload"),
+                download: t("canvas.imageEditor.download"),
+                downloading: t("canvas.imageEditor.downloading"),
+                downloadFailed: t("canvas.imageEditor.downloadFailed"),
+                replace: t("canvas.imageEditor.replace"),
+                uploading: t("canvas.imageEditor.uploading"),
+                uploadFailed: t("canvas.imageEditor.uploadFailed"),
+                fileTypes: t("canvas.imageEditor.fileTypes"),
+                cropTitle: t("canvas.imageCrop.title"),
+                cropLoadFailed: t("canvas.imageCrop.loadFailed"),
+                svgSource: t("canvas.imageEditor.svgSource"),
+                svgPaste: t("canvas.imageEditor.svgPaste"),
+                svgApply: t("canvas.imageEditor.svgApply"),
+                svgSaveFailed: t("canvas.imageEditor.svgSaveFailed"),
+                svgCopy: t("canvas.imageEditor.svgCopy"),
+                svgCopying: t("canvas.imageEditor.svgCopying"),
+                svgCopyFailed: t("canvas.imageEditor.svgCopyFailed"),
+                sourceLoading: t("canvas.imageEditor.sourceLoading"),
+                sourceLoadFailed: t("canvas.imageEditor.sourceLoadFailed"),
+                svgCopied: t("clipboard.copied"),
+                cancel: t("actions.cancel"),
+                retry: t("actions.retry"),
+              }}
+              resolveImageSource={sessionId
+                ? (assetId) => imageAssetContentUrl(sessionId, assetId)
+                : undefined}
+              renderCameraReference={spatialReferences.renderImageContent}
+              onImageUpload={uploadCanvasImage}
+              onReadImageFile={readImageFile}
+              canvasSideActions={rightPanelOpen ? undefined : toolButtons}
+              canvasSideActionPanelWidth={COMPACT_SIDE_ACTION_PANEL_WIDTH}
+              canvasSideActionPanelDefaultCollapsed
+              selectedIds={selectedIds}
+              onDraftChange={updateDraft}
+              placementTool={placementTool}
+              onPlacementToolChange={setPlacementTool}
+              onSelectionChange={setSelectedIds}
+              labels={{
+                draftView: t("composition.views.draft"),
+                refinedView: t("composition.views.refined"),
+                referenceView: t("composition.views.reference"),
+                viewSwitch: t("composition.views.switch"),
+                draftCanvas: t("composition.views.draftCanvas"),
+                refinedCanvas: t("composition.views.refinedCanvas"),
+                referenceCanvas: t("composition.views.referenceCanvas"),
+                agentDecision: t("composition.workflow.agentDecision"),
+                appliedMethods: t("composition.workflow.appliedMethods"),
+                protectionAudit: t("composition.workflow.protectionAudit"),
+                maximumFocusShift: t("composition.workflow.maximumFocusShift"),
+                maximumAreaShift: t("composition.workflow.maximumAreaShift"),
+                maximumRotationShift: t("composition.workflow.maximumRotationShift"),
+                objective: t("composition.refinement.objective"),
+                observations: t("composition.refinement.observations"),
+                uncertainties: t("composition.refinement.uncertainties"),
+                preserve: t("composition.refinement.preserve"),
+                tradeoffs: t("composition.refinement.tradeoffs"),
+                relations: t("composition.refinement.relations"),
+                retained: t("composition.refinement.retained"),
+                target: t("composition.refinement.target"),
+                before: t("composition.refinement.before"),
+                after: t("composition.refinement.after"),
+                error: t("composition.refinement.error"),
+                unmeasurable: t("composition.refinement.unmeasurable"),
+                framePlacement: t("composition.refinement.framePlacement"),
+                sizeRatio: t("composition.refinement.sizeRatio"),
+                mirrorSymmetry: t("composition.refinement.mirrorSymmetry"),
+                focusFlow: t("composition.refinement.focusFlow"),
+                focusAnchor: t("composition.refinement.focusAnchor"),
+                axisRelation: t("composition.refinement.axisRelation"),
+                rotationAlignment: t("composition.refinement.rotationAlignment"),
+                blockAlignment: t("composition.refinement.blockAlignment"),
+                spacingRhythm: t("composition.refinement.spacingRhythm"),
+
+              }}
+              />
+            )}
+          </section>
+        </div>
+      </main>
+    </Human2AiShell>
   );
 }

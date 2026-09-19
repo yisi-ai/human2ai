@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react-webpack5";
 
 import { ConfirmAction } from "@human2ai/ui/yisiui";
 
-const meta = { id: "buttons-confirmaction", title: "Components/Buttons/ConfirmAction", component: ConfirmAction } satisfies Meta<typeof ConfirmAction>;
+const meta = { id: "buttons-confirmaction", title: "yisiui-Components/Buttons/ConfirmAction", component: ConfirmAction } satisfies Meta<typeof ConfirmAction>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 

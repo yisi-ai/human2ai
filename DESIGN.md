@@ -8,6 +8,13 @@ status: "product-owned"
 
 This product synchronizes a versioned YisiUI source release and owns its local Surface, product tokens, compositions, pages, copy, and visual baselines.
 
+## Supported viewports
+
+- Target desktop computer browsers only. Narrow-screen and mobile layouts are outside the product's support and acceptance scope.
+- Use the existing Storybook desktop viewports (`1024×800`, `1280×800`, and `1536×960`) as validation references, selecting the relevant desktop sizes for each change.
+- Do not add mobile-specific breakpoints, alternate mobile layouts, or narrow-screen validation solely to satisfy generic UI Skill checklists. Add that support only when explicitly requested by the user.
+- Within supported desktop layouts, handle long content and constrained panels with appropriate sizing and internal scrolling.
+
 ## Visual direction
 
 - Keep the product visually minimal. Use a clear outer border to define the primary surface, while keeping its internal structure implicit.

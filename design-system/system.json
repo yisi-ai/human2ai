@@ -5,7 +5,7 @@
   "sharedUi": {
     "distribution": "source-sync",
     "surface": "web-react",
-    "version": "0.5.0",
+    "version": "0.14.0",
     "lock": ".yisiui/sync-lock.json"
   },
   "surfaces": {

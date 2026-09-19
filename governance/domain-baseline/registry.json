@@ -1,0 +1,1290 @@
+{
+  "schemaVersion": 1,
+  "categories": [
+    {
+      "id": "asset",
+      "description": "跨领域图片输入的校验与元数据约束"
+    },
+    {
+      "id": "capture",
+      "description": "跨捕捉类型的证据版本、并发与恢复机制"
+    },
+    {
+      "id": "composition",
+      "description": "构图草稿节点的创建、编辑与画布交互约束"
+    },
+    {
+      "id": "project",
+      "description": "项目与类型化会话的归属、组织和生命周期约束"
+    },
+    {
+      "id": "spatial",
+      "description": "三维空间、骨架约束与摄像机输出"
+    },
+    {
+      "id": "style",
+      "description": "画面与 UI 风格条目的内容、创建方和删除生命周期约束"
+    },
+    {
+      "id": "ui-sketch",
+      "description": "UI 界面草图的用户感知元素语义与下游解释约束"
+    }
+  ],
+  "capabilities": [
+    {
+      "id": "asset.image-validation",
+      "category": "asset",
+      "contractVersion": 2,
+      "status": "shared",
+      "responsibility": "校验会话图片与风格参考图的输入字节，并识别格式、MIME 与原始尺寸",
+      "invariants": [
+        "输入大小必须在 1 字节到 10 MiB 之间，包含上限",
+        "根据图片字节读取元数据，接受具有有效宽高的 PNG、JPEG 和 WebP；会话图片显式允许自包含静态 SVG，风格参考图仍只接受位图，不依赖文件名或上传 MIME 声明",
+        "读取元数据时禁用动画模式，校验不改写原始图片字节",
+        "输入不合格时，在写入图片文件与图片记录之前拒绝请求",
+        "SVG 必须在读取图片元数据前通过 XML 及自包含内容校验；不允许脚本、事件、DTD 或外部资源，保留接受的原始源码字节"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/image-input.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/image-content-type-parser.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/image-asset-repository.ts",
+          "consumer": "session-images"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/style-library-repository.ts",
+          "consumer": "style-references"
+        },
+        {
+          "role": "canonical",
+          "path": "src/database/svg-input.ts"
+        }
+      ],
+      "consumers": [
+        "session-images",
+        "style-references"
+      ],
+      "variationPoints": [
+        "会话图片与风格参考图分别映射到原有领域错误类型、错误码和文案",
+        "所属记录校验、revision、存储目录、指纹、排序和删除生命周期由各自 repository 负责",
+        "仅会话图片适配器通过 allowSvg 显式启用 SVG 内容"
+      ],
+      "contractTests": [
+        "test/integration/image-assets.test.ts",
+        "test/integration/image-input-contract.test.ts",
+        "test/integration/style-library.test.ts",
+        "test/unit/shared-capability-boundaries.test.ts",
+        "test/integration/svg-images.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增图片消费者，或修改大小、格式、元数据读取方式、错误映射和写入前校验顺序之前"
+    },
+    {
+      "id": "capture.canvas-edit-history",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "在当前打开的会话中按完整操作记录、撤销和重做画布草稿，并与各领域保存流程衔接",
+      "invariants": [
+        "三种画布共用 100 步内存历史；拖动、缩放、旋转、滑块及按键长按按一次连续操作合并，空修改不入栈",
+        "撤销与重做恢复完整草稿；新编辑清空重做分支，加载或收到外部版本时重建起点，保存回执不新增历史",
+        "原生文字输入的撤销优先，画布观察视角与选择不进入草稿历史；UI 历史同时保存目标状态定位",
+        "本地撤销立即生效，保存中的旧回执不得覆盖后续本地操作；3D 操作队列先保存目标快照，再通过共享指定版本恢复提交撤销或重做",
+        "3D 恢复不绕过任意新草稿的领域约束，只恢复已验证且已保存的历史草稿；冲突停止写入，禁止以旧快照覆盖外部版本"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/session/canvas-edit-history.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/use-canvas-history.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/composition/page.tsx",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/ui-sketch/page.tsx",
+          "consumer": "ui-layout"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/spatial/page.tsx",
+          "consumer": "spatial"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/spatial-edit-queue.ts",
+          "consumer": "spatial"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "spatial",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "各领域草稿类型与现有保存通路",
+        "UI 状态定位、构图加工结果有效性及 3D 姿态约束保留各自所有权"
+      ],
+      "contractTests": [
+        "test/unit/canvas-edit-history.test.ts",
+        "test/unit/spatial-edit-queue.test.ts",
+        "test/integration/draft-version-contract.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CanvasHistoryControls.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入跨刷新历史、协同撤销、变更操作合并边界或新增画布类型之前"
+    },
+    {
+      "id": "capture.draft-versioning",
+      "category": "capture",
+      "contractVersion": 4,
+      "status": "shared",
+      "responsibility": "管理捕捉草稿的不可变版本、乐观并发检查与撤销恢复",
+      "invariants": [
+        "草稿版本只能追加，不能覆盖或删除历史版本",
+        "创建版本必须检查 expectedLatestRevision",
+        "撤销通过创建一个恢复历史内容的新版本完成",
+        "草稿指纹必须根据校验和规范化后的草稿计算",
+        "会话类型必须与捕捉类型匹配",
+        "带 styleProcessing 的保存须在追加事务内校验当前风格绑定、风格 revision 和会话 revision，不匹配返回 STYLE_PROCESSING_STALE 且不写版本",
+        "加工元数据记录 styleId、styleRevision、sourceRevision 和 resultRevision；普通编辑继承上次记录，undo 恢复目标文档的记录（包括无记录）",
+        "最新版本查询复用同一会话类型校验和规范化版本读取；无历史或 knownRevision 等于最新 revision 时返回空结果且不读取历史草稿 JSON，否则仅返回最新版本；读取不写入新版本，完整历史与撤销接口保持原语义",
+        "指定历史版本恢复复用版本追加、会话类型与乐观并发检查，恢复目标草稿及其加工元数据；只允许恢复同一会话中已保存的版本，保留原有 undo 上一版本协议"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/session/draft-version.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/database/draft-version-store.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/draft-version-routes.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/human2ai-api.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/composition-session-repository.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/ui-sketch-session-repository.ts",
+          "consumer": "ui-layout"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/routes/composition-sessions.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/routes/ui-sketch-sessions.ts",
+          "consumer": "ui-layout"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/spatial-session-repository.ts",
+          "consumer": "spatial"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/routes/spatial-sessions.ts",
+          "consumer": "spatial"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "spatial",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "草稿 JSON Schema 与领域校验器",
+        "草稿指纹函数",
+        "草稿版本数据表",
+        "构图专属的 refinement 行为",
+        "可选领域 transition 校验在版本事务内运行，撤销恢复历史时跳过该校验"
+      ],
+      "contractTests": [
+        "test/integration/composition-sessions.test.ts",
+        "test/integration/draft-version-contract.test.ts",
+        "test/integration/ui-sketch-sessions.test.ts",
+        "test/unit/shared-capability-boundaries.test.ts",
+        "test/integration/session-styles.test.ts",
+        "test/integration/spatial-sessions.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增捕捉类型，或修改共享的 revision、并发、undo、指纹或会话类型不变量之前，或改变指定历史版本恢复协议之前"
+    },
+    {
+      "id": "capture.layer-order",
+      "category": "capture",
+      "contractVersion": 2,
+      "status": "shared",
+      "responsibility": "持久化画布内容节点从底到顶的遮挡顺序，并为构图和 UI 提供相同的多选层级操作",
+      "invariants": [
+        "无 layerOrder 的旧草稿保持原有按类型绘制顺序；有序节点 ID 不改变节点数组、编号、内容或几何",
+        "置顶、置底、前移与后移保持选中及未选中节点各自的相对顺序；边界及无选择操作不改变草稿",
+        "layerOrder 不允许重复或非字符串 ID；规范化清理已删除的引用，并把未记录的新节点追加到顶部",
+        "UI 层级跨动效状态共享；构图层级随所选布局状态保存。组选取先由 UI 适配器扩展；构图焦点与动势线参与内容排序，辅助层不参与",
+        "保存和撤销复用 capture.draft-versioning；编辑、预览和 SVG/PNG 导出使用同一内容顺序"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-layer-order.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/composition/layers.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/ui-sketch/layers.ts",
+          "consumer": "ui-layout"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "领域适配器提供旧草稿节点顺序及类型；UI 适配器负责现有单层组成员扩展，构图不引入组",
+        "节点几何、内容及阶段生命周期继续归所属领域，层级只保存 ID 顺序"
+      ],
+      "contractTests": [
+        "test/unit/canvas-layer-order.test.ts",
+        "test/unit/canvas-layer-adapters.test.ts",
+        "test/integration/draft-version-contract.test.ts",
+        "test/unit/composition-states.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx",
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx",
+        "design-system/surfaces/human2ai-web/governance/canvas-layer-order.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入嵌套层或新的画布消费者之前"
+    },
+    {
+      "id": "capture.named-states",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "管理画布局部状态的命名、精确排序与至少保留一个状态的删除边界",
+      "invariants": [
+        "重命名去除首尾空白，长度为 1–100 字符，不修改状态身份、编号、布局或共享节点",
+        "排序必须包含全部状态且每个 id 恰好一次",
+        "删除目标必须存在且至少保留一个状态；领域适配器负责移除布局与选择相邻状态"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-states.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/composition/states.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/ui-sketch/states.ts",
+          "consumer": "ui-layout"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "布局字段、旧草稿兼容和当前状态选择归各领域；公共规则只操作状态元数据"
+      ],
+      "contractTests": [
+        "test/unit/canvas-state-management.test.ts",
+        "test/unit/ui-sketch-state-tabs.test.ts",
+        "test/unit/composition-states.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入状态权限、跨会话移动或改变命名与最少状态数量约束之前"
+    },
+    {
+      "id": "capture.node-origin",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "规范化画布节点来源，使用户和 Agent 能区分既有节点与新增设计元素",
+      "invariants": [
+        "来源只接受 user、agent 或 import",
+        "缺少来源的旧节点规范化为 user",
+        "来源在普通编辑中保留，Agent 新增点缀可保存为 agent；用户备注和节点说明独立保存"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-node-metadata.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/composition/draft.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/ui-sketch/draft.ts",
+          "consumer": "ui-layout"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "构图与 UI 的几何和 Schema 分别由领域持有",
+        "UI 的 import 表示既有界面，构图的 import 表示参考画面中恢复的视觉元素；后续修改的解释由各领域持有"
+      ],
+      "contractTests": [
+        "test/unit/canvas-node-origin.test.ts",
+        "test/integration/composition-projection.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增来源值、消费者或修改历史节点来源兼容规则之前"
+    },
+    {
+      "id": "composition.agent-refinement",
+      "category": "composition",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "执行 Agent 有目标、有依据的构图关系计划，生成独立精修结果与最终关系验证；用户同意和视觉复核由 Agent 负责",
+      "invariants": [
+        "精修只追加关联源草稿版本的 run，不修改或追加用户草稿版本",
+        "v2 计划必须记录目标、原图判断、不确定性、保留项和取舍；每条操作记录原因和预期效果；保留原图决定允许零操作",
+        "计划指纹、构图模式、命名操作和几何数据必须有效；v1 历史计划与结果保持兼容，接口校验不得删除联合类型中其他版本的字段",
+        "位移、旋转、裁切、占幅、重叠和重心变化只记录，不以固定审美幅度阈值拒绝结果",
+        "画框、节点身份、形状类型、用户内容和图片保持不变；尺寸仅由比例或几何对称操作调整，动势线仅由焦点引导操作旋转",
+        "focusLinks 显式关联焦点与区域并联动变换；fixedIds 必须完全保留；不会自动推断主次焦点或新增引导节点",
+        "v2 在最终结果上重新验证所有所选关系；冲突返回具体关系索引和测量数据，不以最后一个操作覆盖先前关系的失败",
+        "数学验证只确认关系成立；用户同意和最终画面复核由 Agent 负责，服务不引入审批状态",
+        "辅助线仅属于结果验证证据，不写入草稿或生图参考"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/refinement/engine.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/database/composition-session-repository.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/routes/composition-sessions.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/refinement/relations.ts"
+        }
+      ],
+      "consumers": [
+        "image-composition"
+      ],
+      "variationPoints": [
+        "场景与版式支持的操作集合",
+        "选择零条、一条或多条有依据的关系",
+        "主体与焦点的显式关联、固定节点、位置对称与几何对称"
+      ],
+      "contractTests": [
+        "test/unit/composition-refinement.test.ts",
+        "test/unit/composition-session-repository.test.ts",
+        "test/integration/composition-sessions.test.ts",
+        "test/unit/composition-relations.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增精修方法、改变内容不变量或改变精修结果与原稿隔离方式时重新评审；UI 像素标准化属于不同领域，保留独立约束"
+    },
+    {
+      "id": "composition.camera-reference",
+      "category": "composition",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "在构图内引用独立 3D 空间的指定摄像机，并保留可独立使用的 PNG 图片节点",
+      "invariants": [
+        "镜头引用只持有源会话/摄像机和最近渲染 revision，3D 场景仍归源空间",
+        "镜头输出复用构图图片位置、尺寸、裁切和图层；源姿势更新不移动或重置节点；用户显式修改镜头宽高比时，保留节点中心和宽度并更新高度，完整显示镜头画面",
+        "引用更新将指定源 revision 的 PNG 保存为构图会话自身的不可变图片资产",
+        "另存图片保留原引用并创建无源引用的新节点；后续源修改和删除不影响静态 PNG",
+        "Agent 会话预览和参考导出内嵌该文档所持有的 PNG 资产，保留历史可复现性"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/camera-reference.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/components/CompositionSpatialReferences.tsx"
+        },
+        {
+          "role": "current",
+          "path": "schemas/composition-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "src/cli/main.ts"
+        }
+      ],
+      "consumers": [
+        "agent-cli",
+        "composition-editor"
+      ],
+      "variationPoints": [
+        "领域新增来源语义，复用既有图片资产校验/存储、二维布局和草稿版本；不把三维骨架复制进构图",
+        "浏览器的当前引用跟随已保存的源空间；历史版本和 PNG 快照保持原始资产"
+      ],
+      "contractTests": [
+        "test/unit/composition-camera-reference.test.ts",
+        "test/integration/spatial-sessions.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/spatial-camera-references.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入跨会话资产删除、服务器后台实时同步或独立镜头权限时"
+    },
+    {
+      "id": "composition.item-clipboard",
+      "category": "composition",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "管理构图草稿节点的会话内复制快照、容量受限粘贴与新节点选择结果",
+      "invariants": [
+        "复制内容是复制时节点属性的深拷贝快照，不依赖原节点后续是否修改或删除",
+        "粘贴为每个成功创建的焦点、区域和图片生成新 id，动势线沿用领域固定 id direction-1",
+        "焦点最多三个、动势线最多一条；多项粘贴时只跳过会超过对应上限的节点，其余节点继续创建",
+        "每次成功粘贴保留节点属性和多选相对位置，并按画布世界坐标向右下递增偏移",
+        "粘贴完成后的选择结果只包含本次实际创建的节点",
+        "原生粘贴优先识别系统剪贴板图片；只有匹配当前画布复制标记时才粘贴内部节点快照，外部文字不得触发过期节点粘贴"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.tsx",
+          "consumer": "image-composition"
+        }
+      ],
+      "consumers": [
+        "image-composition"
+      ],
+      "variationPoints": [
+        "浏览器适配层使用 Ctrl/Cmd+C 与 Ctrl/Cmd+V，并把 24px 偏移换算为构图世界坐标",
+        "节点快照只存在于当前挂载的构图画布组件内；系统剪贴板仅写入与该快照匹配的随机自定义 MIME 标记，不写入节点内容或持久化草稿"
+      ],
+      "contractTests": [
+        "test/unit/composition-draft.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "将节点剪贴板扩展到 UI 草图、跨会话或系统剪贴板，修改焦点/动势线上限，或改变粘贴选择与偏移规则之前"
+    },
+    {
+      "id": "composition.layout-states",
+      "category": "composition",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "管理同一构图会话中共享节点内容、独立画框和节点布局的可自定义状态",
+      "invariants": [
+        "无 states 的旧草稿解析为一个默认状态，保持原持久化结构和指纹",
+        "所有状态共用节点身份、类型、文字、图片来源与裁切、备注和业务语义；增删节点同步到各状态",
+        "状态独立保存画框尺寸与边界、节点位置尺寸旋转和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
+        "新增复制指定来源布局、插入其后并选中，命名排序和删除边界委托 capture.named-states；删除活动状态选择邻近状态",
+        "状态和当前选择通过既有草稿版本、自动保存、外部版本同步及本地撤销恢复；指纹覆盖全部状态",
+        "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/states.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/analysis.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/types.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/composition-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "web/app/composition/page.tsx"
+        }
+      ],
+      "consumers": [
+        "composition-capture",
+        "composition-editor"
+      ],
+      "variationPoints": [
+        "UI 状态保留共享画框和层级以及独立可见性；构图不引入节点可见性或状态转换图",
+        "状态组件复用本地 UiSketchStateTabs；不复制状态菜单和拖动实现",
+        "保存、并发与撤销继续委托 capture.draft-versioning 和 capture.canvas-edit-history，不新增路由或数据库表"
+      ],
+      "contractTests": [
+        "test/unit/composition-states.test.ts",
+        "test/integration/composition-sessions.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/composition-layout-states.md",
+        "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增独立内容、可见性、动画或跨状态加工操作之前"
+    },
+    {
+      "id": "composition.light-source",
+      "category": "composition",
+      "contractVersion": 4,
+      "status": "local",
+      "responsibility": "管理构图图形的显式光源属性与编辑、精修、生成参考中的统一照明语义",
+      "invariants": [
+        "isLightSource 缺省或 false 表示普通图形且不改变旧草稿指纹；true 改变指纹，文字区域不得标记为光源",
+        "切换只改变光源属性，保留几何、备注与来源；复制及版本存储保留属性，精修不得改变光源身份",
+        "编辑与精修保留可操作的光源图形；矩形沿长边形成光带、沿短边渐隐，圆形使用径向渐变；浏览器参考预览和 SVG/PNG 导出复用无描边、柔化边缘的标识，多个光源保留独立节点与渐变定义；颜色是识别约定",
+        "光源与普通形状采用相同的大致意图解释：保留照明方位、延展趋势和空间作用，矩形的带状特征可以变宽、变窄、断续或融合；用户指令和备注优先，未指定的宽度、长度、连续性、边缘和强弱由Agent自由安排，不自行增加等宽、完整贯穿、中强对比或缩略图醒目要求；按整体大致呼应验收，不逐边逐段比对，也不完全忽略光照意图"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/render.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.tsx",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/compositionExport.ts",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/composition.md"
+        }
+      ],
+      "consumers": [
+        "image-composition"
+      ],
+      "variationPoints": [
+        "照明方向和实际色温由 Agent 根据构图与用户意图安排；不增加方向字段或箭头",
+        "持久化和撤销复用 capture.draft-versioning，几何精修复用 composition.agent-refinement，节点复制复用 composition.item-clipboard"
+      ],
+      "contractTests": [
+        "test/unit/composition-light-source.test.ts",
+        "test/integration/composition-sessions.test.ts",
+        "test/unit/integration-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "扩展到文字、图片、方向控制或修改光源编码与精修保留规则之前"
+    },
+    {
+      "id": "composition.reference-projection",
+      "category": "composition",
+      "contractVersion": 3,
+      "status": "local",
+      "responsibility": "指导消费项目 Agent 提取参考画面组织观看的结构与感受，建立可编辑构图并通过既有 Capture 版本继续协作",
+      "invariants": [
+        "Agent 实际查看参考画面，先判断注意力、重量、节奏与空间关系如何形成整体感受，再选择图形；Human2AI 不调用视觉模型或根据规则选择审美方向",
+        "以构图贡献决定分区：保留产生主次、平衡、呼吸感、空间层次或动势的关系，合并只增加物件识别与轮廓精度的形段；图内重要视觉重量不得仅用背景说明代替",
+        "默认复原结构与感受，允许在用户约束内概括位置和包络，不以像素间隙、物件轮廓或节点数验收；保存后检查几何的实际作用及过粗、过细两种损失",
+        "模式沿用会话选择或用户明确指定；两者都未选择时先询问",
+        "参考画面恢复的节点使用 import，新设计使用 agent，浏览器新增使用 user；普通编辑保留来源",
+        "annotation 解释视觉特征通过何种关系产生何种构图效果，不止陈述物件与位置；所有新导入节点 note 与新建参考构图 overallNote 为空，显示文字另存，续改保留用户备注并尊重用户修改或删除",
+        "完整草稿复用 capture.draft-versioning 的保存、并发检查与撤销，不通过受保护的 composition apply 建立节点"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/composition-projection.md"
+        }
+      ],
+      "consumers": [
+        "image-composition"
+      ],
+      "variationPoints": [
+        "场景构图侧重主次、尺度与前后关系形成的空间感和动势；版面构图侧重图文视觉重量、层级与疏密形成的阅读节奏和平衡",
+        "UI 反向投影保留自己的源界面变更解释，构图投影不修改参考图文件"
+      ],
+      "contractTests": [
+        "test/integration/composition-projection.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/Human2AiCanvasNodeEditor.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增图片投影输入、图元或模式，或改变来源、参考图与用户编辑的优先级之前"
+    },
+    {
+      "id": "project.session-organization",
+      "category": "project",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "管理构图、UI 和 3D 空间会话的可选项目归属、项目内创建和跨项目移动",
+      "invariants": [
+        "会话的 projectId 只能为 null 或引用一个已存在的项目",
+        "创建会话时提供 projectId 会立即建立项目归属，省略或传入 null 时创建无项目会话",
+        "移动会话必须检查 expectedRevision，并在归属变化时递增 revision",
+        "无项目分组只表示 projectId 为 null 的会话，不对应真实项目记录",
+        "包含会话的项目不能删除"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/project-session-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/project-sessions.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/human2ai-api.ts",
+          "consumer": "workspace-sidebar"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/page.tsx",
+          "consumer": "application-home"
+        }
+      ],
+      "consumers": [
+        "application-home",
+        "image-composition",
+        "spatial",
+        "ui-layout",
+        "workspace-sidebar"
+      ],
+      "variationPoints": [
+        "会话类型决定创建的领域草稿和打开后的工作台路由",
+        "应用侧栏可从全局入口创建无项目会话，或从项目行创建已归属会话",
+        "首页卡片复用 Web API 创建无项目会话，持久化成功后直接打开对应工作台。"
+      ],
+      "contractTests": [
+        "test/integration/project-sessions.test.ts",
+        "test/unit/web-api.test.ts",
+        "test/integration/spatial-sessions.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "修改会话创建时的项目校验、无项目语义、移动 revision 或非空项目删除约束之前",
+      "reviewEvidence": [
+        "storybook/stories/Home.stories.tsx"
+      ]
+    },
+    {
+      "id": "spatial.scene-authoring",
+      "category": "spatial",
+      "status": "local",
+      "contractVersion": 24,
+      "responsibility": "管理多人可扩展骨架、世界位置与旋转固定、关节范围、多摄像机、六面观察盒和确定性镜头输出",
+      "invariants": [
+        "用户与 Agent 共用关节位置、骨段旋转和约束；骨段以上游关节为轴心，标准拓扑与骨长不可通过姿势编辑改写，三轴上下界只能显式配置且包含默认姿势",
+        "左右锁骨与左右髋骨连接段（modelPart 为 left/right-shoulder 或 left/right-hip，含复制肢体）三轴无局部旋转自由度；新人物默认角度与范围均为零。已有非零姿势及历史范围原样保留，但直接旋转、IK、世界旋转固定补偿及完整保存均不得改变连接段局部角度或重新开放范围；仅显式 reset-pose 可恢复默认角度，历史撤销仍复用 DraftVersionStore。连接段随父级正常运动，与世界旋转固定独立，上臂及大腿保留活动能力。",
+        "位置与旋转分别在世界坐标固定，不可通过父级运动、骨长变化或直接保存绕过",
+        "一次操作批次追加一个版本；失败保持原版本，撤销通过共享版本存储恢复",
+        "编辑视角独立于输出摄像机，姿势变化不自动取景",
+        "复原解除所选人物的固定并恢复默认骨段角度，保留空间位置、比例、自定义肢体；共享撤销恢复复原前的姿势和固定",
+        "仅接受当前 v2 数据，appearance 可为 quaternius 人体表面或 geometric 几何人偶；不恢复已删除的旧 skeleton 外形或旧格式转换。人物共用 Quaternius 男女性解剖骨架，人体表面沿用对应源网格，几何外观程序生成；编辑与 PNG 共用 createCharacterModel",
+        "躯干占去头默认身高的 30%–70%，腿部占剩余比例；仅调整此比例时保留骨段角度、头身比例、总身高及手脚尺寸，固定冲突拒绝且可通过共享历史撤销；未记录比例的当前 v2 人物使用模型默认比例",
+        "头高基准直接按 height / headRatio 计算，二、三头身各有独立的同拓扑脸部与躯干轮廓目标网格，2/3/4/7 参考形态之间连续插值顶点、颈长、躯干、肩胯及四肢形态，允许小数且不取整；低头身圆润并弱化眉骨、鼻唇和肌肉起伏，填充细弱关节与手脚体量；相接皮肤在保持部位独立选择的同时连续混合共享法线，头部前后厚度与躯干深度独立联动以协调侧面体量；低头身默认骨架的前后曲率不随截面厚度放大，核心蒙皮以轴线剪切保留水平截面，7 及以上保留原形态曲线；解算、固定校验、Agent 世界坐标与网格共用形态后的关节偏移，保留已存姿势和躯干腿部分配",
+        "bodyType 选择 male/female；未记录时使用男性底模；add-character 与 set-proportions 共用创建/切换规则，切换保留姿势、比例、自定义肢体与锁定，固定冲突原子拒绝，撤销由共享历史完整恢复",
+        "标准手部含稳定手掌、五个固定指根连接和每指三段可旋转骨骼；拇指掌骨与两节指骨区分，末节默认仅蓝色局部 Z 轴弯曲（左 -90–0°、右 0–90°），近节保留 X 弯曲并增加 Z ±45°，掌骨不变；pose-hand 的拇指末节改用左右对应 Z 弯曲。缺省 thumbLimitsVersion 的当前人物只修正原默认范围并标记为 2，保留已有旋转/固定与显式自定义范围，末节已有 X 姿势仅保留到复原所需的范围，历史数据库不重写。手指采用解剖局部弯曲/张开轴和独立正负角度范围，指尖可作 IK 位置目标且解算不得回退牵动手臂；pose-hand 以同一骨段角度提供五指弯曲、张开和拇指内收，固定冲突原子拒绝；reset-hand 仅复原所选手掌及其后代并解除这些部位的固定，保留手臂和其他手，版本存储负责撤销；复制手或手臂包含五指，源模型原始五指蒙皮与低头身厚度共用编辑/PNG 变形。当前 v2 Quaternius 缺失手指时补全默认五指、将掌心放回掌内，保留身体姿势与原手尖的位置固定，不新增旧格式或旧外形渲染。",
+        "整个人物的 neckLength 0.6–1.4、palmSize 0.7–1.3、fingerLength 0.6–1.4、footSize 0.7–1.4 叠加于头身形态，缺省为 1；手脚左右及复制肢体共用数值。显式脖子长度只沿当前颈部方向移动头部，保留躯干、肩膀和头部尺寸，height 仍为基础身高，不反向补偿躯干；手掌改变指根与手指粗细、指长独立控制；脚的宽长按参数缩放、厚度按变化量的一半联动，脚踝按解剖脚底高度温和升降，膝盖与身体不动，默认脚底在蒙皮过渡误差内保持原高度。用户、Agent、解算和编辑/PNG 蒙皮共用计算，修改保留骨段角度与固定，固定冲突原子拒绝；后续比例修改和姿势复原保留这些参数，撤销使用共享版本存储。",
+        "每个镜头按同一版本、画幅和透视派生 color / structure / depth PNG；编辑模型和默认普通图显示较深肤色的弯曲内侧指节短弧线，省略每指最靠近手掌的指根线，非拇指保留近端/远端指间关节线，拇指仅保留指间关节线，其朝向由末节蓝色局部 Z 轴及左右镜像弯曲方向确定，四指仍采用 X 轴向掌侧弯曲对应的短弧线；结构线复用同一表面几何；指节线贴合现有蒙皮并受全场景遮挡，不拦截部位选择，不显示隐藏骨架或网格分块接缝。深度为全图可见人物及物体统一线性相机深度，近白远暗、背景黑，不按对象分别归一化；切换和导出不写入草稿，缓存包含 session/revision/camera/pass。",
+        "空间级 lightingEnabled 缺省为 false；set-lighting 由用户与 Agent 共用，保存和撤销复用 DraftVersionStore。关闭时均匀照亮表面、关闭方向主光和投影，开启时恢复原环境填充、主光及全空间投影，两种模式保留同一接触明暗与指节线。编辑视口、所有镜头普通 PNG 和构图引用跟随对应版本设置，结构线/深度及人物姿势不变，不重写缺省字段的历史草稿。编辑辅助几何不参与投影或接触采样；WebGL 与 CPU 共用光照参数、保留各自抗锯齿/阴影滤波。拖动复用接触明暗并实时更新已启用的投影，结束重新计算，选择不改变接触明暗；镜头 URL 包含渲染版本。",
+        "cameraBoxes 是可选的独立空间对象，最多 24 个，与普通摄像机、人物和物体共用唯一 ID；put-camera-box / fit-camera-box / remove 与 UI、Agent 共用校验及版本存储，不改变人物姿势或普通镜头。等边观察盒边长 0.05–1000 米，三维位置与 XYZ 旋转可编辑，单图分辨率 128–1024 整数。六个正交镜头从盒面朝内取景，使用相同边长、分辨率和完整六面裁切；方向随盒子旋转，顶面图上方为局部 −Z，底面图上方为局部 +Z。取景基于实际蒙皮后网格，支持全部空间对象或全部手部，保留盒子旋转；空范围不移动观察盒。导出 sheet 为固定前/后/左、右/顶/底 3×2 带方向标签合图，或指定单张，使用同一不可变版本，不保存派生镜头；普通图透明，结构和深度共用裁切，六张深度统一使用盒子边长的线性范围。缓存区分会话/版本/观察盒/方向/渲染类型，编辑辅助盒框不进入参考图。主镜头仍决定最终构图，六视图只辅助判断遮挡及大致姿势，提示词不要求多宫格、复制人物或还原指节/身体标记。",
+        "骨架投影 skeleton 为独立只读 PNG 类型，复用 jointWorldTransforms、正式镜头或观察盒摄像机及六面裁切，投影人物骨段、关节点和头部轮廓，包含手指及自定义肢体；解剖左侧蓝色、右侧橙色、中轴中性色，浅色不透明背景，不受肤色、物体和光照影响。骨架透过模型表面显示，不能代表表面遮挡或深度；摄像机后方及视锥外关节点不产生可见标记，穿过观察盒的骨段保留裁切部分。普通摄像机与观察盒的 UI、HTTP、CLI 共用渲染类型、画幅和版本缓存，切换与下载不写入草稿。",
+        "geometric 外观由实际关节世界坐标驱动：圆球关节、圆柱骨段、刚性长方体手掌/脚和仅有双眼的椭球头；头顶与脚尖末端标记由实体包容，手指末端保留圆球。手指与复制肢体共用当前轴、比例和固定约束；手掌形体不随手指弯曲变形，脚底高度与温和脚踝抬升一致。关节球选择位置，骨段及手掌/脚/头选择旋转，几何体参与统一光照、深度、结构线和观察盒取景；编辑器不重复叠加辅助骨架。add-character 可指定 appearance，缺省仍为 quaternius；put-character 只切换 appearance 时必须保留全部姿势、骨架、锁定、比例和自定义肢体；set-proportions 与复原保留外观，保存和撤销复用共享 DraftVersionStore。",
+        "几何人偶五指按解剖身份固定配色：拇指橙、食指蓝、中指绿、无名指紫、小指粉；左右手及复制手同名手指一致，关节球为对应颜色的浅色，人物显示颜色不覆盖此识别配色。编辑器选中几何手指时仅提亮原色系，普通镜头和观察盒使用未选中的统一模型材质；骨架投影、结构线与深度保持各自语义。更新镜头及观察盒渲染 URL 版本以刷新已保存姿势的浏览器缓存，不写入新草稿版本。",
+        "几何人偶关节球与骨段共用有明度对比的材质：五指关节保留对应色系并提亮，身体关节依据人物颜色选择深浅对比。普通镜头与观察盒 color PNG 在可见几何部位边界叠加随输出尺寸调整的细线，近侧表面拥有描线；隐藏部位、三角面接缝与画幅裁切边缘不产生描线，透明轮廓保持原样。描线不应用于人体模型或场景物体，不修改 structure/depth/skeleton、姿势、光照设置和草稿；编辑视口复用材质，参考图描线仅由 PNG 渲染器派生。"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/spatial/index.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/kinematics.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/spatial-render.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/spatial-operations.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/model.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/proportions.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/morph.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/scene.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/hands.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/reference-lines.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/lighting.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/camera-box.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/geometric-model.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/scene-cache.ts"
+        }
+      ],
+      "consumers": [
+        "composition-camera-reference",
+        "spatial-cli",
+        "spatial-workspace"
+      ],
+      "variationPoints": [
+        "自定义骨架通过明确形态操作增加肢体",
+        "透视与正交摄像机",
+        "Quaternius 男性与女性源网格及解剖尺寸",
+        "人体表面与几何人偶外观共用同一骨架及操作"
+      ],
+      "contractTests": [
+        "test/unit/spatial.test.ts",
+        "test/integration/spatial-sessions.test.ts",
+        "test/unit/spatial-render.test.ts",
+        "test/unit/spatial-articulation.test.ts",
+        "test/unit/spatial-model.test.ts",
+        "test/unit/spatial-proportions.test.ts",
+        "test/unit/spatial-morph.test.ts",
+        "test/unit/spatial-hands.test.ts",
+        "test/unit/spatial-body-shape.test.ts",
+        "test/unit/spatial-lighting.test.ts",
+        "test/unit/spatial-camera-box.test.ts",
+        "test/integration/spatial-camera-box.test.ts",
+        "test/unit/spatial-skeleton.test.ts",
+        "test/unit/spatial-geometric-model.test.ts",
+        "test/integration/spatial-geometric-model.test.ts",
+        "test/unit/spatial-scene-cache.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/SpatialWorkspaceView.stories.tsx",
+        "design-system/surfaces/human2ai-web/governance/spatial-articulation.md",
+        "design-system/surfaces/human2ai-web/governance/spatial-camera-references.md",
+        "design-system/surfaces/human2ai-web/governance/spatial-camera-box.md",
+        "design-system/surfaces/human2ai-web/governance/spatial-geometric-model.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "改变固定坐标系、标准人形范围、操作原子性或镜头引用更新方式之前"
+    },
+    {
+      "id": "style.library",
+      "category": "style",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "管理画面与 UI 风格的完整设计规范、可选参考图、简短提示词特征句和创建来源",
+      "invariants": [
+        "风格分类只能为 visual 或 ui",
+        "浏览器创建入口固定创建 user 条目，Agent CLI 创建入口固定创建 agent 条目",
+        "creatorType 在条目创建后不可修改，后续由另一方参与也不改变创建方",
+        "参考图允许为空或包含多张 PNG、JPEG、WebP 图片；description 是唯一完整且非空的设计规范，promptSummary 是独立的非空单行特征短句（最多 240 字符）",
+        "Agent 获取单个风格的使用上下文时只返回参考图和说明，不返回名称、分类、创建方或其他管理信息",
+        "删除风格会删除条目、全部参考图记录和对应图片文件，不提供归档状态",
+        "旧条目未保存 promptSummary 时兼容使用说明首句；更新内容须检查风格 revision",
+        "完整设计规范用于 Agent 的设计决策，浏览器复制提示词只追加一行短句且不调用模型",
+        "删除条目会原子解除所有会话绑定并推进会话 revision，保留画布历史"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/database/style-library-repository.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/routes/style-library.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/style/prompt-summary.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "agent-cli"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/human2ai-api.ts",
+          "consumer": "style-library-page"
+        }
+      ],
+      "consumers": [
+        "agent-cli",
+        "style-library-page"
+      ],
+      "variationPoints": [
+        "浏览器和 Agent 使用不同创建入口来确定不可变的 creatorType",
+        "管理列表包含条目元数据，Agent 的单条风格上下文只包含参考图和说明"
+      ],
+      "contractTests": [
+        "test/integration/style-library.test.ts",
+        "test/unit/style-cli.test.ts",
+        "test/unit/web-api.test.ts"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增分类、归档、规范结构、短句生成策略或变更风格/会话删除语义之前"
+    },
+    {
+      "id": "style.session-binding",
+      "category": "style",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "让用户和 Agent 共享构图/UI 会话的单一风格绑定及当前设计规范",
+      "invariants": [
+        "每个会话可绑定一个存在的全局风格或无风格；分类不限制绑定",
+        "绑定、变更和解除须检查会话 revision；相同绑定不推进版本",
+        "绑定本身不修改画布，读取返回当前完整规范、短句、参考图和最新风格 revision",
+        "用户和 Agent 使用同一绑定操作；连接命令返回当前上下文与含并发参数的加工保存命令",
+        "删除风格解除会话绑定并推进会话 revision；画布历史及加工元数据保留"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/style-library-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/style-library.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/cli/main.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/use-session-style.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/composition/page.tsx",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "web/app/ui-sketch/page.tsx",
+          "consumer": "ui-layout"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "ui-layout"
+      ],
+      "variationPoints": [
+        "默认筛选分类为 visual 或 ui",
+        "画布文档和加工几何由各自领域处理，共享绑定与版本保存机制"
+      ],
+      "contractTests": [
+        "test/integration/session-styles.test.ts"
+      ],
+      "reviewEvidence": [
+        "skills/human2ai/SKILL.md",
+        "design-system/surfaces/human2ai-web/src/local/SessionStylePicker.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增绑定消费者、多风格混合、绑定快照或自动重加工机制之前"
+    },
+    {
+      "id": "ui-sketch.geometry-standardization",
+      "category": "ui-sketch",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "把 UI 草图近似几何整理为整数像素，并按 Agent 选择的邻近关系对齐，供消费项目实现 UI 前执行",
+      "invariants": [
+        "命令本地派生草稿与差异报告，保留原始输入；会话保存通过既有 Capture 并发与撤销边界完成",
+        "以画框为坐标参考，在全部阶段对位置、尺寸及字号取整，保留内容、备注、来源、可见性、组及图片裁剪比例",
+        "Agent 根据用户意图选择阶段、轴、边或中心及锚点；计划绑定源草稿指纹",
+        "组作为整体对齐，每轴累计对齐位移不超过 3 像素；冲突、过期、缺失引用及越界操作报错",
+        "消费项目 Agent 在修改组件前必须执行命令、检查报告，若有几何变化则先保存标准化版本；标准化不替代项目的布局与设计规范"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/standardize.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/geometry.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/ui-layout-standardization-plan.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "src/cli/main.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/session/capabilities.ts"
+        },
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/ui-layout.md"
+        }
+      ],
+      "consumers": [
+        "agent-skill",
+        "ui-layout-cli"
+      ],
+      "variationPoints": [
+        "计划未指定的关系只取整；明确的对齐操作按实际阶段执行",
+        "与 composition/refinement/engine.ts 比较后保持独立：构图使用面积、旋转和归一坐标及构图保护约束，UI 使用整数像素、单层组和阶段几何，二者不变量不兼容"
+      ],
+      "contractTests": [
+        "test/unit/ui-layout-standardize.test.ts",
+        "test/unit/ui-layout-standardize-cli.test.ts",
+        "test/integration/composition-session-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/ui-sketch-groups-standardization.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "加入自动关系推断、等间距或尺寸 token 吸附，调整容差或把标准化放入普通保存入口之前"
+    },
+    {
+      "id": "ui-sketch.item-groups",
+      "category": "ui-sketch",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "管理 UI 草图单层组的持久成员关系及整组选取和移动",
+      "invariants": [
+        "组至少包含两个已有节点，每个节点最多属于一组，组不能嵌套且 id 不与节点或其他组重复",
+        "建组和解组仅变更成员关系，不新增可见容器，不改变节点内容及几何",
+        "组关系跨动效阶段共享，移动只作用于活动阶段并保持成员相对位置",
+        "旧草稿缺少 groups 时规范化为空数组；保存、指纹和撤销复用 capture.draft-versioning",
+        "删除成员后清理引用，少于两个成员的组解散"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/groups.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/types.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/ui-sketch-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.tsx"
+        }
+      ],
+      "consumers": [
+        "agent-skill",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "画布通过右键菜单建组、解组，双击编辑单个成员；Agent 直接写入经过校验的 Capture 文档"
+      ],
+      "contractTests": [
+        "test/unit/ui-sketch-groups.test.ts",
+        "test/integration/composition-session-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx",
+        "design-system/surfaces/human2ai-web/governance/ui-sketch-groups-standardization.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入嵌套组、组缩放、构图分组或跨阶段不同成员关系之前"
+    },
+    {
+      "id": "ui-sketch.layout-intent",
+      "category": "ui-sketch",
+      "contractVersion": 5,
+      "status": "local",
+      "responsibility": "约束 UI 界面草图只表达用户可感知的关键元素及其空间关系，并以稳定节点来源承载用户草图、Agent 新增意图和已有项目 UI 的宏观映射",
+      "invariants": [
+        "UI 界面草图是用户视角的扁平空间意图，不是 DOM、组件树或 CSS 布局模型",
+        "矩形表示近似内容范围或可感知视觉表面，不要求生成边框、卡片或容器",
+        "纯实现 wrapper、Grid、Stack、间距盒和没有独立视觉意义的父级不应成为新增草图节点或下游容器",
+        "父区域与子元素同时出现时必须各自表达不同的用户可感知意义",
+        "实现层级应主要通过相对位置、面积、视觉权重、文字、留白与遮挡关系理解",
+        "每个节点的来源只能是 user、agent 或 import；缺失来源的旧版 v1 草稿兼容归一为 user",
+        "import 表示已有项目 UI 的宏观映射：静态文字可以编辑，删除节点表示从旧 UI 删除对应内容",
+        "annotation 是 Agent 提供的只读节点说明，note 继续承载用户可编辑的修改指令",
+        "已有 UI 映射只使用矩形和静态文字；动态内容、媒体、控件与区域均用矩形概括，不保存截图、DOM、组件树或源码信息",
+        "界面范围是输出范围，不限制节点移动；区域、文字和图片可在范围外继续编辑并保存，位置变化不改动 visible",
+        "静态提示词只包含可见且与界面范围有正面积相交的节点；完全在外或仅贴边的节点不输出，部分相交保留完整几何",
+        "动效提示词保留开始或结束任一状态可见且进入范围的节点及两端几何；两端均无可见交集的节点不输出",
+        "节点拖动的中间位移只作为界面预览，松手后对当前活动阶段草稿提交一次最终位移；取消、丢失指针捕获、切换阶段或卸载不提交临时位置，键盘微移继续即时提交",
+        "投射多节点控件时复用 ui-sketch.item-groups；消费项目 Agent 根据画布修改组件前必须执行 ui-sketch.geometry-standardization，并使用原始用户差异解释意图"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/ui-layout.md"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/uiSketchExport.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/types.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/ui-sketch-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.tsx"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/geometry.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/render.ts"
+        }
+      ],
+      "consumers": [
+        "agent-skill",
+        "exported-prompt",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "具有独立边界、背景、层级、裁切、滚动或交互意义的可感知表面仍可作为区域",
+        "编辑已有草图时保留与当前请求无关的节点，只对新增元素和用户要求的重构应用选择规则",
+        "浏览器创建入口固定创建 user 节点；Agent 保存新构想时使用 agent，映射项目既有 UI 时使用 import",
+        "来源只在节点创建或旧版兼容归一时确定，画布编辑面板不提供来源修改入口",
+        "文字相交判断复用已有文本边界：浏览器传入当前可用的实测尺寸，其他调用沿用确定性尺寸估算",
+        "画布浏览器实测文字边界优先；导出及标准化统一复用领域中的确定性文字边界估算"
+      ],
+      "contractTests": [
+        "test/unit/ui-sketch-export.test.ts",
+        "test/unit/ui-sketch-draft.test.ts",
+        "test/integration/ui-sketch-sessions.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入 UI 草图组件层级、代码生成、嵌套组，或改变节点来源、import 删除/文字编辑语义、标准化回写顺序及关键可感知元素选择边界之前"
+    },
+    {
+      "id": "ui-sketch.preview-export",
+      "category": "ui-sketch",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "按已保存的 UI 界面版本和状态导出自包含预览，浏览器与 CLI 复用同一 SVG 绘制逻辑",
+      "invariants": [
+        "CLI 从既有 Capture 和图片 API 读取明确 revision，不打开浏览器、不写入草稿或访问数据库文件",
+        "使用 stateTabs 的稳定 id 选择状态，省略时选择显示顺序首项；已删除或不存在的状态不能回退到其他状态",
+        "预览按界面范围裁切，保留状态几何、可见性、文字、图片裁剪与共享 layerOrder，排除编辑器控制和观察视口",
+        "CLI 根据 .png 或 .svg 扩展名输出预览，图片资源以内嵌内容保存，返回源版本、fingerprint、状态及产物绝对路径和尺寸",
+        "消费 Agent 默认经 CLI 操作与检查导出预览；仅确需浏览器交互时使用 Chrome MCP，静态视觉检查不触发浏览器自动化"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/ui-sketch/render.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/uiSketchExport.ts",
+          "consumer": "ui-sketch-editor"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "ui-layout-cli"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/session/capabilities.ts"
+        },
+        {
+          "role": "current",
+          "path": "skills/human2ai/SKILL.md"
+        },
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/ui-layout.md"
+        }
+      ],
+      "consumers": [
+        "ui-layout-cli",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "图元及状态属于 UI 领域，构图和 3D 使用各自的领域渲染器；不抽象跨领域绘制框架",
+        "浏览器 PNG 使用 Canvas/剪贴板，CLI 使用现有 sharp 栅格化；SVG 几何、顺序及输出范围共用领域实现，字体栅格化随运行环境变化",
+        "图片读取复用构图 CLI 的 sessionImageSources 与既有受限图片 API，UI 只读取所选状态可见图片；不新增图片存储或预览路由"
+      ],
+      "contractTests": [
+        "test/unit/ui-sketch-export.test.ts",
+        "test/integration/ui-layout-render-cli.test.ts",
+        "test/unit/canvas-layer-adapters.test.ts"
+      ],
+      "reviewEvidence": [
+        "README.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增格式、改变状态默认选择、范围裁切、字体布局或静态检查的浏览器依赖之前"
+    },
+    {
+      "id": "ui-sketch.state-management",
+      "category": "ui-sketch",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "管理同一 UI 草稿的可命名、有序状态快照及增删生命周期",
+      "invariants": [
+        "旧 v1 草稿缺少 stateTabs 时按 start 和 stages 顺序解析，默认编号跟随状态而非当前位置",
+        "stateTabs 记录展示顺序、稳定默认编号及可选用户名称；重命名与排序不修改状态 id、几何或共享节点",
+        "新建状态复制来源的几何、字号及显示状态并紧接来源插入；名称和顺序通过既有草稿版本保存",
+        "至少保留一个状态，stateTabs 必须唯一且覆盖所有 stages 快照；start 可从可编辑状态中删除，顶层节点仍作为共享内容及内部几何基准，其他完整快照保持不变",
+        "复制菜单使用实际状态名称和顺序，单状态复制所剩状态，多个状态按显示顺序导出相邻过渡",
+        "长按拖动只产生界面预览，松手提交一次排序；Esc、pointercancel、丢失捕获、失焦、状态集合或选择变化取消预览"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/states.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/types.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/ui-sketch-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "web/app/ui-sketch/page.tsx"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchStateTabs.tsx"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/uiSketchExport.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "ui-layout-cli"
+        }
+      ],
+      "consumers": [
+        "exported-prompt",
+        "ui-layout-cli",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "状态几何、可见性及共享画框继续归 UI 领域；命名、全量排序和至少保留一个状态的规则通过 capture.named-states 复用。构图单独保存画框和层级布局。",
+        "复用 capture.draft-versioning 现有 UI 会话保存路径，不新增存储或路由",
+        "未命名状态按当前语言显示稳定编号；用户名称不随语言切换翻译"
+      ],
+      "contractTests": [
+        "test/unit/ui-sketch-state-tabs.test.ts",
+        "test/unit/ui-sketch-export.test.ts",
+        "test/integration/ui-sketch-sessions.test.ts",
+        "test/integration/ui-layout-render-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/ui-sketch-state-management.md",
+        "design-system/surfaces/human2ai-web/src/local/UiSketchStateTabs.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "引入独立节点内容、状态转换图或改变共享节点与状态快照的归属时"
+    }
+  ]
+}

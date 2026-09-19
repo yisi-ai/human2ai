@@ -5,7 +5,8 @@ export interface InspectorAsset {
   name: string;
   category: string;
   status: string;
-  source: string;
+  // Removed Registry tombstones no longer point to an implementation.
+  source?: string;
   storyId?: string;
   aliases?: string[];
   distribution?: string;
@@ -29,7 +30,7 @@ export interface MarkedAsset {
   status: string;
 }
 
-export type InspectorCopyMode = "name" | "page";
+export type InspectorCopyMode = "page-id" | "component-name" | "all";
 
 export function mergeRegistries(
   registries: InspectorRegistry[],
@@ -80,12 +81,11 @@ interface CopyDetails {
 
 export function formatAssetCopyText(details: CopyDetails): string {
   const asset = details.registryAsset;
-  if (details.mode === "name") {
-    return [
-      `Category: ${asset?.category ?? details.marker.category}`,
-      `Name: ${asset?.name ?? details.marker.name}`,
-      `Asset: ${details.marker.key}`,
-    ].join("\n");
+  if (details.mode === "page-id") {
+    return details.instanceId;
+  }
+  if (details.mode === "component-name") {
+    return asset?.name ?? details.marker.name;
   }
   return [
     `Surface: ${details.surface}`,

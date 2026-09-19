@@ -2,7 +2,9 @@ import { createInstance, type i18n } from "i18next";
 import enCommon from "../../locales/en/common.json";
 import zhCommon from "../../locales/zh-CN/common.json";
 
-export type AppLocale = "en" | "zh-CN";
+export const appLocales = ["zh-CN", "en"] as const;
+
+export type AppLocale = (typeof appLocales)[number];
 
 export const defaultLocale: AppLocale = "zh-CN";
 
@@ -21,4 +23,12 @@ export function createAppI18n(locale: AppLocale = defaultLocale): i18n {
     resources,
   });
   return instance;
+}
+
+export function isAppLocale(locale: string | null | undefined): locale is AppLocale {
+  return appLocales.some((supportedLocale) => supportedLocale === locale);
+}
+
+export function resolveAppLocale(language: string | undefined): AppLocale {
+  return language?.toLowerCase().startsWith("en") ? "en" : defaultLocale;
 }

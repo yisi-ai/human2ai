@@ -22,7 +22,7 @@ const labels = {
 
 const meta = {
   id: "layouts-appshellframe",
-  title: "Layouts/AppShellFrame",
+  title: "yisiui-Layouts/AppShellFrame",
   component: AppShellFrame,
   parameters: { layout: "fullscreen" },
   args: {

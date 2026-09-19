@@ -29,11 +29,11 @@ function SystemOverview() {
           YisiUI migration candidate
         </h1>
         <p style={{ maxWidth: 620, margin: "28px 0 0", color: "#4C566A", fontSize: 18, lineHeight: 1.65 }}>
-          This supporting Story records the first Writer Harness migration set. The view is not a reusable UI asset and is never exported by @human2ai/ui/yisiui.
+          This supporting Story records the active Writer Harness migration set. The view is not a reusable UI asset and is never exported by @human2ai/ui/yisiui.
         </p>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 16, margin: "36px 0 0" }}>
           {[
-            ["Shared assets", "18"],
+            ["Shared assets", "25"],
             ["Surface", "web-react"],
             ["System status", "migration candidate"],
           ].map(([term, value]) => (
@@ -49,7 +49,7 @@ function SystemOverview() {
 }
 
 const meta = {
-  title: "System/Architecture Status",
+  id: "system-architecture-status", title: "yisiui-System/Architecture Status",
   component: SystemOverview,
   parameters: {
     docs: {

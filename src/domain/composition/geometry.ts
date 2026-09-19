@@ -2,12 +2,19 @@ import type {
   AreaGeometry,
   CompositionArea,
   CompositionDraft,
-  CompositionFrame,
+  CompositionFrameBounds,
+  CompositionFrameSize,
+  CompositionImage,
   DirectionLine,
   DirectionLineGeometry,
   Point,
   VisibleAreaMetrics,
 } from "./types.ts";
+import {
+  COMPOSITION_CANVAS,
+  compositionWorldBounds,
+  frameBoundsInCanvas,
+} from "./frame.ts";
 
 const ASPECT_RATIOS = {
   square: 1,
@@ -15,11 +22,20 @@ const ASPECT_RATIOS = {
   portrait: 0.625,
 } as const;
 
-export function areaGeometry(area: CompositionArea, frame: CompositionFrame): AreaGeometry {
+export function areaGeometry(area: CompositionArea, frame: CompositionFrameSize): AreaGeometry {
   const frameArea = frame.width * frame.height;
   const pixelArea = area.area * frameArea;
 
   if (area.primitive === "circle") {
+    if (area.aspect === "free" && area.width && area.height) {
+      return {
+        type: "ellipse",
+        cx: area.x * frame.width,
+        cy: area.y * frame.height,
+        radiusX: (area.width * frame.width) / 2,
+        radiusY: (area.height * frame.height) / 2,
+      };
+    }
     return {
       type: "circle",
       cx: area.x * frame.width,
@@ -43,8 +59,9 @@ export function areaGeometry(area: CompositionArea, frame: CompositionFrame): Ar
     return { type: "polygon", points, center, width, height };
   }
 
-  const side = Math.sqrt((4 * pixelArea) / Math.sqrt(3));
-  const height = (Math.sqrt(3) / 2) * side;
+  const free = area.aspect === "free" && area.width && area.height;
+  const side = free ? area.width! * frame.width : Math.sqrt((4 * pixelArea) / Math.sqrt(3));
+  const height = free ? area.height! * frame.height : (Math.sqrt(3) / 2) * side;
   const points = [
     { x: center.x, y: center.y - (2 * height) / 3 },
     { x: center.x - side / 2, y: center.y + height / 3 },
@@ -55,7 +72,7 @@ export function areaGeometry(area: CompositionArea, frame: CompositionFrame): Ar
 
 export function directionLineGeometry(
   directionLine: DirectionLine,
-  frame: CompositionFrame,
+  frame: CompositionFrameSize,
 ): DirectionLineGeometry {
   const center = {
     x: directionLine.x * frame.width,
@@ -70,8 +87,80 @@ export function directionLineGeometry(
   };
 }
 
+export function compositionDraftWorldSize(
+  draft: CompositionDraft,
+  minimumSize: CompositionFrameSize = COMPOSITION_CANVAS,
+): CompositionFrameSize {
+  const bounds = compositionDraftWorldBounds(draft, minimumSize);
+  return { width: bounds.width, height: bounds.height };
+}
+
+export function compositionDraftContentBounds(
+  draft: CompositionDraft,
+): CompositionFrameBounds {
+  const frame = frameBoundsInCanvas(draft.frame);
+  const bounds = [
+    frame,
+    ...draft.areas.map((area) => geometryToFrameBounds(areaGeometry(area, COMPOSITION_CANVAS))),
+    ...draft.images.map(compositionImageBounds),
+    ...draft.focusPoints.map((point) => ({
+      x: point.x * COMPOSITION_CANVAS.width - 20,
+      y: point.y * COMPOSITION_CANVAS.height - 20,
+      width: 40,
+      height: 40,
+    })),
+    ...(draft.directionLine
+      ? [
+          {
+            x: draft.directionLine.x * COMPOSITION_CANVAS.width,
+            y: draft.directionLine.y * COMPOSITION_CANVAS.height,
+            width: 0,
+            height: 0,
+          },
+        ]
+      : []),
+  ];
+  return unionBounds(bounds);
+}
+
+export function compositionImageBounds(image: CompositionImage): CompositionFrameBounds {
+  const center = {
+    x: image.x * COMPOSITION_CANVAS.width,
+    y: image.y * COMPOSITION_CANVAS.height,
+  };
+  const halfWidth = (image.width * COMPOSITION_CANVAS.width) / 2;
+  const halfHeight = (image.height * COMPOSITION_CANVAS.height) / 2;
+  const points = [
+    { x: center.x - halfWidth, y: center.y - halfHeight },
+    { x: center.x + halfWidth, y: center.y - halfHeight },
+    { x: center.x + halfWidth, y: center.y + halfHeight },
+    { x: center.x - halfWidth, y: center.y + halfHeight },
+  ].map((point) => rotatePoint(point, center, image.rotation));
+  const minimumX = Math.min(...points.map((point) => point.x));
+  const maximumX = Math.max(...points.map((point) => point.x));
+  const minimumY = Math.min(...points.map((point) => point.y));
+  const maximumY = Math.max(...points.map((point) => point.y));
+  return {
+    x: minimumX,
+    y: minimumY,
+    width: maximumX - minimumX,
+    height: maximumY - minimumY,
+  };
+}
+
+export function compositionDraftWorldBounds(
+  draft: CompositionDraft,
+  minimumSize: CompositionFrameSize = COMPOSITION_CANVAS,
+): CompositionFrameBounds {
+  return unionBounds([
+    compositionWorldBounds(draft.frame, minimumSize),
+    compositionDraftContentBounds(draft),
+  ]);
+}
+
 export function calculateVisibleAreaMetrics(draft: CompositionDraft): VisibleAreaMetrics {
-  const geometries = draft.areas.map((area) => areaGeometry(area, draft.frame));
+  const geometries = draft.areas.map((area) => areaGeometry(area, COMPOSITION_CANVAS));
+  const frame = frameBoundsInCanvas(draft.frame);
   const columns = 180;
   const rows = 120;
   const visibleCounts = geometries.map(() => 0);
@@ -82,8 +171,8 @@ export function calculateVisibleAreaMetrics(draft: CompositionDraft): VisibleAre
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < columns; column += 1) {
       const point = {
-        x: ((column + 0.5) / columns) * draft.frame.width,
-        y: ((row + 0.5) / rows) * draft.frame.height,
+        x: frame.x + ((column + 0.5) / columns) * frame.width,
+        y: frame.y + ((row + 0.5) / rows) * frame.height,
       };
       let covered = false;
       geometries.forEach((geometry, index) => {
@@ -100,7 +189,12 @@ export function calculateVisibleAreaMetrics(draft: CompositionDraft): VisibleAre
   }
 
   const samples = columns * rows;
-  const theoreticalArea = draft.areas.reduce((sum, area) => sum + area.area, 0);
+  const frameArea = frame.width * frame.height;
+  const canvasArea = COMPOSITION_CANVAS.width * COMPOSITION_CANVAS.height;
+  const theoreticalArea = draft.areas.reduce(
+    (sum, area) => sum + (area.area * canvasArea) / frameArea,
+    0,
+  );
   const visibleAreaShares = visibleCounts.map((count) => count / samples);
   const visibleAreaTotal = visibleAreaShares.reduce((sum, area) => sum + area, 0);
   const occupiedArea = occupied / samples;
@@ -131,6 +225,14 @@ export function geometryBounds(geometry: AreaGeometry): {
       maximumY: geometry.cy + geometry.radius,
     };
   }
+  if (geometry.type === "ellipse") {
+    return {
+      minimumX: geometry.cx - geometry.radiusX,
+      maximumX: geometry.cx + geometry.radiusX,
+      minimumY: geometry.cy - geometry.radiusY,
+      maximumY: geometry.cy + geometry.radiusY,
+    };
+  }
   return {
     minimumX: Math.min(...geometry.points.map((point) => point.x)),
     maximumX: Math.max(...geometry.points.map((point) => point.x)),
@@ -141,58 +243,27 @@ export function geometryBounds(geometry: AreaGeometry): {
 
 export function freeDimensionsFromArea(
   area: number,
-  frame: CompositionFrame,
+  frame: CompositionFrameSize,
   ratio = 1.6,
+  primitive: CompositionArea["primitive"] = "quadrilateral",
 ): Pick<CompositionArea, "width" | "height"> {
   const pixelArea = area * frame.width * frame.height;
-  const pixelWidth = Math.sqrt(pixelArea * ratio);
+  const areaFactor = primitive === "circle" ? Math.PI / 4 : primitive === "triangle" ? 0.5 : 1;
+  const pixelWidth = Math.sqrt((pixelArea * ratio) / areaFactor);
   return {
     width: pixelWidth / frame.width,
-    height: pixelArea / pixelWidth / frame.height,
-  };
-}
-
-export function clampAreaCenter(
-  area: CompositionArea,
-  frame: CompositionFrame,
-): CompositionArea {
-  const geometry = areaGeometry({ ...area, x: 0.5, y: 0.5 }, frame);
-  const center = { x: frame.width / 2, y: frame.height / 2 };
-  let minimumDeltaX: number;
-  let maximumDeltaX: number;
-  let minimumDeltaY: number;
-  let maximumDeltaY: number;
-
-  if (geometry.type === "circle") {
-    minimumDeltaX = -geometry.radius;
-    maximumDeltaX = geometry.radius;
-    minimumDeltaY = -geometry.radius;
-    maximumDeltaY = geometry.radius;
-  } else {
-    const deltas = geometry.points.map((point) => ({
-      x: point.x - center.x,
-      y: point.y - center.y,
-    }));
-    minimumDeltaX = Math.min(...deltas.map((point) => point.x));
-    maximumDeltaX = Math.max(...deltas.map((point) => point.x));
-    minimumDeltaY = Math.min(...deltas.map((point) => point.y));
-    maximumDeltaY = Math.max(...deltas.map((point) => point.y));
-  }
-
-  return {
-    ...area,
-    x: clamp(area.x, (-maximumDeltaX * 0.9) / frame.width, 1 + (-minimumDeltaX * 0.9) / frame.width),
-    y: clamp(
-      area.y,
-      (-maximumDeltaY * 0.9) / frame.height,
-      1 + (-minimumDeltaY * 0.9) / frame.height,
-    ),
+    height: pixelArea / areaFactor / pixelWidth / frame.height,
   };
 }
 
 function containsPoint(geometry: AreaGeometry, point: Point): boolean {
   if (geometry.type === "circle") {
     return Math.hypot(point.x - geometry.cx, point.y - geometry.cy) <= geometry.radius;
+  }
+  if (geometry.type === "ellipse") {
+    const x = (point.x - geometry.cx) / geometry.radiusX;
+    const y = (point.y - geometry.cy) / geometry.radiusY;
+    return x * x + y * y <= 1;
   }
 
   let inside = false;
@@ -213,6 +284,29 @@ function containsPoint(geometry: AreaGeometry, point: Point): boolean {
   return inside;
 }
 
+function geometryToFrameBounds(geometry: AreaGeometry): CompositionFrameBounds {
+  const bounds = geometryBounds(geometry);
+  return {
+    x: bounds.minimumX,
+    y: bounds.minimumY,
+    width: bounds.maximumX - bounds.minimumX,
+    height: bounds.maximumY - bounds.minimumY,
+  };
+}
+
+function unionBounds(bounds: CompositionFrameBounds[]): CompositionFrameBounds {
+  const minimumX = Math.min(...bounds.map((item) => item.x));
+  const minimumY = Math.min(...bounds.map((item) => item.y));
+  const maximumX = Math.max(...bounds.map((item) => item.x + item.width));
+  const maximumY = Math.max(...bounds.map((item) => item.y + item.height));
+  return {
+    x: minimumX,
+    y: minimumY,
+    width: maximumX - minimumX,
+    height: maximumY - minimumY,
+  };
+}
+
 function rotatePoint(point: Point, center: Point, degrees: number): Point {
   const radians = (degrees * Math.PI) / 180;
   const cosine = Math.cos(radians);
@@ -231,8 +325,4 @@ function pointAt(center: Point, degrees: number, distance: number): Point {
     x: center.x + Math.cos(radians) * distance,
     y: center.y + Math.sin(radians) * distance,
   };
-}
-
-function clamp(value: number, minimum: number, maximum: number): number {
-  return Math.max(minimum, Math.min(maximum, value));
 }

@@ -5,7 +5,7 @@ import { Card, Col, Divider, Row, Space, Typography as AntTypography } from "ant
 import { tokens, type TokenName } from "@human2ai/ui/yisiui/tokens";
 import { assertStoryText } from "../interactionChecks";
 
-const meta = { title: "Foundations/Tokens" } satisfies Meta;
+const meta = { id: "foundations-tokens", title: "yisiui-Foundations/Tokens" } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
@@ -156,10 +156,13 @@ function semanticTypographyStyle(id: string): CSSProperties {
   const style: CSSProperties = {
     fontFamily: tokenValue(`${prefix}.fontFamily`),
     fontSize: tokenValue(`${prefix}.fontSize`),
-    fontWeight: tokenNumber(`${prefix}.fontWeight`),
     lineHeight: tokenNumber(`${prefix}.lineHeight`),
     letterSpacing: tokenValue(`${prefix}.letterSpacing`),
   };
+  const fontWeightToken = `${prefix}.fontWeight`;
+  if (hasToken(fontWeightToken)) {
+    style.fontWeight = tokenNumber(fontWeightToken);
+  }
   const variantNumericToken = `${prefix}.fontVariantNumeric`;
   if (hasToken(variantNumericToken)) {
     style.fontVariantNumeric = tokenValue(variantNumericToken);
@@ -185,7 +188,7 @@ function SemanticTypographyCard({ role }: { role: SemanticRole }) {
           <div style={style}>{role.sample}</div>
           <AntTypography.Text code style={{ wordBreak: "break-all" }}>{prefix}</AntTypography.Text>
           <AntTypography.Text type="secondary">
-            {tokenValue(`${prefix}.fontSize`)} · {tokenValue(`${prefix}.fontWeight`)} · {tokenValue(`${prefix}.lineHeight`)}
+            {tokenValue(`${prefix}.fontSize`)} · {style.fontWeight ?? "继承"} · {tokenValue(`${prefix}.lineHeight`)}
           </AntTypography.Text>
         </Space>
       </Card>
@@ -215,7 +218,7 @@ export const Typography: Story = {
 
         {foundationGroups.map((group) => (
           <section key={group.id} aria-labelledby={`typography-foundation-${group.id}`}>
-            <Divider orientation="left" plain>
+            <Divider titlePlacement="start" plain>
               <span id={`typography-foundation-${group.id}`}>{group.label}</span>
             </Divider>
             <Row gutter={[16, 16]}>
@@ -226,7 +229,7 @@ export const Typography: Story = {
 
         {semanticGroups.map((group) => (
           <section key={group.id} aria-labelledby={`typography-semantic-${group.id}`}>
-            <Divider orientation="left" plain>
+            <Divider titlePlacement="start" plain>
               <span id={`typography-semantic-${group.id}`}>{group.label}</span>
             </Divider>
             <Row gutter={[16, 16]}>

@@ -1,4 +1,4 @@
-export const SESSION_TYPES = ["image-composition", "ui-layout"] as const;
+export const SESSION_TYPES = ["image-composition", "ui-layout", "spatial"] as const;
 
 export type SessionType = (typeof SESSION_TYPES)[number];
 export type SessionLifecycleStage = "draft" | "interpreted" | "approved" | "exported";
@@ -16,6 +16,7 @@ export interface Project {
 export interface Session {
   id: string;
   projectId: string | null;
+  styleId: string | null;
   sessionType: SessionType;
   title: string;
   lifecycleStage: SessionLifecycleStage;

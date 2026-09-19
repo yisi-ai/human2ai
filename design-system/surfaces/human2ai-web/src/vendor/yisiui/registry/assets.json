@@ -1,6 +1,6 @@
 {
-  "$schema": "../../../tooling/schemas/registry.schema.json",
-  "schemaVersion": 1,
+  "$schema": "../contracts/registry.schema.json",
+  "schemaVersion": 2,
   "surface": "web-react",
   "namespace": "yisiui",
   "assets": [
@@ -22,8 +22,7 @@
         "label"
       ],
       "aliases": [
-        "TokenButton",
-        "ActionButton"
+        "TokenButton"
       ],
       "useWhen": [
         "需要统一的基础操作按钮",
@@ -43,6 +42,64 @@
         "Ant Design Button",
         "CopyAction",
         "FormActions"
+      ]
+    },
+    {
+      "id": "action-button",
+      "name": "ActionButton",
+      "category": "button",
+      "status": "experimental",
+      "source": "src/components/ActionButton.tsx",
+      "storyId": "buttons-actionbutton--default",
+      "capabilities": [
+        "action",
+        "promise-lifecycle",
+        "pending-feedback",
+        "success-feedback",
+        "error-feedback",
+        "duplicate-submit-lock",
+        "resettable-feedback",
+        "persistent-feedback",
+        "motion-control",
+        "reduced-motion",
+        "accessible-status"
+      ],
+      "slots": [
+        "label",
+        "pendingLabel",
+        "successLabel",
+        "errorLabel",
+        "idleIcon",
+        "successIcon",
+        "errorIcon",
+        "actionProps"
+      ],
+      "aliases": [
+        "ActionFeedbackButton",
+        "AsyncActionButton"
+      ],
+      "useWhen": [
+        "按钮需要执行消费方提供的同步或异步动作，并在执行中、成功和失败之间提供明确反馈",
+        "复制、上传、保存或生成等动作需要统一的防重复提交、反馈停留和动效降级行为"
+      ],
+      "doNotUseWhen": [
+        "只需要由消费方控制 loading 的普通按钮",
+        "需要组件选择文件、调用业务 API、计算上传进度、执行重试或持久化业务状态"
+      ],
+      "differenceSummary": "BasicButton 只提供 Token 外观和基础按钮行为；CopyAction 固定拥有剪贴板职责；FormActions 负责表单底部动作位置；ConfirmAction 负责危险操作确认。ActionButton 组合 BasicButton，统一管理调用方动作 Promise 的 pending、success、error、重复提交锁、反馈停留、状态播报和 reduced-motion，但不拥有复制、上传、保存等业务实现。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/action-button.json",
+      "sourceComponent": "packages/react/src/components/ActionButton.tsx",
+      "distribution": "source-sync",
+      "release": "0.11.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "BasicButton",
+        "CopyAction",
+        "FormActions",
+        "ConfirmAction",
+        "Ant Design Button"
       ]
     },
     {
@@ -220,6 +277,108 @@
         "SelectableRecord",
         "StatusLight",
         "Ant Design Card"
+      ]
+    },
+    {
+      "id": "image-title-card",
+      "name": "ImageTitleCard",
+      "category": "card",
+      "status": "experimental",
+      "source": "src/components/ImageTitleCard.tsx",
+      "storyId": "cards-imagetitlecard--default",
+      "capabilities": [
+        "image-collection",
+        "title-caption",
+        "fan-layout",
+        "uniform-media-frame",
+        "full-image-display",
+        "unclipped-fan",
+        "transparent-image-fade",
+        "overlapping-title",
+        "single-line-title",
+        "consumer-aspect-ratio",
+        "responsive-width"
+      ],
+      "slots": [
+        "images",
+        "title"
+      ],
+      "aliases": [
+        "MediaTitleCard",
+        "FanImageCard",
+        "ImageStackTitleCard"
+      ],
+      "useWhen": [
+        "需要以紧凑的上图下标题结构展示一张或多张由消费方提供的图片",
+        "需要多张图片根据数量轻度扇形叠放、完整显示图片内容，并用透明渐变衔接单行标题"
+      ],
+      "doNotUseWhen": [
+        "需要状态灯、运行态、标签、元数据、底部操作或选择行为",
+        "需要组件管理图片请求、加载失败恢复、业务路由或持久化状态"
+      ],
+      "differenceSummary": "StatusCard 固定承担标题、副标题、状态灯和运行态扫光；Ant Design Card 是通用内容容器。ImageTitleCard 只提供无浅色背景的多图轻度扇形布局、完整图片显示、图片底部到完全透明的 mask 渐隐、轻微覆盖图片的单行截断标题以及消费方控制的图片 slot 和宽高比，不拥有交互和业务状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/image-title-card.json",
+      "sourceComponent": "packages/react/src/components/ImageTitleCard.tsx",
+      "distribution": "source-sync",
+      "release": "0.11.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "StatusCard",
+        "Ant Design Card",
+        "HTML figure/figcaption"
+      ]
+    },
+    {
+      "id": "loading-state",
+      "name": "LoadingState",
+      "category": "status",
+      "status": "experimental",
+      "source": "src/components/LoadingState.tsx",
+      "storyId": "components-states-loadingstate--default",
+      "capabilities": [
+        "loading",
+        "layout-stable",
+        "skeleton",
+        "accessible-busy-state",
+        "compact-density",
+        "bounded-rows",
+        "motion-control",
+        "reduced-motion"
+      ],
+      "slots": [
+        "label"
+      ],
+      "aliases": [
+        "SkeletonBoundary",
+        "PanelLoadingState"
+      ],
+      "useWhen": [
+        "页面或有界面板等待数据并需要通过骨架保持布局节奏",
+        "调用方需要可访问加载标签、可控骨架行数和紧凑密度"
+      ],
+      "doNotUseWhen": [
+        "按钮或短生命周期提交动作需要反馈",
+        "需要精确复刻业务专属内容几何的骨架",
+        "需要组件管理请求、重试或业务状态机"
+      ],
+      "differenceSummary": "Ant Design Skeleton 只呈现骨架，Spin 和 AsyncActionState 面向短时动作；LoadingState 进一步提供具名 aria-busy 区域、独立加载播报、1–12 行运行时边界、紧凑密度以及 motion=none 和 prefers-reduced-motion 契约，保持页面或有界面板的加载布局稳定，但不拥有请求生命周期或业务状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "writer-harness",
+      "sourceComponent": "design-system/surfaces/desktop-web/candidates/loading-state/src/LoadingState.tsx",
+      "sourceSubmission": "design-system/proposal-submissions/writer-harness/loading-state/87e93855f569c9ede1bef3664e2f4735eb0e16c2/submission.json",
+      "sourceCommit": "87e93855f569c9ede1bef3664e2f4735eb0e16c2",
+      "distribution": "source-sync",
+      "release": "0.10.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "StatusCard",
+        "EmptyState",
+        "ErrorState",
+        "AsyncActionState",
+        "Ant Design Skeleton",
+        "Ant Design Spin"
       ]
     },
     {
@@ -494,13 +653,12 @@
       "id": "form-actions",
       "name": "FormActions",
       "category": "button",
-      "status": "experimental",
-      "source": "src/patterns/FormActions.tsx",
-      "storyId": "buttons-formactions--default",
+      "status": "removed",
       "capabilities": [
         "submit",
         "cancel",
-        "loading"
+        "loading",
+        "disabled"
       ],
       "slots": [
         "secondary",
@@ -524,15 +682,24 @@
       "similarAssetsChecked": [
         "ResourceListToolbar",
         "DangerZone"
-      ]
+      ],
+      "migration": {
+        "kind": "remove",
+        "replacement": null,
+        "deprecatedSince": "0.12.0",
+        "removeAfter": "0.12.0",
+        "removedIn": "0.12.0",
+        "legacyImportNames": [
+          "FormActionsProps"
+        ],
+        "migrationGuide": "../migrations/2026-09-06-form-actions-removal.md"
+      }
     },
     {
       "id": "copy-action",
       "name": "CopyAction",
       "category": "button",
-      "status": "experimental",
-      "source": "src/components/CopyAction.tsx",
-      "storyId": "buttons-copyaction--default",
+      "status": "removed",
       "capabilities": [
         "copy",
         "async-content",
@@ -554,7 +721,19 @@
       "doNotUseWhen": [
         "需要业务 API、权限或缓存策略的复制适配器"
       ],
-      "differenceSummary": "只管理复制动作与反馈，业务数据读取和错误语义由容器适配器提供。",
+      "differenceSummary": "旧资产只管理复制动作与反馈，业务数据读取和错误语义由容器适配器提供；现由通用 ActionButton 承担动作 Promise 和反馈生命周期，复制内容解析与剪贴板写入迁移到消费方。",
+      "migration": {
+        "kind": "replace",
+        "replacement": "yisiui/action-button",
+        "deprecatedSince": "0.11.0",
+        "removeAfter": "0.12.0",
+        "legacyImportNames": [
+          "CopyActionProps",
+          "CopyActionWriter"
+        ],
+        "migrationGuide": "../migrations/2026-09-03-copy-action-to-action-button.md",
+        "removedIn": "0.12.0"
+      },
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -730,14 +909,21 @@
         "error",
         "autofocus",
         "embedded-surface",
-        "long-content"
+        "long-content",
+        "optional-upload-trigger",
+        "top-content",
+        "horizontal-content-scroll",
+        "hidden-scrollbar",
+        "large-footer-actions"
       ],
       "slots": [
         "message-input",
         "quick-prompts",
         "footer-info",
         "submit-action",
-        "error"
+        "error",
+        "top-content",
+        "upload-action"
       ],
       "aliases": [
         "ChatComposer",
@@ -747,13 +933,14 @@
       "useWhen": [
         "需要向 AI 发送受控的单条消息，并统一输入、发送、加载、禁用和错误状态",
         "需要在选区浮层中使用从一行增高到三行的紧凑输入，或在完整对话区使用自动增高的多行输入",
-        "需要由业务侧提供快捷语言及其实际发送文字"
+        "需要由业务侧提供快捷语言及其实际发送文字",
+        "需要注入顶部上下文或附件展示，并可选显示业务自有上传入口"
       ],
       "doNotUseWhen": [
-        "需要组件管理消息历史、调用 AI、选择模型、上传附件或持久化会话",
+        "需要组件管理消息历史、调用 AI、选择模型、执行附件上传请求或持久化会话",
         "需要编辑长文正文、标记文字范围或决定选区浮层的位置"
       ],
-      "differenceSummary": "Ant Design X Sender 提供通用 AI 输入基础，但项目仍需要紧凑输入从一行增高到三行、单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 只负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。MessageComposer 封装受控消息输入与发送行为，不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。",
+      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作下沿对齐，快捷语言文字为 13px、按钮高 32px，上传按钮为 32px，发送按钮保持 44px，顶部容器默认关闭，topContentEnabled 开启后提供 48px 高的横向滚动区，隐藏滚动条，上下内边距 4px、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入。",
       "sourceStatus": "experimental",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -770,6 +957,70 @@
       ]
     },
     {
+      "id": "text-mark-editor",
+      "name": "TextMarkEditor",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/TextMarkEditor.tsx",
+      "storyId": "modules-textmarkeditor--default",
+      "capabilities": [
+        "modal-editor",
+        "marked-text-context",
+        "field-slot",
+        "field-label-association",
+        "field-hint-description",
+        "auto-growing-multiline",
+        "bounded-textarea-rows",
+        "submit",
+        "cancel",
+        "optional-delete",
+        "delete-confirmation",
+        "loading",
+        "disabled",
+        "error",
+        "long-content",
+        "keyboard-modal",
+        "focus-restoration"
+      ],
+      "slots": [
+        "title",
+        "selected-text",
+        "fields",
+        "error",
+        "delete-action"
+      ],
+      "aliases": [
+        "MarkedTextFieldEditor",
+        "AnnotationFieldEditor"
+      ],
+      "useWhen": [
+        "需要在紧凑模态框中编辑已标记文字关联的一个或多个调用方字段",
+        "需要统一保存、取消、错误、长内容和可选删除确认边界，同时由调用方持有数据"
+      ],
+      "doNotUseWhen": [
+        "需要编辑长文正文、处理文字选区范围或定位浮动工具栏",
+        "需要组件调用 API、AI、持久化数据或决定领域字段模型",
+        "需要复杂多步骤表单或页面级编辑工作流"
+      ],
+      "differenceSummary": "LongformTextEditor 负责正文、选区与范围装饰，FormActions 只负责通用提交/取消动作，ConfirmAction 只负责单次危险确认，Ant Design Modal 不提供文字标记上下文和字段契约；TextMarkEditor 内部排列取消/保存按钮并组合 ConfirmAction，提供受控紧凑模态框、具名选中文字 region、自动关联 label/hint 的调用方控件、默认 3 行且最多 6 行的内容自增高多行输入、保存锁定、错误播报、长内容双滚动边界、Escape 与焦点归还，但不拥有选区、字段模型、API 或持久化。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "writer-harness",
+      "sourceComponent": "design-system/surfaces/desktop-web/candidates/text-mark-editor/src/TextMarkEditor.tsx",
+      "sourceSubmission": "design-system/proposal-submissions/writer-harness/text-mark-editor/87e93855f569c9ede1bef3664e2f4735eb0e16c2/submission.json",
+      "sourceCommit": "87e93855f569c9ede1bef3664e2f4735eb0e16c2",
+      "distribution": "source-sync",
+      "release": "0.10.0",
+      "ownerRepository": "yisiui",
+      "similarAssetsChecked": [
+        "LongformTextEditor",
+        "FormActions",
+        "DangerZone",
+        "ConfirmAction",
+        "MessageComposer",
+        "Ant Design Modal"
+      ]
+    },
+    {
       "id": "aspect-ratio-selector",
       "name": "AspectRatioSelector",
       "category": "module",
@@ -779,6 +1030,8 @@
       "capabilities": [
         "selection",
         "aspect-ratio-preview",
+        "manual-ratio-input",
+        "equivalent-preset-match",
         "keyboard-selection",
         "controlled-state",
         "disabled",
@@ -786,6 +1039,8 @@
       ],
       "slots": [
         "title",
+        "width-label",
+        "height-label",
         "option-label"
       ],
       "aliases": [
@@ -794,14 +1049,14 @@
         "ImageRatioSelector"
       ],
       "useWhen": [
-        "需要从一组常用宽高比中选择一个比例，并同步查看所选比例的几何预览",
+        "需要从常用预设或手动输入中选择宽高比，并同步查看当前比例的几何预览",
         "需要在紧凑工具区内用环绕布局呈现最多七个比例选项"
       ],
       "doNotUseWhen": [
-        "需要输入任意宽高数值或裁剪图片",
+        "需要输入实际像素尺寸、锁定尺寸单位或裁剪图片",
         "只需要线性排列的同级视图切换"
       ],
-      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 负责线性同级视图切换，SelectableRecord 负责完整资源记录选择，Ant Design Radio.Group 不提供比例几何反馈；AspectRatioSelector 把最多七个比例按钮环绕在动态等比预览周围，支持受控/非受控值、方向键/Home/End、局部及整体禁用和长标签截断，不读取业务数据。",
+      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 负责线性同级视图切换，SelectableRecord 负责完整资源记录选择，Ant Design Radio.Group 不提供比例几何反馈；AspectRatioSelector 把最多七个比例按钮环绕在动态等比预览周围，支持预设与手动宽高比输入、等价比例匹配、受控/非受控值、方向键/Home/End、局部及整体禁用和长标签截断，不读取业务数据。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -937,6 +1192,176 @@
         "Ant Design Tabs",
         "Ant Design Modal"
       ]
+    },
+    {
+      "id": "decorative-title",
+      "name": "DecorativeTitle",
+      "category": "typography",
+      "status": "experimental",
+      "source": "src/components/DecorativeTitle.tsx",
+      "storyId": "typography-decorativetitle--default",
+      "capabilities": [
+        "decorative-heading",
+        "pill-shape",
+        "thick-bottom-right-border",
+        "circular-icon",
+        "color-presets",
+        "custom-colors",
+        "svg-decoration",
+        "custom-decoration",
+        "consumer-heading-level",
+        "long-content",
+        "overlapping-icon-circle",
+        "single-line-title"
+      ],
+      "slots": [
+        "icon",
+        "title",
+        "decoration"
+      ],
+      "useWhen": [
+        "需要左右大圆角、底部和右侧厚边的特殊标题",
+        "需要圆形图标区、可覆盖的预设配色和右侧 SVG 装饰"
+      ],
+      "doNotUseWhen": [
+        "普通表单标签或需要按钮、导航、选择等交互",
+        "需要状态、图片集合或业务容器"
+      ],
+      "similarAssetsChecked": [
+        "StatusCard",
+        "ImageTitleCard",
+        "TextShine",
+        "Ant Design Typography"
+      ],
+      "differenceSummary": "StatusCard 承担运行状态，ImageTitleCard 承担图片集合与标题，TextShine 只提供文字动效；DecorativeTitle 提供静态胶囊形特殊标题、右下厚边、覆盖并贴合左端的正圆图标区与单行截断、同色系加深圆底色、无细描边和可替换 SVG 花纹，不拥有业务状态或点击行为。",
+      "aliases": [
+        "PillTitle",
+        "FeatureHeading",
+        "装饰标题"
+      ],
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/decorative-title.json",
+      "sourceComponent": "packages/react/src/components/DecorativeTitle.tsx",
+      "distribution": "source-sync",
+      "release": "0.12.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "animated-icon",
+      "name": "AnimatedIcon",
+      "category": "icon",
+      "status": "experimental",
+      "source": "src/components/AnimatedIcon.tsx",
+      "storyId": "icons-animatedicon--default",
+      "capabilities": [
+        "svg-icon-set",
+        "static-default",
+        "single-play",
+        "seamless-loop",
+        "reset-on-completion",
+        "restart-on-trigger",
+        "imperative-play-stop",
+        "current-color",
+        "reduced-motion",
+        "accessible-label",
+        "layered-motion"
+      ],
+      "slots": [],
+      "aliases": [
+        "MotionIcon",
+        "动态图标",
+        "动效图标"
+      ],
+      "useWhen": [
+        "需要具有统一默认姿态和复位动效的通用 SVG 图标",
+        "需要向按钮或标题 icon slot 注入可单次播放、循环或静态展示的图标"
+      ],
+      "doNotUseWhen": [
+        "需要图标判断业务成功、管理上传或执行复制请求",
+        "需要照片、插画、品牌标志或任意 SVG 动画编辑器"
+      ],
+      "similarAssetsChecked": [
+        "BasicButton icon slot",
+        "CompositeButton icon slot",
+        "DecorativeTitle icon slot",
+        "TextShine",
+        "Ant Design icons"
+      ],
+      "differenceSummary": "已有按钮和标题提供 icon slot，TextShine 只负责文字扫光；AnimatedIcon 统一提供 12 个原创 SVG 图形，以成对三次贝塞尔参数化平滑转角，保留圆润轮廓、适量实心细节与保持连接的整体动效，支持默认姿态、单次播放结束复位、显式循环、重播与停止、可访问标签和减少动效回退，不管理产品动作或业务状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/animated-icon.json",
+      "sourceComponent": "packages/react/src/components/AnimatedIcon.tsx",
+      "distribution": "source-sync",
+      "release": "0.12.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "model-selector",
+      "name": "ModelSelector",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/ModelSelector.tsx",
+      "storyId": "modules-modelselector--default",
+      "capabilities": [
+        "mode-selection",
+        "horizontal-mode-layout",
+        "vertical-mode-layout",
+        "source-selection",
+        "model-selection",
+        "discrete-reasoning-levels",
+        "highest-reasoning-stars",
+        "reduced-motion",
+        "controlled-selection",
+        "overflow-model-menu",
+        "automatic-popup-flip",
+        "viewport-bounded-popup",
+        "bounded-list-scroll",
+        "keyboard-selection",
+        "focus-restoration",
+        "disabled",
+        "loading",
+        "empty",
+        "error",
+        "long-content",
+        "localized-labels"
+      ],
+      "slots": [
+        "title",
+        "mode-icon",
+        "error"
+      ],
+      "aliases": [
+        "ModelPicker",
+        "模型选择器",
+        "推理强度选择器"
+      ],
+      "useWhen": [
+        "需要在紧凑面板中切换模式、来源、模型型号和离散推理档位",
+        "需要过多型号进入浮层，并在右侧或下方空间不足时自动避让",
+        "需要调用方持有选项、能力和受控选择，组件只负责呈现与交互"
+      ],
+      "doNotUseWhen": [
+        "只需要同级视图切换或单个下拉选择",
+        "需要组件连接厂商 API、管理密钥、价格、权限或持久化模型配置"
+      ],
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "CompositeButton",
+        "SectionNavigationPanel",
+        "AspectRatioSelector",
+        "Ant Design Dropdown",
+        "Ant Design Slider"
+      ],
+      "differenceSummary": "TabSwitch 负责单组同级选择，CompositeButton 负责行级动作，SectionNavigationPanel 承载分区内容，AspectRatioSelector 表达画幅；ModelSelector 组合横竖两种模式排版、可选来源入口、带溢出列表的型号单选和离散推理滑块，复用 Ant Design Dropdown 定位与 Slider，提供浮层的四向避让、窄屏回退、内部滚动和受控一致选择，不拥有产品请求、厂商能力推断或持久化。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/model-selector.json",
+      "sourceComponent": "packages/react/src/patterns/ModelSelector.tsx",
+      "distribution": "source-sync",
+      "release": "0.14.0",
+      "ownerRepository": "yisiui"
     }
   ]
 }

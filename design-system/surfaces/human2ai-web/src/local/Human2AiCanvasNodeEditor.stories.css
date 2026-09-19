@@ -1,0 +1,17 @@
+.human2ai-canvas-node-editor-story {
+  position: relative;
+  min-height: 100vh;
+  padding: var(--yisiui-space-6);
+  background: var(--yisiui-color-surface-soft);
+}
+
+.human2ai-canvas-node-editor-story--narrow {
+  width: 320px;
+}
+
+.human2ai-canvas-node-editor-story__preview {
+  width: 180px;
+  height: 120px;
+  background: var(--yisiui-color-paper-sage);
+  border-radius: var(--yisiui-radius-md);
+}

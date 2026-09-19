@@ -1,15 +1,28 @@
 import { spawn } from "node:child_process";
 import process from "node:process";
+import { fileURLToPath } from "node:url";
 
-const port = process.env.HUMAN2AI_PORT ?? "4179";
+process.env.HUMAN2AI_PORT ??= "4180";
+process.env.HUMAN2AI_DATABASE_PATH ??= fileURLToPath(
+  new URL("../.human2ai-data/human2ai.sqlite", import.meta.url),
+);
+const port = process.env.HUMAN2AI_PORT;
 const serviceUrl =
   process.env.HUMAN2AI_SERVER_URL ?? `http://127.0.0.1:${port}`;
 const children = [];
+const serviceStatus = await inspectHuman2AiService(serviceUrl);
 
-if (!(await isHuman2AiRunning(serviceUrl))) {
+if (serviceStatus === "incompatible") {
+  process.stderr.write(
+    `The Human2AI service at ${serviceUrl} does not support UI sketch drafts. Stop the old service and run npm run dev again.\n`,
+  );
+  process.exit(1);
+}
+if (serviceStatus === "unavailable") {
   children.push(runNpmScript("server:dev"));
 }
 children.push(runNpmScript("dev:web"));
+children.push(runNpmScript("build:server:watch"));
 
 let stopping = false;
 
@@ -20,16 +33,22 @@ function runNpmScript(script) {
   });
 }
 
-async function isHuman2AiRunning(baseUrl) {
+async function inspectHuman2AiService(baseUrl) {
   try {
     const response = await fetch(new URL("/api/v1/health", baseUrl), {
       signal: AbortSignal.timeout(1_000),
     });
-    if (!response.ok) return false;
+    if (!response.ok) return "unavailable";
     const payload = await response.json();
-    return payload?.service === "human2ai" && payload?.status === "ok";
+    if (payload?.service !== "human2ai" || payload?.status !== "ok") {
+      return "unavailable";
+    }
+    return Array.isArray(payload.capabilities)
+      && payload.capabilities.includes("ui-sketch-drafts")
+      ? "compatible"
+      : "incompatible";
   } catch {
-    return false;
+    return "unavailable";
   }
 }
 

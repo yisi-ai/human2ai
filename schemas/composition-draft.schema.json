@@ -4,19 +4,39 @@
   "title": "User Composition Draft",
   "type": "object",
   "additionalProperties": false,
-  "required": ["version", "kind", "frame", "focusPoints", "areas"],
+  "required": ["version", "kind", "processingSemantic", "frame", "overallNote", "focusPoints", "areas", "images"],
+  "allOf": [
+    { "if": { "required": ["states"] }, "then": { "required": ["activeStateId"] } },
+    { "if": { "required": ["activeStateId"] }, "then": { "required": ["states"] } }
+  ],
   "properties": {
+    "activeStateId": { "type": "string", "minLength": 1 },
+    "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
+    "layerOrder": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
     "version": { "const": 1 },
     "kind": { "const": "composition-draft" },
+    "processingSemantic": { "enum": [null, "scene-composition", "editorial-layout"] },
     "frame": {
       "type": "object",
       "additionalProperties": false,
       "required": ["width", "height"],
       "properties": {
         "width": { "type": "integer", "minimum": 256, "maximum": 4096 },
-        "height": { "type": "integer", "minimum": 256, "maximum": 4096 }
+        "height": { "type": "integer", "minimum": 256, "maximum": 4096 },
+        "bounds": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["x", "y", "width", "height"],
+          "properties": {
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "width": { "type": "number", "exclusiveMinimum": 0 },
+            "height": { "type": "number", "exclusiveMinimum": 0 }
+          }
+        }
       }
     },
+    "overallNote": { "type": "string" },
     "focusPoints": {
       "type": "array",
       "maxItems": 3,
@@ -28,12 +48,17 @@
         {
           "type": "object",
           "additionalProperties": false,
-          "required": ["id", "x", "y", "rotation"],
+          "required": ["id", "x", "y", "rotation", "note", "annotation", "semanticType", "shotScale"],
           "properties": {
             "id": { "const": "direction-1" },
-            "x": { "type": "number", "minimum": 0, "maximum": 1 },
-            "y": { "type": "number", "minimum": 0, "maximum": 1 },
-            "rotation": { "type": "number" }
+            "x": { "type": "number" },
+            "y": { "type": "number" },
+            "rotation": { "type": "number" },
+            "origin": { "enum": ["user", "agent", "import"] },
+            "note": { "type": "string" },
+            "annotation": { "type": "string" },
+            "semanticType": { "type": "string" },
+            "shotScale": { "enum": ["auto", "foreground", "midground", "background"] }
           }
         }
       ]
@@ -43,7 +68,7 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "primitive", "x", "y", "area", "aspect"],
+        "required": ["id", "primitive", "x", "y", "area", "aspect", "visualWeight", "note", "annotation", "semanticType", "shotScale"],
         "properties": {
           "id": { "type": "string", "pattern": "^area-[0-9]+$" },
           "primitive": { "enum": ["circle", "triangle", "quadrilateral"] },
@@ -51,28 +76,158 @@
           "y": { "type": "number" },
           "area": { "type": "number", "exclusiveMinimum": 0 },
           "aspect": { "enum": ["square", "free", "landscape", "portrait"] },
+          "visualWeight": { "enum": ["auto", "high", "medium", "low", "decorative"] },
+          "displayText": { "type": "string" },
+          "isLightSource": { "type": "boolean" },
           "rotation": { "type": "number" },
           "width": { "type": "number", "exclusiveMinimum": 0 },
-          "height": { "type": "number", "exclusiveMinimum": 0 }
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "origin": { "enum": ["user", "agent", "import"] },
+          "note": { "type": "string" },
+          "annotation": { "type": "string" },
+          "semanticType": { "type": "string" },
+          "shotScale": { "enum": ["auto", "foreground", "midground", "background"] }
         },
         "allOf": [
           {
             "if": { "properties": { "aspect": { "const": "free" } } },
             "then": { "required": ["width", "height"] }
+          },
+          {
+            "if": {
+              "properties": { "semanticType": { "const": "text-region" } },
+              "required": ["semanticType"]
+            },
+            "then": { "required": ["displayText"], "properties": { "isLightSource": { "const": false } } },
+            "else": { "not": { "required": ["displayText"] } }
           }
         ]
+      }
+    },
+    "images": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "x", "y", "width", "height", "rotation", "visualWeight", "assetId", "crop", "note", "annotation", "semanticType", "shotScale"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^image-[0-9]+$" },
+          "x": { "type": "number" },
+          "y": { "type": "number" },
+          "width": { "type": "number", "exclusiveMinimum": 0 },
+          "height": { "type": "number", "exclusiveMinimum": 0 },
+          "rotation": { "type": "number" },
+          "visualWeight": { "enum": ["auto", "high", "medium", "low", "decorative"] },
+          "cameraReference": {
+            "type": "object", "additionalProperties": false,
+            "required": ["sessionId", "cameraId", "renderedRevision"],
+            "properties": {
+              "sessionId": { "type": "string", "minLength": 1 },
+              "cameraId": { "type": "string", "minLength": 1 },
+              "renderedRevision": { "type": "integer", "minimum": 0 }
+            }
+          },
+          "assetId": {
+            "type": ["string", "null"],
+            "minLength": 1
+          },
+          "crop": {
+            "oneOf": [
+              { "type": "null" },
+              { "$ref": "#/$defs/imageCrop" }
+            ]
+          },
+          "origin": { "enum": ["user", "agent", "import"] },
+          "note": { "type": "string" },
+          "annotation": { "type": "string" },
+          "semanticType": { "type": "string" },
+          "shotScale": { "enum": ["auto", "foreground", "midground", "background"] }
+        }
       }
     }
   },
   "$defs": {
+    "state": {
+      "type": "object", "additionalProperties": false,
+      "required": ["id", "number", "layout"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "number": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "layout": {
+          "type": "object", "additionalProperties": false,
+          "required": ["frame", "layerOrder", "focusPoints", "directionLine", "areas", "images"],
+          "properties": {
+            "frame": { "allOf": [{ "$ref": "#/properties/frame" }, { "type": "object", "required": ["bounds"] }] },
+            "layerOrder": { "$ref": "#/properties/layerOrder" },
+            "focusPoints": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/layoutPoint" } },
+            "directionLine": { "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/layoutDirection" }] },
+            "areas": { "type": "array", "items": { "$ref": "#/$defs/layoutArea" } },
+            "images": { "type": "array", "items": { "$ref": "#/$defs/layoutImage" } }
+          }
+        }
+      }
+    },
+    "layoutPoint": {
+      "type": "object", "additionalProperties": false, "required": ["id", "x", "y"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^focus-[0-9]+$" },
+        "x": { "type": "number" }, "y": { "type": "number" }
+      }
+    },
+    "layoutDirection": {
+      "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "rotation"],
+      "properties": {
+        "id": { "const": "direction-1" }, "x": { "type": "number" }, "y": { "type": "number" },
+        "rotation": { "type": "number" }
+      }
+    },
+    "layoutArea": {
+      "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "area", "aspect"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^area-[0-9]+$" },
+        "x": { "type": "number" }, "y": { "type": "number" },
+        "area": { "type": "number", "exclusiveMinimum": 0 },
+        "aspect": { "enum": ["square", "free", "landscape", "portrait"] },
+        "rotation": { "type": "number" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }
+      },
+      "allOf": [{ "if": { "properties": { "aspect": { "const": "free" } } }, "then": { "required": ["width", "height"] } }]
+    },
+    "layoutImage": {
+      "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "width", "height", "rotation"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^image-[0-9]+$" },
+        "x": { "type": "number" }, "y": { "type": "number" },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 }, "rotation": { "type": "number" }
+      }
+    },
+    "imageCrop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["x", "y", "width", "height"],
+      "properties": {
+        "x": { "type": "number", "minimum": 0, "maximum": 1 },
+        "y": { "type": "number", "minimum": 0, "maximum": 1 },
+        "width": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 },
+        "height": { "type": "number", "exclusiveMinimum": 0, "maximum": 1 }
+      }
+    },
     "point": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["id", "x", "y"],
+      "required": ["id", "x", "y", "note", "annotation", "semanticType", "shotScale"],
       "properties": {
         "id": { "type": "string", "pattern": "^focus-[0-9]+$" },
-        "x": { "type": "number", "minimum": 0, "maximum": 1 },
-        "y": { "type": "number", "minimum": 0, "maximum": 1 }
+        "x": { "type": "number" },
+        "y": { "type": "number" },
+        "origin": { "enum": ["user", "agent", "import"] },
+        "note": { "type": "string" },
+        "annotation": { "type": "string" },
+        "semanticType": { "type": "string" },
+        "shotScale": { "enum": ["auto", "foreground", "midground", "background"] }
       }
     }
   }

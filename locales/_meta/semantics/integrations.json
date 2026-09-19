@@ -1,0 +1,80 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "integrations",
+  "concepts": {
+    "integrations.visual-workspace-description": {
+      "meaning": "A short capability description for connecting an Agent to the local visual workspace to create and edit compositions, UI sketches, and 3D spaces.",
+      "scope": "WorkBuddy connector listing, bundled Skill discovery metadata, and standalone Skill marketplace listing.",
+      "referent": "Human2AI's existing browser workspace and CLI collaboration capabilities.",
+      "precedence": "Describes the product's capabilities; does not promise hosted storage, image generation, or automatic implementation of a finished application.",
+      "canonicalKey": "integrations.workbuddy.description",
+      "searchTerms": ["连接器", "本地视觉工作区", "connector", "local visual workspace"],
+      "examples": ["Explain which visual artifacts the installed connector lets an Agent edit."],
+      "nonExamples": ["Name an individual session.", "Advertise a hosted image-generation service."]
+    },
+    "integrations.composition-example": {
+      "meaning": "An example user request to recover the composition of a supplied reference image as an editable canvas.",
+      "scope": "WorkBuddy connector marketplace usage examples.",
+      "referent": "The existing reference-projection workflow for composition sessions.",
+      "precedence": "Communicates user intent without prescribing literal outlines or promising pixel-identical reconstruction.",
+      "canonicalKey": "integrations.workbuddy.examples.composition",
+      "searchTerms": ["参考图构图", "连接器示例", "reference composition", "connector example"],
+      "examples": ["Ask to put a reference image's composition onto an editable canvas."],
+      "nonExamples": ["Generate a finished photograph.", "Trace every object outline."]
+    },
+    "integrations.ui-sketch-example": {
+      "meaning": "An example user request to edit an existing UI sketch according to its notes and export a preview.",
+      "scope": "WorkBuddy connector marketplace usage examples.",
+      "referent": "The existing UI-layout capture editing and preview-export workflow.",
+      "precedence": "Refers to the editable sketch; does not promise production code or changes to a deployed application.",
+      "canonicalKey": "integrations.workbuddy.examples.uiSketch",
+      "searchTerms": ["UI 草图", "导出预览", "UI sketch", "export preview"],
+      "examples": ["Ask the Agent to adjust a sketch using the user's notes."],
+      "nonExamples": ["Deploy a finished website.", "Change an unrelated application."]
+    },
+    "integrations.spatial-example": {
+      "meaning": "An example user request to create a 3D space, pose a character, and export the camera view.",
+      "scope": "WorkBuddy connector marketplace usage examples.",
+      "referent": "The existing spatial session, character posing, and camera rendering capabilities.",
+      "precedence": "The exported view represents the authored scene; it is not a promise to generate a photorealistic image or animation.",
+      "canonicalKey": "integrations.workbuddy.examples.spatial",
+      "searchTerms": ["3D 空间", "人物姿势", "3D space", "character pose"],
+      "examples": ["Ask the Agent to pose a character and export a camera view."],
+      "nonExamples": ["Generate an animated film.", "Modify a composition without a spatial session."]
+    }
+  },
+  "keys": {
+    "integrations.workbuddy.description": {
+      "conceptId": "integrations.visual-workspace-description",
+      "variant": "marketplace-description",
+      "role": "connector capability description and bundled or standalone Skill discovery summary",
+      "grammar": "complete sentence describing available actions",
+      "tone": "direct and factual",
+      "reusePolicy": "canonical"
+    },
+    "integrations.workbuddy.examples.composition": {
+      "conceptId": "integrations.composition-example",
+      "variant": "marketplace-prompt",
+      "role": "example user request",
+      "grammar": "imperative sentence",
+      "tone": "natural and conversational",
+      "reusePolicy": "canonical"
+    },
+    "integrations.workbuddy.examples.uiSketch": {
+      "conceptId": "integrations.ui-sketch-example",
+      "variant": "marketplace-prompt",
+      "role": "example user request",
+      "grammar": "imperative sentence",
+      "tone": "natural and conversational",
+      "reusePolicy": "canonical"
+    },
+    "integrations.workbuddy.examples.spatial": {
+      "conceptId": "integrations.spatial-example",
+      "variant": "marketplace-prompt",
+      "role": "example user request",
+      "grammar": "imperative sentence",
+      "tone": "natural and conversational",
+      "reusePolicy": "canonical"
+    }
+  }
+}

@@ -2,7 +2,9 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 
 import {
   InvalidRecordError,
+  ProjectNameConflictError,
   ProjectNotFoundError,
+  ProjectNotEmptyError,
   ProjectSessionRepository,
   RevisionConflictError,
   SessionNotFoundError,
@@ -39,6 +41,15 @@ interface MoveSessionBody {
   expectedRevision: number;
 }
 
+interface RenameSessionBody {
+  title: string;
+  expectedRevision: number;
+}
+
+interface DeleteSessionBody {
+  expectedRevision: number;
+}
+
 const nullableStringSchema = {
   anyOf: [{ type: "null" }, { type: "string" }],
 } as const;
@@ -70,12 +81,13 @@ const projectSchema = {
   },
 } as const;
 
-const sessionSchema = {
+export const sessionSchema = {
   type: "object",
   additionalProperties: false,
   required: [
     "id",
     "projectId",
+    "styleId",
     "sessionType",
     "title",
     "lifecycleStage",
@@ -86,6 +98,7 @@ const sessionSchema = {
   properties: {
     id: { type: "string" },
     projectId: nullableStringSchema,
+    styleId: nullableStringSchema,
     sessionType: { type: "string", enum: SESSION_TYPES },
     title: { type: "string" },
     lifecycleStage: {
@@ -106,6 +119,7 @@ const errorSchema = {
     code: { type: "string" },
     message: { type: "string" },
     actualRevision: { type: "integer", minimum: 1 },
+    sessionCount: { type: "integer", minimum: 1 },
   },
 } as const;
 
@@ -151,7 +165,7 @@ export function registerProjectSessionRoutes(
             description: nullableDescriptionSchema,
           },
         },
-        response: { 201: projectSchema, 400: errorSchema },
+        response: { 201: projectSchema, 400: errorSchema, 409: errorSchema },
       },
     },
     async (request, reply) =>
@@ -197,6 +211,32 @@ export function registerProjectSessionRoutes(
     async (request, reply) =>
       execute(reply, 200, () =>
         repository.updateProject(request.params.projectId, request.body),
+      ),
+  );
+
+  server.delete<{ Params: ProjectParams; Body: DeleteSessionBody }>(
+    "/api/v1/projects/:projectId",
+    {
+      schema: {
+        params: idParamsSchema("projectId"),
+        body: {
+          type: "object",
+          additionalProperties: false,
+          required: ["expectedRevision"],
+          properties: {
+            expectedRevision: { type: "integer", minimum: 1 },
+          },
+        },
+        response: {
+          400: errorSchema,
+          404: errorSchema,
+          409: errorSchema,
+        },
+      },
+    },
+    async (request, reply) =>
+      execute(reply, 204, () =>
+        repository.deleteProject(request.params.projectId, request.body),
       ),
   );
 
@@ -293,6 +333,60 @@ export function registerProjectSessionRoutes(
       execute(reply, 200, () => repository.getSession(request.params.sessionId)),
   );
 
+  server.patch<{ Params: SessionParams; Body: RenameSessionBody }>(
+    "/api/v1/sessions/:sessionId",
+    {
+      schema: {
+        params: idParamsSchema("sessionId"),
+        body: {
+          type: "object",
+          additionalProperties: false,
+          required: ["title", "expectedRevision"],
+          properties: {
+            title: { type: "string", minLength: 1, maxLength: 200 },
+            expectedRevision: { type: "integer", minimum: 1 },
+          },
+        },
+        response: {
+          200: sessionSchema,
+          400: errorSchema,
+          404: errorSchema,
+          409: errorSchema,
+        },
+      },
+    },
+    async (request, reply) =>
+      execute(reply, 200, () =>
+        repository.renameSession(request.params.sessionId, request.body),
+      ),
+  );
+
+  server.delete<{ Params: SessionParams; Body: DeleteSessionBody }>(
+    "/api/v1/sessions/:sessionId",
+    {
+      schema: {
+        params: idParamsSchema("sessionId"),
+        body: {
+          type: "object",
+          additionalProperties: false,
+          required: ["expectedRevision"],
+          properties: {
+            expectedRevision: { type: "integer", minimum: 1 },
+          },
+        },
+        response: {
+          400: errorSchema,
+          404: errorSchema,
+          409: errorSchema,
+        },
+      },
+    },
+    async (request, reply) =>
+      execute(reply, 204, () =>
+        repository.deleteSession(request.params.sessionId, request.body),
+      ),
+  );
+
   server.patch<{ Params: SessionParams; Body: MoveSessionBody }>(
     "/api/v1/sessions/:sessionId/project",
     {
@@ -323,7 +417,7 @@ export function registerProjectSessionRoutes(
 
 function execute<T>(
   reply: FastifyReply,
-  successStatus: 200 | 201,
+  successStatus: 200 | 201 | 204,
   operation: () => T,
 ): T | FastifyReply {
   try {
@@ -340,6 +434,16 @@ function execute<T>(
         code: error.code,
         message: error.message,
         actualRevision: error.actualRevision,
+      });
+    }
+    if (error instanceof ProjectNameConflictError) {
+      return reply.code(409).send({ code: error.code, message: error.message });
+    }
+    if (error instanceof ProjectNotEmptyError) {
+      return reply.code(409).send({
+        code: error.code,
+        message: error.message,
+        sessionCount: error.sessionCount,
       });
     }
     if (error instanceof InvalidRecordError) {

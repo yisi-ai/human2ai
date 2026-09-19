@@ -9,7 +9,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "motion-borderscan",
-  title: "Components/Motion/BorderScan",
+  title: "yisiui-Components/Motion/BorderScan",
   component: BorderScan,
   parameters: { layout: "padded" },
   argTypes: {

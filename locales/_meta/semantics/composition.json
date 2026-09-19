@@ -1,0 +1,1914 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "composition",
+  "concepts": {
+    "composition.editable-view": {
+      "meaning": "The user-editable composition view that presents the current authored draft before any Agent refinement, named after the composition being edited rather than its draft lifecycle state.",
+      "scope": "The editable composition tab and the accessible name of its authored-draft canvas.",
+      "referent": "The current user-authored composition and its editable canvas.",
+      "precedence": "Peer to the Agent-refined and preview views; distinct from the composition feature's navigation entry, draft revision metadata, and workflow status messages.",
+      "canonicalKey": "composition.views.draft",
+      "searchTerms": [
+        "构图",
+        "草图",
+        "Composition",
+        "Sketch",
+        "editable composition"
+      ],
+      "examples": [
+        "Select Composition to return from Preview to editing the current composition."
+      ],
+      "nonExamples": [
+        "The navigation entry that opens the composition feature.",
+        "A draft revision number or unsaved-changes status.",
+        "The read-only Agent refinement or preview view."
+      ]
+    },
+    "composition.flow": {
+      "meaning": "A user-placed straight marker that expresses the intended visual movement or compositional sweep through an image by its position and angle, without prescribing an arrow direction or requiring a literal line in the final image.",
+      "scope": "The composition draft toolbar, canvas node editor, accessible canvas labels, and exported image-generation prompt.",
+      "referent": "The single movable and rotatable infinite line marker stored in a composition draft.",
+      "precedence": "Peer to focal points and content regions; it informs their overall visual relationship but remains distinct from the guide grid, axes derived during Agent refinement, and final artwork.",
+      "canonicalKey": "composition.flow.label",
+      "searchTerms": [
+        "动势线",
+        "动势",
+        "方向线",
+        "Flow",
+        "visual flow",
+        "direction line"
+      ],
+      "examples": [
+        "A diagonal marker expressing a rising sweep through the composition.",
+        "A horizontal marker expressing a calm visual flow across the image."
+      ],
+      "nonExamples": [
+        "An arrow with a start point and destination.",
+        "A focus or area axis calculated during Agent refinement.",
+        "A guide-grid line used only for editor alignment.",
+        "A literal stroke that must appear in the generated image."
+      ]
+    },
+    "composition.flow-control-point": {
+      "meaning": "One of two freely movable editing points on the infinite composition flow line; moving either point sets the line through that point and the other stationary point.",
+      "scope": "Accessible names of the two controls shown when the composition flow line is selected.",
+      "referent": "An editor-only point identified by its number, without assigning a start, end, or arrow direction to the infinite line.",
+      "precedence": "A control belonging to composition flow, distinct from a focal point, the whole-line selection, and the former rotation handle.",
+      "canonicalKey": "composition.flow.controlPoint",
+      "searchTerms": ["动势线操作点", "控制点", "flow control point", "two-point line control"],
+      "examples": ["Drag control point 1 while control point 2 stays fixed.", "Use arrow keys to adjust the focused flow control point."],
+      "nonExamples": ["A focal point in the composition.", "The destination of a directed arrow.", "A finite line endpoint."]
+    },
+    "composition.element-capacity": {
+      "meaning": "A compact status showing how many instances of one composition element are currently placed on the canvas compared with that element's placement limit.",
+      "scope": "The supplementary text and accessible name of composition toolbar actions that have an explicit placement limit.",
+      "referent": "The current draft's placed instance count and configured maximum for the specific toolbar element.",
+      "precedence": "Supplementary to the element label and action state; distinct from the session-wide node count, selection count, and remaining number of placements.",
+      "canonicalKey": "composition.elementCapacity.compact",
+      "searchTerms": [
+        "n/n",
+        "已放置",
+        "放置上限",
+        "placed count",
+        "placement limit",
+        "element capacity"
+      ],
+      "examples": [
+        "1/3 beside the Focus tool when one of three focal points is on the canvas.",
+        "1/1 beside the Flow tool when its single allowed line is on the canvas."
+      ],
+      "nonExamples": [
+        "The total number of all nodes in the session.",
+        "The number of currently selected canvas items.",
+        "A count of placements remaining before the limit is reached."
+      ]
+    },
+    "composition.clear-canvas": {
+      "meaning": "A destructive action that replaces the current composition draft with a blank default draft and restores the composition editor's default view, frame, guide, lock, zoom, and selection state.",
+      "scope": "The icon-only action beside the composition workbench's tool-section heading and its destructive confirmation.",
+      "referent": "The current composition draft and its transient editor presentation state, without deleting the session itself.",
+      "precedence": "Broader than deleting selected composition nodes; distinct from clearing only UI-sketch content because it also restores composition defaults and clears draft-level settings and notes. Clearing draft content is one undoable editor operation in the current open session.",
+      "canonicalKey": "composition.clearCanvas",
+      "searchTerms": [
+        "清空画布",
+        "重置构图",
+        "Clear canvas",
+        "reset composition"
+      ],
+      "examples": [
+        "Clear all composition elements and return the draft frame and editor view to their defaults."
+      ],
+      "nonExamples": [
+        "Delete only the selected composition node.",
+        "Reset only the composition frame ratio.",
+        "Delete the composition session."
+      ]
+    },
+    "composition.depth": {
+      "meaning": "The intended foreground, midground, or background placement and occlusion relationship of a composition element; Auto leaves this unspecified.",
+      "scope": "Composition node metadata controls and exported image-generation prompts.",
+      "referent": "The relative spatial depth stored in the legacy shotScale field.",
+      "precedence": "The project term 景别 means front-to-back layering, not camera framing or shot size. It differs from visual weight, node size, and UI stacking order; Auto omits the depth line in exported prompts.",
+      "canonicalKey": "composition.depth.label",
+      "searchTerms": [
+        "景别",
+        "前后遮挡层次",
+        "空间层次",
+        "Depth",
+        "shotScale",
+        "foreground",
+        "midground",
+        "background"
+      ],
+      "examples": [
+        "Place a text region in the foreground.",
+        "Let the model decide depth when Auto is selected."
+      ],
+      "nonExamples": [
+        "Choose a close-up versus a wide shot.",
+        "Assign high visual weight."
+      ]
+    },
+    "composition.mode": {
+      "meaning": "The user-selected interpretation of all composition regions as a scene or an editorial layout.",
+      "scope": "Composition mode selector and mode-dependent image-generation guidance.",
+      "referent": "The draft processingSemantic value: scene-composition, editorial-layout, or null.",
+      "precedence": "Global interpretation, not per-node depth or an Agent-selected refinement method. A null value is genuinely unselected and must not be inferred from content.",
+      "canonicalKey": "composition.mode.label",
+      "searchTerms": [
+        "构图模式",
+        "场景构图",
+        "版式编排",
+        "Mode",
+        "Scene",
+        "Editorial",
+        "processingSemantic"
+      ],
+      "examples": [
+        "Choose Scene so text can participate in perspective and occlusion.",
+        "Choose Editorial for static layout, hierarchy, and spacing."
+      ],
+      "nonExamples": [
+        "Automatically choose a mode because the draft has text.",
+        "Select one aesthetic refinement method."
+      ]
+    },
+    "composition.area-summary": {
+      "meaning": "A summary of geometric area coverage relationships within the current composition frame.",
+      "scope": "Composition area overview panel and prompt metrics section.",
+      "referent": "Approximate draft-region coverage metrics.",
+      "precedence": "The UI heading introduces area metrics; the prompt heading describes image relationships. Not a node list or exact final-image analysis.",
+      "canonicalKey": "composition.areaOverview",
+      "searchTerms": [
+        "面积概览",
+        "整体画面关系",
+        "Area overview",
+        "image relationships"
+      ],
+      "examples": [
+        "Group occupied area and negative-space percentages."
+      ],
+      "nonExamples": [
+        "List every node name."
+      ]
+    },
+    "composition.occupied-area": {
+      "meaning": "The approximate proportion of the current frame covered by the union of draft area-region geometries.",
+      "scope": "Composition area statistics and prompt coverage line.",
+      "referent": "calculateVisibleAreaMetrics occupiedArea, sampled inside the frame from draft.areas.",
+      "precedence": "Overlaps count only once and out-of-frame portions are excluded. Image nodes, focus points and flow markers do not contribute to this metric; it is not final artwork pixel occupancy.",
+      "canonicalKey": "composition.occupied",
+      "searchTerms": [
+        "画面占用",
+        "Occupied",
+        "主要内容占比",
+        "occupied area",
+        "coverage"
+      ],
+      "examples": [
+        "Report 40% when area regions cover about two fifths of the frame."
+      ],
+      "nonExamples": [
+        "Sum overlapping region areas without deduplication.",
+        "Measure the nontransparent pixels of an uploaded image."
+      ]
+    },
+    "composition.negative-space": {
+      "meaning": "The approximate proportion of the composition frame not covered by draft area-region geometries.",
+      "scope": "Composition area statistics and prompt negative-space line.",
+      "referent": "One minus the occupiedArea metric.",
+      "precedence": "Complementary to occupied area using the same sampled frame and geometry boundaries; not transparent pixels or a requirement to leave the final artwork literally empty.",
+      "canonicalKey": "composition.negativeSpace",
+      "searchTerms": [
+        "负空间",
+        "Negative space",
+        "留白",
+        "uncovered area"
+      ],
+      "examples": [
+        "Report 60% negative space when occupied area is 40%."
+      ],
+      "nonExamples": [
+        "Measure gaps between UI components.",
+        "Count only transparent image pixels."
+      ]
+    },
+    "composition.circle-region": {
+      "meaning": "A circle-shaped editable region used to indicate approximate visual content distribution.",
+      "scope": "Composition region-creation toolbar.",
+      "referent": "A draft area created with the circle primitive.",
+      "precedence": "Editor geometry is a spatial cue, not a fixed silhouette required in the final artwork; distinct from text regions and imported image nodes.",
+      "canonicalKey": "composition.toolNames.circle",
+      "searchTerms": [
+        "圆形",
+        "Circle",
+        "circle",
+        "content footprint"
+      ],
+      "examples": [
+        "Add a circle region to indicate approximate subject coverage."
+      ],
+      "nonExamples": [
+        "Require the generated image to reproduce the complete editor outline."
+      ]
+    },
+    "composition.triangle-region": {
+      "meaning": "A triangle-shaped editable region used to indicate approximate visual content distribution.",
+      "scope": "Composition region-creation toolbar.",
+      "referent": "A draft area created with the triangle primitive.",
+      "precedence": "Editor geometry is a spatial cue, not a fixed silhouette required in the final artwork; distinct from text regions and imported image nodes.",
+      "canonicalKey": "composition.toolNames.triangle",
+      "searchTerms": [
+        "三角形",
+        "Triangle",
+        "triangle",
+        "content footprint"
+      ],
+      "examples": [
+        "Add a triangle region to indicate approximate subject coverage."
+      ],
+      "nonExamples": [
+        "Require the generated image to reproduce the complete editor outline."
+      ]
+    },
+    "composition.rectangle-region": {
+      "meaning": "A rectangle-shaped editable region used to indicate approximate visual content distribution.",
+      "scope": "Composition region-creation toolbar.",
+      "referent": "A draft area created with the quadrilateral with free aspect primitive.",
+      "precedence": "Editor geometry is a spatial cue, not a fixed silhouette required in the final artwork; distinct from text regions and imported image nodes.",
+      "canonicalKey": "composition.toolNames.quadrilateral",
+      "searchTerms": [
+        "矩形",
+        "Rectangle",
+        "quadrilateral with free aspect",
+        "content footprint"
+      ],
+      "examples": [
+        "Add a rectangle region to indicate approximate subject coverage."
+      ],
+      "nonExamples": [
+        "Require the generated image to reproduce the complete editor outline."
+      ]
+    },
+    "composition.visual-focus": {
+      "meaning": "A user-placed point expressing intended visual attention in the composition.",
+      "scope": "Composition focus tool, placement-count accessible label, and exported focal-point section.",
+      "referent": "A draft focus point and its intended visual position.",
+      "precedence": "Not keyboard focus, a physical region area, or an automatic consequence of high visual weight. Prompt numbering is one-based order within focusPoints, not a persistent identifier.",
+      "canonicalKey": "composition.toolNames.focus",
+      "searchTerms": [
+        "焦点",
+        "视觉焦点",
+        "Focus",
+        "Visual focal points"
+      ],
+      "examples": [
+        "Place a focus point near the intended face location."
+      ],
+      "nonExamples": [
+        "Focus a text input.",
+        "Treat every high-weight region as a focal point."
+      ]
+    },
+    "composition.content-regions": {
+      "meaning": "The draft area regions expressing the distribution and extent of intended visual content.",
+      "scope": "The content-region section of exported composition prompts.",
+      "referent": "The inspected draft areas, including text regions in the shared area sequence.",
+      "precedence": "These are visual influence regions, not final object silhouettes or UI containers. Individual ordinary regions use Content region while text regions use Text region; both share one-based order in the same area list. Image nodes have a separate export section.",
+      "canonicalKey": "composition.prompt.areaHeading",
+      "searchTerms": [
+        "主要内容分布",
+        "内容区域",
+        "Main content distribution",
+        "Content region"
+      ],
+      "examples": [
+        "Describe the first ordinary area as Content region #1."
+      ],
+      "nonExamples": [
+        "Use the exported number as a stable node identifier.",
+        "Describe a DOM container hierarchy."
+      ]
+    },
+    "composition.text-region": {
+      "meaning": "An editable composition area that must contain visible typography in the final artwork.",
+      "scope": "Composition text-region creation tool, node-kind label, numbered exported area headings, and typography requirements in image-generation prompts.",
+      "referent": "A free rectangular area marked semanticType text-region.",
+      "precedence": "Distinct from a plain shape region and from the textContent field containing its literal copy. Blank display text requests model-created copy, not omission of typography. Prompt numbering follows the shared area sequence, not a separate text-only count.",
+      "canonicalKey": "composition.toolNames.textRegion",
+      "searchTerms": [
+        "文字区域",
+        "Text region",
+        "typography area",
+        "text-region"
+      ],
+      "examples": [
+        "Add a text region for a headline and describe its placement."
+      ],
+      "nonExamples": [
+        "Add a region with no typography requirement.",
+        "Treat the region name as the literal text to render."
+      ]
+    },
+    "composition.prompt-layout-intent": {
+      "meaning": "Instructions for interpreting the composition draft as image layout intent rather than literal editor geometry.",
+      "scope": "The opening and layout-guidance sections of exported image-generation prompts.",
+      "referent": "The desired final image, draft spatial relationships, and optional supplied reference image.",
+      "precedence": "Preserves relative visual relationships while permitting reconstruction, overlap and bleed; existing mode-specific instructions determine scene versus editorial interpretation. It is not UI implementation guidance or a demand to reproduce outlines.",
+      "canonicalKey": "composition.prompt.title",
+      "searchTerms": [
+        "整体布局要求",
+        "参考图",
+        "视觉影响范围",
+        "image layout intent",
+        "spatial cue",
+        "not line art"
+      ],
+      "examples": [
+        "Ask for an image using relative content placement and an optional reference."
+      ],
+      "nonExamples": [
+        "Build DOM wrappers matching every draft rectangle.",
+        "Trace the reference image outlines."
+      ]
+    },
+    "composition.prompt-position": {
+      "meaning": "Reference positions expressed as percentages of the overall image width and height from its top-left corner.",
+      "scope": "Composition exported focus, area and image position lines and coordinate-origin guidance.",
+      "referent": "Inspected focus positions or area/image centers relative to the composition frame.",
+      "precedence": "Percentages, not pixels; these describe approximate placement rather than fixed final geometry. The image origin is separate from the infinite editor viewport origin.",
+      "canonicalKey": "composition.prompt.referencePosition",
+      "searchTerms": [
+        "参考位置",
+        "距左",
+        "距上",
+        "reference position",
+        "percentages",
+        "0%, 0%"
+      ],
+      "examples": [
+        "Describe a region center at 25% from the left and 40% from the top."
+      ],
+      "nonExamples": [
+        "Specify CSS left: 25px.",
+        "Report a viewport camera position."
+      ]
+    },
+    "composition.output-aspect-ratio": {
+      "meaning": "The intended output image width-to-height ratio derived from the current frame dimensions.",
+      "scope": "The composition frame ratio controls and output-ratio line of composition prompts.",
+      "referent": "The reduced width:height ratio supplied by the exporter.",
+      "precedence": "A ratio rather than pixel dimensions; not viewport zoom or an element aspect ratio.",
+      "canonicalKey": "composition.prompt.outputRatio",
+      "searchTerms": [
+        "输出比例",
+        "Output ratio",
+        "aspect ratio"
+      ],
+      "examples": [
+        "Request a 16:9 image."
+      ],
+      "nonExamples": [
+        "Require a 16 by 9 pixel image."
+      ]
+    },
+    "composition.prompt-element-area": {
+      "meaning": "A reference percentage indicating the footprint of one content region or image relative to the frame.",
+      "scope": "Per-element composition prompt area lines.",
+      "referent": "For area nodes, sampled visibleAreaShare inside the frame; for image nodes, areaShare from their bounds divided by frame area.",
+      "precedence": "Not the union coverage of all areas. The image calculation does not clip to the frame and can exceed 100%; neither calculation analyzes final-image pixels.",
+      "canonicalKey": "composition.prompt.referenceArea",
+      "searchTerms": [
+        "可见内容占比",
+        "reference area",
+        "element coverage",
+        "visibleAreaShare",
+        "areaShare"
+      ],
+      "examples": [
+        "Describe one region coverage relative to the whole image."
+      ],
+      "nonExamples": [
+        "Report total occupied area with overlap counted once."
+      ]
+    },
+    "composition.prompt-orientation": {
+      "meaning": "The approximate angular tendency of one region or image visual distribution.",
+      "scope": "Per-element composition prompt rotation lines.",
+      "referent": "The inspected element rotation in degrees.",
+      "precedence": "A compositional orientation cue, not an instruction to rotate the entire image or a motion duration; omitted for effectively zero rotation.",
+      "canonicalKey": "composition.prompt.referenceRotation",
+      "searchTerms": [
+        "视觉分布倾向",
+        "reference rotation",
+        "visual distribution",
+        "degrees"
+      ],
+      "examples": [
+        "Describe a region tilt of roughly 15 degrees."
+      ],
+      "nonExamples": [
+        "Rotate the browser viewport."
+      ]
+    },
+    "composition.prompt-frame-overflow": {
+      "meaning": "The sides of the composition frame beyond which a region or image extends.",
+      "scope": "Per-element clipping statements in exported composition prompts.",
+      "referent": "The inspected clippedSides list and its localized side names.",
+      "precedence": "Frame overflow, not hidden visibility or destructive cropping. Side words are lowercase values inside a sentence, not editor movement commands; separators format a list.",
+      "canonicalKey": "composition.prompt.referenceClipping",
+      "searchTerms": [
+        "内容延伸至画面之外",
+        "上侧",
+        "下侧",
+        "左侧",
+        "右侧",
+        "extends beyond",
+        "clipped sides"
+      ],
+      "examples": [
+        "Describe content extending past the top and right of the image."
+      ],
+      "nonExamples": [
+        "Delete content outside the frame.",
+        "Move an element left by one pixel."
+      ]
+    },
+    "composition.refined-view": {
+      "meaning": "The read-only view of an independently saved Agent refinement result matching the current authored draft; adjustment magnitude is decided by the Agent.",
+      "scope": "Composition workbench refined tab and canvas.",
+      "referent": "The refinedDraft in the available refinement result.",
+      "precedence": "The tab is unavailable when the result is absent, stale or fails validation; selecting it does not start refinement. Distinct from the editable draft and generation preview.",
+      "canonicalKey": "composition.views.refined",
+      "searchTerms": [
+        "精修",
+        "加工",
+        "Refined",
+        "Agent-refined composition",
+        "refined view"
+      ],
+      "examples": [
+        "Inspect a valid refinement result without editing its canvas."
+      ],
+      "nonExamples": [
+        "Trigger Agent processing by clicking the tab.",
+        "Overwrite the authored draft or apply a bound style to it."
+      ]
+    },
+    "composition.reference-view": {
+      "meaning": "The structural preview intended as a reference for image generation.",
+      "scope": "Composition workbench preview tab and reference canvas.",
+      "referent": "The validated refined draft when available, otherwise the current authored draft, rendered in reference appearance.",
+      "precedence": "A preview of composition structure, not the final generated artwork or an uploaded source image; selecting it does not copy or download an image.",
+      "canonicalKey": "composition.views.reference",
+      "searchTerms": [
+        "预览",
+        "Preview",
+        "用于生图的结构参考",
+        "Composition structure for image generation"
+      ],
+      "examples": [
+        "Inspect the authored draft reference when no valid refinement exists."
+      ],
+      "nonExamples": [
+        "Display a completed AI-generated image."
+      ]
+    },
+    "composition.view-selection": {
+      "meaning": "The selection among authored, refined and reference representations of one composition.",
+      "scope": "The composition view-switch control.",
+      "referent": "The current workbench representation, not another session or animation stage.",
+      "precedence": "The same composition under different representations; the refined choice is gated by result availability.",
+      "canonicalKey": "composition.views.switch",
+      "searchTerms": [
+        "构图视图",
+        "Composition view",
+        "view selector"
+      ],
+      "examples": [
+        "Switch from editable Composition to Preview."
+      ],
+      "nonExamples": [
+        "Switch between interface animation stages."
+      ]
+    },
+    "composition.workspace": {
+      "meaning": "The workbench region containing the composition canvas and its available representations.",
+      "scope": "The composition page canvas section landmark.",
+      "referent": "The page-level canvas workspace.",
+      "precedence": "Contains the selected view; distinct from the infinite viewport, a particular draft canvas, or the application sidebar.",
+      "canonicalKey": "composition.workspace",
+      "searchTerms": [
+        "画布工作区",
+        "Canvas workspace"
+      ],
+      "examples": [
+        "Name the section containing the composition workflow view."
+      ],
+      "nonExamples": [
+        "Name the project navigation sidebar."
+      ]
+    },
+    "composition.selected-items": {
+      "meaning": "The currently selected composition node identifiers displayed in the area overview.",
+      "scope": "Composition area-overview selection summary.",
+      "referent": "The current selectedItemIds list, or its absence.",
+      "precedence": "Not all draft nodes, an unset composition mode, or missing saved data. None is a fallback display value rather than a stored node name.",
+      "canonicalKey": "composition.currentSelection",
+      "searchTerms": [
+        "当前选择",
+        "无",
+        "Current selection",
+        "None"
+      ],
+      "examples": [
+        "List the identifiers of selected nodes."
+      ],
+      "nonExamples": [
+        "Count every node in the session."
+      ]
+    },
+    "composition.refinement-rationale": {
+      "meaning": "The Agent-authored reasoning supplied with the applied composition refinement plan.",
+      "scope": "Rationale section in the validated refinement summary.",
+      "referent": "refinement.plan.rationale.",
+      "precedence": "Explanatory text, not a model-confidence score, an action to ask the Agent, or the audit result.",
+      "canonicalKey": "composition.workflow.agentDecision",
+      "searchTerms": [
+        "Agent 判断",
+        "Agent decision",
+        "rationale"
+      ],
+      "examples": [
+        "Read why the Agent selected a refinement approach."
+      ],
+      "nonExamples": [
+        "Start another Agent decision process."
+      ]
+    },
+    "composition.applied-methods": {
+      "meaning": "The refinement methods and versions actually applied to produce the displayed result.",
+      "scope": "Method list in the validated refinement summary.",
+      "referent": "refinement.appliedOperations method and methodVersion values.",
+      "precedence": "Not the catalog of available methods or the unexecuted plan alone.",
+      "canonicalKey": "composition.workflow.appliedMethods",
+      "searchTerms": [
+        "执行方法",
+        "Applied methods",
+        "method version"
+      ],
+      "examples": [
+        "Display an executed method with its version."
+      ],
+      "nonExamples": [
+        "Offer all possible refinement methods for selection."
+      ]
+    },
+    "composition.refinement-audit": {
+      "meaning": "Observed geometric differences between the independent refinement result and its source draft, recorded for comparison without fixed aesthetic magnitude limits.",
+      "scope": "Change summary section in the refinement result.",
+      "referent": "refinement.audit.changes values computed from the source and refined drafts.",
+      "precedence": "Displayed values are observed maximum changes, not configured permitted limits, safety scores, or cumulative changes across sessions.",
+      "canonicalKey": "composition.workflow.protectionAudit",
+      "searchTerms": [
+        "变化记录",
+        "Changes",
+        "refinement comparison",
+        "maximum shift"
+      ],
+      "examples": [
+        "Inspect measured displacement after a refinement."
+      ],
+      "nonExamples": [
+        "Interpret a displayed change as the maximum allowed limit."
+      ]
+    },
+    "composition.feature": {
+      "meaning": "The image-composition planning feature entered from the home page.",
+      "scope": "Home-page composition feature-entry heading.",
+      "referent": "The composition workbench as a product capability.",
+      "precedence": "Distinct from the editable-view tab within an already open session and the title of a particular session.",
+      "canonicalKey": "navigation.composition",
+      "searchTerms": [
+        "构图",
+        "Composition",
+        "feature entry"
+      ],
+      "examples": [
+        "Identify the composition feature above its Start button."
+      ],
+      "nonExamples": [
+        "Select the editable Composition tab in an open session."
+      ]
+    },
+    "composition.guide-grid": {
+      "meaning": "An editor-only rule-of-thirds grid over the composition frame.",
+      "scope": "Composition frame controls and authored/refined canvas guide display.",
+      "referent": "Two horizontal and two vertical lines dividing the frame into thirds.",
+      "precedence": "Presentation aid, not persisted content geometry, UI layout grid, or a line to draw in the exported reference.",
+      "canonicalKey": "composition.showGuideGrid",
+      "searchTerms": [
+        "九宫线",
+        "开启九宫线",
+        "关闭九宫线",
+        "Show grid",
+        "Hide grid",
+        "rule of thirds"
+      ],
+      "examples": [
+        "Show frame thirds to help place a focal point."
+      ],
+      "nonExamples": [
+        "Add grid lines to the final generated artwork."
+      ]
+    },
+    "composition.node-editor": {
+      "meaning": "The editor for metadata of a selected composition node.",
+      "scope": "Composition node-editor title and selected-kind label.",
+      "referent": "The selected draft node and its metadata, with its kind appended to the title.",
+      "precedence": "Not the whole session editor, a command to rename the node, or an annotation-only form.",
+      "canonicalKey": "canvasNodeEditor.title",
+      "searchTerms": [
+        "编辑节点信息",
+        "Edit node details",
+        "node metadata editor"
+      ],
+      "examples": [
+        "Title the metadata panel for a selected composition node."
+      ],
+      "nonExamples": [
+        "Rename a project in the workspace sidebar."
+      ]
+    },
+    "composition.refinement-objective": {
+      "meaning": "The intended improvement of this specific refinement, selected by the Agent.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The intended improvement of this specific refinement, selected by the Agent.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.objective",
+      "searchTerms": [
+        "精修目标",
+        "Refinement objective"
+      ],
+      "examples": [
+        "Display refinement objective when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-observations": {
+      "meaning": "Evidence the Agent read from the source composition, rather than prescribed rules.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Evidence the Agent read from the source composition, rather than prescribed rules.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.observations",
+      "searchTerms": [
+        "判断依据",
+        "Observations"
+      ],
+      "examples": [
+        "Display observations when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-uncertainties": {
+      "meaning": "Unresolved interpretations of the source composition that the Agent explicitly records.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Unresolved interpretations of the source composition that the Agent explicitly records.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.uncertainties",
+      "searchTerms": [
+        "待确认事项",
+        "Uncertainties"
+      ],
+      "examples": [
+        "Display uncertainties when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-preserve": {
+      "meaning": "Original compositional relationships the Agent intends to retain.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Original compositional relationships the Agent intends to retain.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.preserve",
+      "searchTerms": [
+        "保留关系",
+        "Preserved intent"
+      ],
+      "examples": [
+        "Display preserved intent when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-tradeoffs": {
+      "meaning": "Consequences accepted by the Agent when choosing the refinement relationships.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Consequences accepted by the Agent when choosing the refinement relationships.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.tradeoffs",
+      "searchTerms": [
+        "取舍",
+        "Tradeoffs"
+      ],
+      "examples": [
+        "Display tradeoffs when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-relations": {
+      "meaning": "Computed verification of each selected geometric relationship in the final result; not an aesthetic score.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Computed verification of each selected geometric relationship in the final result; not an aesthetic score.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.relations",
+      "searchTerms": [
+        "关系验证",
+        "Relation checks"
+      ],
+      "examples": [
+        "Display relation checks when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-retained": {
+      "meaning": "A completed refinement decision that preserves the source unchanged with an explicit reason.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A completed refinement decision that preserves the source unchanged with an explicit reason.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.retained",
+      "searchTerms": [
+        "保留原构图",
+        "Composition retained"
+      ],
+      "examples": [
+        "Display composition retained when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-target": {
+      "meaning": "The target measurement of a selected refinement relationship.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The measured relation in refinement.audit.relations.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.target",
+      "searchTerms": [
+        "目标值",
+        "Target"
+      ],
+      "examples": [
+        "Display target when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-before": {
+      "meaning": "The measurement of the selected relationship on the immutable source draft.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The measured relation in refinement.audit.relations.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.before",
+      "searchTerms": [
+        "原图测量",
+        "Before"
+      ],
+      "examples": [
+        "Display before when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-after": {
+      "meaning": "The measurement of the selected relationship on the final independent refinement result.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The measured relation in refinement.audit.relations.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.after",
+      "searchTerms": [
+        "精修测量",
+        "After"
+      ],
+      "examples": [
+        "Display after when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-error": {
+      "meaning": "The absolute error between the final measurement and the selected relation target.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The measured relation in refinement.audit.relations.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.error",
+      "searchTerms": [
+        "达成偏差",
+        "Deviation"
+      ],
+      "examples": [
+        "Display deviation when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-unmeasurable": {
+      "meaning": "The selected relationship has no meaningful measurement on the source, for example an axis on a circular mass.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The selected relationship has no meaningful measurement on the source, for example an axis on a circular mass.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.unmeasurable",
+      "searchTerms": [
+        "不适用",
+        "Not applicable"
+      ],
+      "examples": [
+        "Display not applicable when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-frame-placement": {
+      "meaning": "A selected focus, subject center or edge placed on a named frame division.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A selected focus, subject center or edge placed on a named frame division.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.framePlacement",
+      "searchTerms": [
+        "分割线定位",
+        "Frame division"
+      ],
+      "examples": [
+        "Display frame division when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-size-ratio": {
+      "meaning": "A selected length or area related to another named measurement by an explicit ratio.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A selected length or area related to another named measurement by an explicit ratio.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.sizeRatio",
+      "searchTerms": [
+        "尺寸比例",
+        "Size ratio"
+      ],
+      "examples": [
+        "Display size ratio when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-mirror-symmetry": {
+      "meaning": "A selected pair of areas mirrored in position or complete geometry about a frame axis.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A selected pair of areas mirrored in position or complete geometry about a frame axis.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.mirrorSymmetry",
+      "searchTerms": [
+        "轴对称",
+        "Mirror symmetry"
+      ],
+      "examples": [
+        "Display mirror symmetry when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-focus-flow": {
+      "meaning": "The directed local axis of an existing area or direction line aimed toward a selected focus.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "The directed local axis of an existing area or direction line aimed toward a selected focus.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.focusFlow",
+      "searchTerms": [
+        "焦点引导",
+        "Focal guidance"
+      ],
+      "examples": [
+        "Display focal guidance when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-focus-anchor": {
+      "meaning": "A selected focus placed at a named two-dimensional frame anchor.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A selected focus placed at a named two-dimensional frame anchor.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.focusAnchor",
+      "searchTerms": [
+        "焦点定位",
+        "Focus placement"
+      ],
+      "examples": [
+        "Display focus placement when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-axis-relation": {
+      "meaning": "A chosen parallel, perpendicular or mirrored relationship between focus and area axes.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A chosen parallel, perpendicular or mirrored relationship between focus and area axes.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.axisRelation",
+      "searchTerms": [
+        "轴线关系",
+        "Axis relationship"
+      ],
+      "examples": [
+        "Display axis relationship when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-rotation-alignment": {
+      "meaning": "A selected area rotated to a named direction.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "A selected area rotated to a named direction.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.rotationAlignment",
+      "searchTerms": [
+        "方向对齐",
+        "Orientation alignment"
+      ],
+      "examples": [
+        "Display orientation alignment when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-block-alignment": {
+      "meaning": "Selected area edges or centers aligned to a named anchor area.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Selected area edges or centers aligned to a named anchor area.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.blockAlignment",
+      "searchTerms": [
+        "区域对齐",
+        "Area alignment"
+      ],
+      "examples": [
+        "Display area alignment when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.refinement-spacing-rhythm": {
+      "meaning": "Selected areas spaced with equal edge gaps along an axis.",
+      "scope": "Agent refinement result explanation and relation verification.",
+      "referent": "Selected areas spaced with equal edge gaps along an axis.",
+      "precedence": "Independent of editable draft controls and style processing; describes or inspects an existing refinement result.",
+      "canonicalKey": "composition.refinement.spacingRhythm",
+      "searchTerms": [
+        "等距排列",
+        "Equal spacing"
+      ],
+      "examples": [
+        "Display equal spacing when inspecting an Agent refinement."
+      ],
+      "nonExamples": [
+        "Start style processing or change the source draft."
+      ]
+    },
+    "composition.light-source": {
+      "meaning": "An authored lighting intention expressed at the same approximate level as other composition regions. Rectangles suggest band-shaped or extended illumination, circles suggest localized illumination. Preserve the lighting contribution and broad spatial relationship while allowing the final light to change width, length, curvature, continuity, edges and strength with the scene. Yellow identifies lighting, not color temperature.",
+      "scope": "Composition shape properties, editor and refined preview, exported reference image and generation prompt.",
+      "referent": "The isLightSource property on a non-text composition area.",
+      "precedence": "User instructions and node notes take precedence over default creative interpretation. Otherwise the Agent interprets lighting freely, as with ordinary shape regions. The authored lighting intent should remain apparent in the overall composition, but does not require an isolated complete stripe, constant width, exact coverage, numerical geometry, strong contrast or thumbnail visibility. Multiple sources remain separately considered while their visible effects may overlap, split or blend.",
+      "canonicalKey": "composition.lightSource.toggle",
+      "searchTerms": [
+        "作为光源",
+        "光源",
+        "light source",
+        "illumination"
+      ],
+      "examples": [
+        "A diagonal illumination tendency realized as a narrower, interrupted band across several surfaces.",
+        "A broad circular light cue interpreted as an off-frame source with scene-dependent falloff."
+      ],
+      "nonExamples": [
+        "A yellow physical object inferred from the marker color.",
+        "An exact light-patch width or contrast threshold inferred from the drawn geometry.",
+        "Ignoring the authored directional or extended lighting contribution entirely."
+      ]
+    }
+  },
+  "keys": {
+    "composition.views.draft": {
+      "conceptId": "composition.editable-view",
+      "variant": "tab-label",
+      "role": "label for the editable composition tab in the three-view switcher",
+      "grammar": "noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical",
+      "duplicateReason": "It intentionally matches navigation.composition in both supported locales, but this key selects the editable view inside an open composition while the navigation key opens the composition feature."
+    },
+    "composition.flow.label": {
+      "conceptId": "composition.flow",
+      "variant": "label",
+      "role": "composition toolbar element label and node kind",
+      "grammar": "noun phrase",
+      "tone": "concise and expressive",
+      "reusePolicy": "canonical"
+    },
+    "composition.flow.promptHeading": {
+      "conceptId": "composition.flow",
+      "variant": "prompt-heading",
+      "role": "heading for the composition-flow section of an exported prompt",
+      "grammar": "heading noun phrase",
+      "tone": "concise and instructional",
+      "reusePolicy": "contextual"
+    },
+    "composition.flow.promptReference": {
+      "conceptId": "composition.flow",
+      "variant": "prompt-reference",
+      "role": "sentence describing the position and angle of composition flow in an exported prompt",
+      "grammar": "complete descriptive sentence",
+      "tone": "precise and non-literal",
+      "reusePolicy": "contextual"
+    },
+    "composition.flow.controlPoint": {
+      "conceptId": "composition.flow-control-point",
+      "variant": "accessible-control-label",
+      "role": "accessible name for an individually movable composition flow control point",
+      "grammar": "noun phrase with a point number",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "composition.elementCapacity.compact": {
+      "conceptId": "composition.element-capacity",
+      "variant": "compact-status",
+      "role": "small supplementary count beside a limited composition toolbar element",
+      "grammar": "numeric ratio",
+      "tone": "compact and neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.elementCapacity.ariaLabel": {
+      "conceptId": "composition.element-capacity",
+      "variant": "accessible-action-label",
+      "role": "accessible name combining the toolbar element label with its placed count and limit",
+      "grammar": "complete accessible label",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "composition.clearCanvas": {
+      "conceptId": "composition.clear-canvas",
+      "variant": "icon-action-label",
+      "role": "visible tooltip, accessible name, and destructive confirmation button label for the composition clear action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical",
+      "duplicateReason": "It intentionally shares copy with uiSketch.canvasLabels.clearCanvas, but this action resets the entire composition draft and editor presentation to defaults instead of preserving frame and draft-level settings."
+    },
+    "composition.clearCanvasConfirmTitle": {
+      "conceptId": "composition.clear-canvas",
+      "variant": "confirmation-title",
+      "role": "title of the destructive confirmation shown before clearing a composition draft",
+      "grammar": "concise confirmation question",
+      "tone": "direct and cautionary",
+      "reusePolicy": "contextual",
+      "duplicateReason": "It intentionally parallels uiSketch.canvasLabels.clearCanvasConfirmTitle, but the composition action restores the full draft and editor presentation to defaults."
+    },
+    "composition.clearCanvasConfirmDescription": {
+      "conceptId": "composition.clear-canvas",
+      "variant": "confirmation-description",
+      "role": "consequence statement in the destructive confirmation shown before clearing a composition draft",
+      "grammar": "complete explanatory sentence",
+      "tone": "specific and cautionary",
+      "reusePolicy": "contextual"
+    },
+    "composition.depth.label": {
+      "conceptId": "composition.depth",
+      "variant": "field-label",
+      "role": "node depth field label and accessible selector name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.depth.auto": {
+      "conceptId": "composition.depth",
+      "variant": "auto-value",
+      "role": "depth option label; explicit depths also appear as prompt values",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Automatic spatial depth differs from visualWeight.auto, which leaves prominence unspecified."
+    },
+    "composition.depth.foreground": {
+      "conceptId": "composition.depth",
+      "variant": "foreground-value",
+      "role": "depth option label; explicit depths also appear as prompt values",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.depth.midground": {
+      "conceptId": "composition.depth",
+      "variant": "midground-value",
+      "role": "depth option label; explicit depths also appear as prompt values",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.depth.background": {
+      "conceptId": "composition.depth",
+      "variant": "background-value",
+      "role": "depth option label; explicit depths also appear as prompt values",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.depth.prompt": {
+      "conceptId": "composition.depth",
+      "variant": "prompt-line",
+      "role": "prompt line describing the explicit depth; shotScale placeholder retains the exporter message contract",
+      "grammar": "label with value placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.label": {
+      "conceptId": "composition.mode",
+      "variant": "field-label",
+      "role": "mode field label and selector accessible name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.mode.placeholder": {
+      "conceptId": "composition.mode",
+      "variant": "selection-prompt",
+      "role": "placeholder inviting an explicit mode selection",
+      "grammar": "imperative verb",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.scene": {
+      "conceptId": "composition.mode",
+      "variant": "scene-value",
+      "role": "scene option label and exported mode value",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.editorial": {
+      "conceptId": "composition.mode",
+      "variant": "editorial-value",
+      "role": "editorial option label and exported mode value",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.prompt": {
+      "conceptId": "composition.mode",
+      "variant": "prompt-line",
+      "role": "exported mode label with semantic value placeholder",
+      "grammar": "label with value placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.unselected": {
+      "conceptId": "composition.mode",
+      "variant": "unselected-value",
+      "role": "exported state for an unset mode",
+      "grammar": "state phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.unselectedGuidance": {
+      "conceptId": "composition.mode",
+      "variant": "unselected-guidance",
+      "role": "instruction to choose a mode before continuing",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.sceneGuidance": {
+      "conceptId": "composition.mode",
+      "variant": "scene-guidance",
+      "role": "prompt instruction to interpret regions as parts of a scene",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.mode.editorialGuidance": {
+      "conceptId": "composition.mode",
+      "variant": "editorial-guidance",
+      "role": "prompt instruction to interpret regions as editorial layout",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.areaOverview": {
+      "conceptId": "composition.area-summary",
+      "variant": "panel-heading",
+      "role": "heading above area statistics",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.metricsHeading": {
+      "conceptId": "composition.area-summary",
+      "variant": "prompt-heading",
+      "role": "heading introducing geometric coverage relationships in the prompt",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.occupied": {
+      "conceptId": "composition.occupied-area",
+      "variant": "metric-label",
+      "role": "label paired with the occupied percentage",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.occupied": {
+      "conceptId": "composition.occupied-area",
+      "variant": "prompt-line",
+      "role": "approximate frame coverage statement in the image-generation prompt",
+      "grammar": "sentence with percentage placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.negativeSpace": {
+      "conceptId": "composition.negative-space",
+      "variant": "metric-label",
+      "role": "label paired with the negative-space percentage",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.negativeSpace": {
+      "conceptId": "composition.negative-space",
+      "variant": "prompt-line",
+      "role": "approximate negative-space statement in the image-generation prompt",
+      "grammar": "sentence with percentage placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.toolNames.circle": {
+      "conceptId": "composition.circle-region",
+      "variant": "tool-label",
+      "role": "noun label on the control that adds this kind of area region",
+      "grammar": "noun",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "composition.toolNames.triangle": {
+      "conceptId": "composition.triangle-region",
+      "variant": "tool-label",
+      "role": "noun label on the control that adds this kind of area region",
+      "grammar": "noun",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "composition.toolNames.quadrilateral": {
+      "conceptId": "composition.rectangle-region",
+      "variant": "tool-label",
+      "role": "noun label on the control that adds this kind of area region",
+      "grammar": "noun",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "composition.toolNames.focus": {
+      "conceptId": "composition.visual-focus",
+      "variant": "tool-label",
+      "role": "label of the focus-placement tool and input to its accessible capacity label",
+      "grammar": "noun",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.focusHeading": {
+      "conceptId": "composition.visual-focus",
+      "variant": "prompt-section-heading",
+      "role": "heading introducing exported focal points",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.focusNumber": {
+      "conceptId": "composition.visual-focus",
+      "variant": "numbered-prompt-heading",
+      "role": "heading identifying one focal point by export order",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.areaHeading": {
+      "conceptId": "composition.content-regions",
+      "variant": "prompt-section-heading",
+      "role": "heading introducing ordinary and text area regions",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.areaNumber": {
+      "conceptId": "composition.content-regions",
+      "variant": "numbered-region-heading",
+      "role": "heading for a non-text area at its one-based index in the shared area sequence",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.toolNames.textRegion": {
+      "conceptId": "composition.text-region",
+      "variant": "kind-label",
+      "role": "creation-tool label and text-region node-kind label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.textRegionNumber": {
+      "conceptId": "composition.text-region",
+      "variant": "numbered-prompt-heading",
+      "role": "heading for a text region at its one-based position in the shared area sequence",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.title": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "opening-instruction",
+      "role": "opening request to design an image using the following layout information",
+      "grammar": "instructional sentences",
+      "tone": "direct",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.layoutHeading": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "section-heading",
+      "role": "heading introducing overall layout instructions",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.flexibleImplementation": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "adaptation-guidance",
+      "role": "instruction preserving relative placement and visual relationships while allowing content reconstruction",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.referenceImageGuidance": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "reference-guidance",
+      "role": "instruction treating the uploaded reference as a spatial cue rather than line art",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.referenceValues": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "geometry-guidance",
+      "role": "explanation of position, proportion and angle values as relational guidance",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.regionSemanticsGuidance": {
+      "conceptId": "composition.prompt-layout-intent",
+      "variant": "region-boundary-guidance",
+      "role": "instruction against reproducing complete region boundaries or fixed silhouettes",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.displayTextGuidance": {
+      "conceptId": "composition.text-region",
+      "variant": "typography-guidance",
+      "role": "instruction requiring visible typography, verbatim supplied copy, and model-written copy when blank",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.generatedDisplayText": {
+      "conceptId": "composition.text-region",
+      "variant": "generated-copy-instruction",
+      "role": "per-region instruction to generate text content rather than leave the region empty",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.referencePosition": {
+      "conceptId": "composition.prompt-position",
+      "variant": "position-line",
+      "role": "reference point or center position with x and y percentage placeholders",
+      "grammar": "label with percentage placeholders",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.coordinateOrigin": {
+      "conceptId": "composition.prompt-position",
+      "variant": "origin-guidance",
+      "role": "explanation of the top-left image-relative percentage origin",
+      "grammar": "explanatory sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.outputRatio": {
+      "conceptId": "composition.output-aspect-ratio",
+      "variant": "prompt-line",
+      "role": "output image ratio label with ratio placeholder",
+      "grammar": "label with ratio placeholder",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.referenceArea": {
+      "conceptId": "composition.prompt-element-area",
+      "variant": "prompt-line",
+      "role": "approximate per-element frame footprint with area percentage placeholder",
+      "grammar": "sentence with percentage placeholder",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.referenceRotation": {
+      "conceptId": "composition.prompt-orientation",
+      "variant": "prompt-line",
+      "role": "orientation statement with rotation in degrees",
+      "grammar": "sentence with degree placeholder",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.referenceClipping": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "overflow-line",
+      "role": "sentence listing frame sides crossed by content",
+      "grammar": "sentence with sides placeholder",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.top": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "top-value",
+      "role": "side name inserted in the overflow statement",
+      "grammar": "direction value",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.bottom": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "bottom-value",
+      "role": "side name inserted in the overflow statement",
+      "grammar": "direction value",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.left": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "left-value",
+      "role": "side name inserted in the overflow statement",
+      "grammar": "direction value",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.right": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "right-value",
+      "role": "side name inserted in the overflow statement",
+      "grammar": "direction value",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.sideSeparator": {
+      "conceptId": "composition.prompt-frame-overflow",
+      "variant": "list-separator",
+      "role": "punctuation joining localized side values",
+      "grammar": "list punctuation",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.views.draftCanvas": {
+      "conceptId": "composition.editable-view",
+      "variant": "canvas-name",
+      "role": "accessible name of the current authored composition canvas",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.views.refined": {
+      "conceptId": "composition.refined-view",
+      "variant": "tab-label",
+      "role": "tab selecting the Agent refinement result",
+      "grammar": "concise view label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.views.refinedCanvas": {
+      "conceptId": "composition.refined-view",
+      "variant": "canvas-name",
+      "role": "accessible name of the read-only refined composition canvas",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.views.reference": {
+      "conceptId": "composition.reference-view",
+      "variant": "tab-label",
+      "role": "tab selecting structural reference preview",
+      "grammar": "noun",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.views.referenceCanvas": {
+      "conceptId": "composition.reference-view",
+      "variant": "canvas-name",
+      "role": "accessible name describing the image-generation structure reference",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.views.switch": {
+      "conceptId": "composition.view-selection",
+      "variant": "selector-name",
+      "role": "accessible name of the composition representation selector",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.workspace": {
+      "conceptId": "composition.workspace",
+      "variant": "landmark-name",
+      "role": "accessible name of the composition workspace section",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.currentSelection": {
+      "conceptId": "composition.selected-items",
+      "variant": "field-label",
+      "role": "label paired with selected node identifiers",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.none": {
+      "conceptId": "composition.selected-items",
+      "variant": "empty-value",
+      "role": "fallback value when the selection list is empty",
+      "grammar": "absence value",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.workflow.agentDecision": {
+      "conceptId": "composition.refinement-rationale",
+      "variant": "section-heading",
+      "role": "heading above the refinement plan rationale",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.workflow.appliedMethods": {
+      "conceptId": "composition.applied-methods",
+      "variant": "section-heading",
+      "role": "heading above the applied method-version list",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.workflow.protectionAudit": {
+      "conceptId": "composition.refinement-audit",
+      "variant": "section-heading",
+      "role": "heading for measured refinement changes",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.workflow.maximumFocusShift": {
+      "conceptId": "composition.refinement-audit",
+      "variant": "focus-displacement-label",
+      "role": "label for the largest frame-relative focus-point displacement, displayed as a percentage",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.workflow.maximumAreaShift": {
+      "conceptId": "composition.refinement-audit",
+      "variant": "region-displacement-label",
+      "role": "label for the largest frame-relative area-region displacement, not a coverage delta, displayed as a percentage",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.workflow.maximumRotationShift": {
+      "conceptId": "composition.refinement-audit",
+      "variant": "rotation-change-label",
+      "role": "label for the largest area-region angular change, displayed in degrees",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "navigation.composition": {
+      "conceptId": "composition.feature",
+      "variant": "entry-heading",
+      "role": "heading identifying the composition feature entry",
+      "grammar": "noun",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "composition.views.draft selects the authored view within a session; this identical Composition/构图 label identifies a feature entry."
+    },
+    "composition.frameRatio": {
+      "conceptId": "composition.output-aspect-ratio",
+      "variant": "field-label",
+      "role": "heading and accessible name for the composition frame aspect-ratio selector",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.aspectRatioTitle": {
+      "conceptId": "composition.output-aspect-ratio",
+      "variant": "compact-control-title",
+      "role": "compact ratio-control title; width and height fields represent ratio components",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.showGuideGrid": {
+      "conceptId": "composition.guide-grid",
+      "variant": "show-action",
+      "role": "tooltip and accessible name for enabling the guide overlay",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.hideGuideGrid": {
+      "conceptId": "composition.guide-grid",
+      "variant": "hide-action",
+      "role": "tooltip and accessible name for disabling the guide overlay",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "canvasNodeEditor.title": {
+      "conceptId": "composition.node-editor",
+      "variant": "editor-title",
+      "role": "title prefix joined with node kind and selected-kind field label",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvasNodeEditor.shapeKind": {
+      "conceptId": "composition.content-regions",
+      "variant": "editor-kind-label",
+      "role": "generic kind name for a selected ordinary geometric area region",
+      "grammar": "noun",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "canvasNodeEditor.pointKind": {
+      "conceptId": "composition.visual-focus",
+      "variant": "editor-kind-label",
+      "role": "geometric point-kind name for the selected focal point in the node editor",
+      "grammar": "noun",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.refinement.objective": {
+      "conceptId": "composition.refinement-objective",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.observations": {
+      "conceptId": "composition.refinement-observations",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.uncertainties": {
+      "conceptId": "composition.refinement-uncertainties",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.preserve": {
+      "conceptId": "composition.refinement-preserve",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.tradeoffs": {
+      "conceptId": "composition.refinement-tradeoffs",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.relations": {
+      "conceptId": "composition.refinement-relations",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.retained": {
+      "conceptId": "composition.refinement-retained",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.target": {
+      "conceptId": "composition.refinement-target",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.before": {
+      "conceptId": "composition.refinement-before",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.after": {
+      "conceptId": "composition.refinement-after",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.error": {
+      "conceptId": "composition.refinement-error",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.unmeasurable": {
+      "conceptId": "composition.refinement-unmeasurable",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.framePlacement": {
+      "conceptId": "composition.refinement-frame-placement",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.sizeRatio": {
+      "conceptId": "composition.refinement-size-ratio",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.mirrorSymmetry": {
+      "conceptId": "composition.refinement-mirror-symmetry",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.focusFlow": {
+      "conceptId": "composition.refinement-focus-flow",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.focusAnchor": {
+      "conceptId": "composition.refinement-focus-anchor",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.axisRelation": {
+      "conceptId": "composition.refinement-axis-relation",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.rotationAlignment": {
+      "conceptId": "composition.refinement-rotation-alignment",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.blockAlignment": {
+      "conceptId": "composition.refinement-block-alignment",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.refinement.spacingRhythm": {
+      "conceptId": "composition.refinement-spacing-rhythm",
+      "variant": "result-label",
+      "role": "refinement result label",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.lightSource.toggle": {
+      "conceptId": "composition.light-source",
+      "variant": "shape-property",
+      "role": "switch label",
+      "grammar": "concise verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.lightSourceNumber": {
+      "conceptId": "composition.light-source",
+      "variant": "prompt-region-heading",
+      "role": "numbered prompt heading",
+      "grammar": "numbered noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.lightSourceGuidance": {
+      "conceptId": "composition.light-source",
+      "variant": "prompt-legend",
+      "role": "generation instruction",
+      "grammar": "instruction sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.lightBandGuidance": {
+      "conceptId": "composition.light-source",
+      "variant": "per-light-band-guidance",
+      "role": "approximate lighting interpretation for an individual rectangular light source",
+      "grammar": "instruction sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    }
+  }
+}

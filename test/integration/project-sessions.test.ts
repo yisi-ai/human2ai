@@ -159,6 +159,135 @@ describe("project and typed session API", () => {
     expect(conflict.statusCode).toBe(409);
   });
 
+  it("rejects duplicate project names when creating or renaming", async () => {
+    ({ database, server } = createTestServer());
+    const first = await server.inject({
+      method: "POST",
+      url: "/api/v1/projects",
+      payload: { name: "品牌项目" },
+    });
+    expect(first.statusCode).toBe(201);
+
+    const duplicate = await server.inject({
+      method: "POST",
+      url: "/api/v1/projects",
+      payload: { name: " 品牌项目 " },
+    });
+    expect(duplicate.statusCode).toBe(409);
+    expect(duplicate.json()).toMatchObject({ code: "PROJECT_NAME_CONFLICT" });
+
+    const second = await server.inject({
+      method: "POST",
+      url: "/api/v1/projects",
+      payload: { name: "活动项目" },
+    });
+    const secondProject = second.json<{ id: string }>();
+    const renameConflict = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/projects/${secondProject.id}`,
+      payload: { name: "品牌项目", expectedRevision: 1 },
+    });
+    expect(renameConflict.statusCode).toBe(409);
+    expect(renameConflict.json()).toMatchObject({ code: "PROJECT_NAME_CONFLICT" });
+  });
+
+  it("deletes only empty projects with revision protection", async () => {
+    ({ database, server } = createTestServer());
+    const occupiedResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/projects",
+      payload: { name: "已有内容" },
+    });
+    const occupied = occupiedResponse.json<{ id: string }>();
+    await server.inject({
+      method: "POST",
+      url: "/api/v1/sessions",
+      payload: {
+        sessionType: "image-composition",
+        title: "项目子项",
+        projectId: occupied.id,
+      },
+    });
+
+    const occupiedDelete = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/projects/${occupied.id}`,
+      payload: { expectedRevision: 1 },
+    });
+    expect(occupiedDelete.statusCode).toBe(409);
+    expect(occupiedDelete.json()).toMatchObject({
+      code: "PROJECT_NOT_EMPTY",
+      sessionCount: 1,
+    });
+
+    const emptyResponse = await server.inject({
+      method: "POST",
+      url: "/api/v1/projects",
+      payload: { name: "空项目" },
+    });
+    const empty = emptyResponse.json<{ id: string }>();
+    const staleDelete = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/projects/${empty.id}`,
+      payload: { expectedRevision: 2 },
+    });
+    expect(staleDelete.statusCode).toBe(409);
+
+    const deleted = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/projects/${empty.id}`,
+      payload: { expectedRevision: 1 },
+    });
+    expect(deleted.statusCode).toBe(204);
+
+    const missing = await server.inject({
+      method: "GET",
+      url: `/api/v1/projects/${empty.id}`,
+    });
+    expect(missing.statusCode).toBe(404);
+  });
+
+  it("renames and deletes a session with revision protection", async () => {
+    ({ database, server } = createTestServer());
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/v1/sessions",
+      payload: { sessionType: "image-composition", title: "旧会话名" },
+    });
+    const session = created.json<{ id: string }>();
+
+    const renamed = await server.inject({
+      method: "PATCH",
+      url: `/api/v1/sessions/${session.id}`,
+      payload: { title: "新会话名", expectedRevision: 1 },
+    });
+    expect(renamed.statusCode).toBe(200);
+    expect(renamed.json()).toMatchObject({ title: "新会话名", revision: 2 });
+
+    const staleDelete = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/sessions/${session.id}`,
+      payload: { expectedRevision: 1 },
+    });
+    expect(staleDelete.statusCode).toBe(409);
+
+    const deleted = await server.inject({
+      method: "DELETE",
+      url: `/api/v1/sessions/${session.id}`,
+      payload: { expectedRevision: 2 },
+    });
+    expect(deleted.statusCode).toBe(204);
+    expect(
+      database.prepare("SELECT session_id FROM composition_sessions").all(),
+    ).toEqual([]);
+
+    const missing = await server.inject({
+      method: "GET",
+      url: `/api/v1/sessions/${session.id}`,
+    });
+    expect(missing.statusCode).toBe(404);
+  });
+
   it("rejects unsupported types and missing projects", async () => {
     ({ database, server } = createTestServer());
 

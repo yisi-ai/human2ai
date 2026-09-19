@@ -8,6 +8,8 @@ import {
   addFocus,
   createDraft,
   draftFingerprint,
+  framePointToCanvas,
+  setProcessingSemantic,
 } from "../../src/domain/composition/index.js";
 
 describe("composition CLI", () => {
@@ -25,7 +27,10 @@ describe("composition CLI", () => {
   it("lets an Agent inspect methods, view a draft, and apply an explicit plan", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-composition-cli-"));
     try {
-      let draft = addFocus(createDraft(), { x: 0.49, y: 0.54 }).draft;
+      let draft = addFocus(
+        setProcessingSemantic(createDraft(), "scene-composition"),
+        { x: 0.49, y: 0.54 },
+      ).draft;
       draft = addArea(draft, {
         primitive: "triangle",
         area: 0.1,
@@ -60,11 +65,14 @@ describe("composition CLI", () => {
 
       const methods = (await executeCli(["composition", "methods"])) as {
         decisionOwner: string;
-        methods: unknown[];
+        methods: Array<{ id: string }>;
         planSchema: object;
       };
       expect(methods.decisionOwner).toBe("agent");
-      expect(methods.methods).toHaveLength(3);
+      expect(methods.methods.map((method) => method.id)).toEqual([
+        "focus-anchor", "axis-relation", "rotation-alignment", "block-alignment",
+        "spacing-rhythm", "frame-placement", "size-ratio", "mirror-symmetry", "focus-flow",
+      ]);
       expect(methods.planSchema).toHaveProperty("$defs");
 
       const inspection = (await executeCli([
@@ -92,7 +100,9 @@ describe("composition CLI", () => {
         resultPreview,
       ])) as { audit: { passed: boolean }; refinedDraft: { focusPoints: Array<{ y: number }> } };
       expect(result.audit.passed).toBe(true);
-      expect(result.refinedDraft.focusPoints[0].y).toBe(0.55);
+      expect(result.refinedDraft.focusPoints[0].y).toBe(
+        framePointToCanvas({ x: 0.5, y: 0.55 }, draft.frame).y,
+      );
       expect(JSON.parse(await readFile(resultPath, "utf8"))).toMatchObject({
         kind: "composition-refinement-result",
         audit: { passed: true },
@@ -111,6 +121,42 @@ describe("composition CLI", () => {
           draftPath,
         ]),
       ).rejects.toThrow(/must not overwrite the draft/i);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
+
+  it("exposes an unselected mode and refuses to refine until the user chooses", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-composition-mode-"));
+    try {
+      const draft = createDraft();
+      const draftPath = path.join(directory, "draft.json");
+      const planPath = path.join(directory, "plan.json");
+      await writeFile(draftPath, JSON.stringify(draft), "utf8");
+      await writeFile(planPath, JSON.stringify({
+        version: 1,
+        kind: "composition-refinement-plan",
+        sourceFingerprint: draftFingerprint(draft),
+        rationale: "The Agent must ask the user before selecting a mode.",
+        operations: [],
+      }), "utf8");
+
+      const inspection = (await executeCli([
+        "composition",
+        "inspect",
+        "--draft",
+        draftPath,
+      ])) as { processingSemantic: string | null };
+      expect(inspection.processingSemantic).toBeNull();
+
+      await expect(executeCli([
+        "composition",
+        "apply",
+        "--draft",
+        draftPath,
+        "--plan",
+        planPath,
+      ])).rejects.toThrow(/mode is not selected.*ask the user/i);
     } finally {
       await rm(directory, { recursive: true, force: true });
     }

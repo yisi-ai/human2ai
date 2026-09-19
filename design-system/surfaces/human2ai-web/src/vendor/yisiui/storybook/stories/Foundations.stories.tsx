@@ -3,7 +3,7 @@ import { Card, Col, Divider, Row, Space, Typography } from "antd";
 
 import { tokens, type TokenName } from "@human2ai/ui/yisiui/tokens";
 
-const meta = { title: "Foundations/Tokens" } satisfies Meta;
+const meta = { id: "foundations-tokens", title: "yisiui-Foundations/Tokens" } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
@@ -152,7 +152,7 @@ export const Colors: Story = {
           const names = colorTokenNames.filter((name) => prefixes.some((prefix) => name.startsWith(prefix)));
           return (
             <section key={id} aria-labelledby={`color-group-${id}`}>
-              <Divider orientation="left" plain>
+              <Divider titlePlacement="start" plain>
                 <span id={`color-group-${id}`}>{label}</span>
               </Divider>
               <Row gutter={[16, 16]}>{names.map((name) => <ColorTokenCard key={name} name={name} />)}</Row>

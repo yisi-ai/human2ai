@@ -14,7 +14,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "buttons-compositebutton",
-  title: "Components/Buttons/CompositeButton",
+  title: "yisiui-Components/Buttons/CompositeButton",
   component: CompositeButton,
   parameters: { layout: "padded" },
 } satisfies Meta<typeof CompositeButton>;

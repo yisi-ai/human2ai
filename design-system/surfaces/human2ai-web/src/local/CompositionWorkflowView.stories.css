@@ -8,7 +8,9 @@
 }
 
 .composition-workflow-story .human2ai-composition-workflow {
+  box-sizing: border-box;
   max-width: 960px;
+  height: calc(100vh - (var(--yisiui-surface-desktop-web-page-padding) * 2));
   margin: 0 auto;
   padding: var(--yisiui-surface-desktop-web-panel-padding);
   background: var(--yisiui-color-surface-panel);

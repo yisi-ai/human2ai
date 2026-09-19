@@ -102,13 +102,46 @@ const copyButtonStyle: CSSProperties = {
 
 const copyModeGroupStyle: CSSProperties = {
   display: "grid",
-  gridTemplateColumns: "1fr 1fr",
+  gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
   gap: 2,
   marginTop: 4,
   padding: 2,
   background: "#0F172A",
   borderRadius: 7,
 };
+
+const copyModes: ReadonlyArray<{
+  mode: InspectorCopyMode;
+  label: string;
+  actionLabel: string;
+  successMessage: string;
+}> = [
+  {
+    mode: "page-id",
+    label: "页面ID",
+    actionLabel: "复制页面ID",
+    successMessage: "已复制页面ID",
+  },
+  {
+    mode: "component-name",
+    label: "组件名",
+    actionLabel: "复制组件名",
+    successMessage: "已复制组件名",
+  },
+  {
+    mode: "all",
+    label: "全部信息",
+    actionLabel: "复制全部信息",
+    successMessage: "已复制全部信息",
+  },
+];
+
+function storedCopyMode(value: string | null): InspectorCopyMode {
+  if (value === "page-id" || value === "component-name" || value === "all") {
+    return value;
+  }
+  return value === "name" ? "component-name" : "all";
+}
 
 const feedbackStyle: CSSProperties = {
   display: "block",
@@ -210,11 +243,12 @@ function InspectorRuntime({
   const [enabled, setEnabled] = useState(enabledByDefault);
   const [showAllNames, setShowAllNames] = useState(false);
   const [showAssetInfo, setShowAssetInfo] = useState(true);
-  const [copyMode, setCopyMode] = useState<InspectorCopyMode>("page");
+  const [copyMode, setCopyMode] = useState<InspectorCopyMode>("all");
   const [copyStatus, setCopyStatus] = useState("");
   const [assets, setAssets] = useState<VisibleAsset[]>([]);
   const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
   const registry = useMemo(() => mergeRegistries(registries), [registries]);
+  const activeCopyMode = copyModes.find(({ mode }) => mode === copyMode) ?? copyModes[2];
   const hovered = useMemo(
     () => assets.find((asset) => asset.element === hoveredElement) ?? null,
     [assets, hoveredElement],
@@ -244,12 +278,12 @@ function InspectorRuntime({
       setEnabled(storedEnabled === null ? enabledByDefault : storedEnabled === "enabled");
       setShowAllNames(window.localStorage.getItem(`${storagePrefix}:show-names`) === "enabled");
       setShowAssetInfo(window.localStorage.getItem(`${storagePrefix}:show-info`) !== "disabled");
-      setCopyMode(window.localStorage.getItem(`${storagePrefix}:copy-mode`) === "name" ? "name" : "page");
+      setCopyMode(storedCopyMode(window.localStorage.getItem(`${storagePrefix}:copy-mode`)));
     } catch {
       setEnabled(enabledByDefault);
       setShowAllNames(false);
       setShowAssetInfo(true);
-      setCopyMode("page");
+      setCopyMode("all");
     }
   }, [enabledByDefault, storagePrefix]);
 
@@ -332,11 +366,11 @@ function InspectorRuntime({
         marker: hovered.marker,
         registryAsset: registry.get(hovered.marker.key),
       }));
-      setCopyStatus(copyMode === "name" ? "已复制名字信息" : "已复制页面信息");
+      setCopyStatus(activeCopyMode.successMessage);
     } catch (error) {
       setCopyStatus(error instanceof Error ? `复制失败：${error.message}` : "复制失败");
     }
-  }, [copyMode, hovered, registry, surface]);
+  }, [activeCopyMode.successMessage, copyMode, hovered, registry, surface]);
 
   useEffect(() => {
     const onCopyShortcut = (event: KeyboardEvent): void => {
@@ -425,7 +459,7 @@ function InspectorRuntime({
           <strong>{hovered.instanceId} · {hovered.marker.name}</strong>
           <pre style={{ margin: "8px 0", overflowWrap: "anywhere", whiteSpace: "pre-wrap" }}>
             {formatAssetCopyText({
-              mode: "page",
+              mode: "all",
               surface,
               page: `${window.location.pathname}${window.location.search}${window.location.hash}` || "/",
               instanceId: hovered.instanceId,
@@ -434,7 +468,7 @@ function InspectorRuntime({
             })}
           </pre>
           <button type="button" style={copyButtonStyle} onClick={() => void copyHovered()}>
-            {copyMode === "name" ? "复制名字信息" : "复制页面信息"}
+            {activeCopyMode.actionLabel}
           </button>
         </aside>
       ) : null}
@@ -462,7 +496,7 @@ function InspectorRuntime({
             <div style={{ marginTop: 6 }}>
               <span>复制内容</span>
               <div style={copyModeGroupStyle} role="group" aria-label="复制资产信息模式">
-                {(["name", "page"] as const).map((mode) => {
+                {copyModes.map(({ mode, label }) => {
                   const selected = copyMode === mode;
                   return (
                     <button
@@ -480,7 +514,7 @@ function InspectorRuntime({
                         fontSize: 12,
                       }}
                     >
-                      {mode === "name" ? "名字信息" : "页面信息"}
+                      {label}
                     </button>
                   );
                 })}

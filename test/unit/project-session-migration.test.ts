@@ -18,20 +18,20 @@ describe("project and typed session migration", () => {
     }
   });
 
-  it("creates the shared index and both supported session roots", () => {
+  it("creates the shared index and all supported session roots", () => {
     const database = openDatabase(":memory:", migrationsDirectory);
 
     expect(
       database
         .prepare("SELECT code FROM session_types ORDER BY code")
         .all(),
-    ).toEqual([{ code: "image-composition" }, { code: "ui-layout" }]);
+    ).toEqual([{ code: "image-composition" }, { code: "spatial" }, { code: "ui-layout" }]);
     expect(
       database
         .prepare(
           `SELECT name FROM sqlite_master
            WHERE type = 'table'
-             AND name IN ('projects', 'sessions', 'composition_sessions', 'ui_sessions')
+             AND name IN ('projects', 'sessions', 'composition_sessions', 'ui_sessions', 'spatial_sessions')
            ORDER BY name`,
         )
         .all(),
@@ -39,6 +39,7 @@ describe("project and typed session migration", () => {
       { name: "composition_sessions" },
       { name: "projects" },
       { name: "sessions" },
+      { name: "spatial_sessions" },
       { name: "ui_sessions" },
     ]);
 

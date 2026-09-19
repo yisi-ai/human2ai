@@ -66,7 +66,7 @@ function InteractiveExample(props: SectionNavigationPanelProps) {
 
 const meta = {
   id: "modules-sectionnavigationpanel",
-  title: "Modules/SectionNavigationPanel",
+  title: "yisiui-Modules/SectionNavigationPanel",
   component: SectionNavigationPanel,
   parameters: { layout: "centered" },
   args: {

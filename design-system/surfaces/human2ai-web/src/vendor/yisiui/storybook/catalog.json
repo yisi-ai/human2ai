@@ -4,7 +4,7 @@
   "stories": [
     {
       "id": "foundations-tokens--colors",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "颜色",
       "kind": "foundation",
       "description": "基础、语义和产品颜色 Token。",
@@ -12,7 +12,7 @@
     },
     {
       "id": "foundations-tokens--typography",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "字体",
       "kind": "foundation",
       "description": "字体刻度和语义文字角色。",
@@ -20,7 +20,7 @@
     },
     {
       "id": "foundations-tokens--spacing",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "间距",
       "kind": "foundation",
       "description": "间距刻度。",
@@ -28,7 +28,7 @@
     },
     {
       "id": "foundations-tokens--radius",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "圆角",
       "kind": "foundation",
       "description": "圆角刻度。",
@@ -36,7 +36,7 @@
     },
     {
       "id": "foundations-tokens--shadows",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "阴影",
       "kind": "foundation",
       "description": "面板、卡片和浮层深度。",
@@ -44,7 +44,7 @@
     },
     {
       "id": "foundations-tokens--motion",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "动效",
       "kind": "foundation",
       "description": "交互时长和文字动效速度倍率。",
@@ -52,7 +52,7 @@
     },
     {
       "id": "foundations-tokens--layout-metrics",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "布局尺寸",
       "kind": "foundation",
       "description": "共享桌面 Web Surface 布局尺寸。",
@@ -60,7 +60,7 @@
     },
     {
       "id": "foundations-tokens--component-geometry",
-      "title": "Foundations/Tokens",
+      "title": "yisiui-Foundations/Tokens",
       "name": "组件尺寸",
       "kind": "foundation",
       "description": "按钮、输入和卡片几何 Token。",
@@ -68,15 +68,23 @@
     },
     {
       "id": "buttons-basicbutton--default",
-      "title": "Components/Buttons/BasicButton",
+      "title": "yisiui-Components/Buttons/BasicButton",
       "kind": "experimental",
       "assetKey": "yisiui/basic-button",
       "description": "需要统一的基础操作按钮",
       "source": "apps/storybook/stories/BasicButton.stories.tsx"
     },
     {
+      "id": "buttons-actionbutton--default",
+      "title": "yisiui-Components/Buttons/ActionButton",
+      "kind": "experimental",
+      "assetKey": "yisiui/action-button",
+      "description": "按钮需要执行消费方提供的同步或异步动作，并在执行中、成功和失败之间提供明确反馈",
+      "source": "apps/storybook/stories/ActionButton.stories.tsx"
+    },
+    {
       "id": "buttons-compositebutton--default",
-      "title": "Components/Buttons/CompositeButton",
+      "title": "yisiui-Components/Buttons/CompositeButton",
       "kind": "experimental",
       "assetKey": "yisiui/composite-button",
       "description": "需要全宽、左对齐并带辅助说明和悬浮操作的行级按钮",
@@ -84,7 +92,7 @@
     },
     {
       "id": "components-states-statusbadge--default",
-      "title": "Components/States/StatusBadge",
+      "title": "yisiui-Components/States/StatusBadge",
       "kind": "experimental",
       "assetKey": "yisiui/status-badge",
       "description": "状态标签和小型结果提示",
@@ -92,7 +100,7 @@
     },
     {
       "id": "components-status-statuslight--default",
-      "title": "Components/States/StatusLight",
+      "title": "yisiui-Components/States/StatusLight",
       "kind": "experimental",
       "assetKey": "yisiui/status-light",
       "description": "需要用竖向绿、黄、红灯表达一个当前状态",
@@ -100,15 +108,31 @@
     },
     {
       "id": "cards-statuscard--default",
-      "title": "Components/Cards/StatusCard",
+      "title": "yisiui-Components/Cards/StatusCard",
       "kind": "experimental",
       "assetKey": "yisiui/status-card",
       "description": "需要左侧标题/副标题和右侧 StatusLight 的状态卡片",
       "source": "apps/storybook/stories/StatusCard.stories.tsx"
     },
     {
+      "id": "cards-imagetitlecard--default",
+      "title": "yisiui-Components/Cards/ImageTitleCard",
+      "kind": "experimental",
+      "assetKey": "yisiui/image-title-card",
+      "description": "需要以紧凑的上图下标题结构展示一张或多张由消费方提供的图片",
+      "source": "apps/storybook/stories/ImageTitleCard.stories.tsx"
+    },
+    {
+      "id": "components-states-loadingstate--default",
+      "title": "yisiui-Components/States/LoadingState",
+      "kind": "experimental",
+      "assetKey": "yisiui/loading-state",
+      "description": "页面或有界面板等待数据并需要通过骨架保持布局节奏",
+      "source": "apps/storybook/stories/LoadingState.stories.tsx"
+    },
+    {
       "id": "numbers-numberbadge--default",
-      "title": "Components/Numbers/NumberBadge",
+      "title": "yisiui-Components/Numbers/NumberBadge",
       "kind": "experimental",
       "assetKey": "yisiui/number-badge",
       "description": "需要在固定尺寸的圆形底色中显示数字",
@@ -116,7 +140,7 @@
     },
     {
       "id": "numbers-animatednumber--default",
-      "title": "Components/Numbers/AnimatedNumber",
+      "title": "yisiui-Components/Numbers/AnimatedNumber",
       "kind": "experimental",
       "assetKey": "yisiui/animated-number",
       "description": "需要以纯数字形式展示会变化的指标",
@@ -124,7 +148,7 @@
     },
     {
       "id": "motion-borderscan--default",
-      "title": "Components/Motion/BorderScan",
+      "title": "yisiui-Components/Motion/BorderScan",
       "kind": "experimental",
       "assetKey": "yisiui/border-scan",
       "description": "需要为已知固定宽高的矩形或圆角矩形组件叠加一条沿边框循环运动的扫光",
@@ -132,7 +156,7 @@
     },
     {
       "id": "motion-textshine--default",
-      "title": "Components/Motion/TextShine",
+      "title": "yisiui-Components/Motion/TextShine",
       "kind": "experimental",
       "assetKey": "yisiui/text-shine",
       "description": "需要只在文字字形内部显示循环扫光提醒",
@@ -140,7 +164,7 @@
     },
     {
       "id": "switching-tabswitch--default",
-      "title": "Components/Switching/TabSwitch",
+      "title": "yisiui-Components/Switching/TabSwitch",
       "kind": "experimental",
       "assetKey": "yisiui/tab-switch",
       "description": "需要在两个或多个同级视图之间切换",
@@ -148,31 +172,15 @@
     },
     {
       "id": "switching-underlinetabswitch--default",
-      "title": "Components/Switching/UnderlineTabSwitch",
+      "title": "yisiui-Components/Switching/UnderlineTabSwitch",
       "kind": "experimental",
       "assetKey": "yisiui/underline-tab-switch",
       "description": "需要全宽、等分宽度的同级视图切换",
       "source": "apps/storybook/stories/UnderlineTabSwitch.stories.tsx"
     },
     {
-      "id": "buttons-formactions--default",
-      "title": "Components/Buttons/FormActions",
-      "kind": "experimental",
-      "assetKey": "yisiui/form-actions",
-      "description": "新建页和编辑页底部操作",
-      "source": "apps/storybook/stories/PatternFormActions.stories.tsx"
-    },
-    {
-      "id": "buttons-copyaction--default",
-      "title": "Components/Buttons/CopyAction",
-      "kind": "experimental",
-      "assetKey": "yisiui/copy-action",
-      "description": "复制短文本、生成内容或异步读取的文本结果",
-      "source": "apps/storybook/stories/CopyAction.stories.tsx"
-    },
-    {
       "id": "modules-sideactionpanel--default",
-      "title": "Modules/SideActionPanel",
+      "title": "yisiui-Modules/SideActionPanel",
       "kind": "experimental",
       "assetKey": "yisiui/side-action-panel",
       "description": "需要在页面或工作台一侧组织紧凑 Icon 工具与纵向行级操作",
@@ -180,7 +188,7 @@
     },
     {
       "id": "modules-assetskeletontree--article-list",
-      "title": "Modules/AssetSkeletonTree",
+      "title": "yisiui-Modules/AssetSkeletonTree",
       "kind": "experimental",
       "assetKey": "yisiui/asset-skeleton-tree",
       "description": "需要查看或编辑资产骨架层级",
@@ -188,7 +196,7 @@
     },
     {
       "id": "buttons-confirmaction--default",
-      "title": "Components/Buttons/ConfirmAction",
+      "title": "yisiui-Components/Buttons/ConfirmAction",
       "kind": "experimental",
       "assetKey": "yisiui/confirm-action",
       "description": "删除、忽略、覆盖或不可逆操作的就地确认",
@@ -196,23 +204,31 @@
     },
     {
       "id": "modules-messagecomposer--default",
-      "title": "Modules/MessageComposer",
+      "title": "yisiui-Modules/MessageComposer",
       "kind": "experimental",
       "assetKey": "yisiui/message-composer",
       "description": "需要向 AI 发送受控的单条消息，并统一输入、发送、加载、禁用和错误状态",
       "source": "apps/storybook/stories/MessageComposer.stories.tsx"
     },
     {
+      "id": "modules-textmarkeditor--default",
+      "title": "yisiui-Modules/TextMarkEditor",
+      "kind": "experimental",
+      "assetKey": "yisiui/text-mark-editor",
+      "description": "需要在紧凑模态框中编辑已标记文字关联的一个或多个调用方字段",
+      "source": "apps/storybook/stories/TextMarkEditor.stories.tsx"
+    },
+    {
       "id": "modules-aspectratioselector--default",
-      "title": "Modules/AspectRatioSelector",
+      "title": "yisiui-Modules/AspectRatioSelector",
       "kind": "experimental",
       "assetKey": "yisiui/aspect-ratio-selector",
-      "description": "需要从一组常用宽高比中选择一个比例，并同步查看所选比例的几何预览",
+      "description": "需要从常用预设或手动输入中选择宽高比，并同步查看当前比例的几何预览",
       "source": "apps/storybook/stories/AspectRatioSelector.stories.tsx"
     },
     {
       "id": "layouts-appshellframe--default",
-      "title": "Layouts/AppShellFrame",
+      "title": "yisiui-Layouts/AppShellFrame",
       "kind": "experimental",
       "assetKey": "yisiui/app-shell-frame",
       "description": "桌面应用需要全屏壳层、持久侧栏、全局标题栏和独立滚动内容区",
@@ -220,15 +236,39 @@
     },
     {
       "id": "modules-sectionnavigationpanel--default",
-      "title": "Modules/SectionNavigationPanel",
+      "title": "yisiui-Modules/SectionNavigationPanel",
       "kind": "experimental",
       "assetKey": "yisiui/section-navigation-panel",
       "description": "需要在一个有界区域内通过左侧 Icon 与文字导航切换右侧业务内容",
       "source": "apps/storybook/stories/SectionNavigationPanel.stories.tsx"
     },
     {
+      "id": "typography-decorativetitle--default",
+      "title": "yisiui-Components/Typography/DecorativeTitle",
+      "kind": "experimental",
+      "assetKey": "yisiui/decorative-title",
+      "description": "需要左右大圆角、底部和右侧厚边的特殊标题",
+      "source": "apps/storybook/stories/DecorativeTitle.stories.tsx"
+    },
+    {
+      "id": "icons-animatedicon--default",
+      "title": "yisiui-Components/Icons/AnimatedIcon",
+      "kind": "experimental",
+      "assetKey": "yisiui/animated-icon",
+      "description": "需要具有统一默认姿态和复位动效的通用 SVG 图标",
+      "source": "apps/storybook/stories/AnimatedIcon.stories.tsx"
+    },
+    {
+      "id": "modules-modelselector--default",
+      "title": "yisiui-Modules/ModelSelector",
+      "kind": "experimental",
+      "assetKey": "yisiui/model-selector",
+      "description": "需要在紧凑面板中切换模式、来源、模型型号和离散推理档位",
+      "source": "apps/storybook/stories/ModelSelector.stories.tsx"
+    },
+    {
       "id": "system-architecture-status--migration-candidate",
-      "title": "System/Architecture Status",
+      "title": "yisiui-System/Architecture Status",
       "kind": "supporting",
       "description": "展示迁移候选状态；不代表共享组件。",
       "source": "apps/storybook/stories/SystemOverview.stories.tsx"

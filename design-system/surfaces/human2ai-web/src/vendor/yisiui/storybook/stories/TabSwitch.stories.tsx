@@ -15,7 +15,7 @@ import { assertStoryRole, assertStorySelector, assertStoryText } from "../intera
 
 const meta = {
   id: "switching-tabswitch",
-  title: "Components/Switching/TabSwitch",
+  title: "yisiui-Components/Switching/TabSwitch",
   component: TabSwitch,
   parameters: { layout: "padded" },
   argTypes: {

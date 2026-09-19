@@ -7,7 +7,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "cards-statuscard",
-  title: "Components/Cards/StatusCard",
+  title: "yisiui-Components/Cards/StatusCard",
   component: StatusCard,
   parameters: { layout: "padded" },
   argTypes: {

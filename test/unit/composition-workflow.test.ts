@@ -9,6 +9,7 @@ import {
   draftFingerprint,
   moveItem,
   receiveCompositionRefinement,
+  setProcessingSemantic,
   updateCompositionWorkflowDraft,
 } from "../../src/domain/composition/index.js";
 
@@ -125,7 +126,10 @@ describe("composition refinement workflow", () => {
 });
 
 function createRefinableDraft() {
-  let draft = addFocus(createDraft(), { x: 0.61, y: 0.39 }).draft;
+  let draft = addFocus(
+    setProcessingSemantic(createDraft(), "scene-composition"),
+    { x: 0.61, y: 0.39 },
+  ).draft;
   draft = addArea(draft, {
     primitive: "quadrilateral",
     aspect: "free",

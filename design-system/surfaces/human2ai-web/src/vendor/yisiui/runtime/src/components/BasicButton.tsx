@@ -4,6 +4,7 @@ import { Button } from "antd";
 import type { ButtonProps } from "antd";
 import type { CSSProperties, ReactNode } from "react";
 
+import { useUiAssetAttributes } from "../internal/uiAssetAttributeScope";
 import { uiAssetAttributes } from "../internal/uiAssetAttributes";
 import { tokens, type TokenName } from "../tokens/tokens";
 
@@ -41,6 +42,9 @@ export function BasicButton({
   "aria-label": ariaLabel,
   ...buttonProps
 }: BasicButtonProps) {
+  const assetAttributes = useUiAssetAttributes(
+    uiAssetAttributes("basic-button", "BasicButton", "component"),
+  );
   const tokenStyle: CSSProperties = {
     ...(backgroundColor === "none"
       ? {
@@ -60,7 +64,7 @@ export function BasicButton({
   return (
     <Button
       {...buttonProps}
-      {...uiAssetAttributes("basic-button", "BasicButton", "component")}
+      {...assetAttributes}
       aria-label={mode === "icon-only" ? iconLabel ?? ariaLabel : ariaLabel}
       icon={mode === "without-icon" ? undefined : icon}
       style={{ ...tokenStyle, ...style }}

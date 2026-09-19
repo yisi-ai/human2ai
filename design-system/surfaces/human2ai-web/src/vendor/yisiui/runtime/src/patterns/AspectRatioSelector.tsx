@@ -1,7 +1,7 @@
 "use client";
 
-import type { CSSProperties, KeyboardEvent } from "react";
-import { useRef, useState } from "react";
+import type { ChangeEvent, CSSProperties, FocusEvent, KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 
 import "../../styles/tokens.css";
 import "../../styles/aspect-ratio-selector.css";
@@ -15,6 +15,11 @@ export interface AspectRatioOption {
   height: number;
   disabled?: boolean;
   ariaLabel?: string;
+}
+
+export interface AspectRatioValue {
+  width: number;
+  height: number;
 }
 
 export const DEFAULT_ASPECT_RATIO_OPTIONS = [
@@ -32,7 +37,12 @@ export interface AspectRatioSelectorProps {
   value?: string;
   defaultValue?: string;
   onChange?: (key: string, option: AspectRatioOption) => void;
+  ratio?: AspectRatioValue;
+  defaultRatio?: AspectRatioValue;
+  onRatioChange?: (ratio: AspectRatioValue, matchedOption?: AspectRatioOption) => void;
   title?: string;
+  widthLabel?: string;
+  heightLabel?: string;
   "aria-label"?: string;
   disabled?: boolean;
   className?: string;
@@ -58,6 +68,8 @@ function validateOptions(
   options: readonly AspectRatioOption[],
   value: string | undefined,
   defaultValue: string | undefined,
+  ratio: AspectRatioValue | undefined,
+  defaultRatio: AspectRatioValue | undefined,
 ): void {
   if (options.length === 0 || options.length > OPTION_POSITIONS.length) {
     throw new Error("AspectRatioSelector 需要 1 至 7 个比例选项。");
@@ -84,6 +96,21 @@ function validateOptions(
   }
   if (defaultValue !== undefined && !keys.has(defaultValue)) {
     throw new Error(`AspectRatioSelector defaultValue 不存在于 options：${defaultValue}`);
+  }
+
+  validateRatio(ratio, "ratio");
+  validateRatio(defaultRatio, "defaultRatio");
+}
+
+function validateRatio(ratio: AspectRatioValue | undefined, propName: string): void {
+  if (
+    ratio !== undefined &&
+    (!Number.isFinite(ratio.width) ||
+      ratio.width <= 0 ||
+      !Number.isFinite(ratio.height) ||
+      ratio.height <= 0)
+  ) {
+    throw new Error(`AspectRatioSelector ${propName} 的宽高必须是正数。`);
   }
 }
 
@@ -114,14 +141,41 @@ function getLastEnabledIndex(options: readonly AspectRatioOption[]): number {
   return -1;
 }
 
-function getPreviewStyle(option: AspectRatioOption): PreviewStyle {
+function getPreviewStyle(ratio: AspectRatioValue): PreviewStyle {
   const maxWidth = 62;
   const maxHeight = 60;
-  const scale = Math.min(maxWidth / option.width, maxHeight / option.height);
+  const scale = Math.min(maxWidth / ratio.width, maxHeight / ratio.height);
   return {
-    "--yisiui-aspect-ratio-preview-width": `${Math.max(12, option.width * scale)}px`,
-    "--yisiui-aspect-ratio-preview-height": `${Math.max(12, option.height * scale)}px`,
+    "--yisiui-aspect-ratio-preview-width": `${Math.max(12, ratio.width * scale)}px`,
+    "--yisiui-aspect-ratio-preview-height": `${Math.max(12, ratio.height * scale)}px`,
   };
+}
+
+function ratioFromOption(option: AspectRatioOption): AspectRatioValue {
+  return { width: option.width, height: option.height };
+}
+
+function ratiosEqual(left: AspectRatioValue, right: AspectRatioValue): boolean {
+  const leftProduct = left.width * right.height;
+  const rightProduct = right.width * left.height;
+  const tolerance = Math.max(1, Math.abs(leftProduct), Math.abs(rightProduct)) * 1e-9;
+  return Math.abs(leftProduct - rightProduct) <= tolerance;
+}
+
+function findMatchingOption(
+  options: readonly AspectRatioOption[],
+  ratio: AspectRatioValue,
+): AspectRatioOption | undefined {
+  return options.find((option) => ratiosEqual(option, ratio));
+}
+
+function formatRatioPart(value: number): string {
+  return String(value);
+}
+
+function parseRatioPart(value: string): number | null {
+  const parsed = Number(value);
+  return value.trim() !== "" && Number.isFinite(parsed) && parsed > 0 ? parsed : null;
 }
 
 export function AspectRatioSelector({
@@ -129,30 +183,111 @@ export function AspectRatioSelector({
   value,
   defaultValue,
   onChange,
+  ratio,
+  defaultRatio,
+  onRatioChange,
   title = "比例",
+  widthLabel = "w",
+  heightLabel = "h",
   "aria-label": ariaLabel = "比例选择",
   disabled = false,
   className,
   style,
 }: AspectRatioSelectorProps) {
-  validateOptions(options, value, defaultValue);
+  validateOptions(options, value, defaultValue, ratio, defaultRatio);
 
   const firstEnabledKey = getFirstEnabledKey(options);
-  const [internalValue, setInternalValue] = useState(defaultValue ?? firstEnabledKey);
   const optionByKey = new Map(options.map((option) => [option.key, option]));
-  const fallbackKey = optionByKey.has(internalValue) ? internalValue : firstEnabledKey;
-  const selectedKey = value ?? fallbackKey;
-  const selectedOption = optionByKey.get(selectedKey) ?? options[0];
+  const defaultOption = optionByKey.get(defaultValue ?? firstEnabledKey) ?? options[0];
+  const initialRatio = defaultRatio ?? ratioFromOption(defaultOption);
+  const [internalRatio, setInternalRatio] = useState<AspectRatioValue>(initialRatio);
+  const [internalSelectedKey, setInternalSelectedKey] = useState<string | null>(() => {
+    if (defaultRatio !== undefined) {
+      return findMatchingOption(options, defaultRatio)?.key ?? null;
+    }
+    return defaultOption.key;
+  });
+  const controlledOption = value === undefined ? undefined : optionByKey.get(value);
+  const currentRatio = ratio ?? (controlledOption ? ratioFromOption(controlledOption) : internalRatio);
+  const preferredOption = optionByKey.get(value ?? internalSelectedKey ?? "");
+  const matchedOption =
+    preferredOption && ratiosEqual(preferredOption, currentRatio)
+      ? preferredOption
+      : findMatchingOption(options, currentRatio);
+  const selectedKey = matchedOption?.key ?? null;
+  const [widthInput, setWidthInput] = useState(() => formatRatioPart(currentRatio.width));
+  const [heightInput, setHeightInput] = useState(() => formatRatioPart(currentRatio.height));
+  const inputId = useId();
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
+
+  useEffect(() => {
+    if (ratio !== undefined || value !== undefined) {
+      setWidthInput(formatRatioPart(currentRatio.width));
+      setHeightInput(formatRatioPart(currentRatio.height));
+    }
+  }, [currentRatio.height, currentRatio.width, ratio, value]);
+
+  function requestRatioChange(nextRatio: AspectRatioValue): void {
+    const nextMatchedOption = findMatchingOption(options, nextRatio);
+    if (ratio === undefined && value === undefined) {
+      setInternalRatio(nextRatio);
+      setInternalSelectedKey(nextMatchedOption?.key ?? null);
+    }
+    onRatioChange?.(nextRatio, nextMatchedOption);
+  }
 
   function selectOption(option: AspectRatioOption): void {
     if (disabled || option.disabled) {
       return;
     }
-    if (value === undefined) {
-      setInternalValue(option.key);
+    const nextRatio = ratioFromOption(option);
+    if (ratio === undefined && value === undefined) {
+      setInternalRatio(nextRatio);
+      setInternalSelectedKey(option.key);
+      setWidthInput(formatRatioPart(nextRatio.width));
+      setHeightInput(formatRatioPart(nextRatio.height));
     }
     onChange?.(option.key, option);
+    onRatioChange?.(nextRatio, option);
+  }
+
+  function handleRatioInputChange(
+    dimension: keyof AspectRatioValue,
+    event: ChangeEvent<HTMLInputElement>,
+  ): void {
+    const nextInput = event.currentTarget.value;
+    const nextWidthInput = dimension === "width" ? nextInput : widthInput;
+    const nextHeightInput = dimension === "height" ? nextInput : heightInput;
+
+    if (dimension === "width") {
+      setWidthInput(nextInput);
+    } else {
+      setHeightInput(nextInput);
+    }
+
+    const nextWidth = parseRatioPart(nextWidthInput);
+    const nextHeight = parseRatioPart(nextHeightInput);
+    if (nextWidth !== null && nextHeight !== null) {
+      requestRatioChange({ width: nextWidth, height: nextHeight });
+    }
+  }
+
+  function handleRatioInputBlur(
+    dimension: keyof AspectRatioValue,
+    event: FocusEvent<HTMLInputElement>,
+  ): void {
+    if (
+      parseRatioPart(event.currentTarget.value) !== null &&
+      ratio === undefined &&
+      value === undefined
+    ) {
+      return;
+    }
+    if (dimension === "width") {
+      setWidthInput(formatRatioPart(currentRatio.width));
+    } else {
+      setHeightInput(formatRatioPart(currentRatio.height));
+    }
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLButtonElement>, index: number): void {
@@ -184,51 +319,105 @@ export function AspectRatioSelector({
       )}
       className={["yisi-aspect-ratio-selector", className].filter(Boolean).join(" ")}
       style={style}
-      role="radiogroup"
-      aria-label={ariaLabel}
       aria-disabled={disabled}
     >
-      <div className="yisi-aspect-ratio-selector-title">{title}</div>
-      <div
-        className="yisi-aspect-ratio-selector-preview-area"
-        aria-live="polite"
-        aria-label={`当前比例：${selectedOption.label}`}
-      >
-        <span className="yisi-aspect-ratio-selector-current">当前比例：{selectedOption.label}</span>
-        <span
-          className="yisi-aspect-ratio-selector-preview"
-          style={getPreviewStyle(selectedOption)}
-          data-ratio={selectedOption.key}
-          aria-hidden="true"
-        />
+      <div className="yisi-aspect-ratio-selector-header">
+        <span className="yisi-aspect-ratio-selector-title" title={title}>
+          {title}
+        </span>
+        <div className="yisi-aspect-ratio-selector-inputs">
+          <label className="yisi-aspect-ratio-selector-input-label">
+            <span>{widthLabel}</span>
+            <input
+              id={`${inputId}-width`}
+              className="yisi-aspect-ratio-selector-input"
+              type="number"
+              min="0"
+              step="any"
+              inputMode="decimal"
+              autoComplete="off"
+              aria-label={widthLabel}
+              aria-invalid={parseRatioPart(widthInput) === null}
+              disabled={disabled}
+              value={widthInput}
+              onChange={(event) => handleRatioInputChange("width", event)}
+              onBlur={(event) => handleRatioInputBlur("width", event)}
+            />
+          </label>
+          <span className="yisi-aspect-ratio-selector-multiply" aria-hidden="true">
+            ×
+          </span>
+          <label className="yisi-aspect-ratio-selector-input-label">
+            <span>{heightLabel}</span>
+            <input
+              id={`${inputId}-height`}
+              className="yisi-aspect-ratio-selector-input"
+              type="number"
+              min="0"
+              step="any"
+              inputMode="decimal"
+              autoComplete="off"
+              aria-label={heightLabel}
+              aria-invalid={parseRatioPart(heightInput) === null}
+              disabled={disabled}
+              value={heightInput}
+              onChange={(event) => handleRatioInputChange("height", event)}
+              onBlur={(event) => handleRatioInputBlur("height", event)}
+            />
+          </label>
+        </div>
       </div>
-      {options.map((option, index) => {
-        const selected = option.key === selectedKey;
-        return (
-          <button
-            key={option.key}
-            ref={(element) => {
-              buttonRefs.current[index] = element;
-            }}
-            className="yisi-aspect-ratio-selector-option"
-            type="button"
-            role="radio"
-            aria-checked={selected}
-            aria-label={option.ariaLabel}
-            title={option.label}
-            data-ratio-key={option.key}
-            data-position={OPTION_POSITIONS[index]}
-            disabled={disabled || option.disabled}
-            tabIndex={
-              selected || (selectedOption.disabled && option.key === firstEnabledKey) ? 0 : -1
-            }
-            onClick={() => selectOption(option)}
-            onKeyDown={(event) => handleKeyDown(event, index)}
-          >
-            <span>{option.label}</span>
-          </button>
-        );
-      })}
+      <div
+        className="yisi-aspect-ratio-selector-options"
+        role="radiogroup"
+        aria-label={ariaLabel}
+        aria-disabled={disabled}
+      >
+        <div
+          className="yisi-aspect-ratio-selector-preview-area"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <span className="yisi-aspect-ratio-selector-current">
+            {title}: {formatRatioPart(currentRatio.width)} × {formatRatioPart(currentRatio.height)}
+          </span>
+          <span
+            className="yisi-aspect-ratio-selector-preview"
+            style={getPreviewStyle(currentRatio)}
+            data-ratio={selectedKey ?? `${currentRatio.width}:${currentRatio.height}`}
+            data-ratio-value={`${currentRatio.width}:${currentRatio.height}`}
+            aria-hidden="true"
+          />
+        </div>
+        {options.map((option, index) => {
+          const selected = option.key === selectedKey;
+          const selectedOptionIsDisabled = matchedOption?.disabled ?? false;
+          const fallbackTabStop =
+            (selectedKey === null || selectedOptionIsDisabled) && option.key === firstEnabledKey;
+          return (
+            <button
+              key={option.key}
+              ref={(element) => {
+                buttonRefs.current[index] = element;
+              }}
+              className="yisi-aspect-ratio-selector-option"
+              type="button"
+              role="radio"
+              aria-checked={selected}
+              aria-label={option.ariaLabel}
+              title={option.label}
+              data-ratio-key={option.key}
+              data-position={OPTION_POSITIONS[index]}
+              disabled={disabled || option.disabled}
+              tabIndex={selected || fallbackTabStop ? 0 : -1}
+              onClick={() => selectOption(option)}
+              onKeyDown={(event) => handleKeyDown(event, index)}
+            >
+              <span>{option.label}</span>
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -14,8 +14,8 @@ export type {
 } from "./assetMarker";
 
 export * from "./components/BasicButton";
+export * from "./components/ActionButton";
 export * from "./components/CompositeButton";
-export * from "./components/CopyAction";
 export * from "./components/NumberBadge";
 export * from "./components/AnimatedNumber";
 export * from "./components/BorderScan";
@@ -25,11 +25,16 @@ export * from "./components/UnderlineTabSwitch";
 export * from "./components/StatusBadge";
 export * from "./components/StatusLight";
 export * from "./components/StatusCard";
-export * from "./patterns/FormActions";
+export * from "./components/ImageTitleCard";
+export * from "./components/DecorativeTitle";
+export * from "./components/AnimatedIcon";
+export * from "./components/LoadingState";
 export * from "./patterns/ConfirmAction";
 export * from "./patterns/AspectRatioSelector";
+export * from "./patterns/ModelSelector";
 export * from "./patterns/AssetSkeletonTree";
 export * from "./patterns/MessageComposer";
+export * from "./patterns/TextMarkEditor";
 export * from "./patterns/SideActionPanel";
 export * from "./patterns/SectionNavigationPanel";
 export * from "./layouts/AppShellFrame";

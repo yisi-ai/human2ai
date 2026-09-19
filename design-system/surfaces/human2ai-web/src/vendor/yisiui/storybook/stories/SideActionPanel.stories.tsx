@@ -16,7 +16,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "modules-sideactionpanel",
-  title: "Modules/SideActionPanel",
+  title: "yisiui-Modules/SideActionPanel",
   component: SideActionPanel,
   parameters: { layout: "centered" },
   argTypes: {

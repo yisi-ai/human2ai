@@ -1,10 +1,9 @@
 "use client";
 
-import { SendOutlined } from "@ant-design/icons";
-import { Sender } from "@ant-design/x";
+import { PlusOutlined, SendOutlined } from "@ant-design/icons";
+import { Input } from "antd";
 import type {
   ComponentRef,
-  CSSProperties,
   FormEvent,
   FormHTMLAttributes,
   KeyboardEvent,
@@ -33,7 +32,7 @@ export interface MessageComposerQuickPrompt {
   message: string;
 }
 
-type SenderRef = ComponentRef<typeof Sender>;
+type MessageTextAreaRef = ComponentRef<typeof Input.TextArea>;
 
 export interface MessageComposerProps
   extends Omit<
@@ -50,6 +49,12 @@ export interface MessageComposerProps
   variant?: MessageComposerVariant;
   surface?: MessageComposerSurface;
   quickPrompts?: readonly MessageComposerQuickPrompt[];
+  topContent?: ReactNode;
+  topContentEnabled?: boolean;
+  topContentLabel?: string;
+  uploadEnabled?: boolean;
+  uploadLabel?: string;
+  onUpload?: () => void;
   footer?: ReactNode;
   error?: ReactNode;
   autoFocus?: boolean;
@@ -73,6 +78,12 @@ export const MessageComposer = forwardRef<
     variant = "single-line",
     surface = "standalone",
     quickPrompts = [],
+    topContent,
+    topContentEnabled = false,
+    topContentLabel = "附加内容",
+    uploadEnabled = false,
+    uploadLabel = "上传文件",
+    onUpload,
     footer,
     error,
     autoFocus = false,
@@ -86,7 +97,7 @@ export const MessageComposer = forwardRef<
   },
   forwardedRef,
 ) {
-  const senderRef = useRef<SenderRef | null>(null);
+  const inputRef = useRef<MessageTextAreaRef | null>(null);
   const errorId = useId();
   const submitDisabled = disabled || readOnly || loading || !value.trim();
 
@@ -102,14 +113,14 @@ export const MessageComposer = forwardRef<
   useImperativeHandle(
     forwardedRef,
     () => ({
-      focus: () => senderRef.current?.focus(),
-      blur: () => senderRef.current?.blur(),
+      focus: () => inputRef.current?.focus(),
+      blur: () => inputRef.current?.blur(),
     }),
     [],
   );
 
   useEffect(() => {
-    if (autoFocus && !disabled) senderRef.current?.focus();
+    if (autoFocus && !disabled) inputRef.current?.focus();
   }, [autoFocus, disabled]);
 
   const handleKeyDown = (event: KeyboardEvent): false | undefined => {
@@ -135,36 +146,6 @@ export const MessageComposer = forwardRef<
     submitMessage();
   };
 
-  const senderStyles = {
-    root: {
-      width: "100%",
-      minWidth: 0,
-      border: 0,
-      borderRadius: "inherit",
-      background: "transparent",
-      boxShadow: "none",
-    },
-    content: {
-      minHeight: variant === "single-line" ? 38 : 96,
-      alignItems: "flex-end",
-      padding: variant === "single-line" ? "6px 12px 2px" : "10px 12px 4px",
-    },
-    input: {
-      minWidth: 0,
-      color: "var(--yisiui-color-text-primary)",
-      fontSize: "var(--yisiui-font-size-sm)",
-      lineHeight: "var(--yisiui-font-line-height-normal)",
-    },
-    footer: {
-      minHeight: 36,
-      padding: "0 4px 4px 8px",
-      boxSizing: "border-box",
-      color: "var(--yisiui-color-text-muted)",
-      fontSize: "var(--yisiui-font-size-xs)",
-      lineHeight: "var(--yisiui-font-line-height-compact)",
-    },
-  } satisfies Record<string, CSSProperties>;
-
   return (
     <form
       {...formProps}
@@ -178,67 +159,90 @@ export const MessageComposer = forwardRef<
       data-error={error ? "true" : "false"}
       onSubmit={handleFormSubmit}
     >
-      <Sender
-        ref={senderRef}
-        rootClassName={styles.sender}
-        value={value}
-        placeholder={placeholder}
-        disabled={disabled}
-        readOnly={readOnly || loading}
-        loading={loading}
-        autoSize={variant === "single-line" ? { minRows: 1, maxRows: 3 } : { minRows: 3, maxRows: 8 }}
-        submitType="enter"
-        aria-label={ariaLabel}
-        aria-describedby={error ? errorId : undefined}
-        aria-keyshortcuts="Control+Enter Meta+Enter"
-        data-message-composer-input
-        prefix={false}
-        suffix={false}
-        footer={(
-          <div className={styles.footerBar} data-message-composer-footer>
-            <div className={styles.footerInfo}>
-              {quickPrompts.length ? (
-                <div className={styles.quickPromptList} aria-label="快捷语言">
-                  {quickPrompts.map((prompt, index) => (
-                    <div
-                      key={`${prompt.label}:${prompt.message}:${index}`}
-                      className={styles.quickPromptItem}
-                      data-message-composer-quick-prompt={prompt.label}
-                    >
-                      <CompositeButton
-                        className={styles.quickPromptButton}
-                        icon={prompt.icon}
-                        label={prompt.label}
-                        aria-label={`发送快捷消息：${prompt.label}`}
-                        title={prompt.message}
-                        disabled={disabled || readOnly || loading || !prompt.message.trim()}
-                        onClick={() => submitMessage(prompt.message)}
-                      />
-                    </div>
-                  ))}
+      {topContentEnabled ? (
+        <div
+          className={styles.topContent}
+          data-yisiui-slot="top-content"
+          data-message-composer-top-content
+          role={topContent ? "region" : undefined}
+          aria-label={topContent ? topContentLabel : undefined}
+          tabIndex={topContent ? 0 : undefined}
+        >
+          {topContent}
+        </div>
+      ) : null}
+      <div className={styles.content}>
+        <Input.TextArea
+          ref={inputRef}
+          className={styles.input}
+          value={value}
+          placeholder={placeholder}
+          disabled={disabled}
+          readOnly={readOnly || loading}
+          autoSize={variant === "single-line"
+            ? { minRows: 1, maxRows: 3 }
+            : { minRows: 3, maxRows: 8 }}
+          variant="borderless"
+          aria-label={ariaLabel}
+          aria-describedby={error ? errorId : undefined}
+          aria-keyshortcuts="Control+Enter Meta+Enter"
+          data-message-composer-input
+          onChange={(event) => onChange(event.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </div>
+      <div className={styles.footerBar} data-message-composer-footer>
+        {uploadEnabled ? (
+          <BasicButton
+            className={styles.uploadButton}
+            htmlType="button"
+            type="text"
+            mode="icon-only"
+            icon={<PlusOutlined aria-hidden="true" />}
+            iconLabel={uploadLabel}
+            backgroundColor="color.surface.active"
+            disabled={disabled || readOnly || loading || !onUpload}
+            onClick={onUpload}
+            data-message-composer-upload
+          />
+        ) : null}
+        <div className={styles.footerInfo}>
+          {quickPrompts.length ? (
+            <div className={styles.quickPromptList} aria-label="快捷语言">
+              {quickPrompts.map((prompt, index) => (
+                <div
+                  key={`${prompt.label}:${prompt.message}:${index}`}
+                  className={styles.quickPromptItem}
+                  data-message-composer-quick-prompt={prompt.label}
+                >
+                  <CompositeButton
+                    className={styles.quickPromptButton}
+                    icon={prompt.icon}
+                    label={prompt.label}
+                    aria-label={`发送快捷消息：${prompt.label}`}
+                    title={prompt.message}
+                    disabled={disabled || readOnly || loading || !prompt.message.trim()}
+                    onClick={() => submitMessage(prompt.message)}
+                  />
                 </div>
-              ) : null}
-              {footer ? <span className={styles.footerText}>{footer}</span> : null}
+              ))}
             </div>
-            <BasicButton
-              className={styles.sendButton}
-              htmlType="submit"
-              type="text"
-              size="small"
-              mode="icon-only"
-              icon={<SendOutlined />}
-              iconLabel={submitLabel}
-              loading={loading}
-              disabled={submitDisabled}
-              data-message-composer-submit
-            />
-          </div>
-        )}
-        styles={senderStyles}
-        onChange={onChange}
-        onKeyDown={handleKeyDown}
-        onSubmit={submitMessage}
-      />
+          ) : null}
+          {footer ? <span className={styles.footerText}>{footer}</span> : null}
+        </div>
+        <BasicButton
+          className={styles.sendButton}
+          htmlType="submit"
+          type="text"
+          size="large"
+          mode="icon-only"
+          icon={<SendOutlined />}
+          iconLabel={submitLabel}
+          loading={loading}
+          disabled={submitDisabled}
+          data-message-composer-submit
+        />
+      </div>
       {error ? (
         <div id={errorId} className={styles.error} role="alert">
           {error}

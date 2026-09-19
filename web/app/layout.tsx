@@ -5,7 +5,7 @@ import { AppI18nProvider } from "../i18n/I18nProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "human2ai 构图编辑器",
+  title: "以形塑形",
   description: "使用基础图形规划画面重心、主体占比与视觉方向。",
 };
 

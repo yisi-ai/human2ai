@@ -1,0 +1,65 @@
+.yisi-action-button-feedback-icon {
+  display: inline-flex;
+}
+
+.yisi-action-button[data-action-status="success"] .yisi-action-button-feedback-icon {
+  animation: yisi-action-button-feedback-pop var(--yisiui-motion-normal) ease-out;
+}
+
+.yisi-action-button[data-action-status="error"] .yisi-action-button-feedback-icon {
+  animation: yisi-action-button-feedback-shake var(--yisiui-motion-slow) ease-out;
+}
+
+.yisi-action-button-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.yisi-action-button-motion-none .ant-btn-loading-icon .anticon,
+.yisi-action-button-motion-none .yisi-action-button-feedback-icon {
+  animation: none;
+}
+
+@keyframes yisi-action-button-feedback-pop {
+  0% {
+    transform: scale(0.72);
+  }
+
+  70% {
+    transform: scale(1.12);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes yisi-action-button-feedback-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  35% {
+    transform: translateX(-2px);
+  }
+
+  70% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-action-button .ant-btn-loading-icon .anticon,
+  .yisi-action-button .yisi-action-button-feedback-icon {
+    animation: none;
+  }
+}

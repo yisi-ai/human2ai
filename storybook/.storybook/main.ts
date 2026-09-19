@@ -39,6 +39,7 @@ function enableCssModuleDefaultExports(rule: unknown): void {
 }
 
 const config: StorybookConfig = {
+  staticDirs: ["../../web/public"],
   stories: [
     "../stories/**/*.stories.@(js|jsx|mjs|ts|tsx)",
     "../../design-system/surfaces/human2ai-web/src/local/**/*.stories.@(js|jsx|mjs|ts|tsx)",

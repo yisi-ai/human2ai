@@ -1,0 +1,84 @@
+.human2ai-state-tabs {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+  padding: calc(var(--yisiui-space-1) / 2);
+  gap: var(--yisiui-space-1);
+  overflow-x: auto;
+  background: var(--yisiui-color-surface-page);
+  border-radius: var(--yisiui-radius-sm);
+}
+.human2ai-state-tabs__add.ant-btn {
+  flex: 0 0 auto;
+}
+.human2ai-state-tabs__item {
+  position: relative;
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  border-radius: var(--yisiui-radius-sm);
+}
+.human2ai-state-tabs__item[data-selected="true"] {
+  background: var(--yisiui-color-surface-panel);
+}
+.human2ai-state-tabs__tab.ant-btn,
+.human2ai-state-tabs__more.ant-btn,
+.human2ai-state-tabs__add.ant-btn {
+  height: var(--yisiui-space-6);
+  padding-block: 0;
+  line-height: var(--yisiui-space-5);
+}
+.human2ai-state-tabs__more.ant-btn {
+  width: var(--yisiui-space-6);
+  min-width: var(--yisiui-space-6);
+}
+.human2ai-state-tabs__tab.ant-btn {
+  max-width: 240px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+}
+.human2ai-state-tabs__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.human2ai-state-tabs__more.ant-btn {
+  opacity: 0;
+}
+.human2ai-state-tabs__item:hover .human2ai-state-tabs__more,
+.human2ai-state-tabs__item:focus-within .human2ai-state-tabs__more,
+.human2ai-state-tabs__more[data-open="true"] {
+  opacity: 1;
+}
+.human2ai-state-tabs__item[data-dragging="true"] {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+.human2ai-state-tabs__item[data-drop]::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--yisiui-color-text-primary);
+  content: "";
+}
+.human2ai-state-tabs__item[data-drop="before"]::after { left: -2px; }
+.human2ai-state-tabs__item[data-drop="after"]::after { right: -2px; }
+.human2ai-state-tabs__ghost {
+  position: fixed;
+  z-index: 1100;
+  max-width: 240px;
+  overflow: hidden;
+  padding: var(--yisiui-space-2) var(--yisiui-space-3);
+  color: var(--yisiui-color-text-primary);
+  background: var(--yisiui-color-surface-panel);
+  border: 1px solid var(--yisiui-color-text-primary);
+  border-radius: var(--yisiui-radius-sm);
+  pointer-events: none;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

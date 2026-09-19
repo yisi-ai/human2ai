@@ -13,7 +13,7 @@ import { assertStoryRole, assertStorySelector, assertStoryText } from "../intera
 
 const meta = {
   id: "modules-assetskeletontree",
-  title: "Modules/AssetSkeletonTree",
+  title: "yisiui-Modules/AssetSkeletonTree",
   component: AssetSkeletonTree,
   parameters: { layout: "fullscreen" },
 } satisfies Meta<typeof AssetSkeletonTree>;

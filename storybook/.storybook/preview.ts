@@ -13,7 +13,7 @@ const preview: Preview = {
     a11y: { test: "error" },
     controls: { expanded: true },
     layout: "fullscreen",
-    options: { storySort: { order: ["human2ai", "Components", "Modules", "Foundations", "System", "*"] } },
+    options: { storySort: { order: ["human2ai", "yisiui-Components", "yisiui-Modules", "yisiui-Layouts", "yisiui-Foundations", "yisiui-System", "*"] } },
     viewport: {
       viewports: {
         desktopMinimum: { name: "Desktop minimum", styles: { width: "1024px", height: "800px" } },

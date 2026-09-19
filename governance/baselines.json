@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "baselines": [
+    {
+      "id": "domain",
+      "location": "governance/domain-baseline",
+      "skill": "domain-baseline",
+      "check": "npm run domain-baseline:check"
+    },
+    {
+      "id": "i18n",
+      "location": "locales/_meta",
+      "skill": "i18n-semantic-naming",
+      "check": "npm run i18n:check"
+    },
+    {
+      "id": "ui",
+      "location": "design-system/surfaces/human2ai-web/governance",
+      "skill": "yisiui-*",
+      "check": null
+    }
+  ]
+}

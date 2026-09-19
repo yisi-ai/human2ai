@@ -13,7 +13,7 @@ const colorOptions = ["none", ...basicButtonColorTokens];
 
 const meta = {
   id: "buttons-basicbutton",
-  title: "Components/Buttons/BasicButton",
+  title: "yisiui-Components/Buttons/BasicButton",
   component: BasicButton,
   parameters: { layout: "centered" },
   argTypes: {

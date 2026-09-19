@@ -16,7 +16,7 @@ const SPEED_LABELS: Readonly<Record<TextShineSpeed, string>> = {
 
 const meta = {
   id: "motion-textshine",
-  title: "Components/Motion/TextShine",
+  title: "yisiui-Components/Motion/TextShine",
   component: TextShine,
   parameters: { layout: "padded" },
   argTypes: {

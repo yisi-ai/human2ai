@@ -1,3 +1,4 @@
+import type { RestoreDraftVersionInput } from "../domain/session/index.ts";
 import { randomUUID } from "node:crypto";
 
 import {
@@ -12,65 +13,28 @@ import {
   type CompositionRefinementResult,
   type CompositionRefinementRun,
 } from "../domain/composition/index.ts";
-import type { SessionType } from "../domain/session/index.ts";
+import { DraftVersionStore } from "./draft-version-store.ts";
+import type { CreateDraftVersionInput } from "../domain/session/index.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 import {
   InvalidRecordError,
-  SessionNotFoundError,
 } from "./project-session-repository.ts";
 
-interface DraftVersionRow {
-  id: string;
-  session_id: string;
-  revision: number;
-  draft_json: string;
-  created_at: string;
-}
+export {
+  DraftRevisionConflictError,
+  DraftSessionTypeMismatchError as CompositionSessionRequiredError,
+  DraftVersionNotFoundError,
+} from "./draft-version-errors.ts";
 
 interface RefinementRunRow {
   id: string;
   session_id: string;
   source_draft_version_id: string;
   source_draft_revision: number;
-  source_fingerprint: string;
+  source_draft_json: string;
   plan_json: string;
   result_json: string;
   created_at: string;
-}
-
-export class CompositionSessionRequiredError extends Error {
-  readonly code = "SESSION_TYPE_MISMATCH";
-
-  constructor(
-    readonly sessionId: string,
-    readonly actualType: SessionType,
-  ) {
-    super(`Session ${sessionId} has type ${actualType}; expected image-composition`);
-  }
-}
-
-export class DraftRevisionConflictError extends Error {
-  readonly code = "DRAFT_REVISION_CONFLICT";
-
-  constructor(
-    readonly expectedLatestRevision: number,
-    readonly actualLatestRevision: number,
-  ) {
-    super(
-      `Expected latest draft revision ${expectedLatestRevision}, received ${actualLatestRevision}`,
-    );
-  }
-}
-
-export class DraftVersionNotFoundError extends Error {
-  readonly code = "DRAFT_VERSION_NOT_FOUND";
-
-  constructor(
-    readonly sessionId: string,
-    readonly revision: number,
-  ) {
-    super(`Draft revision ${revision} not found in composition session ${sessionId}`);
-  }
 }
 
 export class RefinementRunNotFoundError extends Error {
@@ -95,58 +59,47 @@ export class RefinementPlanStaleError extends Error {
 }
 
 export class CompositionSessionRepository {
-  constructor(private readonly database: DatabaseConnection) {}
+  private readonly draftVersions: DraftVersionStore<CompositionDraft>;
+
+  constructor(private readonly database: DatabaseConnection) {
+    this.draftVersions = new DraftVersionStore(database, {
+      table: "composition_draft_versions",
+      storesFingerprint: true,
+      sessionType: "image-composition",
+      sessionLabel: "composition session",
+      validateDraft,
+      fingerprint: draftFingerprint,
+    });
+  }
 
   listDraftVersions(sessionId: string): CompositionDraftVersion[] {
-    this.assertCompositionSession(sessionId);
-    const rows = this.database
-      .prepare<[string], DraftVersionRow>(
-        `${DRAFT_VERSION_SELECT} WHERE session_id = ? ORDER BY revision`,
-      )
-      .all(sessionId);
-    return rows.map(mapDraftVersion);
+    return this.draftVersions.listDraftVersions(sessionId);
   }
 
   getDraftVersion(sessionId: string, revision: number): CompositionDraftVersion {
-    this.assertCompositionSession(sessionId);
-    const row = this.database
-      .prepare<[string, number], DraftVersionRow>(
-        `${DRAFT_VERSION_SELECT} WHERE session_id = ? AND revision = ?`,
-      )
-      .get(sessionId, revision);
-    if (!row) throw new DraftVersionNotFoundError(sessionId, revision);
-    return mapDraftVersion(row);
+    return this.draftVersions.getDraftVersion(sessionId, revision);
+  }
+
+  getLatestDraftVersion(sessionId: string, knownRevision?: number): CompositionDraftVersion | null {
+    return this.draftVersions.getLatestDraftVersion(sessionId, knownRevision);
   }
 
   createDraftVersion(
     sessionId: string,
-    input: { expectedLatestRevision: number; draft: unknown },
+    input: CreateDraftVersionInput,
   ): CompositionDraftVersion {
-    const draft = validateCompositionDraft(input.draft);
-    const fingerprint = draftFingerprint(draft);
+    return this.draftVersions.createDraftVersion(sessionId, input);
+  }
 
-    return this.database.transaction(() => {
-      this.assertCompositionSession(sessionId);
-      const actualLatestRevision = this.latestDraftRevision(sessionId);
-      if (input.expectedLatestRevision !== actualLatestRevision) {
-        throw new DraftRevisionConflictError(
-          input.expectedLatestRevision,
-          actualLatestRevision,
-        );
-      }
+  restoreDraftVersion(sessionId: string, input: RestoreDraftVersionInput) {
+    return this.draftVersions.restoreDraftVersion(sessionId, input);
+  }
 
-      const id = randomUUID();
-      const revision = actualLatestRevision + 1;
-      const createdAt = new Date().toISOString();
-      this.database
-        .prepare(
-          `INSERT INTO composition_draft_versions
-            (id, session_id, revision, fingerprint, draft_json, created_at)
-           VALUES (?, ?, ?, ?, ?, ?)`,
-        )
-        .run(id, sessionId, revision, fingerprint, JSON.stringify(draft), createdAt);
-      return this.getDraftVersion(sessionId, revision);
-    })();
+  undoDraftVersion(
+    sessionId: string,
+    input: { changeRevision: number; expectedLatestRevision: number },
+  ): CompositionDraftVersion {
+    return this.draftVersions.undoDraftVersion(sessionId, input);
   }
 
   listRefinementRuns(sessionId: string): CompositionRefinementRun[] {
@@ -211,34 +164,10 @@ export class CompositionSessionRepository {
     return this.getRefinementRun(sessionId, id);
   }
 
-  private latestDraftRevision(sessionId: string): number {
-    const row = this.database
-      .prepare<[string], { revision: number }>(
-        `SELECT coalesce(max(revision), 0) AS revision
-         FROM composition_draft_versions
-         WHERE session_id = ?`,
-      )
-      .get(sessionId);
-    return row?.revision ?? 0;
-  }
-
   private assertCompositionSession(sessionId: string): void {
-    const row = this.database
-      .prepare<[string], { session_type: SessionType }>(
-        "SELECT session_type FROM sessions WHERE id = ?",
-      )
-      .get(sessionId);
-    if (!row) throw new SessionNotFoundError(sessionId);
-    if (row.session_type !== "image-composition") {
-      throw new CompositionSessionRequiredError(sessionId, row.session_type);
-    }
+    this.draftVersions.assertSessionType(sessionId);
   }
 }
-
-const DRAFT_VERSION_SELECT = `
-  SELECT id, session_id, revision, draft_json, created_at
-  FROM composition_draft_versions
-`;
 
 const REFINEMENT_RUN_SELECT = `
   SELECT
@@ -246,7 +175,7 @@ const REFINEMENT_RUN_SELECT = `
     drafts.session_id,
     runs.source_draft_version_id,
     drafts.revision AS source_draft_revision,
-    json_extract(runs.result_json, '$.sourceFingerprint') AS source_fingerprint,
+    drafts.draft_json AS source_draft_json,
     runs.plan_json,
     runs.result_json,
     runs.created_at
@@ -255,37 +184,24 @@ const REFINEMENT_RUN_SELECT = `
     ON drafts.id = runs.source_draft_version_id
 `;
 
-function mapDraftVersion(row: DraftVersionRow): CompositionDraftVersion {
-  const draft = JSON.parse(row.draft_json) as CompositionDraft;
-  return {
-    id: row.id,
-    sessionId: row.session_id,
-    revision: row.revision,
-    fingerprint: draftFingerprint(draft),
-    draft,
-    createdAt: row.created_at,
-  };
-}
-
 function mapRefinementRun(row: RefinementRunRow): CompositionRefinementRun {
+  const sourceFingerprint = draftFingerprint(validateDraft(JSON.parse(row.source_draft_json)));
+  const plan = JSON.parse(row.plan_json) as CompositionRefinementRun["plan"];
+  plan.sourceFingerprint = sourceFingerprint;
+  const result = JSON.parse(row.result_json) as CompositionRefinementRun["result"];
+  result.sourceFingerprint = sourceFingerprint;
+  result.plan.sourceFingerprint = sourceFingerprint;
+  result.refinedDraft = validateDraft(result.refinedDraft);
   return {
     id: row.id,
     sessionId: row.session_id,
     sourceDraftVersionId: row.source_draft_version_id,
     sourceDraftRevision: row.source_draft_revision,
-    sourceFingerprint: row.source_fingerprint,
-    plan: JSON.parse(row.plan_json) as CompositionRefinementRun["plan"],
-    result: JSON.parse(row.result_json) as CompositionRefinementRun["result"],
+    sourceFingerprint,
+    plan,
+    result,
     createdAt: row.created_at,
   };
-}
-
-function validateCompositionDraft(input: unknown): CompositionDraft {
-  try {
-    return validateDraft(input);
-  } catch (error) {
-    throw new InvalidRecordError(errorMessage(error));
-  }
 }
 
 function validateCompositionPlan(input: unknown): CompositionRefinementPlan {

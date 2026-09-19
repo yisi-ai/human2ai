@@ -11,6 +11,8 @@ import {
   addFocus,
   createDraft,
   draftFingerprint,
+  setProcessingSemantic,
+  validateDraft,
   type CompositionRefinementPlan,
 } from "../../src/domain/composition/index.js";
 
@@ -35,7 +37,10 @@ describe("CompositionSessionRepository", () => {
       title: "持久化构图",
     });
     let repository = new CompositionSessionRepository(database);
-    const draft = addFocus(createDraft(), { x: 0.61, y: 0.39 }).draft;
+    const draft = addFocus(
+      setProcessingSemantic(createDraft(), "scene-composition"),
+      { x: 0.2, y: 0.2 },
+    ).draft;
     const version = repository.createDraftVersion(session.id, {
       expectedLatestRevision: 0,
       draft,
@@ -44,7 +49,7 @@ describe("CompositionSessionRepository", () => {
       version: 1,
       kind: "composition-refinement-plan",
       sourceFingerprint: draftFingerprint(draft),
-      rationale: "Agent selects a nearby golden-section anchor.",
+      rationale: "Agent selects a golden-section anchor for an independent refinement.",
       operations: [
         {
           method: "focus-anchor",
@@ -59,6 +64,10 @@ describe("CompositionSessionRepository", () => {
       sourceDraftRevision: 1,
       plan,
     });
+    expect(run.result.audit.passed).toBe(true);
+    expect(run.result.audit.changes.maximumFocusShift).toBeGreaterThan(0.08);
+    expect(repository.listDraftVersions(session.id)).toEqual([version]);
+    expect(repository.getDraftVersion(session.id, 1)).toEqual(version);
     database.close();
 
     database = openDatabase(databasePath, migrationsDirectory);
@@ -99,14 +108,25 @@ describe("CompositionSessionRepository", () => {
       expectedLatestRevision: 0,
       draft,
     });
+    const legacyDraft = {
+      version: 1,
+      kind: "composition-draft",
+      frame: { width: 1200, height: 800 },
+      focusPoints: [{ id: "focus-1", x: 0.61, y: 0.39 }],
+      directionLine: null,
+      areas: [],
+    };
     database
-      .prepare("UPDATE composition_draft_versions SET fingerprint = ?")
-      .run("draft-00000000");
+      .prepare("UPDATE composition_draft_versions SET fingerprint = ?, draft_json = ?")
+      .run("draft-00000000", JSON.stringify(legacyDraft));
 
     const restored = repository.getDraftVersion(session.id, 1);
+    const normalizedLegacyDraft = validateDraft(legacyDraft);
 
-    expect(restored.fingerprint).toBe(draftFingerprint(draft));
-    const run = repository.createRefinementRun(session.id, {
+    expect(restored.draft).toEqual(normalizedLegacyDraft);
+    expect(restored.draft.frame.bounds).toBeDefined();
+    expect(restored.fingerprint).toBe(draftFingerprint(normalizedLegacyDraft));
+    expect(() => repository.createRefinementRun(session.id, {
       sourceDraftRevision: 1,
       plan: {
         version: 1,
@@ -123,8 +143,7 @@ describe("CompositionSessionRepository", () => {
           },
         ],
       },
-    });
-    expect(run.sourceFingerprint).toBe(restored.fingerprint);
+    })).toThrow(/mode is not selected.*ask the user/i);
     database.close();
   });
 });

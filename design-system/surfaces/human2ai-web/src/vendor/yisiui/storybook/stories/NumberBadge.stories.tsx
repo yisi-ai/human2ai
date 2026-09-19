@@ -9,7 +9,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "numbers-numberbadge",
-  title: "Components/Numbers/NumberBadge",
+  title: "yisiui-Components/Numbers/NumberBadge",
   component: NumberBadge,
   parameters: { layout: "padded" },
   argTypes: {

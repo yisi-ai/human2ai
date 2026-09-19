@@ -4,7 +4,7 @@ import { Flex, Typography } from "antd";
 import { StatusBadge } from "@human2ai/ui/yisiui";
 import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
-const meta = { title: "Components/States/StatusBadge", component: StatusBadge } satisfies Meta<typeof StatusBadge>;
+const meta = { id: "components-states-statusbadge", title: "yisiui-Components/States/StatusBadge", component: StatusBadge } satisfies Meta<typeof StatusBadge>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 

@@ -1,3 +1,4 @@
+import { Ajv2020 } from "ajv/dist/2020.js";
 import type { FastifyInstance, FastifyReply } from "fastify";
 
 import compositionDraftSchema from "../../../schemas/composition-draft.schema.json" with {
@@ -8,17 +9,14 @@ import compositionRefinementPlanSchema from "../../../schemas/composition-refine
 };
 import {
   CompositionSessionRepository,
-  CompositionSessionRequiredError,
-  DraftRevisionConflictError,
-  DraftVersionNotFoundError,
   RefinementPlanStaleError,
   RefinementRunNotFoundError,
 } from "../../database/composition-session-repository.ts";
-import {
-  InvalidRecordError,
-  SessionNotFoundError,
-} from "../../database/project-session-repository.ts";
 import { RefinementConstraintError } from "../../domain/composition/index.ts";
+import {
+  registerDraftVersionRoutes,
+  replyToDraftVersionError,
+} from "./draft-version-routes.ts";
 
 const { $schema: _draftDialect, ...fastifyCompositionDraftSchema } =
   compositionDraftSchema;
@@ -29,17 +27,8 @@ interface SessionParams {
   sessionId: string;
 }
 
-interface DraftVersionParams extends SessionParams {
-  revision: number;
-}
-
 interface RefinementRunParams extends SessionParams {
   refinementRunId: string;
-}
-
-interface CreateDraftVersionBody {
-  expectedLatestRevision: number;
-  draft: unknown;
 }
 
 interface CreateRefinementRunBody {
@@ -62,16 +51,6 @@ const sessionParamsSchema = {
   properties: { sessionId: { type: "string", minLength: 1 } },
 } as const;
 
-const draftVersionParamsSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["sessionId", "revision"],
-  properties: {
-    sessionId: { type: "string", minLength: 1 },
-    revision: { type: "integer", minimum: 1 },
-  },
-} as const;
-
 const refinementRunParamsSchema = {
   type: "object",
   additionalProperties: false,
@@ -79,20 +58,6 @@ const refinementRunParamsSchema = {
   properties: {
     sessionId: { type: "string", minLength: 1 },
     refinementRunId: { type: "string", minLength: 1 },
-  },
-} as const;
-
-const draftVersionSchema = {
-  type: "object",
-  additionalProperties: false,
-  required: ["id", "sessionId", "revision", "fingerprint", "draft", "createdAt"],
-  properties: {
-    id: { type: "string" },
-    sessionId: { type: "string" },
-    revision: { type: "integer", minimum: 1 },
-    fingerprint: { type: "string", pattern: "^draft-[0-9a-f]{8}$" },
-    draft: compositionDraftReference,
-    createdAt: { type: "string" },
   },
 } as const;
 
@@ -158,6 +123,7 @@ const errorSchema = {
     actualLatestRevision: { type: "integer", minimum: 0 },
     expectedSourceFingerprint: { type: "string" },
     receivedSourceFingerprint: { type: "string" },
+    changeRevision: { type: "integer", minimum: 1 },
     audit: { type: "object", additionalProperties: true },
   },
 } as const;
@@ -166,79 +132,16 @@ export function registerCompositionSessionRoutes(
   server: FastifyInstance,
   repository: CompositionSessionRepository,
 ): void {
+  // Validate versioned plans without Fastify's default removal of fields from other union branches.
+  const planValidator = new Ajv2020({ allErrors: true });
+  planValidator.addSchema(compositionRefinementPlanSchema);
   server.addSchema(fastifyCompositionDraftSchema);
   server.addSchema(fastifyCompositionRefinementPlanSchema);
-
-  server.get<{ Params: SessionParams }>(
-    "/api/v1/sessions/:sessionId/composition/drafts",
-    {
-      schema: {
-        params: sessionParamsSchema,
-        response: {
-          200: {
-            type: "object",
-            additionalProperties: false,
-            required: ["draftVersions"],
-            properties: {
-              draftVersions: { type: "array", items: draftVersionSchema },
-            },
-          },
-          404: errorSchema,
-          409: errorSchema,
-        },
-      },
-    },
-    async (request, reply) =>
-      execute(reply, 200, () => ({
-        draftVersions: repository.listDraftVersions(request.params.sessionId),
-      })),
-  );
-
-  server.post<{ Params: SessionParams; Body: CreateDraftVersionBody }>(
-    "/api/v1/sessions/:sessionId/composition/drafts",
-    {
-      schema: {
-        params: sessionParamsSchema,
-        body: {
-          type: "object",
-          additionalProperties: false,
-          required: ["expectedLatestRevision", "draft"],
-          properties: {
-            expectedLatestRevision: { type: "integer", minimum: 0 },
-            draft: compositionDraftReference,
-          },
-        },
-        response: {
-          201: draftVersionSchema,
-          400: errorSchema,
-          404: errorSchema,
-          409: errorSchema,
-        },
-      },
-    },
-    async (request, reply) =>
-      execute(reply, 201, () =>
-        repository.createDraftVersion(request.params.sessionId, request.body),
-      ),
-  );
-
-  server.get<{ Params: DraftVersionParams }>(
-    "/api/v1/sessions/:sessionId/composition/drafts/:revision",
-    {
-      schema: {
-        params: draftVersionParamsSchema,
-        response: {
-          200: draftVersionSchema,
-          404: errorSchema,
-          409: errorSchema,
-        },
-      },
-    },
-    async (request, reply) =>
-      execute(reply, 200, () =>
-        repository.getDraftVersion(request.params.sessionId, request.params.revision),
-      ),
-  );
+  registerDraftVersionRoutes(server, {
+    routePrefix: "/api/v1/sessions/:sessionId/composition",
+    draftSchema: compositionDraftReference,
+    repository,
+  });
 
   server.get<{ Params: SessionParams }>(
     "/api/v1/sessions/:sessionId/composition/refinements",
@@ -268,6 +171,7 @@ export function registerCompositionSessionRoutes(
   server.post<{ Params: SessionParams; Body: CreateRefinementRunBody }>(
     "/api/v1/sessions/:sessionId/composition/refinements",
     {
+      validatorCompiler: ({ schema }) => planValidator.compile(schema),
       schema: {
         params: sessionParamsSchema,
         body: {
@@ -324,24 +228,11 @@ function execute(
   try {
     return reply.code(successStatus).send(operation());
   } catch (error) {
-    if (
-      error instanceof SessionNotFoundError ||
-      error instanceof DraftVersionNotFoundError ||
-      error instanceof RefinementRunNotFoundError
-    ) {
+    if (error instanceof RefinementRunNotFoundError) {
       return reply.code(404).send({ code: error.code, message: error.message });
     }
-    if (error instanceof CompositionSessionRequiredError) {
-      return reply.code(409).send({ code: error.code, message: error.message });
-    }
-    if (error instanceof DraftRevisionConflictError) {
-      return reply.code(409).send({
-        code: error.code,
-        message: error.message,
-        expectedLatestRevision: error.expectedLatestRevision,
-        actualLatestRevision: error.actualLatestRevision,
-      });
-    }
+    const draftVersionReply = replyToDraftVersionError(reply, error);
+    if (draftVersionReply) return draftVersionReply;
     if (error instanceof RefinementPlanStaleError) {
       return reply.code(409).send({
         code: error.code,
@@ -356,9 +247,6 @@ function execute(
         message: error.message,
         audit: error.audit,
       });
-    }
-    if (error instanceof InvalidRecordError) {
-      return reply.code(400).send({ code: error.code, message: error.message });
     }
     throw error;
   }

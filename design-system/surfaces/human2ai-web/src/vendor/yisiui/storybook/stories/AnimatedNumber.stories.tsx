@@ -8,7 +8,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "numbers-animatednumber",
-  title: "Components/Numbers/AnimatedNumber",
+  title: "yisiui-Components/Numbers/AnimatedNumber",
   component: AnimatedNumber,
   parameters: { layout: "padded" },
   argTypes: {

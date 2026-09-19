@@ -22,6 +22,7 @@ interface ProjectRow {
 interface SessionRow {
   id: string;
   project_id: string | null;
+  style_id: string | null;
   session_type: SessionType;
   title: string;
   lifecycle_stage: SessionLifecycleStage;
@@ -35,6 +36,25 @@ export class ProjectNotFoundError extends Error {
 
   constructor(readonly projectId: string) {
     super(`Project not found: ${projectId}`);
+  }
+}
+
+export class ProjectNameConflictError extends Error {
+  readonly code = "PROJECT_NAME_CONFLICT";
+
+  constructor(readonly name: string) {
+    super(`Project name already exists: ${name}`);
+  }
+}
+
+export class ProjectNotEmptyError extends Error {
+  readonly code = "PROJECT_NOT_EMPTY";
+
+  constructor(
+    readonly projectId: string,
+    readonly sessionCount: number,
+  ) {
+    super(`Project contains ${sessionCount} session(s): ${projectId}`);
   }
 }
 
@@ -107,6 +127,7 @@ export class ProjectSessionRepository {
 
   createProject(input: { name: string; description?: string | null }): Project {
     const name = requiredText(input.name, "Project name");
+    this.assertProjectNameAvailable(name);
     const description = optionalText(input.description);
     const id = randomUUID();
     const now = new Date().toISOString();
@@ -132,6 +153,7 @@ export class ProjectSessionRepository {
     assertRevision(input.expectedRevision, project.revision);
     const name =
       input.name === undefined ? project.name : requiredText(input.name, "Project name");
+    if (name !== project.name) this.assertProjectNameAvailable(name, projectId);
     const description =
       input.description === undefined ? project.description : optionalText(input.description);
     const now = new Date().toISOString();
@@ -143,6 +165,24 @@ export class ProjectSessionRepository {
       )
       .run(name, description, now, projectId, input.expectedRevision);
     return this.getProject(projectId);
+  }
+
+  deleteProject(
+    projectId: string,
+    input: { expectedRevision: number },
+  ): void {
+    const project = this.getProject(projectId);
+    assertRevision(input.expectedRevision, project.revision);
+    if (project.sessionCount > 0) {
+      throw new ProjectNotEmptyError(projectId, project.sessionCount);
+    }
+    this.database
+      .prepare(
+        `DELETE FROM projects
+         WHERE id = ? AND revision = ?
+           AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = ?)`,
+      )
+      .run(projectId, input.expectedRevision, projectId);
   }
 
   listSessions(): Session[] {
@@ -192,6 +232,8 @@ export class ProjectSessionRepository {
         this.database
           .prepare("INSERT INTO composition_sessions (session_id) VALUES (?)")
           .run(id);
+      } else if (input.sessionType === "spatial") {
+        this.database.prepare("INSERT INTO spatial_sessions (session_id) VALUES (?)").run(id);
       } else {
         this.database.prepare("INSERT INTO ui_sessions (session_id) VALUES (?)").run(id);
       }
@@ -220,11 +262,57 @@ export class ProjectSessionRepository {
     return this.getSession(sessionId);
   }
 
+  renameSession(
+    sessionId: string,
+    input: { title: string; expectedRevision: number },
+  ): Session {
+    const session = this.getSession(sessionId);
+    assertRevision(input.expectedRevision, session.revision);
+    const title = requiredText(input.title, "Session title");
+    if (session.title === title) return session;
+
+    const now = new Date().toISOString();
+    this.database
+      .prepare(
+        `UPDATE sessions
+         SET title = ?, revision = revision + 1, updated_at = ?
+         WHERE id = ? AND revision = ?`,
+      )
+      .run(title, now, sessionId, input.expectedRevision);
+    return this.getSession(sessionId);
+  }
+
+  deleteSession(
+    sessionId: string,
+    input: { expectedRevision: number },
+  ): void {
+    const session = this.getSession(sessionId);
+    assertRevision(input.expectedRevision, session.revision);
+    this.database
+      .prepare("DELETE FROM sessions WHERE id = ? AND revision = ?")
+      .run(sessionId, input.expectedRevision);
+  }
+
   private selectSessions(where: string, parameters: string[]): Session[] {
     const rows = this.database
       .prepare<string[], SessionRow>(`${SESSION_SELECT} ${where} ORDER BY updated_at DESC, id`)
       .all(...parameters);
     return rows.map(mapSession);
+  }
+
+  private assertProjectNameAvailable(name: string, excludedProjectId?: string): void {
+    const existing = excludedProjectId
+      ? this.database
+          .prepare<[string, string], { id: string }>(
+            "SELECT id FROM projects WHERE name = ? AND id <> ? LIMIT 1",
+          )
+          .get(name, excludedProjectId)
+      : this.database
+          .prepare<[string], { id: string }>(
+            "SELECT id FROM projects WHERE name = ? LIMIT 1",
+          )
+          .get(name);
+    if (existing) throw new ProjectNameConflictError(name);
   }
 }
 
@@ -232,6 +320,7 @@ const SESSION_SELECT = `
   SELECT
     id,
     project_id,
+    style_id,
     session_type,
     title,
     lifecycle_stage,
@@ -257,6 +346,7 @@ function mapSession(row: SessionRow): Session {
   return {
     id: row.id,
     projectId: row.project_id,
+    styleId: row.style_id,
     sessionType: row.session_type,
     title: row.title,
     lifecycleStage: row.lifecycle_stage,

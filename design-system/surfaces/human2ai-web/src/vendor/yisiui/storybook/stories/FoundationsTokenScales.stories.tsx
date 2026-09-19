@@ -6,7 +6,7 @@ import { tokens, type TokenName } from "@human2ai/ui/yisiui/tokens";
 import { assertStoryText } from "../interactionChecks";
 import styles from "./FoundationsTokenScales.stories.module.css";
 
-const meta = { title: "Foundations/Tokens" } satisfies Meta;
+const meta = { id: "foundations-tokens", title: "yisiui-Foundations/Tokens" } satisfies Meta;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
@@ -157,7 +157,7 @@ export const Motion: Story = {
           </article>
         ))}
       </div>
-      <Divider orientation="left" plain>文字动效倍率</Divider>
+      <Divider titlePlacement="start" plain>文字动效倍率</Divider>
       <div className={styles.speedList}>
         {textSpeedTokens.map(([label, name]) => (
           <div className={styles.speedItem} key={name}>

@@ -2,30 +2,14 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://yisi.local/schemas/composition-refinement-plan.schema.json",
   "title": "Agent-authored Composition Refinement Plan",
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["version", "kind", "sourceFingerprint", "rationale", "operations"],
-  "properties": {
-    "version": { "const": 1 },
-    "kind": { "const": "composition-refinement-plan" },
-    "sourceFingerprint": {
-      "type": "string",
-      "pattern": "^draft-[0-9a-f]{8}$"
+  "oneOf": [
+    {
+      "$ref": "#/$defs/legacyPlan"
     },
-    "rationale": { "type": "string", "minLength": 1, "maxLength": 2000 },
-    "operations": {
-      "type": "array",
-      "minItems": 1,
-      "maxItems": 16,
-      "items": {
-        "oneOf": [
-          { "$ref": "#/$defs/focusAnchor" },
-          { "$ref": "#/$defs/axisRelation" },
-          { "$ref": "#/$defs/rotationAlignment" }
-        ]
-      }
+    {
+      "$ref": "#/$defs/directedPlan"
     }
-  },
+  ],
   "$defs": {
     "focusAnchor": {
       "type": "object",
@@ -34,13 +18,19 @@
         "method",
         "methodVersion",
         "targetFocusId",
-        "anchor",
-        "strength"
+        "anchor"
       ],
       "properties": {
-        "method": { "const": "focus-anchor" },
-        "methodVersion": { "const": 1 },
-        "targetFocusId": { "type": "string", "pattern": "^focus-[0-9]+$" },
+        "method": {
+          "const": "focus-anchor"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "targetFocusId": {
+          "type": "string",
+          "pattern": "^focus-[0-9]+$"
+        },
         "anchor": {
           "enum": [
             "optical-center",
@@ -55,7 +45,20 @@
             "third-left-lower"
           ]
         },
-        "strength": { "const": "subtle" }
+        "strength": {
+          "const": "subtle",
+          "description": "Legacy compatibility field; does not restrict adjustment magnitude."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
       }
     },
     "axisRelation": {
@@ -66,28 +69,56 @@
         "methodVersion",
         "focusIds",
         "areaIds",
-        "relation",
-        "strength"
+        "relation"
       ],
       "properties": {
-        "method": { "const": "axis-relation" },
-        "methodVersion": { "const": 1 },
+        "method": {
+          "const": "axis-relation"
+        },
+        "methodVersion": {
+          "const": 1
+        },
         "focusIds": {
           "type": "array",
           "minItems": 2,
           "maxItems": 2,
           "uniqueItems": true,
-          "items": { "type": "string", "pattern": "^focus-[0-9]+$" }
+          "items": {
+            "type": "string",
+            "pattern": "^focus-[0-9]+$"
+          }
         },
         "areaIds": {
           "type": "array",
           "minItems": 2,
           "maxItems": 2,
           "uniqueItems": true,
-          "items": { "type": "string", "pattern": "^area-[0-9]+$" }
+          "items": {
+            "type": "string",
+            "pattern": "^area-[0-9]+$"
+          }
         },
-        "relation": { "enum": ["parallel", "perpendicular", "mirrored-cross"] },
-        "strength": { "const": "subtle" }
+        "relation": {
+          "enum": [
+            "parallel",
+            "perpendicular",
+            "mirrored-cross"
+          ]
+        },
+        "strength": {
+          "const": "subtle",
+          "description": "Legacy compatibility field; does not restrict adjustment magnitude."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
       }
     },
     "rotationAlignment": {
@@ -97,23 +128,631 @@
         "method",
         "methodVersion",
         "targetAreaIds",
-        "axis",
-        "strength"
+        "axis"
       ],
       "properties": {
-        "method": { "const": "rotation-alignment" },
-        "methodVersion": { "const": 1 },
+        "method": {
+          "const": "rotation-alignment"
+        },
+        "methodVersion": {
+          "const": 1
+        },
         "targetAreaIds": {
           "type": "array",
           "minItems": 1,
           "uniqueItems": true,
-          "items": { "type": "string", "pattern": "^area-[0-9]+$" }
+          "items": {
+            "type": "string",
+            "pattern": "^area-[0-9]+$"
+          }
         },
         "axis": {
-          "enum": ["horizontal", "vertical", "rising-diagonal", "falling-diagonal"]
+          "enum": [
+            "horizontal",
+            "vertical",
+            "rising-diagonal",
+            "falling-diagonal"
+          ]
         },
-        "strength": { "const": "subtle" }
+        "strength": {
+          "const": "subtle",
+          "description": "Legacy compatibility field; does not restrict adjustment magnitude."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
       }
+    },
+    "blockAlignment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetAreaIds",
+        "anchorAreaId",
+        "alignment"
+      ],
+      "properties": {
+        "method": {
+          "const": "block-alignment"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "targetAreaIds": {
+          "type": "array",
+          "minItems": 2,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^area-[0-9]+$"
+          }
+        },
+        "anchorAreaId": {
+          "type": "string",
+          "pattern": "^area-[0-9]+$"
+        },
+        "alignment": {
+          "enum": [
+            "left",
+            "horizontal-center",
+            "right",
+            "top",
+            "vertical-center",
+            "bottom"
+          ]
+        },
+        "strength": {
+          "const": "subtle",
+          "description": "Legacy compatibility field; does not restrict adjustment magnitude."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "spacingRhythm": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetAreaIds",
+        "axis",
+        "distribution"
+      ],
+      "properties": {
+        "method": {
+          "const": "spacing-rhythm"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "targetAreaIds": {
+          "type": "array",
+          "minItems": 3,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^area-[0-9]+$"
+          }
+        },
+        "axis": {
+          "enum": [
+            "horizontal",
+            "vertical"
+          ]
+        },
+        "distribution": {
+          "const": "equal"
+        },
+        "strength": {
+          "const": "subtle",
+          "description": "Legacy compatibility field; does not restrict adjustment magnitude."
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "framePlacement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetId",
+        "axis",
+        "alignment",
+        "division"
+      ],
+      "properties": {
+        "method": {
+          "const": "frame-placement"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "targetId": {
+          "type": "string",
+          "pattern": "^(area|focus)-[0-9]+$"
+        },
+        "axis": {
+          "enum": [
+            "x",
+            "y"
+          ]
+        },
+        "alignment": {
+          "enum": [
+            "start",
+            "center",
+            "end"
+          ]
+        },
+        "division": {
+          "enum": [
+            "center",
+            "golden-start",
+            "golden-end",
+            "third-start",
+            "third-end"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "sizeRatio": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "targetAreaId",
+        "dimension",
+        "referenceId",
+        "referenceDimension",
+        "ratio"
+      ],
+      "properties": {
+        "method": {
+          "const": "size-ratio"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "targetAreaId": {
+          "type": "string",
+          "pattern": "^area-[0-9]+$"
+        },
+        "dimension": {
+          "enum": [
+            "width",
+            "height",
+            "area"
+          ]
+        },
+        "referenceId": {
+          "type": "string",
+          "pattern": "^(frame|area-[0-9]+)$"
+        },
+        "referenceDimension": {
+          "enum": [
+            "width",
+            "height",
+            "area"
+          ]
+        },
+        "ratio": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "mirrorSymmetry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "anchorAreaId",
+        "targetAreaId",
+        "axis",
+        "division",
+        "match"
+      ],
+      "properties": {
+        "method": {
+          "const": "mirror-symmetry"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "anchorAreaId": {
+          "type": "string",
+          "pattern": "^area-[0-9]+$"
+        },
+        "targetAreaId": {
+          "type": "string",
+          "pattern": "^area-[0-9]+$"
+        },
+        "axis": {
+          "enum": [
+            "vertical",
+            "horizontal"
+          ]
+        },
+        "division": {
+          "enum": [
+            "center",
+            "golden-start",
+            "golden-end",
+            "third-start",
+            "third-end"
+          ]
+        },
+        "match": {
+          "enum": [
+            "position",
+            "geometry"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "focusFlow": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "method",
+        "methodVersion",
+        "sourceId",
+        "targetFocusId",
+        "localAxis"
+      ],
+      "properties": {
+        "method": {
+          "const": "focus-flow"
+        },
+        "methodVersion": {
+          "const": 1
+        },
+        "sourceId": {
+          "type": "string",
+          "pattern": "^(direction-1|area-[0-9]+)$"
+        },
+        "targetFocusId": {
+          "type": "string",
+          "pattern": "^focus-[0-9]+$"
+        },
+        "localAxis": {
+          "enum": [
+            "x",
+            "y"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "expectedEffect": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        }
+      }
+    },
+    "legacyPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "kind",
+        "sourceFingerprint",
+        "rationale",
+        "operations"
+      ],
+      "properties": {
+        "version": {
+          "const": 1
+        },
+        "kind": {
+          "const": "composition-refinement-plan"
+        },
+        "sourceFingerprint": {
+          "type": "string",
+          "pattern": "^draft-[0-9a-f]{8}$"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 16,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/focusAnchor"
+              },
+              {
+                "$ref": "#/$defs/axisRelation"
+              },
+              {
+                "$ref": "#/$defs/rotationAlignment"
+              },
+              {
+                "$ref": "#/$defs/blockAlignment"
+              },
+              {
+                "$ref": "#/$defs/spacingRhythm"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "directedPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version",
+        "kind",
+        "sourceFingerprint",
+        "rationale",
+        "operations",
+        "decision",
+        "objective",
+        "assessment",
+        "preserve",
+        "tradeoffs",
+        "fixedIds",
+        "focusLinks"
+      ],
+      "properties": {
+        "version": {
+          "const": 2
+        },
+        "kind": {
+          "const": "composition-refinement-plan"
+        },
+        "sourceFingerprint": {
+          "type": "string",
+          "pattern": "^draft-[0-9a-f]{8}$"
+        },
+        "rationale": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "operations": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 16,
+          "items": {
+            "allOf": [
+              {
+                "oneOf": [
+                  {
+                    "$ref": "#/$defs/focusAnchor"
+                  },
+                  {
+                    "$ref": "#/$defs/axisRelation"
+                  },
+                  {
+                    "$ref": "#/$defs/rotationAlignment"
+                  },
+                  {
+                    "$ref": "#/$defs/blockAlignment"
+                  },
+                  {
+                    "$ref": "#/$defs/spacingRhythm"
+                  },
+                  {
+                    "$ref": "#/$defs/framePlacement"
+                  },
+                  {
+                    "$ref": "#/$defs/sizeRatio"
+                  },
+                  {
+                    "$ref": "#/$defs/mirrorSymmetry"
+                  },
+                  {
+                    "$ref": "#/$defs/focusFlow"
+                  }
+                ]
+              },
+              {
+                "type": "object",
+                "required": [
+                  "reason",
+                  "expectedEffect"
+                ]
+              }
+            ]
+          }
+        },
+        "decision": {
+          "enum": [
+            "refine",
+            "retain"
+          ]
+        },
+        "objective": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 2000
+        },
+        "assessment": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "intent",
+            "observations",
+            "uncertainties"
+          ],
+          "properties": {
+            "intent": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2000
+            },
+            "observations": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 32,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            },
+            "uncertainties": {
+              "type": "array",
+              "minItems": 0,
+              "maxItems": 32,
+              "items": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 2000
+              }
+            }
+          }
+        },
+        "preserve": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "tradeoffs": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 2000
+          }
+        },
+        "fixedIds": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 32,
+          "items": {
+            "type": "string",
+            "pattern": "^(direction-1|(area|focus)-[0-9]+)$"
+          },
+          "uniqueItems": true
+        },
+        "focusLinks": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 32,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "focusId",
+              "areaId"
+            ],
+            "properties": {
+              "focusId": {
+                "type": "string",
+                "pattern": "^focus-[0-9]+$"
+              },
+              "areaId": {
+                "type": "string",
+                "pattern": "^area-[0-9]+$"
+              }
+            }
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "decision": {
+                "const": "retain"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "operations": {
+                "maxItems": 0,
+                "type": "array"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "operations": {
+                "minItems": 1,
+                "type": "array"
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

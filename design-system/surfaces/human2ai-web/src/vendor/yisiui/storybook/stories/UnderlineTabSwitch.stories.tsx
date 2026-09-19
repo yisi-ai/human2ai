@@ -8,7 +8,7 @@ import { assertStoryRole, assertStorySelector, assertStoryText } from "../intera
 
 const meta = {
   id: "switching-underlinetabswitch",
-  title: "Components/Switching/UnderlineTabSwitch",
+  title: "yisiui-Components/Switching/UnderlineTabSwitch",
   component: UnderlineTabSwitch,
   parameters: { layout: "padded" },
   argTypes: {

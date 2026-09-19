@@ -12,7 +12,7 @@ import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
   id: "components-status-statuslight",
-  title: "Components/States/StatusLight",
+  title: "yisiui-Components/States/StatusLight",
   component: StatusLight,
   parameters: { layout: "padded" },
   argTypes: {
