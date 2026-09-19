@@ -36,6 +36,23 @@ describe("style library API", () => {
     return artifactsDirectory;
   }
 
+  it.each(["/api/v1/styles", "/api/v1/agent/styles"])("creates and updates 3D specifications through %s", async (url) => {
+    await setup();
+    const description = "Rounded low-poly forms, matte materials, muted colors and soft shadows.";
+    const response = await server!.inject({ method: "POST", url, payload: {
+      name: "Toy city", category: "spatial", description,
+    } });
+    expect(response.statusCode, response.body).toBe(201);
+    const style = response.json();
+    expect(style).toMatchObject({ category: "spatial", description, creatorType: url.includes("agent") ? "agent" : "user" });
+    const context = await server!.inject({ method: "GET", url: `/api/v1/agent/styles/${style.id}/context` });
+    expect(context.json()).toEqual({ description, referenceImages: [] });
+    const entryUrl = `/api/v1/styles/${style.id}`;
+    expect((await server!.inject({ method: "PATCH", url: entryUrl, payload: { expectedRevision: 1, category: "visual" } })).json()).toMatchObject({ category: "visual", revision: 2 });
+    expect((await server!.inject({ method: "PATCH", url: entryUrl, payload: { expectedRevision: 2, category: "spatial" } })).json()).toMatchObject({ category: "spatial", revision: 3 });
+    expect((await server!.inject({ method: "PATCH", url: entryUrl, payload: { expectedRevision: 3, category: "unsupported" } })).statusCode).toBe(400);
+  });
+
   it("stores a concise prompt sentence separately and provides a legacy fallback", async () => {
     await setup();
     const description = "Use quiet whitespace and precise alignment.\nKeep the primary action prominent.";

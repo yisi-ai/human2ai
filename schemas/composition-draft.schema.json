@@ -78,6 +78,7 @@
           "aspect": { "enum": ["square", "free", "landscape", "portrait"] },
           "visualWeight": { "enum": ["auto", "high", "medium", "low", "decorative"] },
           "displayText": { "type": "string" },
+          "corners": { "$ref": "#/$defs/textCorners" },
           "isLightSource": { "type": "boolean" },
           "rotation": { "type": "number" },
           "width": { "type": "number", "exclusiveMinimum": 0 },
@@ -99,7 +100,11 @@
               "required": ["semanticType"]
             },
             "then": { "required": ["displayText"], "properties": { "isLightSource": { "const": false } } },
-            "else": { "not": { "required": ["displayText"] } }
+            "else": { "not": { "anyOf": [{ "required": ["displayText"] }, { "required": ["corners"] }] } }
+          },
+          {
+            "if": { "required": ["corners"] },
+            "then": { "properties": { "primitive": { "const": "quadrilateral" }, "aspect": { "const": "free" } } }
           }
         ]
       }
@@ -182,12 +187,23 @@
         "rotation": { "type": "number" }
       }
     },
+    "textCorners": {
+      "type": "array", "minItems": 4, "maxItems": 4,
+      "items": {
+        "type": "object", "additionalProperties": false, "required": ["x", "y"],
+        "properties": {
+          "x": { "type": "number", "minimum": 0, "maximum": 1 },
+          "y": { "type": "number", "minimum": 0, "maximum": 1 }
+        }
+      }
+    },
     "layoutArea": {
       "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "area", "aspect"],
       "properties": {
         "id": { "type": "string", "pattern": "^area-[0-9]+$" },
         "x": { "type": "number" }, "y": { "type": "number" },
         "area": { "type": "number", "exclusiveMinimum": 0 },
+        "corners": { "$ref": "#/$defs/textCorners" },
         "aspect": { "enum": ["square", "free", "landscape", "portrait"] },
         "rotation": { "type": "number" },
         "width": { "type": "number", "exclusiveMinimum": 0 },

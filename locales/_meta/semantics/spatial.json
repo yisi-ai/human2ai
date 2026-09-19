@@ -4,14 +4,16 @@
   "concepts": {
     "spatial.title": {
       "meaning": "A standalone editable three-dimensional scene, peer to composition and UI sessions.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "scope": "Spatial workspace and composition camera-reference integration. The fixed Space tab selects the editable scene within this workspace.",
       "referent": "A standalone editable three-dimensional scene, peer to composition and UI sessions.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.title",
       "searchTerms": [
         "3D 空间",
         "3D space",
-        "title"
+        "title",
+        "空间",
+        "Space tab"
       ],
       "examples": [
         "A standalone editable three-dimensional scene, peer to composition and UI sessions."
@@ -95,7 +97,7 @@
     },
     "spatial.cameras": {
       "meaning": "List of saved output cameras, separate from the temporary editing view.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "scope": "Spatial workspace and composition camera-reference integration. Includes the fixed Cameras tab and the gallery of all current scene output cameras.",
       "referent": "List of saved output cameras, separate from the temporary editing view.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.cameras",
@@ -105,7 +107,8 @@
         "cameras"
       ],
       "examples": [
-        "List of saved output cameras, separate from the temporary editing view."
+        "List of saved output cameras, separate from the temporary editing view.",
+        "Switching to a three-column gallery of camera names and framing previews."
       ],
       "nonExamples": [
         "An ordinary uploaded image or the 2D composition viewport."
@@ -762,7 +765,7 @@
     },
     "spatial.constrained": {
       "meaning": "The requested pose cannot proceed further while preserving bone lengths, joint limits and locks.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "scope": "Spatial workspace and composition camera-reference integration. Workspace-level feedback appears only in the error icon tooltip to the left of the Space tab; no canvas status banner.",
       "referent": "The requested pose cannot proceed further while preserving bone lengths, joint limits and locks.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.constrained",
@@ -798,7 +801,7 @@
     },
     "spatial.load-failed": {
       "meaning": "Failure reading the selected spatial session.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "scope": "Spatial workspace and composition camera-reference integration. Workspace-level feedback appears only in the error icon tooltip to the left of the Space tab; no canvas status banner.",
       "referent": "Failure reading the selected spatial session.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.loadFailed",
@@ -816,7 +819,7 @@
     },
     "spatial.save-failed": {
       "meaning": "A spatial change remains local after a failed save.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "scope": "Spatial workspace and composition camera-reference integration. Workspace-level feedback appears only in the error icon tooltip to the left of the Space tab; no canvas status banner.",
       "referent": "A spatial change remains local after a failed save.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.saveFailed",
@@ -845,42 +848,6 @@
       ],
       "examples": [
         "A revision conflict prevents overwriting another saved spatial edit."
-      ],
-      "nonExamples": [
-        "An ordinary uploaded image or the 2D composition viewport."
-      ]
-    },
-    "spatial.saving": {
-      "meaning": "A spatial edit is being persisted.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
-      "referent": "A spatial edit is being persisted.",
-      "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
-      "canonicalKey": "spatial.saving",
-      "searchTerms": [
-        "正在保存空间",
-        "Saving space",
-        "saving"
-      ],
-      "examples": [
-        "A spatial edit is being persisted."
-      ],
-      "nonExamples": [
-        "An ordinary uploaded image or the 2D composition viewport."
-      ]
-    },
-    "spatial.saved": {
-      "meaning": "The current spatial draft has been successfully persisted.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
-      "referent": "The current spatial draft has been successfully persisted.",
-      "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
-      "canonicalKey": "spatial.saved",
-      "searchTerms": [
-        "空间已保存",
-        "Space saved",
-        "saved"
-      ],
-      "examples": [
-        "The current spatial draft has been successfully persisted."
       ],
       "nonExamples": [
         "An ordinary uploaded image or the 2D composition viewport."
@@ -1448,7 +1415,7 @@
     },
     "spatial.parameters": {
       "meaning": "Editable properties of the selected scene object, camera, joint, or bone, displayed independently from the object list.",
-      "scope": "Dedicated tab and section in the 3D space AppShellFrame right panel.",
+      "scope": "Dedicated tab and section in the 3D space AppShellFrame right panel. Also labels the camera gallery action, combined with the camera name, that opens these properties for that camera.",
       "referent": "Editable properties of the selected scene object, camera, or skeletal joint.",
       "precedence": "The panel selection changes presentation only; scene selection, pose, and output cameras remain independent.",
       "canonicalKey": "spatial.parameters",
@@ -1458,7 +1425,8 @@
         "spatial sidebar"
       ],
       "examples": [
-        "Editable properties of the selected scene object, camera, or skeletal joint."
+        "Editable properties of the selected scene object, camera, or skeletal joint.",
+        "A camera card named Camera 2 opens the Camera 2 properties in the right sidebar."
       ],
       "nonExamples": [
         "Project navigation or a saved camera view."
@@ -3232,6 +3200,81 @@
       "nonExamples": [
         "The retired skeleton appearance, a 2D skeleton projection, or a downloaded skin mesh."
       ]
+    },
+    "spatial.workspace-views": {
+      "meaning": "Switch between the editable scene and its output camera gallery.",
+      "scope": "3D workspace camera gallery.",
+      "referent": "The fixed Space and Cameras switch above the central workspace.",
+      "precedence": "Separate from the right panel tabs and from changing the selected output camera.",
+      "canonicalKey": "spatial.workspaceViews",
+      "searchTerms": [
+        "切换空间视图",
+        "3D workspace view"
+      ],
+      "examples": [
+        "Use the keyboard to switch from Space to Cameras."
+      ],
+      "nonExamples": [
+        "Switching between information, objects and properties in the sidebar."
+      ]
+    },
+    "spatial.camera-preview-pending": {
+      "meaning": "The current camera preview will become available after the scene changes are saved.",
+      "scope": "3D workspace camera gallery.",
+      "referent": "A gallery camera whose current saved preview source is not yet available.",
+      "precedence": "Retain the camera name while waiting; never display an older scene revision as current.",
+      "canonicalKey": "spatial.cameraPreviewPending",
+      "searchTerms": [
+        "保存后显示预览",
+        "Preview available after saving"
+      ],
+      "examples": [
+        "Adding a camera while automatic saving is pending."
+      ],
+      "nonExamples": [
+        "An image request that failed and can be retried."
+      ]
+    },
+    "spatial.show-cameras": {
+      "meaning": "Show or hide the editor-only position, direction and framing guides for every output camera in the current scene.",
+      "scope": "Checkbox in the 3D workspace information and tools panel.",
+      "referent": "All output camera helpers in the editable spatial viewport, including the selected camera.",
+      "precedence": "A local viewing preference, independent of camera selection, stored camera parameters, observation boxes and exported previews.",
+      "canonicalKey": "spatial.showCameras",
+      "searchTerms": [
+        "显示摄像机",
+        "Show cameras",
+        "camera guides",
+        "camera visibility"
+      ],
+      "examples": [
+        "Enable the checkbox to see all camera guides at once.",
+        "Disable it to hide camera guides while editing the scene."
+      ],
+      "nonExamples": [
+        "Selecting the Cameras gallery tab.",
+        "Changing camera rendering settings or showing character bones."
+      ]
+    },
+    "spatial.edit-object": {
+      "meaning": "Open the compact editor for the display name and user note of one top-level spatial entity.",
+      "scope": "Spatial viewport double-click editor and its accessible dialog title.",
+      "referent": "A character, primitive object, output camera or observation box identified by its stable ID.",
+      "precedence": "Describes object metadata; joint and bone manipulation continues to control pose. Closing keeps already saved changes.",
+      "canonicalKey": "spatial.editObject",
+      "searchTerms": [
+        "编辑物件",
+        "Edit object",
+        "object note editor"
+      ],
+      "examples": [
+        "Double-click a box to explain what it represents.",
+        "Double-click a character surface to edit the character note."
+      ],
+      "nonExamples": [
+        "Rotate a bone.",
+        "Edit the entire space or its style."
+      ]
     }
   },
   "keys": {
@@ -3658,24 +3701,6 @@
       "reusePolicy": "canonical",
       "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
     },
-    "spatial.saving": {
-      "conceptId": "spatial.saving",
-      "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
-      "tone": "concise and neutral",
-      "reusePolicy": "canonical",
-      "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
-    },
-    "spatial.saved": {
-      "conceptId": "spatial.saved",
-      "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
-      "tone": "concise and neutral",
-      "reusePolicy": "canonical",
-      "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
-    },
     "spatial.duplicate": {
       "conceptId": "spatial.duplicate",
       "variant": "default",
@@ -3956,7 +3981,7 @@
     "spatial.parameters": {
       "conceptId": "spatial.parameters",
       "variant": "canonical",
-      "role": "tab choice and section heading",
+      "role": "tab choice, section heading and accessible properties destination",
       "grammar": "noun phrase",
       "tone": "concise",
       "reusePolicy": "canonical"
@@ -4822,6 +4847,46 @@
       "grammar": "imperative verb phrase",
       "tone": "concise and direct",
       "reusePolicy": "contextual"
+    },
+    "spatial.spaceTab": {
+      "conceptId": "spatial.title",
+      "variant": "workspace-tab",
+      "role": "view switch option",
+      "grammar": "noun phrase",
+      "tone": "concise",
+      "reusePolicy": "contextual"
+    },
+    "spatial.workspaceViews": {
+      "conceptId": "spatial.workspace-views",
+      "variant": "default",
+      "role": "view switch accessible name",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.cameraPreviewPending": {
+      "conceptId": "spatial.camera-preview-pending",
+      "variant": "default",
+      "role": "status message",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.showCameras": {
+      "conceptId": "spatial.show-cameras",
+      "variant": "default",
+      "role": "checkbox label",
+      "grammar": "verb phrase",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "spatial.editObject": {
+      "conceptId": "spatial.edit-object",
+      "variant": "default",
+      "role": "Dialog title",
+      "grammar": "Verb phrase",
+      "tone": "Concise and neutral",
+      "reusePolicy": "canonical"
     }
   }
 }

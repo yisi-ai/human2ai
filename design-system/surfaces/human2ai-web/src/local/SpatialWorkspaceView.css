@@ -1,11 +1,30 @@
-.spatial-workspace { box-sizing: border-box; display: flex; height: 100%; min-height: 0; min-width: 0; overflow: hidden; padding: var(--yisiui-space-4); color: var(--yisiui-color-text-primary); }
+.spatial-workspace { box-sizing: border-box; display: flex; height: 100%; min-height: 0; min-width: 0; overflow: hidden; padding: var(--yisiui-space-3); color: var(--yisiui-color-text-primary); }
+.spatial-workflow { flex: 1; }
+.spatial-workflow .human2ai-composition-workflow__stage { overflow: hidden; }
+.spatial-workspace-controls { position: relative; display: flex; align-items: center; }
+.spatial-workspace-error { position: absolute; right: calc(100% + var(--yisiui-space-2)); display: flex; align-items: center; }
 .spatial-center { position: relative; display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; overflow: hidden; border-radius: var(--yisiui-radius-md); }
+.spatial-space { position: relative; display: flex; flex: 1; min-width: 0; min-height: 0; }
+.spatial-space[hidden] { display: none; }
+.spatial-camera-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: var(--yisiui-space-4); min-height: 0; overflow: auto; }
+.spatial-camera-gallery, .spatial-panel-body { scrollbar-width: none; }
+.spatial-camera-gallery::-webkit-scrollbar, .spatial-panel-body::-webkit-scrollbar { display: none; }
+.spatial-camera-card { position: relative; display: flex; flex-direction: column; gap: var(--yisiui-space-2); min-width: 0; margin: 0; }
+.spatial-camera-card .spatial-camera-select { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; border-radius: var(--yisiui-radius-md); }
+.spatial-camera-card:hover .spatial-camera-image, .spatial-camera-card[data-selected="true"] .spatial-camera-image { border-color: var(--yisiui-color-action-primary); }
+.spatial-camera-image .ant-alert button { position: relative; z-index: 2; }
+.spatial-camera-card figcaption { font-size: var(--yisiui-font-size-sm); overflow-wrap: anywhere; }
+.spatial-camera-image { display: grid; place-items: center; aspect-ratio: 4 / 3; min-width: 0; overflow: hidden; border: 1px solid var(--yisiui-color-border-subtle); border-radius: var(--yisiui-radius-md); background: var(--yisiui-color-surface-soft); }
+.spatial-camera-image > * { grid-area: 1 / 1; min-width: 0; max-width: 100%; }
+.spatial-camera-image > img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
+.spatial-camera-image > .ant-alert { box-sizing: border-box; }
+.spatial-camera-pending { margin: 0; padding: var(--yisiui-space-3); color: var(--yisiui-color-text-secondary); font-size: var(--yisiui-font-size-sm); text-align: center; }
 .spatial-panel-host { height: 100%; min-height: 0; }
 .spatial-panel { box-sizing: border-box; display: flex; flex-direction: column; gap: var(--yisiui-space-5); height: 100%; min-height: 0; padding: var(--yisiui-space-5); color: var(--yisiui-color-text-primary); }
 .spatial-panel .spatial-panel-tabs { min-width: 0; }
 .spatial-panel-tabs .ant-segmented-item { flex: 1 0 auto; }
 .spatial-panel-tabs .ant-segmented-item-label { padding-inline: var(--yisiui-space-1); }
-.spatial-panel-body { display: flex; flex-direction: column; gap: var(--yisiui-space-5); min-height: 0; overflow: auto; scrollbar-gutter: stable; }
+.spatial-panel-body { display: flex; flex-direction: column; gap: var(--yisiui-space-5); min-height: 0; overflow: auto; }
 .spatial-panel h2 { margin: 0; font-size: var(--yisiui-font-size-lg); font-weight: 600; }
 .spatial-tools, .spatial-objects, .spatial-parameters, .spatial-preview { display: flex; flex: none; flex-direction: column; gap: var(--yisiui-space-3); min-width: 0; }
 .spatial-add-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--yisiui-space-2); }
@@ -25,6 +44,8 @@
 .spatial-viewport__error { padding: var(--yisiui-space-5); }
 .spatial-field { display: flex; flex-direction: column; gap: var(--yisiui-space-2); font-size: var(--yisiui-font-size-sm); min-width: 0; }
 .spatial-field > span { color: var(--yisiui-color-text-secondary); }
+.spatial-object-editor-fields { display: grid; gap: var(--yisiui-space-4); }
+.spatial-note-tooltip { white-space: pre-wrap; overflow-wrap: anywhere; }
 .spatial-vector { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--yisiui-space-1); }
 .spatial-field .ant-input-number, .spatial-field .ant-select { width: 100%; min-width: 0; }
 .spatial-locks { display: flex; flex-direction: column; gap: var(--yisiui-space-2); }
@@ -49,7 +70,6 @@
 .spatial-reference-tabs .ant-segmented-group { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .spatial-reference-tabs .ant-segmented-item { min-width: 0; }
 .spatial-reference-tabs .ant-segmented-item-label { padding-inline: var(--yisiui-space-1); }
-.spatial-status { padding: var(--yisiui-space-1) var(--yisiui-space-2); font-size: var(--yisiui-font-size-sm); color: var(--yisiui-color-text-secondary); }
 .spatial-joint-icon { color: #b77931; }
 .spatial-bone-icon { color: #728aa1; }
 .spatial-rig-legend { display: flex; gap: var(--yisiui-space-4); font-size: var(--yisiui-font-size-sm); color: var(--yisiui-color-text-secondary); }

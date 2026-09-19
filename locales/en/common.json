@@ -48,7 +48,8 @@
       "label": "Category",
       "all": "All types",
       "visual": "Visual",
-      "ui": "UI"
+      "ui": "UI",
+      "spatial": "3D"
     },
     "creator": {
       "label": "Creator",
@@ -66,7 +67,8 @@
     },
     "description": {
       "heading": "Design specification",
-      "placeholder": "Describe the layout, proportions, visual hierarchy, and decorative treatment."
+      "placeholder": "Describe the layout, proportions, visual hierarchy, and decorative treatment.",
+      "spatialPlaceholder": "Describe forms, proportions, materials, palette, lighting, and camera treatment."
     },
     "searchPlaceholder": "Search styles",
     "deleteTitle": "Delete this style?",
@@ -346,6 +348,10 @@
     },
     "lightSource": {
       "toggle": "Use as light source"
+    },
+    "textRegion": {
+      "cornerLabel": "Text outline corner {{index}}",
+      "cornerHelp": "Select a text region and hold Ctrl to drag its corners. Focus a corner and use the arrow keys for fine adjustments."
     }
   },
   "uiSketch": {
@@ -498,6 +504,9 @@
   },
   "spatial": {
     "title": "3D space",
+    "spaceTab": "Space",
+    "workspaceViews": "3D workspace view",
+    "cameraPreviewPending": "Preview available after saving",
     "newSpace": "New 3D space",
     "newInProject": "New 3D space in {{project}}",
     "untitled": "Untitled 3D space",
@@ -544,8 +553,6 @@
     "loadFailed": "Could not load the 3D space",
     "saveFailed": "Could not save. Try again.",
     "conflict": "The space has changed. Reload to continue.",
-    "saving": "Saving space",
-    "saved": "Space saved",
     "duplicate": "Duplicate scene object",
     "deleteConfirm": "Delete this scene object?",
     "empty": "No objects in this space",
@@ -587,6 +594,7 @@
     "resetPose": "Reset pose",
     "resetPoseHint": "Restore the default pose and clear this character’s locks. Can be undone.",
     "showRig": "Show joints and bones",
+    "showCameras": "Show cameras",
     "lightingEffects": "Lighting effects",
     "jointLeftWrist": "Left wrist",
     "jointLeftAnkle": "Left ankle",
@@ -677,7 +685,8 @@
     "renderPassError": "--pass must be one of {{passes}}.",
     "appearance": "Model style",
     "appearanceQuaternius": "Human model",
-    "appearanceGeometric": "Geometric mannequin"
+    "appearanceGeometric": "Geometric mannequin",
+    "editObject": "Edit object"
   },
   "canvasHistory": {
     "undo": "Undo",

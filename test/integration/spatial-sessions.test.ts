@@ -5,11 +5,57 @@ import sharp from "sharp";
 import { describe, expect, it } from "vitest";
 import { createHuman2AiServer } from "../../src/server/runtime.js";
 import { executeCli } from "../../src/cli/main.js";
-import { applySpatialOperations, createHumanoid, createSpatialDraft, jointWorldTransforms, type SpatialDraft } from "../../src/domain/spatial/index.js";
+import { applySpatialOperations, createHumanoid, createSpatialCameraBox, createSpatialDraft, jointWorldTransforms, type SpatialDraft } from "../../src/domain/spatial/index.js";
 import { createDraft } from "../../src/domain/composition/index.js";
 import { addCameraReference, snapshotCameraReference } from "../../src/domain/composition/camera-reference.js";
+import { availableSpatialCameraPreviews, updateSpatialCameraPreviews } from "../../web/lib/spatial-camera-previews.ts";
 
 describe("3D spatial sessions", () => {
+  it("saves object notes through the CLI, exposes them in inspect and restores them without altering PNGs", async () => {
+    const directory = await mkdtemp(join(tmpdir(), "human2ai-spatial-notes-"));
+    const server = createHuman2AiServer({ databasePath: ":memory:", artifactsDirectory: directory });
+    try {
+      const session = (await server.inject({ method: "POST", url: "/api/v1/sessions", payload: { sessionType: "spatial", title: "Object notes" } })).json<{ id: string }>();
+      const root = `/api/v1/sessions/${session.id}/spatial`, draft = createSpatialDraft();
+      draft.characters = [createHumanoid("person", "Person")];
+      draft.objects = [{ id: "desk", name: "Desk", kind: "box", position: [1, .5, 0], rotation: [0, 0, 0], size: [1, 1, 1], color: "#abcdef" }];
+      draft.cameraBoxes = [createSpatialCameraBox("box", "Observation box")];
+      draft.cameras[0].width = draft.cameras[0].height = 128;
+      expect((await server.inject({ method: "POST", url: `${root}/drafts`, payload: { expectedLatestRevision: 0, draft } })).statusCode).toBe(201);
+      const loaded = (await server.inject(`${root}/drafts/latest`)).json<{ draftVersion: { draft: SpatialDraft } }>().draftVersion.draft;
+      const previews = updateSpatialCameraPreviews(undefined, loaded, 1);
+      const fetcher = async (input: string | URL | Request, init?: RequestInit) => {
+        const url = new URL(String(input));
+        const response = await server.inject({ method: (init?.method ?? "GET") as "GET", url: url.pathname + url.search, payload: init?.body as string | undefined, headers: init?.headers as Record<string, string> });
+        return new Response(new Uint8Array(response.rawPayload), { status: response.statusCode, headers: { "content-type": String(response.headers["content-type"]) } });
+      };
+      const note = "保持当前位置\n依据空间风格细化，不照搬占位形状。", input = join(directory, "notes.json");
+      await writeFile(input, JSON.stringify([
+        { type: "put-character", character: { ...draft.characters[0], note } },
+        { type: "put-object", object: { ...draft.objects[0], name: "Reception desk", note } },
+        { type: "put-camera", camera: { ...draft.cameras[0], note } },
+        { type: "put-camera-box", box: { ...draft.cameraBoxes[0], note } },
+      ]));
+      const applied = await executeCli(["spatial", "apply", "--session", session.id, "--revision", "1", "--input", input], { fetch: fetcher as typeof fetch }) as { draft: SpatialDraft; revision: number };
+      expect([...availableSpatialCameraPreviews(previews, applied.draft)]).toEqual([["camera-1", 1]]);
+      const savedPreviews = updateSpatialCameraPreviews(previews, applied.draft, applied.revision);
+      const inspected = await executeCli(["spatial", "inspect", "--session", session.id, "--revision", "2"], { fetch: fetcher as typeof fetch }) as { draft: SpatialDraft };
+      for (const entity of [...inspected.draft.characters, ...inspected.draft.objects, ...inspected.draft.cameras, ...inspected.draft.cameraBoxes!]) expect(entity.note).toBe(note);
+      expect(inspected.draft.objects[0].name).toBe("Reception desk");
+      expect((await server.inject(`${root}/drafts/1`)).json().draft).toEqual(draft);
+      const png = (revision: number) => server.inject(`${root}/cameras/camera-1.png?revision=${revision}`);
+      const before = await png(1), after = await png(2);
+      expect(before.statusCode).toBe(200); expect(after.statusCode).toBe(200);
+      expect(after.rawPayload.equals(before.rawPayload)).toBe(true);
+      const undo = await server.inject({ method: "POST", url: `${root}/drafts/undo`, payload: { expectedLatestRevision: 2, changeRevision: 2 } });
+      expect(undo.statusCode).toBe(201); expect(undo.json().draft).toEqual(draft);
+      const restored = await server.inject({ method: "POST", url: `${root}/drafts/restore`, payload: { expectedLatestRevision: 3, targetRevision: 2 } });
+      expect(restored.statusCode).toBe(201); expect(restored.json().draft).toEqual(inspected.draft);
+      expect([...availableSpatialCameraPreviews(savedPreviews, undo.json().draft)]).toEqual([["camera-1", 1]]);
+      expect([...availableSpatialCameraPreviews(savedPreviews, restored.json().draft)]).toEqual([["camera-1", 1]]);
+    } finally { await server.close(); await rm(directory, { recursive: true, force: true }); }
+  });
+
   it("keeps existing connector poses rigid across API edits, raw saves, reset and undo", async () => {
     const directory = await mkdtemp(join(tmpdir(),"human2ai-connectors-"));
     const server = createHuman2AiServer({databasePath:":memory:",artifactsDirectory:directory});

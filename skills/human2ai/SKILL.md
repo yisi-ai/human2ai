@@ -1,6 +1,6 @@
 ---
 name: human2ai
-description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); or to reuse a visual style. The consumer project's Agent owns downstream implementation.
+description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); to model in the consumer project using a style and 3D spatial guidance; or to reuse a visual style. The consumer project's Agent owns downstream implementation.
 ---
 
 # Human2AI
@@ -30,10 +30,10 @@ If the integration config is missing, stop and tell the user that this repositor
 
 ## Use the shared style library
 
-The style library is global to the local Human2AI service. Each composition or UI session can bind one of its styles; the browser and Agent share that binding. Search it when the user asks to reuse a style or when you need to select a style for canvas processing:
+The style library is global to the local Human2AI service. Each composition, UI or spatial session can bind one of its styles; the browser and Agent share that binding. Search it when the user asks to reuse a style or when you need to select a style for canvas processing or consumer-project modeling:
 
 ```text
-<runner> style list [--category <visual|ui>] [--creator <user|agent>]
+<runner> style list [--category <visual|ui|spatial>] [--creator <user|agent>]
 <runner> style get --style <style-id>
 ```
 
@@ -42,14 +42,14 @@ The style library is global to the local Human2AI service. Each composition or U
 When a style encountered during Agent work is worth keeping, save it directly as an Agent-created entry; there is no proposal or pending-review state:
 
 ```text
-<runner> style create --name <name> --category <visual|ui> --description <specification> --summary <sentence>
+<runner> style create --name <name> --category <visual|ui|spatial> --description <specification> --summary <sentence>
 <runner> style add-reference --style <style-id> --input <image> --expected-revision <n>
 ```
 
 A style may have no reference image, but its design specification must be non-empty. Supply a separate concise sentence capturing its distinctive visual traits (typically 30–60 Chinese characters, maximum 240 characters). Browser prompt copying adds only this sentence, without a model call or the full specification. Keep the sentence consistent when editing the specification. Older entries without a sentence fall back to their first description sentence until edited. The creation entrypoint permanently marks these entries as `agent`; entries created in the browser remain `user` even after Agent edits. Update or permanently delete only when the user requests it or it is otherwise clearly part of the current task:
 
 ```text
-<runner> style update --style <style-id> --expected-revision <n> [--name <name>] [--category <visual|ui>] [--description <specification>] [--summary <sentence>]
+<runner> style update --style <style-id> --expected-revision <n> [--name <name>] [--category <visual|ui|spatial>] [--description <specification>] [--summary <sentence>]
 <runner> style remove-reference --style <style-id> --reference <reference-id> --expected-revision <n>
 <runner> style delete --style <style-id> --expected-revision <n>
 ```
@@ -106,11 +106,17 @@ For spatial sessions, read [references/spatial.md](references/spatial.md). Creat
 
 When generating an image from a spatial camera, follow that reference's **Camera references for image generation** guidance for interpreting pose intent, correcting anatomical inaccuracies, and excluding guide markings from the generated image.
 
+## Model in the consumer project
+
+When the user asks for final 3D models or a scene in their project, read [references/spatial-modeling.md](references/spatial-modeling.md). Combine the full style specification and reference images with the Human2AI spatial session's layout, scale, pose and camera guidance. Build and review the result using the consumer project's existing tools. A style binding does not alter the guide scene or record completion of external modeling. Use the spatial authoring workflow above only when the guide scene itself needs edits.
+
 ## Choose refinement or style processing
 
 A request for 精修, mathematical proportion, symmetry, focal guidance, or rule-based composition calls for the independent refinement workflow in [references/composition.md](references/composition.md). Do not infer a style request from these terms or bind a library style. Refinement may preserve the source without changes when the Agent finds no justified improvement. Use style processing below only when style application is part of the user’s intent.
 
 ## Process a canvas with its style
+
+This workflow applies to composition and UI canvases. For modeling from a spatial session, use the consumer-project workflow above.
 
 For a request to recover the composition of a reference picture, first follow the reference-projection workflow in [references/composition.md](references/composition.md). Abstract the structure that organizes attention, weight, rhythm and space; judge the resulting experience rather than resemblance to object outlines. Choose each shape for its contribution to the whole and explain that contribution in its description. New reference nodes have empty notes, and a new reference draft has an empty overall note. The supplied picture is the visual evidence for that task. Apply a different style only when requested; an existing binding must not silently redesign the recovered composition.
 

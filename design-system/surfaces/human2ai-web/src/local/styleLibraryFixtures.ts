@@ -12,6 +12,7 @@ export const labels: StyleLibraryLabels = {
   allCategories: "全部类型",
   visualCategory: "画面",
   uiCategory: "UI",
+  spatialCategory: "3D",
   creator: "创建方",
   allCreators: "全部创建方",
   userCreator: "User",
@@ -26,6 +27,7 @@ export const labels: StyleLibraryLabels = {
   promptSummary: "风格短句",
   promptSummaryPlaceholder: "用一句话概括最鲜明的视觉特征",
   descriptionPlaceholder: "说明布局、比例、视觉层级和装饰等设计规则",
+  spatialDescriptionPlaceholder: "说明形体、比例、材质、配色、光照和镜头等建模规则",
   searchPlaceholder: "搜索风格",
   deleteTitle: "确认删除这个风格？",
   deleteDescription: "该风格及其全部参考图将被永久删除。",
@@ -91,5 +93,11 @@ export const fixtureStyles: StyleEntry[] = [
     createdAt: "2026-09-03T11:00:00.000Z",
     updatedAt: "2026-09-03T11:00:00.000Z",
   },
+  {
+    id: "spatial-1", name: "低多边形玩具城市", category: "spatial", creatorType: "agent",
+    description: "使用简洁块面与圆润轮廓，建筑略矮胖，门窗适度夸张。采用哑光材质、奶油白主体和少量蓝绿点缀，柔和阴影。按空间草稿保留指定的布局、尺度关系和相机视角。",
+    promptSummary: "圆润低多边形，哑光奶油白与低饱和蓝绿，柔和阴影。",
+    referenceImages: [], revision: 1,
+    createdAt: "2026-09-19T10:00:00.000Z", updatedAt: "2026-09-19T10:00:00.000Z",
+  },
 ];
-

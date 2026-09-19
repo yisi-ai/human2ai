@@ -8,11 +8,12 @@ import { styleReferenceContentUrl, type StyleCategory } from "../lib/human2ai-ap
 import { getStyleLibraryLabels } from "../lib/style-library-labels";
 import type { useSessionStyle } from "../lib/use-session-style";
 
-export function SessionStyleControl({ controller, category, processing, disabled }: {
+export function SessionStyleControl({ controller, category, processing, disabled, showProcessingStatus = true }: {
   controller: ReturnType<typeof useSessionStyle>;
   category: StyleCategory;
   processing?: StyleProcessing;
   disabled?: boolean;
+  showProcessingStatus?: boolean;
 }) {
   const { t } = useTranslation();
   const style = controller.currentStyle;
@@ -31,6 +32,6 @@ export function SessionStyleControl({ controller, category, processing, disabled
     saving={controller.saving}
     error={controller.error}
     disabled={disabled}
-    pending={Boolean(style && (processing?.styleId !== style.id || processing.styleRevision !== style.revision))}
+    pending={showProcessingStatus && Boolean(style && (processing?.styleId !== style.id || processing.styleRevision !== style.revision))}
   />;
 }

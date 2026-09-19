@@ -2,6 +2,8 @@
 
 A `spatial` session owns an editable scene, independent of composition and UI sessions. Characters, simple objects, and multiple named output cameras share that scene. The browser's orbit view is temporary; moving a character never reframes an output camera.
 
+Characters, primitive objects, output cameras and observation boxes may carry a `note` with user instructions. Read it with the entity's ID, name and geometry when interpreting the scene; a placeholder's note can explain the real object it represents or required framing. Missing or empty notes mean no instructions. Preserve notes when editing other properties. To update a note, use the corresponding `put-character`, `put-object`, `put-camera` or `put-camera-box` with the current entity and changed `note`; use an empty string to clear it. Notes are saved and undoable with the scene, included in `inspect`, and never drawn into reference PNGs.
+
 ## Connect, inspect, edit, review
 
 Use the runner and API origin discovered by the parent skill. Start with `session connect --session <id>` and `capture list --session <id>`. A new space has revision 0 and a default `camera-1`. For an existing revision:

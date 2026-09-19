@@ -12,7 +12,7 @@ function captureLayout(draft: CompositionDraft): CompositionLayout {
     layerOrder: compositionLayerOrder(draft),
     focusPoints: draft.focusPoints.map(({ id, x, y }) => ({ id, x, y })),
     directionLine: draft.directionLine ? (({ id, x, y, rotation }) => ({ id, x, y, rotation }))(draft.directionLine) : null,
-    areas: draft.areas.map(({ id, x, y, area, aspect, rotation, width, height }) => ({ id, x, y, area, aspect, rotation, width, height })),
+    areas: draft.areas.map(({ id, x, y, area, aspect, rotation, width, height, corners }) => ({ id, x, y, area, aspect, rotation, width, height, ...(corners ? { corners: structuredClone(corners) } : {}) })),
     images: draft.images.map(({ id, x, y, width, height, rotation }) => ({ id, x, y, width, height, rotation })),
   };
 }
@@ -30,7 +30,7 @@ function applyLayout(draft: CompositionDraft, layout: CompositionLayout): Compos
     areas: draft.areas.map((node) => {
       const saved = areas.get(node.id);
       if (!saved) return { ...node };
-      const { x, y, area, aspect, rotation, width, height, ...content } = node;
+      const { x, y, area, aspect, rotation, width, height, corners, ...content } = node;
       return { ...content, ...saved };
     }),
     images: draft.images.map((node) => ({ ...node, ...images.get(node.id) })),

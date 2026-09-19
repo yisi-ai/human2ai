@@ -3,9 +3,9 @@
   "domain": "style-library",
   "concepts": {
     "style.library": {
-      "meaning": "The product-wide collection of reusable visual and interface style entries maintained directly by users and Agents.",
+      "meaning": "The product-wide collection of reusable visual, interface and 3D modeling styles maintained directly by users and Agents.",
       "scope": "The style-library route, its application navigation entry, and page title.",
-      "referent": "The flat collection of visual and UI style entries, not a project folder, session, prompt collection, or archive.",
+      "referent": "The flat collection of visual, UI and 3D style entries, not a project folder, session, prompt collection, or archive.",
       "precedence": "Top-level product area parallel to composition and interface workbenches.",
       "canonicalKey": "styleLibrary.title",
       "searchTerms": ["风格库", "风格合集", "Style library", "style collection"],
@@ -43,19 +43,19 @@
       "nonExamples": ["The complete prose description of the style."]
     },
     "style.category": {
-      "meaning": "The single flat classification that places a style entry in either the visual or UI collection.",
+      "meaning": "The single flat classification of a style as visual imagery, user interface, or 3D modeling.",
       "scope": "Style-library filters, cards, and create/edit form.",
-      "referent": "One of exactly two style categories: visual imagery or user interface.",
+      "referent": "One of three style categories: visual, ui or spatial; categories help discovery and do not restrict session binding.",
       "precedence": "A flat category, not a folder, tree, tag hierarchy, or source type.",
       "canonicalKey": "styleLibrary.category.label",
-      "searchTerms": ["分类", "画面", "UI", "Category", "Visual"],
-      "examples": ["Classify a photographic treatment as Visual.", "Classify a dashboard treatment as UI."],
+      "searchTerms": ["分类", "画面", "UI", "Category", "Visual", "3D", "spatial", "建模风格"],
+      "examples": ["Classify a photographic treatment as Visual.", "Classify a dashboard treatment as UI.", "Classify a low-poly modeling specification as 3D."],
       "nonExamples": ["Article style.", "Music style.", "A nested design taxonomy."]
     },
     "style.category-all": {
-      "meaning": "Show style entries from both supported categories without applying a category restriction.",
+      "meaning": "Show style entries from all supported categories without a category restriction.",
       "scope": "The first item in the style-library category switch.",
-      "referent": "Both Visual and UI entries.",
+      "referent": "Visual, UI and 3D entries.",
       "precedence": "A filter state, not another persisted category.",
       "canonicalKey": "styleLibrary.category.all",
       "searchTerms": ["全部类型", "All types", "all categories"],
@@ -66,7 +66,7 @@
       "meaning": "A style category for the overall treatment of imagery, illustration, photography, or other composed visual scenes.",
       "scope": "Style-library filters, preview-header markers, and create/edit category controls.",
       "referent": "The visual appearance of a picture or scene rather than an interface layout.",
-      "precedence": "Peer to the UI style category.",
+      "precedence": "Peer to the UI and 3D style categories; describes picture treatment rather than a modeling specification.",
       "canonicalKey": "styleLibrary.category.visual",
       "searchTerms": ["画面", "画面风格", "Visual", "image style"],
       "examples": ["Low-saturation cinematic photography."],
@@ -76,7 +76,7 @@
       "meaning": "A style category for the visual treatment of application and website interfaces.",
       "scope": "Style-library filters, preview-header markers, and create/edit category controls.",
       "referent": "Interface appearance such as layout rhythm, typography, controls, and surface treatment.",
-      "precedence": "Peer to the visual style category.",
+      "precedence": "Peer to the Visual and 3D style categories.",
       "canonicalKey": "styleLibrary.category.ui",
       "searchTerms": ["UI", "UI 风格", "Interface", "interface style"],
       "examples": ["Quiet monochrome administration interface."],
@@ -133,8 +133,8 @@
       "nonExamples": ["A source citation.", "A generated prompt.", "A document attachment."]
     },
     "style.description": {
-      "meaning": "The complete design specification and defining characteristics an Agent follows when choosing a style and processing a user canvas.",
-      "scope": "The right side of style preview and the single description control in create/edit flows.",
+      "meaning": "The complete design specification an Agent follows when processing a canvas or modeling in a consumer project.",
+      "scope": "The right side of style preview and the single description control in create/edit flows. Includes 3D modeling specifications consumed alongside spatial guidance.",
       "referent": "One required free-text specification, which may contain principles, rules, examples, and constraints.",
       "precedence": "Explicit user content, function and approximate spatial intent bound its application; the short prompt summary is only a delivery excerpt.",
       "canonicalKey": "styleLibrary.description.heading",
@@ -193,18 +193,18 @@
       "nonExamples": ["An unrelated canvas element note."]
     },
     "style.session-binding": {
-      "meaning": "The optional single style selected for the current composition or UI session and shared with its Agent.",
-      "scope": "Style library and composition/UI session style controls and exports.",
-      "referent": "The optional single style selected for the current composition or UI session and shared with its Agent.",
+      "meaning": "The optional single style selected for the current composition, UI or spatial session and shared with its Agent.",
+      "scope": "Shared style controls for composition, UI and spatial sessions.",
+      "referent": "The optional single style selected for the current composition, UI or spatial session and shared with its Agent.",
       "precedence": "User intent governs style application; this concept is distinct from the complete specification and from canvas content.",
       "canonicalKey": "sessionStyle.label",
       "searchTerms": ["会话风格", "绑定风格", "session style"],
-      "examples": ["Use the selected monochrome style while processing this UI canvas."],
+      "examples": ["Use the selected monochrome style while processing this UI canvas.", "Bind a modeling style to spatial guidance for implementation in a consumer project; binding does not modify the scene."],
       "nonExamples": ["An unrelated canvas element note."]
     },
     "style.session-unbind": {
       "meaning": "Remove the current session style binding while retaining canvas content.",
-      "scope": "Style library and composition/UI session style controls and exports.",
+      "scope": "Shared style controls for composition, UI and spatial sessions.",
       "referent": "Remove the current session style binding while retaining canvas content.",
       "precedence": "User intent governs style application; this concept is distinct from the complete specification and from canvas content.",
       "canonicalKey": "sessionStyle.unbind",
@@ -214,7 +214,7 @@
     },
     "style.session-select": {
       "meaning": "Bind the currently previewed style to the active session.",
-      "scope": "Style library and composition/UI session style controls and exports.",
+      "scope": "Shared style controls for composition, UI and spatial sessions.",
       "referent": "Bind the currently previewed style to the active session.",
       "precedence": "User intent governs style application; this concept is distinct from the complete specification and from canvas content.",
       "canonicalKey": "sessionStyle.select",
@@ -230,17 +230,27 @@
       "canonicalKey": "sessionStyle.pending",
       "searchTerms": ["尚未按风格加工", "style processing pending"],
       "examples": ["A newly bound or updated style requires another Agent processing pass."],
-      "nonExamples": ["An unrelated canvas element note."]
+      "nonExamples": ["An unrelated canvas element note.", "Whether an external consumer project has finished modeling from a spatial session."]
     },
     "style.session-conflict": {
       "meaning": "The session or style changed while an operation was in progress; reload before retrying.",
-      "scope": "Style library and composition/UI session style controls and exports.",
+      "scope": "Shared style controls for composition, UI and spatial sessions.",
       "referent": "The session or style changed while an operation was in progress; reload before retrying.",
       "precedence": "User intent governs style application; this concept is distinct from the complete specification and from canvas content.",
       "canonicalKey": "sessionStyle.conflict",
       "searchTerms": ["风格冲突", "style conflict"],
       "examples": ["The user switched styles while the Agent was processing."],
       "nonExamples": ["An unrelated canvas element note."]
+    },
+    "style.category-spatial": {
+      "meaning": "A reusable specification of 3D shape language, proportions, materials, palette, lighting and camera treatment for modeling in a consumer project.",
+      "scope": "Style-library category filters, preview markers and creation/editing controls; the default filter for spatial session style selection.",
+      "referent": "The spatial style category, not a spatial session, a character appearance switch or a stored mesh asset.",
+      "precedence": "Peer to Visual and UI. Explicit user constraints and authored spatial requirements govern implementation when style preferences conflict.",
+      "canonicalKey": "styleLibrary.category.spatial",
+      "searchTerms": ["3D", "spatial style", "建模风格", "三维风格"],
+      "examples": ["A low-poly toy-city style with matte materials and simplified proportions."],
+      "nonExamples": ["A character pose.", "A downloadable GLB model.", "Switching a pose guide to geometric appearance."]
     }
   },
   "keys": {
@@ -285,6 +295,8 @@
     "sessionStyle.unbind": {"conceptId":"style.session-unbind","variant":"default","role":"action button","grammar":"verb phrase","tone":"concise","reusePolicy":"canonical"},
     "sessionStyle.select": {"conceptId":"style.session-select","variant":"default","role":"action button","grammar":"verb phrase","tone":"concise","reusePolicy":"canonical"},
     "sessionStyle.pending": {"conceptId":"style.session-pending","variant":"default","role":"status","grammar":"sentence","tone":"concise","reusePolicy":"canonical"},
-    "sessionStyle.conflict": {"conceptId":"style.session-conflict","variant":"default","role":"error","grammar":"sentence","tone":"concise","reusePolicy":"canonical"}
+    "sessionStyle.conflict": {"conceptId":"style.session-conflict","variant":"default","role":"error","grammar":"sentence","tone":"concise","reusePolicy":"canonical"},
+    "styleLibrary.category.spatial": {"conceptId":"style.category-spatial","variant":"default","role":"category option and preview marker","grammar":"noun","tone":"concise","reusePolicy":"canonical"},
+    "styleLibrary.description.spatialPlaceholder": {"conceptId":"style.description","variant":"spatial-input-placeholder","role":"placeholder for the full 3D modeling specification","grammar":"imperative sentence","tone":"direct","reusePolicy":"contextual"}
   }
 }

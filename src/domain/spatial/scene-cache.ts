@@ -2,6 +2,7 @@ import { Group } from "three";
 import { createSpatialScene, disposeSpatialScene } from "./scene.ts";
 import { applySpatialContactShading, spatialSurfaces } from "./lighting.ts";
 import type { SpatialDraft } from "./types.ts";
+import { spatialEntityRenderKey } from "./render-inputs.ts";
 
 /** Editor-owned meshes; deterministic exports continue to use createSpatialScene. */
 export class SpatialSceneCache {
@@ -15,7 +16,7 @@ export class SpatialSceneCache {
     const next = new Map<string, { key: string; group: Group }>();
     let changed = false;
     for (const entity of [...draft.characters, ...draft.objects]) {
-      const key = JSON.stringify([entity, Boolean(options.showRig)]);
+      const key = JSON.stringify([spatialEntityRenderKey(entity), Boolean(options.showRig)]);
       let entry = this.entries.get(entity.id);
       if (entry?.key !== key) {
         if (entry) { this.scene.remove(entry.group); disposeSpatialScene(entry.group); }
@@ -38,7 +39,7 @@ export class SpatialSceneCache {
     if (changed) this.scene.updateMatrixWorld(true);
 
     // Cameras, selection, helpers and light switches do not affect contact rays.
-    const surfaceKey = JSON.stringify([draft.characters, draft.objects]);
+    const surfaceKey = JSON.stringify([draft.characters.map(spatialEntityRenderKey), draft.objects.map(spatialEntityRenderKey)]);
     const meshes = spatialSurfaces(this.scene);
     const topology = meshes.map(mesh => JSON.stringify([mesh.userData, mesh.geometry.getAttribute("position").count])).join("/");
     if (!this.colors || topology !== this.shadedTopology || (!options.dragging && surfaceKey !== this.shadedKey)) {

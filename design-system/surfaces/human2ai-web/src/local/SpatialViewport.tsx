@@ -17,12 +17,14 @@ export interface SpatialViewportProps {
   selection: SpatialSelection;
   mode: "translate" | "rotate";
   onSelect(selection: SpatialSelection): void;
+  onEdit?(selection: NonNullable<SpatialSelection>, position: { x: number; y: number }): void;
   onOperation(operation: SpatialOperation): void;
   onViewChange?(view: { position: Vec3; target: Vec3 }): void;
   label: string;
   errorLabel: string;
   disabled?: boolean;
   showRig?: boolean;
+  showCameras?: boolean;
 }
 
 export function SpatialViewport(props: SpatialViewportProps) {
@@ -58,7 +60,7 @@ export function SpatialViewport(props: SpatialViewportProps) {
     const baseColors = new WeakMap<Mesh, Color>();
     let lightingEnabled: boolean | undefined;
     const boxGuides = new Group(); scene.add(boxGuides);
-    let cameraGuide: CameraHelper | null = null;
+    const cameraGuides = new Group(); scene.add(cameraGuides);
     let dragging = false;
     let base: SpatialDraft | null = null;
     let frame = 0;
@@ -78,19 +80,21 @@ export function SpatialViewport(props: SpatialViewportProps) {
         renderer.shadowMap.needsUpdate = true;
       }
       const selection = current.current.selection;
-      if (cameraGuide) { scene.remove(cameraGuide); cameraGuide.dispose(); cameraGuide = null; }
-      const selectedCamera = selection && "cameraId" in selection ? draft.cameras.find(c => c.id === selection.cameraId) : undefined;
-      if (selectedCamera) {
-        const outputCamera = createOutputCamera(selectedCamera);
+      const highlight = getComputedStyle(element).getPropertyValue("--yisiui-color-action-primary").trim() || "#467bd3";
+      disposeSpatialScene(cameraGuides); cameraGuides.clear();
+      for (const source of current.current.showCameras === false ? [] : draft.cameras) {
+        const selected = selection && "cameraId" in selection && selection.cameraId === source.id;
+        const outputCamera = createOutputCamera(source);
         // Show the useful framing at the look-at target, rather than the distant clipping plane.
-        outputCamera.far = Math.max(outputCamera.near * 2, outputCamera.position.distanceTo(vector(selectedCamera.target)));
+        outputCamera.far = Math.max(outputCamera.near * 2, outputCamera.position.distanceTo(vector(source.target)));
         outputCamera.updateProjectionMatrix();
-        cameraGuide = new CameraHelper(outputCamera);
+        const cameraGuide = new CameraHelper(outputCamera);
         const material = cameraGuide.material as LineBasicMaterial;
-        material.vertexColors = false; material.color.set("#9cbbd3");
-        material.transparent = true; material.opacity = .7;
+        material.vertexColors = false; material.color.set(selected ? highlight : "#9cbbd3");
+        material.transparent = true; material.opacity = selected ? .95 : .45;
         material.depthTest = false; cameraGuide.renderOrder = 1;
-        scene.add(cameraGuide);
+        cameraGuide.userData.cameraId = source.id;
+        cameraGuides.add(cameraGuide);
       }
       disposeSpatialScene(boxGuides); boxGuides.clear();
       for (const box of draft.cameraBoxes ?? []) {
@@ -101,7 +105,6 @@ export function SpatialViewport(props: SpatialViewportProps) {
         outline.userData.cameraBoxId = box.id; outline.renderOrder = 1; boxGuides.add(outline);
         if (selected) { const axes = new AxesHelper(box.size * .25); axes.position.copy(outline.position); axes.quaternion.copy(outline.quaternion); boxGuides.add(axes); }
       }
-      const highlight = getComputedStyle(element).getPropertyValue("--yisiui-color-action-primary").trim() || "#467bd3";
       const handActor = selection && "characterId" in selection && selection.handBoneId ? draft.characters.find(c => c.id === selection.characterId) : undefined;
       const hand = handActor?.bones.find(b => b.id === (selection && "characterId" in selection ? selection.handBoneId : undefined));
       const handIds = handActor && hand ? handJointIds(handActor,hand) : undefined;
@@ -207,25 +210,61 @@ export function SpatialViewport(props: SpatialViewportProps) {
     };
     orbit.addEventListener("change", viewChanged);
     let pointerStart: [number, number] | null = null;
-    const down = (event: PointerEvent) => { element.focus(); pointerStart = [event.clientX, event.clientY]; };
-    const pick = (event: PointerEvent) => {
-      if (!pointerStart || event.button !== 0 || dragging || transform.axis || current.current.disabled) return;
-      if (Math.hypot(event.clientX - pointerStart[0], event.clientY - pointerStart[1]) > 4) return;
+    let pointerMoved = false, lastDrag = -Infinity;
+    let clickTarget: { selection: SpatialSelection; x: number; y: number; time: number } | null = null;
+    const down = (event: PointerEvent) => {
+      element.focus(); pointerStart = [event.clientX, event.clientY]; pointerMoved = false;
+      if (event.button === 0 && (!clickTarget || event.timeStamp - clickTarget.time > 500 || Math.hypot(event.clientX - clickTarget.x, event.clientY - clickTarget.y) > 4)) {
+        // Keep the first hit while single-click selection expands the properties sidebar.
+        clickTarget = { selection: hitSelection(event, true), x: event.clientX, y: event.clientY, time: event.timeStamp };
+      }
+    };
+    const move = (event: PointerEvent) => {
+      if (event.buttons && pointerStart && Math.hypot(event.clientX - pointerStart[0], event.clientY - pointerStart[1]) > 4) {
+        pointerMoved = true; lastDrag = performance.now(); clickTarget = null;
+      }
+    };
+    const hitSelection = (event: MouseEvent, wholeObject = false): SpatialSelection => {
       const rect = renderer.domElement.getBoundingClientRect();
       const ray = new Raycaster();
       ray.setFromCamera(new Vector2((event.clientX - rect.left) / rect.width * 2 - 1, -(event.clientY - rect.top) / rect.height * 2 + 1), camera);
+      ray.near = camera.near;
       ray.params.Line.threshold = .015;
-      const boxHit = ray.intersectObjects(boxGuides.children).find(hit => hit.object.userData.cameraBoxId);
       const hits = content ? ray.intersectObjects(content.children, true) : [];
-      const hit = hits.find(hit=>hit.object.userData.rig === "joint") ?? hits.find(hit=>hit.object.userData.rig) ?? hits[0];
-      if (boxHit && (!hit || boxHit.distance < hit.distance)) { current.current.onSelect({ cameraBoxId: boxHit.object.userData.cameraBoxId }); return; }
+      const hit = wholeObject ? hits[0] : hits.find(hit=>hit.object.userData.rig === "joint") ?? hits.find(hit=>hit.object.userData.rig) ?? hits[0];
+      const guideHit = ray.intersectObjects([...boxGuides.children, ...(wholeObject ? cameraGuides.children : [])]).find(guide => {
+        if (guide.object.userData.cameraBoxId) return true;
+        if (!guide.object.userData.cameraId || hit) return false;
+        // A camera at the editor's eye must not make its near-plane helpers catch every ray.
+        const point = guide.point.clone().project(camera);
+        return point.z >= -1 && point.z <= 1 && Math.hypot(rect.left + (point.x + 1) * rect.width / 2 - event.clientX, rect.top + (1 - point.y) * rect.height / 2 - event.clientY) <= 6;
+      });
+      if (guideHit && (!hit || guideHit.distance < hit.distance)) {
+        const data = guideHit.object.userData;
+        return data.cameraId ? { cameraId: data.cameraId } : { cameraBoxId: data.cameraBoxId };
+      }
       if (hit) {
         const data = hit.object.userData;
-        current.current.onSelect(data.characterId ? { characterId: data.characterId, jointId: data.jointId, boneId: data.boneId } : { objectId: data.objectId });
+        return data.characterId ? (wholeObject ? { characterId: data.characterId } : { characterId: data.characterId, jointId: data.jointId, boneId: data.boneId }) : data.objectId ? { objectId: data.objectId } : null;
       }
+      return null;
+    };
+    const pick = (event: PointerEvent) => {
+      if (!pointerStart || pointerMoved || event.button !== 0 || dragging || transform.axis || current.current.disabled) return;
+      if (Math.hypot(event.clientX - pointerStart[0], event.clientY - pointerStart[1]) > 4) return;
+      const selection = hitSelection(event);
+      if (selection) current.current.onSelect(selection);
+    };
+    const edit = (event: MouseEvent) => {
+      if (event.button !== 0 || dragging || pointerMoved || performance.now() - lastDrag < 500 || current.current.disabled) return;
+      const selection = clickTarget && event.timeStamp - clickTarget.time <= 500 ? clickTarget.selection : hitSelection(event, true);
+      clickTarget = null;
+      if (selection) { event.preventDefault(); current.current.onEdit?.(selection, { x: event.clientX, y: event.clientY }); }
     };
     renderer.domElement.addEventListener("pointerdown", down);
+    renderer.domElement.addEventListener("pointermove", move);
     renderer.domElement.addEventListener("pointerup", pick);
+    renderer.domElement.addEventListener("dblclick", edit);
     const resize = new ResizeObserver(() => {
       const { width, height } = element.getBoundingClientRect();
       if (!width || !height) return;
@@ -241,18 +280,24 @@ export function SpatialViewport(props: SpatialViewportProps) {
       resize.disconnect(); orbit.dispose(); transform.dispose();
       grid.geometry.dispose(); for (const material of Array.isArray(grid.material) ? grid.material : [grid.material]) material.dispose();
       contentCache.dispose();
-      cameraGuide?.dispose(); disposeSpatialScene(boxGuides);
+      disposeSpatialScene(cameraGuides); disposeSpatialScene(boxGuides);
       light.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };
   }, []);
-  useEffect(() => { runtime.current?.rebuild(props.draft); runtime.current?.select(); }, [props.draft, props.selection, props.mode, props.disabled, props.showRig]);
+  useEffect(() => { runtime.current?.rebuild(props.draft); runtime.current?.select(); }, [props.draft, props.selection, props.mode, props.disabled, props.showRig, props.showCameras]);
 
   useEffect(() => { if (props.interactionResetKey !== undefined) runtime.current?.cancel(); }, [props.interactionResetKey]);
 
   return <div {...uiAssetAttributes({ namespace: "human2ai", id: "spatial-viewport", name: "SpatialViewport", category: "canvas", origin: "project", status: "candidate" })}
     ref={host} className="spatial-viewport" tabIndex={0} role="region" aria-label={props.label}
     onKeyDown={event => {
+      if (event.key === "Enter" && props.selection && !props.disabled) {
+        event.preventDefault();
+        const rect = event.currentTarget.getBoundingClientRect();
+        props.onEdit?.(props.selection, { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+        return;
+      }
       if (event.key === "Escape") { runtime.current?.cancel(); props.onSelect(null); return; }
       const axes: Record<string, [number, number]> = { ArrowLeft: [0, -1], ArrowRight: [0, 1], ArrowDown: [1, -1], ArrowUp: [1, 1], PageDown: [2, -1], PageUp: [2, 1] };
       const delta = axes[event.key], selection = props.selection;

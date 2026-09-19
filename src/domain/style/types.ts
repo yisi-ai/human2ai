@@ -1,6 +1,6 @@
 import type { Session } from "../session/types.ts";
 
-export const STYLE_CATEGORIES = ["visual", "ui"] as const;
+export const STYLE_CATEGORIES = ["visual", "ui", "spatial"] as const;
 export type StyleCategory = (typeof STYLE_CATEGORIES)[number];
 
 export const STYLE_CREATOR_TYPES = ["user", "agent"] as const;

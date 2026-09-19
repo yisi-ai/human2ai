@@ -3,6 +3,7 @@ import { createHumanoid, createSpatialCameraBox, createSpatialDraft } from "../.
 import { SpatialSceneCache } from "../../src/domain/spatial/scene-cache.ts";
 import { createSpatialScene, disposeSpatialScene } from "../../src/domain/spatial/scene.ts";
 import { applySpatialContactShading, spatialSurfaces } from "../../src/domain/spatial/lighting.ts";
+import { canonicalJson } from "../../src/domain/fingerprint.ts";
 
 const contactDraft = () => ({ ...createSpatialDraft(), objects: [
   { id: "box", name: "Box", kind: "box" as const, position: [0,.0376,0] as [number,number,number], rotation: [0,0,0] as [number,number,number], size: [.1,.06,.1] as [number,number,number], color: "#ffffff" },
@@ -45,6 +46,18 @@ it("replaces only the edited object but refreshes its neighbors' contact shading
     } finally { disposeSpatialScene(fresh); }
     cache.update(draft);
     expect(box.geometry.getAttribute("color").array).toEqual(originalColors);
+  } finally { cache.dispose(); }
+});
+
+it("retains the actual meshes and contact colors while editing names and notes", () => {
+  const cache = new SpatialSceneCache(), draft = { ...contactDraft(), characters: [createHumanoid("person", "Person")] };
+  try {
+    cache.update(draft);
+    const meshes = spatialSurfaces(cache.scene), colors = meshes.map(mesh => mesh.geometry.getAttribute("color"));
+    const changed = structuredClone(draft);
+    for (const entity of [...changed.characters, ...changed.objects]) Object.assign(entity, { name: "Renamed", note: "Preserve the pose\nAdd detail" });
+    expect(cache.update(JSON.parse(canonicalJson(changed)))).toBe(false);
+    spatialSurfaces(cache.scene).forEach((mesh, i) => { expect(mesh).toBe(meshes[i]); expect(mesh.geometry.getAttribute("color")).toBe(colors[i]); });
   } finally { cache.dispose(); }
 });
 

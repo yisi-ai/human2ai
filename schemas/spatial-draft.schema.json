@@ -291,6 +291,9 @@
             "type": "number",
             "minimum": 0.7,
             "maximum": 1.4
+          },
+          "note": {
+            "type": "string"
           }
         }
       }
@@ -361,6 +364,9 @@
           "color": {
             "type": "string",
             "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "note": {
+            "type": "string"
           }
         }
       }
@@ -451,6 +457,9 @@
                 "type": "null"
               }
             ]
+          },
+          "note": {
+            "type": "string"
           }
         }
       }
@@ -509,6 +518,9 @@
             "type": "integer",
             "minimum": 128,
             "maximum": 1024
+          },
+          "note": {
+            "type": "string"
           }
         }
       }

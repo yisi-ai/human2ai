@@ -7,6 +7,16 @@ import { describe, expect, it, vi } from "vitest";
 import { executeCli } from "../../src/cli/main.js";
 
 describe("style CLI", () => {
+  it("creates, filters and updates spatial styles", async () => {
+    const fetchMock = vi.fn(async (_input: RequestInfo | URL, init?: RequestInit) => init?.body
+      ? Response.json(JSON.parse(String(init.body)))
+      : Response.json({ styles: [{ id: "3d", category: "spatial" }, { id: "ui", category: "ui" }] })) as typeof fetch;
+    await expect(executeCli(["style", "create", "--name", "Toy city", "--category", "spatial", "--description", "Matte low-poly forms."], { fetch: fetchMock })).resolves.toMatchObject({ category: "spatial" });
+    await expect(executeCli(["style", "list", "--category", "spatial"], { fetch: fetchMock })).resolves.toEqual({ styles: [{ id: "3d", category: "spatial" }] });
+    await expect(executeCli(["style", "update", "--style", "3d", "--expected-revision", "1", "--category", "spatial"], { fetch: fetchMock })).resolves.toMatchObject({ category: "spatial" });
+    await expect(executeCli(["style", "list", "--category", "unsupported"], { fetch: fetchMock })).rejects.toThrow(/category/);
+  });
+
   it("creates Agent styles without accepting a caller-supplied creator", async () => {
     const fetchMock = vi.fn(async () => Response.json({
       id: "style-1",

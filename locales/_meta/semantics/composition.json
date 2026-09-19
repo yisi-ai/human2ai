@@ -55,9 +55,21 @@
       "referent": "An editor-only point identified by its number, without assigning a start, end, or arrow direction to the infinite line.",
       "precedence": "A control belonging to composition flow, distinct from a focal point, the whole-line selection, and the former rotation handle.",
       "canonicalKey": "composition.flow.controlPoint",
-      "searchTerms": ["动势线操作点", "控制点", "flow control point", "two-point line control"],
-      "examples": ["Drag control point 1 while control point 2 stays fixed.", "Use arrow keys to adjust the focused flow control point."],
-      "nonExamples": ["A focal point in the composition.", "The destination of a directed arrow.", "A finite line endpoint."]
+      "searchTerms": [
+        "动势线操作点",
+        "控制点",
+        "flow control point",
+        "two-point line control"
+      ],
+      "examples": [
+        "Drag control point 1 while control point 2 stays fixed.",
+        "Use arrow keys to adjust the focused flow control point."
+      ],
+      "nonExamples": [
+        "A focal point in the composition.",
+        "The destination of a directed arrow.",
+        "A finite line endpoint."
+      ]
     },
     "composition.element-capacity": {
       "meaning": "A compact status showing how many instances of one composition element are currently placed on the canvas compared with that element's placement limit.",
@@ -313,7 +325,7 @@
     "composition.text-region": {
       "meaning": "An editable composition area that must contain visible typography in the final artwork.",
       "scope": "Composition text-region creation tool, node-kind label, numbered exported area headings, and typography requirements in image-generation prompts.",
-      "referent": "A free rectangular area marked semanticType text-region.",
+      "referent": "A freely sized composition text area marked semanticType text-region, with an optional convex four-corner outline.",
       "precedence": "Distinct from a plain shape region and from the textContent field containing its literal copy. Blank display text requests model-created copy, not omission of typography. Prompt numbering follows the shared area sequence, not a separate text-only count.",
       "canonicalKey": "composition.toolNames.textRegion",
       "searchTerms": [
@@ -1037,6 +1049,27 @@
         "A yellow physical object inferred from the marker color.",
         "An exact light-patch width or contrast threshold inferred from the drawn geometry.",
         "Ignoring the authored directional or extended lighting contribution entirely."
+      ]
+    },
+    "composition.text-region-outline": {
+      "meaning": "One of four editable corners defining the desired outer silhouette of a composition text block, without prescribing glyph distortion.",
+      "scope": "Ctrl-assisted corner dragging and keyboard nudging on selected composition text regions.",
+      "referent": "A clockwise corner of the text region in its local bounding box.",
+      "precedence": "Changes only text-region geometry; normal resizing still scales the whole region. Node descriptions remain view-only and are not exported to prompts.",
+      "canonicalKey": "composition.textRegion.cornerLabel",
+      "searchTerms": [
+        "文字轮廓",
+        "角点",
+        "text outline",
+        "corner",
+        "Ctrl"
+      ],
+      "examples": [
+        "Narrow the upper corners to suggest a trapezoidal block of text."
+      ],
+      "nonExamples": [
+        "Edit literal display text.",
+        "Warp an image or modify an ordinary shape."
       ]
     }
   },
@@ -1908,6 +1941,22 @@
       "role": "approximate lighting interpretation for an individual rectangular light source",
       "grammar": "instruction sentences",
       "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.textRegion.cornerLabel": {
+      "conceptId": "composition.text-region-outline",
+      "variant": "corner-control",
+      "role": "accessible name for a numbered text-outline corner control",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.textRegion.cornerHelp": {
+      "conceptId": "composition.text-region-outline",
+      "variant": "interaction-help",
+      "role": "on-demand canvas help for reshaping a text region",
+      "grammar": "instructional sentence",
+      "tone": "concise and neutral",
       "reusePolicy": "contextual"
     }
   }

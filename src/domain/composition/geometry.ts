@@ -50,12 +50,15 @@ export function areaGeometry(area: CompositionArea, frame: CompositionFrameSize)
     const width =
       area.aspect === "free" ? area.width! * frame.width : Math.sqrt(pixelArea * ratio!);
     const height = area.aspect === "free" ? area.height! * frame.height : pixelArea / width;
-    const points = [
+    const points = (area.corners ? area.corners.map((point) => ({
+      x: center.x + (point.x - 0.5) * width,
+      y: center.y + (point.y - 0.5) * height,
+    })) : [
       { x: center.x - width / 2, y: center.y - height / 2 },
       { x: center.x + width / 2, y: center.y - height / 2 },
       { x: center.x + width / 2, y: center.y + height / 2 },
       { x: center.x - width / 2, y: center.y + height / 2 },
-    ].map((point) => rotatePoint(point, center, area.rotation ?? 0));
+    ]).map((point) => rotatePoint(point, center, area.rotation ?? 0));
     return { type: "polygon", points, center, width, height };
   }
 
@@ -68,6 +71,42 @@ export function areaGeometry(area: CompositionArea, frame: CompositionFrameSize)
     { x: center.x + side / 2, y: center.y + height / 3 },
   ].map((point) => rotatePoint(point, center, area.rotation ?? 0));
   return { type: "polygon", points, center, side, height };
+}
+
+export function polygonArea(points: readonly Point[]): number {
+  return Math.abs(points.reduce((sum, point, index) => {
+    const next = points[(index + 1) % points.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0)) / 2;
+}
+
+export function isConvexTextOutline(points: readonly Point[]): boolean {
+  return points.length === 4 && points.every((point, index) => {
+    const next = points[(index + 1) % 4];
+    const after = points[(index + 2) % 4];
+    return (next.x - point.x) * (after.y - next.y)
+      - (next.y - point.y) * (after.x - next.x) > 1e-8;
+  });
+}
+
+/** Fit horizontal text rows inside the outline before applying the node rotation. */
+export function textRegionLines(area: CompositionArea, frame: CompositionFrameSize): Array<[Point, Point]> {
+  const geometry = areaGeometry({ ...area, x: 0, y: 0, rotation: 0 }, frame);
+  if (geometry.type !== "polygon") return [];
+  const center = { x: area.x * frame.width, y: area.y * frame.height };
+  return [-0.18, 0, 0.18].map((row) => {
+    const y = row * geometry.height;
+    const intersections = geometry.points.flatMap((point, index) => {
+      const next = geometry.points[(index + 1) % geometry.points.length];
+      if (y < Math.min(point.y, next.y) || y >= Math.max(point.y, next.y)) return [];
+      return [point.x + (next.x - point.x) * (y - point.y) / (next.y - point.y)];
+    });
+    const left = Math.min(...intersections);
+    const right = Math.max(...intersections);
+    return [0.14, 0.86].map((ratio) => rotatePoint({
+      x: center.x + left + (right - left) * ratio, y: center.y + y,
+    }, center, area.rotation ?? 0)) as [Point, Point];
+  });
 }
 
 export function directionLineGeometry(

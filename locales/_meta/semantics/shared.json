@@ -264,7 +264,7 @@
     },
     "notes.element": {
       "meaning": "User instructions about the meaning or requirements of one canvas element.",
-      "scope": "Composition nodes and UI regions, text or images, including exported prompts.",
+      "scope": "Composition nodes, UI regions, text or images, and top-level 3D characters, objects, cameras and observation boxes, including composition node tooltips, exported prompts and spatial inspection data.",
       "referent": "The currently edited or numbered element.",
       "precedence": "Subordinate to the global note; distinct from visible text and Agent-authored node descriptions. Reference-composition imports leave this field empty for the user, while preserving existing user notes.",
       "canonicalKey": "notes.element.label",
@@ -275,7 +275,8 @@
         "局部备注"
       ],
       "examples": [
-        "Ask the Agent to enlarge a region or change what it represents."
+        "Ask the Agent to enlarge a region or change what it represents.",
+        "Explain that a spatial box represents a reception desk while preserving its footprint."
       ],
       "nonExamples": [
         "Requirements for the entire artifact.",
@@ -285,7 +286,7 @@
     },
     "text.content": {
       "meaning": "The literal visible text content of a text element.",
-      "scope": "Composition text regions and UI-sketch text elements.",
+      "scope": "Composition text regions and UI-sketch text elements, including composition text-region tooltips.",
       "referent": "Text that appears in the output.",
       "precedence": "Distinct from instructions about the text; blank input retains domain-specific behavior in its placeholder.",
       "canonicalKey": "textContent.label",
@@ -866,7 +867,7 @@
     },
     "canvas.node-description": {
       "meaning": "A read-only explanation supplied by an Agent of what a canvas node represents and contributes. In composition work it explains the visual relationship and perceptual effect, without becoming the user's revision instruction.",
-      "scope": "Read-only node metadata in composition and UI canvas editors.",
+      "scope": "Read-only node metadata in composition and UI canvas editors, including composition node tooltips.",
       "referent": "The user-perceived region, static text, or image represented by the selected node.",
       "precedence": "It explains the current node's role and remains separate from the editable node note, which carries the user's direction for changing that node. Composition explanations prioritize contribution to the whole over pictured-object identity.",
       "canonicalKey": "canvas.node.nodeDescription",
@@ -1494,7 +1495,7 @@
     "notes.element.label": {
       "conceptId": "notes.element",
       "variant": "label",
-      "role": "Element note input label",
+      "role": "Element note input label and composition node tooltip section heading",
       "grammar": "Noun",
       "tone": "Concise and explicit",
       "reusePolicy": "canonical"
@@ -1510,7 +1511,7 @@
     "textContent.label": {
       "conceptId": "text.content",
       "variant": "label",
-      "role": "Literal text input label",
+      "role": "Literal text input label and composition text-region tooltip section heading",
       "grammar": "Noun phrase",
       "tone": "Concise and explicit",
       "reusePolicy": "canonical"
@@ -1989,7 +1990,7 @@
     "canvas.node.nodeDescription": {
       "conceptId": "canvas.node-description",
       "variant": "read-only-field-label",
-      "role": "label for the read-only Agent-authored node description in the canvas editor",
+      "role": "label for the read-only Agent-authored node description in the canvas editor and composition node tooltip section heading",
       "grammar": "noun phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical"

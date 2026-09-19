@@ -26,7 +26,7 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-export const Default: Story = { name: "选择与绑定", play: async ({ canvasElement }) => {
+export const Default: Story = { name: "选择与绑定", play: async ({ canvasElement, args }) => {
   const document = canvasElement.ownerDocument;
   const click = (label: string) => {
     const button = [...document.querySelectorAll<HTMLButtonElement>('button')].find((item) => item.getAttribute('aria-label') === label || item.textContent?.trim() === label);
@@ -34,13 +34,15 @@ export const Default: Story = { name: "选择与绑定", play: async ({ canvasEl
     button.click();
   };
   const wait = () => new Promise((resolve) => setTimeout(resolve, 100));
+  const chosen = args.styles.find(style => style.category === args.category)!;
   click("选择风格"); await wait();
-  click("打开“低饱和电影感”"); await wait();
+  click(libraryLabels.openStyle(chosen.name)); await wait();
   click("使用此风格"); await wait();
-  if (!canvasElement.textContent?.includes("低饱和电影感")) throw new Error("Selected style did not appear in the session");
+  if (!canvasElement.textContent?.includes(chosen.name)) throw new Error("Selected style did not appear in the session");
   click("解除风格绑定"); await wait();
   if (!canvasElement.textContent?.includes("选择风格")) throw new Error("Style was not unbound");
 } };
+export const Spatial: Story = { name: "3D 建模指导", args: { category: "spatial" }, play: Default.play };
 export const Bound: Story = { name: "已绑定", args: { currentStyle: fixtureStyles[0] } };
 export const Pending: Story = { name: "等待按新规范加工", args: { currentStyle: fixtureStyles[0], pending: true } };
 export const Loading: Story = { name: "加载中", args: { loading: true } };

@@ -54,6 +54,7 @@ export interface StyleLibraryLabels {
   allCategories: string;
   visualCategory: string;
   uiCategory: string;
+  spatialCategory: string;
   creator: string;
   allCreators: string;
   userCreator: string;
@@ -66,6 +67,7 @@ export interface StyleLibraryLabels {
   fileTypes: string;
   description: string;
   descriptionPlaceholder: string;
+  spatialDescriptionPlaceholder: string;
   promptSummary: string;
   promptSummaryPlaceholder: string;
   searchPlaceholder: string;
@@ -313,6 +315,7 @@ export function StyleLibraryView({
             { key: "all", label: labels.allCategories, mode: "text-only" },
             { key: "visual", label: labels.visualCategory, mode: "text-only" },
             { key: "ui", label: labels.uiCategory, mode: "text-only" },
+            { key: "spatial", label: labels.spatialCategory, mode: "text-only" },
           ]}
           onChange={(value) => setCategoryFilter(value as CategoryFilter)}
         />
@@ -542,6 +545,7 @@ export function StyleLibraryView({
               items={[
                 { key: "visual", label: labels.visualCategory, mode: "text-only" },
                 { key: "ui", label: labels.uiCategory, mode: "text-only" },
+                { key: "spatial", label: labels.spatialCategory, mode: "text-only" },
               ]}
               onChange={(value) => setCategory(value as StyleCategory)}
             />
@@ -552,7 +556,7 @@ export function StyleLibraryView({
               value={description}
               maxLength={20_000}
               autoSize={{ minRows: 6, maxRows: 14 }}
-              placeholder={labels.descriptionPlaceholder}
+              placeholder={category === "spatial" ? labels.spatialDescriptionPlaceholder : labels.descriptionPlaceholder}
               onChange={(event) => setDescription(event.target.value)}
             />
           </label>
@@ -662,7 +666,7 @@ function EditorReference({
 }
 
 function categoryLabel(category: StyleCategory, labels: StyleLibraryLabels): string {
-  return category === "visual" ? labels.visualCategory : labels.uiCategory;
+  return { visual: labels.visualCategory, ui: labels.uiCategory, spatial: labels.spatialCategory }[category];
 }
 
 function creatorLabel(

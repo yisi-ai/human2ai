@@ -582,6 +582,7 @@ function areaMetadata(area: CompositionArea) {
     shotScale: area.shotScale,
     visualWeight: area.visualWeight,
     displayText: area.displayText,
+    corners: area.corners,
     isLightSource: area.isLightSource ?? false,
   };
 }

@@ -9,6 +9,7 @@ import {
   compositionDraftWorldBounds,
   directionLineGeometry,
   geometryBounds,
+  textRegionLines,
 } from "./geometry.ts";
 import type { CompositionArea, CompositionDraft, CompositionImage } from "./types.ts";
 
@@ -93,6 +94,13 @@ export function renderCompositionReferenceSvg(
     ...draft.areas.map((area) => {
     if (area.isLightSource) return renderCompositionLightSourceSvg(area, undefined, "reference");
     const geometry = areaGeometry(area, COMPOSITION_CANVAS);
+    if (area.corners && geometry.type === "polygon") {
+      const points = geometry.points.map((point) => `${format(point.x)},${format(point.y)}`).join(" ");
+      const lines = textRegionLines(area, COMPOSITION_CANVAS).map(([start, end]) =>
+        `<line x1="${format(start.x)}" y1="${format(start.y)}" x2="${format(end.x)}" y2="${format(end.y)}" stroke="#555555" stroke-width="${format(strokeWidth * 2)}" stroke-linecap="round"/>`,
+      );
+      return `<g data-region-kind="text-region"><polygon data-reference-role="text-outline" points="${points}" fill="#e3e3e3"/><g data-reference-role="typography">${lines.join("")}</g></g>`;
+    }
     const shape = renderReferenceInfluenceZone(
       geometry,
       `data-reference-role="influence-zone" fill="url(#composition-region-gradient)"`,

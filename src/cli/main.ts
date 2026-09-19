@@ -360,9 +360,7 @@ async function executeStyleCommand(
 ): Promise<unknown> {
   if (command === "list") {
     assertOnlyOptions(options, ["category", "creator"], "style list");
-    if (options.category && options.category !== "visual" && options.category !== "ui") {
-      throw new Error("--category must be visual or ui.");
-    }
+    if (options.category) requireStyleCategory(options);
     if (options.creator && options.creator !== "user" && options.creator !== "agent") {
       throw new Error("--creator must be user or agent.");
     }
@@ -500,10 +498,10 @@ async function executeStyleCommand(
   throw new Error(styleUsage());
 }
 
-function requireStyleCategory(options: CommandOptions): "visual" | "ui" {
+function requireStyleCategory(options: CommandOptions): "visual" | "ui" | "spatial" {
   const value = requireOption(options, "category");
-  if (value !== "visual" && value !== "ui") {
-    throw new Error("--category must be visual or ui.");
+  if (value !== "visual" && value !== "ui" && value !== "spatial") {
+    throw new Error("--category must be visual, ui or spatial.");
   }
   return value;
 }
@@ -1814,10 +1812,10 @@ function imageUsage(): string {
 function styleUsage(): string {
   return [
     "Style usage:",
-    "  human2ai style list [--category <visual|ui>] [--creator <user|agent>]",
+    "  human2ai style list [--category <visual|ui|spatial>] [--creator <user|agent>]",
     "  human2ai style get --style <id>",
-    "  human2ai style create --name <name> --category <visual|ui> --description <text> [--summary <sentence>]",
-    "  human2ai style update --style <id> --expected-revision <n> [--name <name>] [--category <visual|ui>] [--description <text>] [--summary <sentence>]",
+    "  human2ai style create --name <name> --category <visual|ui|spatial> --description <text> [--summary <sentence>]",
+    "  human2ai style update --style <id> --expected-revision <n> [--name <name>] [--category <visual|ui|spatial>] [--description <text>] [--summary <sentence>]",
     "  human2ai style add-reference --style <id> --input <image> --expected-revision <n>",
     "  human2ai style remove-reference --style <id> --reference <id> --expected-revision <n>",
     "  human2ai style delete --style <id> --expected-revision <n>",

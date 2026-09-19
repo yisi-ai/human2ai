@@ -15,19 +15,19 @@ const creature = applySpatialOperations(fixture, [
   { type: "add-limb", characterId: "person", sourceJointId: "left-shoulder", parentId: "chest", idPrefix: "lower-left", offset: [0.22, -0.2, 0] },
   { type: "add-limb", characterId: "person", sourceJointId: "right-shoulder", parentId: "chest", idPrefix: "lower-right", offset: [-0.22, -0.2, 0] },
 ]).draft;
-function Harness({ initial = fixture, loading = false, disabled = false, error, english = false, onApplied, initialCameraId, cameraSource, cameraBoxSource }: { initial?: SpatialDraft; loading?: boolean; disabled?: boolean; error?: string; english?: boolean; onApplied?(draft: SpatialDraft): void; initialCameraId?: string; cameraSource?(id: string, pass?: SpatialRenderPass): string; cameraBoxSource?(id: string, view: SpatialBoxView, pass: SpatialRenderPass): string }) {
+function Harness({ initial = fixture, loading = false, disabled = false, error, onRetry, english = false, onApplied, initialCameraId, cameraSource, cameraBoxSource }: { initial?: SpatialDraft; loading?: boolean; disabled?: boolean; error?: string; onRetry?(): void; english?: boolean; onApplied?(draft: SpatialDraft): void; initialCameraId?: string; cameraSource?(id: string, pass?: SpatialRenderPass): string; cameraBoxSource?(id: string, view: SpatialBoxView, pass: SpatialRenderPass): string }) {
   const [panelHost, setPanelHost] = useState<HTMLDivElement | null>(null);
   const [panelOpen, setPanelOpen] = useState(true);
   const [draft, setDraft] = useState(initial);
-  const [status, setStatus] = useState<string | null>(null);
+  const [constraintError, setConstraintError] = useState<string | null>(null);
   const copy = english ? en : zh;
   return <Human2AiAppShell title={copy.spatial.title} sidebar={null} rightPanelOpen={panelOpen} onRightPanelOpenChange={setPanelOpen}
     labels={copy.shell} rightPanel={<div ref={setPanelHost} className="spatial-panel-host" />}>
-    <SpatialWorkspaceView panelHost={panelHost} onRequestProperties={() => setPanelOpen(true)} toolsLabel={copy.canvas.tools.label}
+    <SpatialWorkspaceView panelHost={panelHost} onRequestProperties={() => setPanelOpen(true)} toolsLabel={copy.canvas.tools.label} noteLabel={copy.notes.element.label}
     details={<SessionDetails createdAt="2026-09-09T12:00:00Z" updatedAt="2026-09-09T12:00:00Z" nodeCount={draft.characters.length + draft.objects.length} locale={english ? "en" : "zh-CN"} agentCommand={null} labels={{ ...copy.sessionDetails, copied: copy.clipboard.copied }} />}
-    draft={draft} loading={loading} disabled={disabled} error={error} status={status} labels={copy.spatial} actions={copy.actions} initialCameraId={initialCameraId} cameraSource={cameraSource} cameraBoxSource={cameraBoxSource} onOperation={op => {
-    try { const result = applySpatialOperations(draft, [op]); setDraft(result.draft); onApplied?.(result.draft); setStatus(result.constrained ? copy.spatial.constrained : null); }
-    catch { setStatus(copy.spatial.constrained); }
+    draft={draft} loading={loading} disabled={disabled} error={error ?? constraintError} onRetry={onRetry} labels={copy.spatial} actions={copy.actions} initialCameraId={initialCameraId} cameraSource={cameraSource} cameraBoxSource={cameraBoxSource} onOperation={op => {
+    try { const result = applySpatialOperations(draft, [op]); setDraft(result.draft); onApplied?.(result.draft); setConstraintError(result.constrained ? copy.spatial.constrained : null); }
+    catch { setConstraintError(copy.spatial.constrained); }
   }} /></Human2AiAppShell>;
 }
 const meta = { id: "human2ai-spatial-workspace-view", title: "human2ai/SpatialWorkspaceView", component: SpatialWorkspaceView, args: { panelHost: null, draft: fixture, onOperation: () => undefined }, parameters: { layout: "fullscreen" }, render: () => <Harness /> } satisfies Meta<typeof SpatialWorkspaceView>;
@@ -36,7 +36,25 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = { name: "标准人形" };
 export const Empty: Story = { name: "空空间", render: () => <Harness initial={createSpatialDraft()} /> };
 export const Loading: Story = { name: "载入中", render: () => <Harness loading /> };
-export const LoadError: Story = { name: "读取失败", render: () => <Harness error={zh.spatial.loadFailed} disabled /> };
+let errorRetries = 0;
+export const LoadError: Story = {
+  name: "读取失败",
+  render: () => <Harness error={zh.spatial.loadFailed} disabled onRetry={() => errorRetries++} />,
+  play: async ({ canvasElement }) => {
+    const indicator = canvasElement.querySelector<HTMLButtonElement>('.spatial-workspace-error button')!;
+    const tabs = canvasElement.querySelector<HTMLElement>('.spatial-workspace-tabs')!;
+    if (indicator.getBoundingClientRect().right >= tabs.getBoundingClientRect().left) throw new Error('Error icon must appear before the Space tab');
+    if (canvasElement.querySelector('.spatial-center')!.textContent?.includes(zh.spatial.loadFailed)) throw new Error('Do not show error text over the canvas');
+    indicator.focus(); await new Promise(resolve => setTimeout(resolve, 350));
+    const tooltip = canvasElement.ownerDocument.querySelector('[role="tooltip"]');
+    if (!tooltip?.textContent?.includes(zh.spatial.loadFailed) || !tooltip.textContent.includes(zh.actions.retry)) throw new Error('Keyboard focus must reveal the error reason and retry action');
+    errorRetries = 0; indicator.click();
+    if (errorRetries !== 1) throw new Error('The error icon must retain retry');
+    tabs.querySelectorAll<HTMLInputElement>('input')[1].click(); await new Promise(resolve => setTimeout(resolve, 180));
+    if (!canvasElement.querySelector('.spatial-workspace-error')) throw new Error('The error icon must remain available in the Cameras view');
+    indicator.blur();
+  },
+};
 export const Disabled: Story = { name: "等待恢复", render: () => <Harness disabled /> };
 export const TwoHeads: Story = { name: "双头角色", render: () => <Harness initial={applySpatialOperations(fixture, [{ type: "add-limb", characterId: "person", sourceJointId: "neck", parentId: "chest", idPrefix: "second", offset: [.22,.23,0] }]).draft} /> };
 export const FourArms: Story = { name: "四臂角色", render: () => <Harness initial={creature} /> };
@@ -71,6 +89,43 @@ export const CompactFigures: Story = { name: "低头身男女人物", render: ()
 export const FractionalFigures: Story = { name: "2.5 与 3.5 头身", render: () => <Harness initial={{ ...fixture, characters: (["male", "female"] as const).map((bodyType, i) => { const actor = createHumanoid(bodyType, bodyType === "female" ? zh.spatial.bodyFemale : zh.spatial.bodyMale, 1.8, 2.5 + i, undefined, bodyType); actor.position[0] = i - .5; return actor; }) }} /> };
 export const LongContent: Story = { name: "长名称与多个角色", render: () => <Harness initial={{ ...fixture, characters: Array.from({ length: 12 }, (_, i) => createHumanoid(`actor-${i}`, "拥有较长名称的空间人物".repeat(4))) }} /> };
 export const English: Story = { name: "英文界面", render: () => <Harness english /> };
+const notesFixture: SpatialDraft = { ...fixture,
+  objects: [{ id: "desk", name: "接待台", kind: "box", position: [1.3, .4, 0], rotation: [0, 0, 0], size: [1, .8, .7], color: "#b6a58c", note: "弧形接待台\n保留占地范围，背后留出通道。" }],
+  cameraBoxes: [{ ...createSpatialCameraBox("box", "观察盒"), position: [-2, .8, 0], size: .8 }],
+};
+const noteChanges: SpatialDraft[] = [];
+export const ObjectNotes: Story = {
+  name: "物件名称与备注编辑",
+  render: () => <Harness initial={notesFixture} onApplied={draft => noteChanges.push(draft)} />,
+  play: async ({ canvasElement }) => {
+    const pause = () => new Promise(resolve => setTimeout(resolve, 200));
+    const document = canvasElement.ownerDocument;
+    canvasElement.querySelectorAll<HTMLInputElement>('.spatial-panel-tabs input')[1].click(); await pause();
+    [...canvasElement.querySelectorAll<HTMLElement>('.ant-tree-node-content-wrapper')].find(item => item.textContent === notesFixture.objects[0].name)!.click(); await pause();
+    const viewport = canvasElement.querySelector<HTMLElement>('.spatial-viewport')!;
+    noteChanges.length = 0;
+    viewport.focus(); viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); await pause();
+    const editor = document.querySelector<HTMLElement>('[data-spatial-object-editor="desk"]')!;
+    if (!editor || noteChanges.length) throw new Error('Opening the object editor must not change the scene');
+    const name = editor.querySelector<HTMLInputElement>(`input[aria-label="${zh.spatial.name}"]`)!;
+    const note = editor.querySelector<HTMLTextAreaElement>('textarea')!;
+    if (name.value !== notesFixture.objects[0].name || note.value !== notesFixture.objects[0].note) throw new Error('The editor must read the selected object metadata');
+    const text = "接待台的材质与空间要求\n".repeat(20);
+    Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')!.set!.call(note, text);
+    note.dispatchEvent(new Event('input', { bubbles: true })); await pause();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(name, '入口接待台');
+    name.dispatchEvent(new Event('input', { bubbles: true })); await pause();
+    const changed = noteChanges.at(-1)!;
+    if (changed.objects[0].note !== text || changed.objects[0].name !== '入口接待台') throw new Error('Metadata must save before the editor closes');
+    if (JSON.stringify({ ...changed.objects[0], name: notesFixture.objects[0].name, note: notesFixture.objects[0].note }) !== JSON.stringify(notesFixture.objects[0])) throw new Error('Notes must preserve object geometry');
+    if (note.clientHeight >= note.scrollHeight) throw new Error('Long notes must scroll within the bounded textarea');
+    document.querySelector<HTMLButtonElement>('.spatial-object-editor-modal .ant-modal-close')!.click(); await pause();
+    if (document.querySelector('[data-spatial-object-editor]')) throw new Error('Closing must dismiss the editor');
+    viewport.focus(); viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true })); await pause();
+    if (document.querySelector<HTMLTextAreaElement>('[data-spatial-object-editor] textarea')!.value !== text) throw new Error('Closing must retain saved notes');
+  },
+};
+export const ObjectNotesEnglish: Story = { render: () => <Harness english initial={notesFixture} initialCameraId={notesFixture.cameras[0].id} /> };
 export const LightingEnabled: Story = { render: () => <Harness initial={{...fixture,lightingEnabled:true}} /> };
 const lightingChanges: SpatialDraft[] = [];
 export const LightingInteractions: Story = {
@@ -130,9 +185,115 @@ const cameraFixture: SpatialDraft = { ...fixture, cameras: [
   { ...fixture.cameras[0], width: 1600, height: 900, position: [2, 1.8, 4] },
   { ...fixture.cameras[0], id: "portrait", name: zh.spatial.camera.replace("{{number}}", "2"), width: 900, height: 1600, projection: "orthographic", position: [-2, 2, 4] },
 ] };
+const galleryFixture: SpatialDraft = { ...fixture, cameras: Array.from({ length: 7 }, (_, index) => ({
+  ...cameraFixture.cameras[index % 2], id: `gallery-${index}`, name: index === 6 ? "Camera_".repeat(18) : zh.spatial.camera.replace("{{number}}", String(index + 1)),
+})), cameraBoxes: [createSpatialCameraBox("box", zh.spatial.cameraBox)] };
+const galleryPreview = (id: string) => {
+  const camera = galleryFixture.cameras.find(item => item.id === id) ?? galleryFixture.cameras[0];
+  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${camera.width}" height="${camera.height}" viewBox="0 0 400 300"><rect width="400" height="300" fill="#edf0f3"/><path d="M0 220L200 150L400 220M200 150V300" stroke="#9cbbd3" fill="none"/><rect x="130" y="100" width="140" height="100" fill="#b6a58c"/><text x="200" y="160" text-anchor="middle" font-size="30">${id.replace('gallery-', '')}</text></svg>`)}`;
+};
+const galleryChanges: SpatialDraft[] = [];
+export const CameraGallery: Story = {
+  name: "摄像机总览与固定视图切换",
+  render: () => <Harness initial={galleryFixture} cameraSource={galleryPreview} onApplied={draft => galleryChanges.push(draft)} />,
+  play: async ({ canvasElement }) => {
+    const pause = () => new Promise(resolve => setTimeout(resolve, 180));
+    const tabs = canvasElement.querySelector<HTMLElement>('.spatial-workspace-tabs')!;
+    const inputs = tabs.querySelectorAll<HTMLInputElement>('input[type="radio"]');
+    if (inputs.length !== 2 || !inputs[0].checked) throw new Error('The workspace must start with exactly two fixed views');
+    const viewport = canvasElement.querySelector('.spatial-viewport');
+    galleryChanges.length = 0;
+    inputs[1].click(); await pause();
+    const gallery = canvasElement.querySelector<HTMLElement>('.spatial-camera-gallery')!;
+    const cards = [...gallery.querySelectorAll('figure')];
+    if (cards.length !== galleryFixture.cameras.length) throw new Error('Show every scene camera, excluding camera boxes');
+    cards.forEach((card, index) => {
+      if (card.querySelector('figcaption')!.textContent !== galleryFixture.cameras[index].name) throw new Error('Keep complete camera names');
+      if (!card.querySelector<HTMLImageElement>('img')!.alt.startsWith(galleryFixture.cameras[index].name)) throw new Error('Associate each view with its camera');
+    });
+    const bounds = cards.map(card => card.getBoundingClientRect());
+    if (Math.abs(bounds[0].top - bounds[2].top) > 1 || bounds[3].top <= bounds[0].top) throw new Error('Render exactly three cameras per row');
+    inputs[1].focus();
+    inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', keyCode: 37, which: 37, bubbles: true })); await pause();
+    if (!inputs[0].checked || canvasElement.querySelector('.spatial-viewport') !== viewport || viewport!.getBoundingClientRect().height < 160) throw new Error('Keyboard switching must preserve the mounted spatial editor');
+    if (galleryChanges.length) throw new Error('View switching must not mutate the scene');
+    inputs[1].click(); await pause();
+    const galleryBody = canvasElement.querySelector<HTMLElement>('.spatial-camera-gallery')!;
+    galleryBody.scrollTop = galleryBody.scrollHeight;
+    if (galleryBody.scrollWidth > galleryBody.clientWidth || canvasElement.ownerDocument.documentElement.scrollWidth > innerWidth) throw new Error('Camera gallery must scroll internally without horizontal overflow');
+    galleryBody.scrollTop = 0;
+    const select = galleryBody.querySelectorAll<HTMLButtonElement>('.spatial-camera-select');
+    const panelToggle = canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${zh.shell.collapseRightPanel}"]`)!;
+    panelToggle.click(); await pause();
+    select[1].click(); await pause();
+    const panel = canvasElement.querySelector('.spatial-panel')!;
+    const selectedName = () => panel.querySelector<HTMLInputElement>(`input[aria-label="${zh.spatial.name}"]`)?.value;
+    if (panelToggle.getAttribute('aria-expanded') !== 'true' || selectedName() !== galleryFixture.cameras[1].name || !panel.querySelector(`[aria-label="${zh.spatial.span}"]`)) throw new Error('Selecting a camera must reopen its properties, including its projection settings');
+    select[0].focus(); select[0].click(); await pause();
+    if (selectedName() !== galleryFixture.cameras[0].name || select[0].getAttribute('aria-pressed') !== 'true' || select[1].getAttribute('aria-pressed') !== 'false') throw new Error('Gallery selection must track the matching camera properties');
+    if (!inputs[1].checked || galleryChanges.length) throw new Error('Opening camera properties must keep the gallery active without editing the scene');
+    for (const element of [galleryBody, panel.querySelector<HTMLElement>('.spatial-panel-body')!]) {
+      if (getComputedStyle(element).scrollbarWidth !== 'none' && getComputedStyle(element, '::-webkit-scrollbar').display !== 'none') throw new Error('Camera selection must not expose gallery or properties scrollbars');
+      element.scrollTop = element.scrollHeight;
+      if (element.scrollHeight > element.clientHeight && element.scrollTop === 0) throw new Error('Hidden scrollbars must retain access to overflowing content');
+      element.scrollTop = 0;
+    }
+  },
+};
+export const CameraGalleryPending: Story = {
+  name: "英文摄像机等待保存",
+  render: () => <Harness english disabled initial={cameraFixture} />,
+  play: async ({ canvasElement }) => {
+    canvasElement.querySelectorAll<HTMLInputElement>('.spatial-workspace-tabs input')[1].click();
+    await new Promise(resolve => setTimeout(resolve, 180));
+    const gallery = canvasElement.querySelector('.spatial-camera-gallery')!;
+    if (gallery.querySelectorAll('figure').length !== 2 || !gallery.textContent?.includes(en.spatial.cameraPreviewPending) || gallery.querySelector('img')) throw new Error('Pending saved previews must retain names and explain the wait');
+    gallery.querySelector<HTMLButtonElement>('.spatial-camera-select')!.click();
+    await new Promise(resolve => setTimeout(resolve, 180));
+    const name = canvasElement.querySelector<HTMLInputElement>(`.spatial-parameters input[aria-label="${en.spatial.name}"]`)!;
+    if (name.value !== cameraFixture.cameras[0].name || !name.disabled) throw new Error('Read-only previews must allow inspecting disabled camera properties');
+  },
+};
+export const CameraGalleryFailure: Story = {
+  name: "摄像机预览失败与单独重试",
+  render: () => <Harness initial={cameraFixture} cameraSource={id => id === 'portrait' ? 'data:image/png;base64,AAAA' : galleryPreview(id)} />,
+  play: async ({ canvasElement }) => {
+    const pause = () => new Promise(resolve => setTimeout(resolve, 180));
+    canvasElement.querySelectorAll<HTMLInputElement>('.spatial-workspace-tabs input')[1].click(); await pause();
+    const cards = canvasElement.querySelectorAll('.spatial-camera-gallery figure');
+    if (cards[0].textContent?.includes(zh.spatial.referenceLoadFailed) || !cards[1].textContent?.includes(zh.spatial.referenceLoadFailed)) throw new Error('A failed camera must not replace other camera previews');
+    const original = cards[1].querySelector('img');
+    const retry = cards[1].querySelector<HTMLButtonElement>('.ant-alert button')!;
+    const retryBounds = retry.getBoundingClientRect();
+    if (canvasElement.ownerDocument.elementFromPoint(retryBounds.x + retryBounds.width / 2, retryBounds.y + retryBounds.height / 2)?.closest('button') !== retry) throw new Error('The camera selection target must not cover image retry');
+    retry.click(); await pause();
+    if (cards[1].querySelector('img') === original) throw new Error('Retry must request the failed camera again');
+    if (cards[1].querySelector('.spatial-camera-select')!.getAttribute('aria-pressed') !== 'false') throw new Error('Retry must remain separate from camera selection');
+  },
+};
 // Keep the source landscape-shaped to cover stale images while the output size updates.
 const cameraPreview = () => `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900"><rect x="20" y="20" width="1560" height="860" fill="none" stroke="#728aa1" stroke-width="8"/><circle cx="800" cy="450" r="180" fill="#9cbbd3"/></svg>')}`;
-export const CameraLandscape: Story = { name: "横向摄像机范围与预览", render: () => <Harness initial={cameraFixture} initialCameraId={cameraFixture.cameras[0].id} cameraSource={cameraPreview} /> };
+const cameraVisibilityChanges: SpatialDraft[] = [];
+export const CameraLandscape: Story = {
+  name: "横向摄像机范围与预览",
+  render: () => <Harness initial={cameraFixture} initialCameraId={cameraFixture.cameras[0].id} cameraSource={cameraPreview} onApplied={draft => cameraVisibilityChanges.push(draft)} />,
+  play: async ({ canvasElement }) => {
+    const pause = () => new Promise(resolve => setTimeout(resolve, 180));
+    const panel = canvasElement.querySelector('.spatial-panel')!;
+    panel.querySelectorAll<HTMLInputElement>('.spatial-panel-tabs input')[0].click(); await pause();
+    const checkbox = () => [...panel.querySelectorAll('label')].find(label => label.textContent === zh.spatial.showCameras)!.querySelector<HTMLInputElement>('input')!;
+    if (!checkbox().checked) throw new Error('Camera guides must default on');
+    cameraVisibilityChanges.length = 0;
+    checkbox().click(); await pause();
+    if (checkbox().checked) throw new Error('Camera guides must be switchable off');
+    const tabs = canvasElement.querySelectorAll<HTMLInputElement>('.spatial-workspace-tabs input');
+    tabs[1].click(); await pause(); tabs[0].click(); await pause();
+    if (checkbox().checked) throw new Error('Camera guide visibility must survive workspace tab changes');
+    checkbox().click(); await pause();
+    const rig = [...panel.querySelectorAll('label')].find(label => label.textContent === zh.spatial.showRig)!.querySelector<HTMLInputElement>('input')!;
+    if (!checkbox().checked || !rig.checked || cameraVisibilityChanges.length) throw new Error('Camera visibility must remain independent of rig visibility and saved scene operations');
+  },
+};
 export const CameraPortrait: Story = { name: "纵向正交摄像机范围与预览", render: () => <Harness initial={cameraFixture} initialCameraId="portrait" cameraSource={cameraPreview} /> };
 const referencePreview = (_id: string, pass: SpatialRenderPass = "color") => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="900" height="1600"><rect width="900" height="1600" fill="${pass === "depth" ? "black" : "white"}"/>${pass === "skeleton" ? '<ellipse cx="450" cy="320" rx="75" ry="100" fill="#e6eef3" stroke="#688296" stroke-width="8"/><path d="M450 420V850L260 1350M450 850L640 1350M450 540L250 760M450 540L650 760" fill="none" stroke="#427ea9" stroke-width="13"/><circle cx="450" cy="850" r="14" fill="white" stroke="#b97337" stroke-width="6"/>' : `<circle cx="450" cy="800" r="200" fill="${pass === "structure" ? "white" : pass === "depth" ? "#bbbbbb" : "#9cbbd3"}" stroke="#444444" stroke-width="4"/>`}</svg>`)}`;
 export const CameraReferences: Story = { render: () => <Harness initial={cameraFixture} initialCameraId="portrait" cameraSource={referencePreview} /> };

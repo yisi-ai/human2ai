@@ -23,6 +23,7 @@ import {
   addDirectionLine,
   addFocus,
   addTextRegion,
+  areaGeometry,
   changeFrame,
   compositionFrameSizeForRatio,
   createDraft,
@@ -292,12 +293,15 @@ function SelectableCanvasExample() {
 }
 
 function TextRegionExample() {
-  const [draft, setDraft] = useState(createTextRegionDraft);
+  const [draft, setDraft] = useState(() => ({ ...createTextRegionDraft(), layerOrder: ["area-1"] } as CompositionDraft));
   const [selectedIds, setSelectedIds] = useState<string[]>(["area-1"]);
+  const history = useCanvasHistory(draft, ({ draft: restored }) => setDraft(restored));
   return (
     <main
       className="composition-canvas-story composition-canvas-story--canvas-only"
       data-text-region-note={draft.areas[0]?.note}
+      data-canvas-editor
+      data-text-region-draft={JSON.stringify(draft)}
       data-text-region-display-text={draft.areas[0]?.displayText}
       data-text-region-visual-weight={draft.areas[0]?.visualWeight}
       data-processing-semantic={draft.processingSemantic ?? "unselected"}
@@ -306,6 +310,7 @@ function TextRegionExample() {
         draft={draft}
         selectedIds={selectedIds}
         nodeEditorLabels={{ textKind: "文字区域" }}
+        interactionResetKey={history.restoreToken}
         areaEditorLabels={{
           displayText: "显示文字",
           displayTextPlaceholder: "填写要显示的文字；留空由生图模型决定",
@@ -316,7 +321,7 @@ function TextRegionExample() {
           weightLow: "低",
           weightDecorative: "装饰",
         }}
-        onDraftChange={setDraft}
+        onDraftChange={(next) => { if (history.record(next)) setDraft(next); }}
         onSelectionChange={setSelectedIds}
       />
     </main>
@@ -556,10 +561,40 @@ export const NodePlacement: Story = {
       throw new Error("Esc 取消必须保持已有构图不变");
     }
     await arm("文字区域");
+    const textLayer = placementLayer(canvasElement);
+    placementPointer(textLayer, "pointerdown", { x: 700, y: 460 });
+    placementPointer(textLayer, "pointermove", { x: 500, y: 360 });
+    await placementRender();
+    if (snapshot().changes !== 6 || !textLayer.querySelector("path")?.getAttribute("d")) {
+      throw new Error("文字区域拖动预览不得提交中间草稿");
+    }
+    placementPointer(textLayer, "pointerup", { x: 400, y: 300 });
+    await placementRender();
+    const text = snapshot().draft.areas.at(-1)!;
+    if (snapshot().changes !== 7 || text.semanticType !== "text-region"
+      || Math.abs(text.x * COMPOSITION_CANVAS.width - 550) > 0.01
+      || Math.abs(text.y * COMPOSITION_CANVAS.height - 380) > 0.01
+      || Math.abs(text.width! * COMPOSITION_CANVAS.width - 300) > 0.01
+      || Math.abs(text.height! * COMPOSITION_CANVAS.height - 160) > 0.01) {
+      throw new Error("文字区域反向拖动必须按松手位置设置中心及宽高");
+    }
+    if (document.body.querySelector('[role="dialog"]')
+      || canvasElement.querySelector("[data-canvas-placement]")) {
+      throw new Error("文字区域放置后应退出工具并保持画布可操作，不自动打开编辑器");
+    }
+    assertStorySelector(canvasElement, `[data-composition-item="${text.id}"][data-selected="true"]`);
+    if (canvasElement.querySelectorAll(`[data-node-id="${text.id}"][data-resize-handle]`).length !== 8) {
+      throw new Error("新文字区域必须可直接八向调整宽高");
+    }
+
+    await arm("文字区域");
     await placeNodeInStory(canvasElement, { x: 450, y: 280 });
-    if (snapshot().changes !== 7 || snapshot().draft.areas.at(-1)?.semanticType !== "text-region"
-      || !document.body.querySelector('[role="dialog"]')) {
-      throw new Error("文字区域放置后必须直接进入编辑");
+    const clickedText = snapshot().draft.areas.at(-1)!;
+    const defaultText = addTextRegion(createDraft()).draft.areas[0]!;
+    if (snapshot().changes !== 8 || clickedText.semanticType !== "text-region"
+      || clickedText.width !== defaultText.width || clickedText.height !== defaultText.height
+      || document.body.querySelector('[role="dialog"]')) {
+      throw new Error("文字区域单击放置应使用默认尺寸，不自动打开编辑器");
     }
   },
 };
@@ -1108,30 +1143,76 @@ export const CanvasOnly: Story = {
 };
 
 export const NodeNoteTooltip: Story = {
-  name: "节点备注 Tooltip",
-  args: { draft: createTextRegionDraft() },
+  name: "节点信息提示",
+  args: { draft: createNodeTooltipDraft() },
   render: (args) => (
-    <main className="composition-canvas-story composition-canvas-story--canvas-only">
-      <CompositionCanvas {...args} />
-    </main>
+    <ConfigProvider theme={{ token: { motion: false } }}>
+      <main className="composition-canvas-story composition-canvas-story--canvas-only">
+        <CompositionCanvas {...args} />
+      </main>
+    </ConfigProvider>
   ),
-  play: async ({ canvasElement }) => {
-    const textRegion = canvasElement.querySelector<SVGGElement>(
-      '[data-composition-kind="text-region"]',
-    );
-    if (!textRegion || textRegion.textContent?.includes("主标题与导语")) {
-      throw new Error("构图节点备注不应显示在节点内部");
+  play: async ({ canvasElement, args }) => {
+    const description = args.nodeEditorLabels?.nodeDescription ?? zh.canvas.node.nodeDescription;
+    const displayText = args.areaEditorLabels?.displayText ?? zh.textContent.label;
+    const note = args.nodeEditorLabels?.note ?? zh.notes.element.label;
+    const cases = [
+      { id: "area-1", fields: [[description, "文字引导画面的阅读顺序"], [displayText, "静观"], [note, "主标题与导语"]] },
+      { id: "area-2", fields: [[description, "衬托标题的背景区域"]] },
+      { id: "area-3", fields: [] },
+      { id: "area-4", fields: [[displayText, "<b>静观</b>\n自得"]] },
+      { id: "image-1", fields: [[note, "保留图片主体"]] },
+      { id: "focus-1", fields: [[description, "视觉中心"], [note, "靠近标题"]] },
+      { id: "direction-1", fields: [[description, "从左上向右下引导视线"]] },
+    ];
+    for (const { id, fields } of cases) {
+      const node = canvasElement.querySelector<SVGGElement>(`[data-composition-item="${id}"]`)!;
+      node.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+      await nextFrame();
+      const tooltip = [...document.body.querySelectorAll<HTMLElement>('[role="tooltip"]')]
+        .find((item) => !item.closest(".ant-tooltip-hidden"));
+      const actual = tooltip ? [...tooltip.querySelectorAll("dl > div")]
+        .map((item) => [item.querySelector("dt")?.textContent, item.querySelector("dd")?.textContent]) : [];
+      if (JSON.stringify(actual) !== JSON.stringify(fields) || (fields.length === 0 && tooltip)) {
+        throw new Error(`节点 ${id} 必须依序呈现非空说明、显示文字和备注，空内容不显示`);
+      }
+      if (id === "area-4" && tooltip?.querySelector("b")) {
+        throw new Error("显示文字必须按原文显示，不解析 HTML");
+      }
+      node.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
+      await nextFrame();
     }
-    textRegion.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
+    const textNode = canvasElement.querySelector<SVGGElement>('[data-composition-item="area-1"]')!;
+    textNode.focus();
     await nextFrame();
-    const noteTooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]');
-    if (noteTooltip?.textContent?.trim() !== "主标题与导语") {
-      throw new Error("悬停构图节点时必须在 Tooltip 中显示其备注");
+    const focusedTooltip = document.body.querySelector<HTMLElement>('.ant-tooltip:not(.ant-tooltip-hidden) [role="tooltip"]');
+    if (!focusedTooltip?.textContent?.includes("静观") || !focusedTooltip.textContent.includes("文字引导画面的阅读顺序")) {
+      throw new Error("键盘聚焦节点也必须显示说明及显示文字");
     }
-    textRegion.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
-    await nextFrame();
+    textNode.blur();
   },
 };
+
+function createNodeTooltipDraft(): CompositionDraft {
+  let draft = updateItemMetadata(createTextRegionDraft(), "area-1", {
+    origin: "agent", annotation: "文字引导画面的阅读顺序",
+  });
+  draft = addArea(draft, { primitive: "quadrilateral", x: 0.25, y: 0.3 }).draft;
+  draft = updateItemMetadata(draft, "area-2", { annotation: "衬托标题的背景区域", note: " \n " });
+  const empty = addTextRegion(draft, { x: 0.75, y: 0.3 });
+  draft = updateAreaMetadata(
+    updateItemMetadata(empty.draft, empty.id, { annotation: " \n ", note: " " }),
+    empty.id, { displayText: "\t" },
+  );
+  const text = addTextRegion(draft, { x: 0.75, y: 0.65 });
+  draft = updateAreaMetadata(text.draft, text.id, { displayText: "<b>静观</b>\n自得" });
+  const image = addCompositionImage(draft, { x: 0.25, y: 0.65 });
+  draft = updateItemMetadata(image.draft, image.id, { note: "保留图片主体" });
+  const focus = addFocus(draft, { x: 0.5, y: 0.25 });
+  draft = updateItemMetadata(focus.draft, focus.id, { annotation: "视觉中心", note: "靠近标题" });
+  const direction = addDirectionLine(draft);
+  return updateItemMetadata(direction.draft, direction.id, { annotation: "从左上向右下引导视线" });
+}
 
 export const ClipboardImage: Story = {
   name: "粘贴图片与编辑替换",
@@ -1367,8 +1448,74 @@ export const TextRegion: Story = {
     if (node.querySelectorAll(".human2ai-composition-canvas__text-region-marks line").length !== 3) {
       throw new Error("文字区域缺少稳定的文本占位视觉");
     }
-    if (node.querySelectorAll("[data-resize-handle]").length !== 8) {
+    if (canvasElement.querySelectorAll('[data-node-id="area-1"][data-resize-handle]').length !== 8) {
       throw new Error("选中的文字区域需要八向缩放能力");
+    }
+
+    const readDraft = () => JSON.parse(canvasElement.querySelector<HTMLElement>("[data-text-region-draft]")!.dataset.textRegionDraft!) as CompositionDraft;
+    const before = areaGeometry(readDraft().areas[0], COMPOSITION_CANVAS);
+    if (before.type !== "polygon") throw new Error("文字区域需要四个角点");
+    canvasElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Control", ctrlKey: true, bubbles: true }));
+    await nextFrame();
+    const corner = canvasElement.querySelector<SVGGElement>('[data-handle="move-text-corner"][data-corner-index="0"]');
+    if (!corner || canvasElement.querySelectorAll('[data-handle="move-text-corner"]').length !== 4) {
+      throw new Error("按住 Ctrl 应显示四个轮廓角点");
+    }
+    const svg = corner.ownerSVGElement!;
+    const dispatch = (type: string, point: { x: number; y: number }) => {
+      const client = new DOMPoint(point.x, point.y).matrixTransform(svg.getScreenCTM()!);
+      (type === "pointerdown" ? corner : svg).dispatchEvent(new PointerEvent(type, {
+        bubbles: true, pointerId: 81, button: 0, buttons: type === "pointerup" ? 0 : 1,
+        ctrlKey: true, clientX: client.x, clientY: client.y,
+      }));
+    };
+    const grab = { x: before.points[0].x + 3, y: before.points[0].y + 3 };
+    dispatch("pointerdown", grab);
+    dispatch("pointerup", grab);
+    await nextFrame();
+    if (readDraft().areas[0].corners) throw new Error("点击角点但未拖动不应修改轮廓");
+    dispatch("pointerdown", grab);
+    const target = { x: before.points[0].x + 70, y: before.points[0].y + 30 };
+    const dragged = { x: target.x + 3, y: target.y + 3 };
+    dispatch("pointermove", dragged);
+    await nextFrame();
+    const validOutline = readDraft().areas[0].corners;
+    dispatch("pointermove", { x: before.points[2].x + 50, y: before.points[2].y + 50 });
+    await nextFrame();
+    if (JSON.stringify(readDraft().areas[0].corners) !== JSON.stringify(validOutline)) {
+      throw new Error("角点跨边时必须保留最近一次有效轮廓");
+    }
+    dispatch("pointerup", dragged);
+    await nextFrame();
+    const edited = areaGeometry(readDraft().areas[0], COMPOSITION_CANVAS);
+    if (edited.type !== "polygon" || !canvasElement.querySelector("[data-text-outline]")) throw new Error("拖动没有创建四点文字轮廓");
+    edited.points.forEach((point, index) => {
+      const expected = index === 0 ? target : before.points[index];
+      if (Math.hypot(point.x - expected.x, point.y - expected.y) > 0.01) throw new Error("拖角点时其他角点必须固定");
+    });
+    canvasElement.dispatchEvent(new KeyboardEvent("keyup", { key: "Control", ctrlKey: false, bubbles: true }));
+    svg.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, bubbles: true }));
+    await nextFrame();
+    if (readDraft().areas[0].corners) throw new Error("一次撤销必须恢复完整的拖动前轮廓");
+    svg.dispatchEvent(new KeyboardEvent("keydown", { key: "z", ctrlKey: true, shiftKey: true, bubbles: true }));
+    await nextFrame();
+    if (!readDraft().areas[0].corners) throw new Error("重做必须恢复四点轮廓");
+
+    const beforeResize = readDraft().areas[0];
+    const edge = canvasElement.querySelector<SVGRectElement>('[data-node-id="area-1"][data-resize-handle="right"]')!;
+    const edgeBounds = edge.getBoundingClientRect();
+    const edgeStart = { x: edgeBounds.x + edgeBounds.width / 2, y: edgeBounds.y + edgeBounds.height / 2 };
+    for (const type of ["pointerdown", "pointermove", "pointerup"]) {
+      edge.dispatchEvent(new PointerEvent(type, {
+        bubbles: true, pointerId: 82, button: 0, buttons: type === "pointerup" ? 0 : 1,
+        clientX: edgeStart.x + (type === "pointerdown" ? 0 : 40), clientY: edgeStart.y,
+      }));
+      await nextFrame();
+    }
+    const afterResize = readDraft().areas[0];
+    if (afterResize.width! <= beforeResize.width! || afterResize.height !== beforeResize.height
+      || JSON.stringify(afterResize.corners) !== JSON.stringify(beforeResize.corners)) {
+      throw new Error("普通边缘缩放必须保留自定义四点轮廓");
     }
 
     node.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));

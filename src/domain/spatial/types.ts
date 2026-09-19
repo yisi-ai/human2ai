@@ -34,6 +34,8 @@ export interface SpatialBone {
 export interface SpatialCharacter extends SpatialBodyShape {
   id: string;
   name: string;
+  /** User instructions for this entity; absent means no note. */
+  note?: string;
   kind: "humanoid" | "custom";
   position: Vec3;
   rotation: Vec3;
@@ -53,6 +55,8 @@ export interface SpatialCharacter extends SpatialBodyShape {
 export interface SpatialObject {
   id: string;
   name: string;
+  /** User instructions for this entity; absent means no note. */
+  note?: string;
   kind: "box" | "sphere" | "plane";
   position: Vec3;
   rotation: Vec3;
@@ -62,6 +66,8 @@ export interface SpatialObject {
 export interface SpatialCamera {
   id: string;
   name: string;
+  /** User instructions for this entity; absent means no note. */
+  note?: string;
   position: Vec3;
   target: Vec3;
   projection: "perspective" | "orthographic";
@@ -84,6 +90,8 @@ export interface SpatialDraft {
 export interface SpatialCameraBox {
   id: string;
   name: string;
+  /** User instructions for this entity; absent means no note. */
+  note?: string;
   position: Vec3;
   rotation: Vec3;
   /** Cubic crop edge length in metres. */

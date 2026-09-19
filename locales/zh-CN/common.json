@@ -48,7 +48,8 @@
       "label": "分类",
       "all": "全部类型",
       "visual": "画面",
-      "ui": "UI"
+      "ui": "UI",
+      "spatial": "3D"
     },
     "creator": {
       "label": "创建方",
@@ -66,7 +67,8 @@
     },
     "description": {
       "heading": "设计规范",
-      "placeholder": "说明布局、比例、视觉层级和装饰等设计规则"
+      "placeholder": "说明布局、比例、视觉层级和装饰等设计规则",
+      "spatialPlaceholder": "说明形体、比例、材质、配色、光照和镜头等建模规则"
     },
     "searchPlaceholder": "搜索风格",
     "deleteTitle": "确认删除这个风格？",
@@ -346,6 +348,10 @@
     },
     "lightSource": {
       "toggle": "作为光源"
+    },
+    "textRegion": {
+      "cornerLabel": "文字轮廓角点 {{index}}",
+      "cornerHelp": "选中文字区域后，按住 Ctrl 拖动角点调整轮廓；聚焦角点后可用方向键微调。"
     }
   },
   "uiSketch": {
@@ -498,6 +504,9 @@
   },
   "spatial": {
     "title": "3D 空间",
+    "spaceTab": "空间",
+    "workspaceViews": "切换空间视图",
+    "cameraPreviewPending": "保存后显示预览",
     "newSpace": "新建 3D 空间",
     "newInProject": "在“{{project}}”中新建 3D 空间",
     "untitled": "未命名 3D 空间",
@@ -544,8 +553,6 @@
     "loadFailed": "无法读取 3D 空间",
     "saveFailed": "未能保存，请重试",
     "conflict": "空间已有更新，请重新载入后继续",
-    "saving": "正在保存空间",
-    "saved": "空间已保存",
     "duplicate": "复制空间对象",
     "deleteConfirm": "删除这个空间对象？",
     "empty": "空间内还没有对象",
@@ -587,6 +594,7 @@
     "resetPose": "复原姿势",
     "resetPoseHint": "恢复默认姿势并解除此人物的固定，可撤销。",
     "showRig": "显示关节与骨段",
+    "showCameras": "显示摄像机",
     "lightingEffects": "光照效果",
     "jointLeftWrist": "左腕",
     "jointLeftAnkle": "左踝",
@@ -677,7 +685,8 @@
     "renderPassError": "--pass 必须为 {{passes}} 之一。",
     "appearance": "模型样式",
     "appearanceQuaternius": "人体模型",
-    "appearanceGeometric": "几何人偶"
+    "appearanceGeometric": "几何人偶",
+    "editObject": "编辑物件"
   },
   "canvasHistory": {
     "undo": "撤销",

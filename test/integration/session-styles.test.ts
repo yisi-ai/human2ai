@@ -10,13 +10,16 @@ import { openDatabase, type DatabaseConnection } from "../../src/database/migrat
 import { ProjectSessionRepository } from "../../src/database/project-session-repository.ts";
 import { StyleLibraryRepository } from "../../src/database/style-library-repository.ts";
 import { UiSketchSessionRepository } from "../../src/database/ui-sketch-session-repository.ts";
+import { SpatialSessionRepository } from "../../src/database/spatial-session-repository.ts";
 import { createDraft } from "../../src/domain/composition/index.ts";
 import { createUiSketchDraft } from "../../src/domain/ui-sketch/index.ts";
+import { createSpatialDraft } from "../../src/domain/spatial/index.ts";
 import { buildServer } from "../../src/server/app.ts";
 
 describe.each([
   { type: "image-composition" as const, path: "composition", draft: createDraft },
   { type: "ui-layout" as const, path: "ui-sketch", draft: createUiSketchDraft },
+  { type: "spatial" as const, path: "spatial", draft: createSpatialDraft },
 ])("$type session styles", (harness) => {
   let database: DatabaseConnection;
   let directory: string;
@@ -35,13 +38,14 @@ describe.each([
     const styles = new StyleLibraryRepository(database, directory);
     const session = projects.createSession({ sessionType: harness.type, title: "Canvas" });
     const style = styles.createStyle({
-      name: "Whitespace", category: harness.type === "ui-layout" ? "ui" : "visual",
+      name: "Whitespace", category: harness.type === "spatial" ? "spatial" : harness.type === "ui-layout" ? "ui" : "visual",
       creatorType: "agent", description: "Use generous whitespace. Preserve the user's content.",
     });
     server = buildServer({}, {
       projectSessions: projects, styleLibrary: styles,
       compositionSessions: new CompositionSessionRepository(database),
       uiSketchSessions: new UiSketchSessionRepository(database),
+      spatialSessions: new SpatialSessionRepository(database),
     });
     return { session, style, styles };
   }
@@ -49,10 +53,15 @@ describe.each([
   it("shares binding with the browser, detects conflicts and clears deleted styles", async () => {
     const { session, style, styles } = await setup();
     const url = `/api/v1/sessions/${session.id}/style`;
+    const draftsUrl = `/api/v1/sessions/${session.id}/${harness.path}/drafts`;
+    const before = await server.inject({ method: "POST", url: draftsUrl, payload: { expectedLatestRevision: 0, draft: harness.draft() } });
+    expect(before.statusCode, before.body).toBe(201);
     const bind = await server.inject({ method: "PATCH", url, payload: { styleId: style.id, expectedRevision: 1 } });
     expect(bind.statusCode, bind.body).toBe(200);
     expect(bind.json()).toMatchObject({ session: { styleId: style.id, revision: 2 }, style: { id: style.id, promptSummary: "Use generous whitespace." } });
     expect((await server.inject({ method: "GET", url })).json()).toEqual(bind.json());
+    expect((await server.inject({ method: "PATCH", url, payload: { styleId: style.id, expectedRevision: 2 } })).json()).toEqual(bind.json());
+    expect((await server.inject({ method: "GET", url: `${draftsUrl}/1` })).json()).toEqual(before.json());
     expect((await server.inject({ method: "PATCH", url, payload: { styleId: null, expectedRevision: 1 } })).statusCode).toBe(409);
     await styles.deleteStyle(style.id, { expectedRevision: style.revision });
     expect((await server.inject({ method: "GET", url })).json()).toMatchObject({ session: { styleId: null, revision: 3 }, style: null });
@@ -65,12 +74,12 @@ describe.each([
     const first = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 0, draft: harness.draft() } });
     expect(first.statusCode, first.body).toBe(201);
     const processed = await server.inject({ method: "POST", url, payload: {
-      expectedLatestRevision: 1, draft: { ...harness.draft(), overallNote: "User content" },
+      expectedLatestRevision: 1, draft: { ...harness.draft(), ...(harness.type === "spatial" ? { lightingEnabled: true } : { overallNote: "User content" }) },
       styleProcessing: { styleId: style.id, styleRevision: 1, sessionRevision: 2 },
     } });
     expect(processed.statusCode, processed.body).toBe(201);
     expect(processed.json().styleProcessing).toEqual({ styleId: style.id, styleRevision: 1, sourceRevision: 1, resultRevision: 2 });
-    const edited = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 2, draft: { ...harness.draft(), overallNote: "User revision" } } });
+    const edited = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 2, draft: { ...harness.draft(), ...(harness.type === "spatial" ? { lightingEnabled: false } : { overallNote: "User revision" }) } } });
     expect(edited.json().styleProcessing).toEqual(processed.json().styleProcessing);
     const undoEdit = await server.inject({ method: "POST", url: `${url}/undo`, payload: { changeRevision: 3, expectedLatestRevision: 3 } });
     expect(undoEdit.json().draft).toEqual(processed.json().draft);

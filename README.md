@@ -102,7 +102,7 @@ npx --no-install human2ai session open --session <session-id>
 
 `session connect` 返回浏览器地址、最新 Capture 版本和当前会话支持的命令。`capture get` 读取指定版本，`capture save` 保存新版本，`capture undo` 追加恢复版本。不同项目通过项目 ID 和会话 ID 组织在同一本地服务中。
 
-构图和 UI 会话可使用 `/styles/` 中的风格库。Agent 可通过 `style list|get|create|update|add-reference|remove-reference|delete` 操作同一风格库。完整命令和协作方式见 [Human2AI Skill](skills/human2ai/SKILL.md)。
+构图、UI 和 3D 空间会话可使用 `/styles/` 中的风格库，支持画面、UI 和 3D 分类。消费项目的 Agent 可读取完整风格规范，结合 3D 空间的布局、尺度、姿态和相机指导，在消费项目中完成建模；绑定风格不会修改空间草稿。Agent 可通过 `style list|get|create|update|add-reference|remove-reference|delete` 操作同一风格库。完整命令和协作方式见 [Human2AI Skill](skills/human2ai/SKILL.md)。
 
 ## 数据与产物
 

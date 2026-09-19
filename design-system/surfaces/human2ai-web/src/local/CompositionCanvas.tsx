@@ -32,6 +32,8 @@ import {
   isCompositionTextRegion,
   moveFrame,
   moveItem,
+  moveTextRegionCorner,
+  textRegionLines,
   pasteCompositionItems,
   removeItem,
   renderCompositionLightSourceSvg,
@@ -130,6 +132,7 @@ export interface CompositionCanvasProps {
 export type CompositionPlacementTool = "focus" | "direction" | "circle" | "triangle" | "quadrilateral" | "text" | "image";
 
 export interface CompositionAreaEditorLabels {
+  cornerLabel: string;
   lightSource: string;
   displayText: string;
   displayTextPlaceholder: string;
@@ -147,6 +150,17 @@ export interface CompositionCanvasViewportAction {
 }
 
 type PointerInteraction =
+  | {
+      type: "move-text-corner";
+      pointerId: number;
+      sourceDraft: CompositionDraft;
+      id: string;
+      cornerIndex: number;
+      start: Point;
+      startClient: Point;
+      movingPoint: Point;
+      moved: boolean;
+    }
   | {
       type: "move-items";
       pointerId: number;
@@ -196,6 +210,7 @@ const AREA_LABELS: Record<CompositionArea["primitive"], string> = {
 };
 
 const DEFAULT_AREA_EDITOR_LABELS: CompositionAreaEditorLabels = {
+  cornerLabel: "文字轮廓角点 {{index}}",
   lightSource: "作为光源",
   displayText: "显示文字",
   displayTextPlaceholder: "填写要显示的文字；留空由生图模型决定",
@@ -294,6 +309,8 @@ export function CompositionCanvas({
   const clipboardTokenRef = useRef("");
   const pasteCountRef = useRef(0);
   const [draggingItems, setDraggingItems] = useState(false);
+  const [ctrlPressed, setCtrlPressed] = useState(false);
+  const [cornerFocused, setCornerFocused] = useState(false);
   // Handle spacing is editor state; an infinite line persists only position and angle.
   const [directionControlDistance, setDirectionControlDistance] = useState(160);
   const [marqueeBounds, setMarqueeBounds] = useState<CompositionFrameBounds | null>(null);
@@ -375,13 +392,50 @@ export function CompositionCanvas({
     groupResizeSourceRef.current = null;
     setMarqueeBounds(null);
     setEditingTarget(null);
+    setCornerFocused(false);
     dismissContextMenu();
   }, [interactionResetKey]);
+
+  useLayoutEffect(() => {
+    const update = (event: globalThis.KeyboardEvent) => setCtrlPressed(event.ctrlKey);
+    const blur = () => {
+      setCtrlPressed(false);
+      setCornerFocused(false);
+      if (interactionRef.current?.type === "move-text-corner") interactionRef.current = null;
+    };
+    window.addEventListener("keydown", update);
+    window.addEventListener("keyup", update);
+    window.addEventListener("blur", blur);
+    return () => {
+      window.removeEventListener("keydown", update);
+      window.removeEventListener("keyup", update);
+      window.removeEventListener("blur", blur);
+    };
+  }, []);
 
   useLayoutEffect(() => {
     if (placementTool) closeItemEditor();
     if (placementTool && !placementAvailable) onPlacementToolChange?.(null);
   }, [placementTool, placementAvailable]);
+
+  function itemTooltip(item: CompositionItem, displayText = ""): ReactNode {
+    const fields = [
+      [nodeEditorLabels?.nodeDescription ?? "节点说明", item.annotation],
+      [areaEditorLabels.displayText, displayText],
+      [nodeEditorLabels?.note ?? "备注", item.note],
+    ].filter(([, value]) => value.trim());
+    if (fields.length === 0) return undefined;
+    return (
+      <dl className="human2ai-composition-canvas__node-tooltip">
+        {fields.map(([label, value]) => (
+          <div key={label}>
+            <dt>{label}</dt>
+            <dd>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    );
+  }
 
   function placeNode(placement: CanvasPlacementResult): void {
     if (!placementTool || !onDraftChange || !placementAvailable) return;
@@ -424,7 +478,6 @@ export function CompositionCanvas({
     onDraftChange(added.draft);
     onSelectionChange?.([added.id]);
     onPlacementToolChange?.(null);
-    if (placementTool === "text") openItemEditor(added.id, "text");
     suppressClickRef.current = true;
     window.setTimeout(() => { suppressClickRef.current = false; }, 0);
   }
@@ -487,7 +540,21 @@ export function CompositionCanvas({
       if (!id || !type) return;
       const direction = draft.directionLine?.id === id ? draft.directionLine : null;
 
-      if (direction && type === "move-direction-point") {
+      if (type === "move-text-corner" && event.ctrlKey) {
+        const area = draft.areas.find((area) => area.id === id);
+        if (!area || !isCompositionTextRegion(area)) return;
+        const geometry = areaGeometry(area, COMPOSITION_CANVAS);
+        const cornerIndex = Number(handle.dataset.cornerIndex);
+        if (geometry.type !== "polygon" || !geometry.points[cornerIndex]) return;
+        interactionRef.current = {
+          type, pointerId: event.pointerId, sourceDraft: draft, id, cornerIndex,
+          start: point,
+          startClient: { x: event.clientX, y: event.clientY },
+          movingPoint: geometry.points[cornerIndex],
+          moved: false,
+        };
+        handle.focus();
+      } else if (direction && type === "move-direction-point") {
         const pointIndex = Number(handle.dataset.pointIndex);
         const points = directionControlPoints(direction, directionControlDistance);
         interactionRef.current = {
@@ -537,7 +604,7 @@ export function CompositionCanvas({
 
     const interaction = interactionRef.current;
     if (!interaction) return;
-    if (interaction.type === "move-direction-point") {
+    if (interaction.type === "move-direction-point" || interaction.type === "move-text-corner") {
       suppressClickRef.current = true;
       event.preventDefault();
       capturePointer(event.currentTarget, event.pointerId);
@@ -600,6 +667,20 @@ export function CompositionCanvas({
 
     if (!onDraftChange) return;
 
+    if (interaction.type === "move-text-corner") {
+      if (!interaction.moved && Math.hypot(
+        event.clientX - interaction.startClient.x,
+        event.clientY - interaction.startClient.y,
+      ) < 3) return;
+      interaction.moved = true;
+      const next = moveTextRegionCorner(interaction.sourceDraft, interaction.id, interaction.cornerIndex, {
+        x: (interaction.movingPoint.x + point.x - interaction.start.x) / COMPOSITION_CANVAS.width,
+        y: (interaction.movingPoint.y + point.y - interaction.start.y) / COMPOSITION_CANVAS.height,
+      });
+      if (next !== interaction.sourceDraft) onDraftChange(next);
+      return;
+    }
+
     moveDirectionPoint(interaction.sourceDraft, interaction.pointIndex, {
       x: interaction.movingPoint.x + point.x - interaction.start.x,
       y: interaction.movingPoint.y + point.y - interaction.start.y,
@@ -643,6 +724,7 @@ export function CompositionCanvas({
   function finishPointerInteraction(event: ReactPointerEvent<SVGSVGElement>): void {
     const interaction = interactionRef.current;
     if (!interaction || interaction.pointerId !== event.pointerId) return;
+    if (interaction.type === "move-text-corner") handlePointerMove(event);
     if (interaction.type === "marquee") {
       const hitIds = interaction.moved
         ? itemsIntersectingBounds(
@@ -971,7 +1053,7 @@ export function CompositionCanvas({
               key={image.id}
               id={image.id}
               label={`${imageLabel} ${image.id}`}
-              tooltip={image.note.trim() || undefined}
+              tooltip={itemTooltip(image)}
               x={image.x * COMPOSITION_CANVAS.width}
               y={image.y * COMPOSITION_CANVAS.height}
               rotation={image.rotation}
@@ -1041,6 +1123,9 @@ export function CompositionCanvas({
             ? { x: geometry.cx, y: geometry.cy }
             : geometry.center;
           const bounds = areaNodeBounds(area, geometry);
+          const outline = area.corners
+            ? areaGeometry({ ...area, x: 0, y: 0, rotation: 0 }, COMPOSITION_CANVAS)
+            : null;
           const itemLabel = textRegion
             ? nodeEditorLabels?.textKind ?? "文字区域"
             : AREA_LABELS[area.primitive];
@@ -1050,7 +1135,7 @@ export function CompositionCanvas({
               key={area.id}
               id={area.id}
               label={`选择${itemLabel} ${area.id}`}
-              tooltip={area.note.trim() || undefined}
+              tooltip={itemTooltip(area, textRegion ? area.displayText : undefined)}
               x={center.x}
               y={center.y}
               rotation={area.rotation ?? 0}
@@ -1126,13 +1211,27 @@ export function CompositionCanvas({
                 />
               ) : textRegion ? (
                 <>
+                  {outline?.type === "polygon" ? (
+                    <polygon
+                      className="human2ai-composition-canvas__shape"
+                      points={outline.points.map((point) => `${point.x},${point.y}`).join(" ")}
+                      data-text-outline
+                    />
+                  ) : (
                   <CanvasShape
                     type="rectangle"
                     width={geometry.width ?? 0}
                     height={geometry.height}
                     className="human2ai-composition-canvas__shape"
                   />
-                  <TextRegionMarks width={geometry.width ?? 0} height={geometry.height} />
+                  )}
+                  {outline ? (
+                    <g className="human2ai-composition-canvas__text-region-marks" aria-hidden="true">
+                      {textRegionLines({ ...area, x: 0, y: 0, rotation: 0 }, COMPOSITION_CANVAS).map(([start, end], index) => (
+                        <line key={index} x1={start.x} y1={start.y} x2={end.x} y2={end.y} />
+                      ))}
+                    </g>
+                  ) : <TextRegionMarks width={geometry.width ?? 0} height={geometry.height} />}
                 </>
               ) : (
                 <CanvasShape
@@ -1160,7 +1259,7 @@ export function CompositionCanvas({
             }
             onDelete={appearance !== "reference" && onDraftChange ? deleteItem : undefined}
             bounds={sceneBounds}
-            tooltip={draft.directionLine.note.trim() || undefined}
+            tooltip={itemTooltip(draft.directionLine)}
           />
           ] : []),
           ...draft.focusPoints.map((focus) => {
@@ -1173,7 +1272,7 @@ export function CompositionCanvas({
               key={focus.id}
               id={focus.id}
               label={`选择焦点 ${focus.id}`}
-              tooltip={focus.note.trim() || undefined}
+              tooltip={itemTooltip(focus)}
               x={x}
               y={y}
               selected={selectedItemIdSet.has(focus.id)}
@@ -1340,6 +1439,45 @@ export function CompositionCanvas({
             aria-hidden="true" />
         ) : null}
         <g ref={setControlsHost} data-canvas-controls-layer />
+
+        {appearance !== "reference" && onDraftChange && selectedItemIds.length === 1
+          && (ctrlPressed || cornerFocused) ? draft.areas.filter((area) =>
+            area.id === selectedItemIds[0] && isCompositionTextRegion(area),
+          ).map((area) => {
+            const geometry = areaGeometry(area, COMPOSITION_CANVAS);
+            if (geometry.type !== "polygon") return null;
+            return (
+              <g key={area.id} className="human2ai-composition-canvas__handles"
+                onFocus={() => setCornerFocused(true)}
+                onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setCornerFocused(false); }}>
+                {geometry.points.map((point, index) => (
+                  <g key={index} data-item-id={area.id} data-handle="move-text-corner" data-corner-index={index}
+                    className="human2ai-composition-canvas__text-corner"
+                    transform={`translate(${point.x} ${point.y})`} role="button" tabIndex={0}
+                    aria-label={areaEditorLabels.cornerLabel.replace("{{index}}", String(index + 1))}
+                    aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
+                    onContextMenu={(event) => { event.preventDefault(); event.stopPropagation(); }}
+                    onKeyDown={(event) => {
+                      const step = (event.shiftKey ? 10 : 1) / screenScale;
+                      const delta: Partial<Record<string, Point>> = {
+                        ArrowLeft: { x: -step, y: 0 }, ArrowRight: { x: step, y: 0 },
+                        ArrowUp: { x: 0, y: -step }, ArrowDown: { x: 0, y: step },
+                      };
+                      const offset = delta[event.key];
+                      if (!offset) return;
+                      event.preventDefault(); event.stopPropagation();
+                      onDraftChange(moveTextRegionCorner(draft, area.id, index, {
+                        x: (point.x + offset.x) / COMPOSITION_CANVAS.width,
+                        y: (point.y + offset.y) / COMPOSITION_CANVAS.height,
+                      }));
+                    }}>
+                    <circle className="human2ai-composition-canvas__transform-handle" r={7 / screenScale} />
+                    <circle className="human2ai-composition-canvas__transform-hit" r={12 / screenScale} />
+                  </g>
+                ))}
+              </g>
+            );
+          }) : null}
 
         {placementTool && placementAvailable ? (
           <CanvasPlacement
@@ -2011,6 +2149,5 @@ function compositionPlacementOptions(tool: CompositionPlacementTool): CanvasPlac
     shape: tool === "circle" ? "ellipse" : tool === "triangle" ? "triangle" : "rectangle",
     width: bounds.width,
     height: bounds.height,
-    clickOnly: tool === "text",
   };
 }

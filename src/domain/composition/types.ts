@@ -62,6 +62,8 @@ export interface CompositionArea extends Point, CompositionNodeMetadata {
   aspect: AreaAspect;
   visualWeight: CompositionVisualWeight;
   displayText?: string;
+  /** Clockwise corners in the unrotated bounding box, normalized to 0..1. */
+  corners?: [Point, Point, Point, Point];
   isLightSource?: boolean;
   rotation?: number;
   width?: number;
@@ -106,7 +108,7 @@ export interface CompositionLayout {
   layerOrder: string[];
   focusPoints: Pick<FocusPoint, "id" | "x" | "y">[];
   directionLine: Pick<DirectionLine, "id" | "x" | "y" | "rotation"> | null;
-  areas: Pick<CompositionArea, "id" | "x" | "y" | "area" | "aspect" | "rotation" | "width" | "height">[];
+  areas: Pick<CompositionArea, "id" | "x" | "y" | "area" | "aspect" | "rotation" | "width" | "height" | "corners">[];
   images: Pick<CompositionImage, "id" | "x" | "y" | "width" | "height" | "rotation">[];
 }
 

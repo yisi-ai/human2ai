@@ -470,6 +470,7 @@ function canonicalDraftJson(draft: CompositionDraft): string {
       ...(area.rotation === undefined ? {} : { rotation: area.rotation }),
       ...(area.width === undefined ? {} : { width: area.width }),
       ...(area.height === undefined ? {} : { height: area.height }),
+      ...(area.corners === undefined ? {} : { corners: area.corners }),
     })),
     images: draft.images.map((image) => ({
       id: image.id,

@@ -968,7 +968,7 @@ function CompositionPageContent() {
                 currentZoom: t("composition.canvasZoom"),
                 fitAll: t("composition.fitAll"),
                 help: t("canvas.viewport.help"),
-                interactionHelp: t("canvas.viewport.instructions"),
+                interactionHelp: `${t("canvas.viewport.instructions")} ${t("composition.textRegion.cornerHelp")}`,
                 sideActions: t("canvas.tools.label"),
                 collapseSideActions: t("composition.collapseTools"),
                 expandSideActions: t("composition.expandTools"),
@@ -1008,6 +1008,7 @@ function CompositionPageContent() {
               areaEditorLabels={{
                 lightSource: t("composition.lightSource.toggle"),
                 displayText: t("textContent.label"),
+                cornerLabel: t("composition.textRegion.cornerLabel", { index: "{{index}}" }),
                 displayTextPlaceholder: t("textContent.compositionPlaceholder"),
                 visualWeight: t("visualWeight.label"),
                 weightAuto: t("visualWeight.auto"),

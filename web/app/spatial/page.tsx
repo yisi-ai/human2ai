@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SpatialWorkspaceView, SessionDetails, CanvasHistoryControls, type SpatialLabels } from "@human2ai/ui";
@@ -8,10 +8,13 @@ import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { LoadingState } from "@human2ai/ui/yisiui/loading-state";
 import { createSpatialDraft, applySpatialOperations, type SpatialDraft, type SpatialOperation } from "../../../src/domain/spatial";
 import { Human2AiShell } from "../../components/Human2AiShell";
+import { SessionStyleControl } from "../../components/SessionStyleControl";
 import { createSpatialSession, getSession, getLatestSpatialDraftVersion, applySpatialEdits, saveSpatialDraft, restoreSpatialDraft, spatialCameraUrl, spatialCameraBoxUrl, Human2AiApiError, type Human2AiSession } from "../../lib/human2ai-api";
 import { buildSessionCliCommand } from "../../lib/session-connection";
 import { useCanvasHistory } from "../../lib/use-canvas-history";
+import { useSessionStyle } from "../../lib/use-session-style";
 import { SpatialEditQueue } from "../../lib/spatial-edit-queue";
+import { availableSpatialCameraPreviews, updateSpatialCameraPreviews, type SpatialCameraPreviewState } from "../../lib/spatial-camera-previews";
 import zh from "../../../locales/zh-CN/common.json";
 
 export default function SpatialPage() {
@@ -29,6 +32,9 @@ function SpatialSessionPage() {
   const [session, setSession] = useState<Human2AiSession | null>(null);
   const [draft, setDraft] = useState<SpatialDraft>(createSpatialDraft);
   const [revision, setRevision] = useState(0);
+  const [cameraPreviews, setCameraPreviews] = useState<SpatialCameraPreviewState>();
+  const cameraPreviewRevisions = useMemo(() => availableSpatialCameraPreviews(cameraPreviews, draft), [cameraPreviews, draft]);
+  const sessionStyle = useSessionStyle(sessionId, async () => sessionId!, revision);
   const [loading, setLoading] = useState(Boolean(sessionId));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -53,12 +59,14 @@ function SpatialSessionPage() {
     let disposed = false;
     let writing = false;
     setError(null); setSession(null); setLoading(Boolean(sessionId)); setSaving(false); setConstrained(false);
+    setCameraPreviews(undefined);
     setDraft(context.queue.draft); setRevision(0); setUpdatedAt(null);
     if (!sessionId) { setDraft(context.queue.draft); setRevision(0); return; }
     const receive = (next: Awaited<ReturnType<typeof getLatestSpatialDraftVersion>>) => {
       context.queue = new SpatialEditQueue(next?.draft ?? emptyDraft.current(), next?.revision ?? 0);
       history.reset(context.queue.draft);
       setDraft(context.queue.draft); setRevision(context.queue.revision); setUpdatedAt(next?.createdAt ?? null);
+      setCameraPreviews(previous => next ? updateSpatialCameraPreviews(previous, next.draft, next.revision) : undefined);
     };
     void Promise.all([getSession(sessionId), getLatestSpatialDraftVersion(sessionId)]).then(([metadata, latest]) => {
       if (disposed) return;
@@ -81,6 +89,7 @@ function SpatialSessionPage() {
           }, saved => {
             if (!disposed) {
               setRevision(saved.revision); setUpdatedAt(saved.createdAt); setDraft(context.queue.draft); setError(null);
+              setCameraPreviews(previous => updateSpatialCameraPreviews(previous, saved.draft, saved.revision));
             }
           });
         } else {
@@ -129,15 +138,20 @@ function SpatialSessionPage() {
     rightPanel={sessionId ? <div ref={setPanelHost} className="spatial-panel-host" /> : undefined}>
     {!sessionId ? <BasicButton onClick={async () => { const created = await createSpatialSession(t("spatial.untitled")); router.push(`/spatial?session=${encodeURIComponent(created.id)}`); }}>{t("spatial.newSpace")}</BasicButton> : <SpatialWorkspaceView
       key={`${sessionId}/${reload}`} draft={draft} initialCameraId={params.get("camera")} labels={labels} actions={{ retry: t("actions.retry"), delete: t("actions.delete"), cancel: t("actions.cancel") }} onOperation={edit}
-      panelHost={panelHost} toolsLabel={t("canvas.tools.label")} onRequestProperties={() => setRightPanelOpen(true)}
-      loading={loading} disabled={Boolean(error) || loading} error={error ? t(error) : null} status={constrained ? t("spatial.constrained") : saving ? t("spatial.saving") : revision > 0 ? t("spatial.saved") : null}
-      onRetry={retry} interactionResetKey={history.restoreToken}
+      panelHost={panelHost} toolsLabel={t("canvas.tools.label")} noteLabel={t("notes.element.label")} onRequestProperties={() => setRightPanelOpen(true)}
+      loading={loading} disabled={Boolean(error) || loading} error={error ? t(error) : constrained ? t("spatial.constrained") : null}
+      onRetry={error ? retry : undefined} interactionResetKey={history.restoreToken}
       historyControls={<CanvasHistoryControls {...history} labels={{ undo: t("canvasHistory.undo"), redo: t("canvasHistory.redo"), label: t("canvasHistory.label") }} />}
-      cameraSource={(id, pass) => !loading && !saving && !state.current.queue.pending && !error && session?.id === sessionId && revision > 0 ? spatialCameraUrl(sessionId, id, revision, pass) : undefined}
+      cameraSource={(id, pass) => {
+        const previewRevision = cameraPreviewRevisions.get(id);
+        return !loading && !error && session?.id === sessionId && previewRevision ? spatialCameraUrl(sessionId, id, previewRevision, pass) : undefined;
+      }}
       cameraBoxSource={(id, view, pass) => !loading && !saving && !state.current.queue.pending && !error && session?.id === sessionId && revision > 0 ? spatialCameraBoxUrl(sessionId, id, revision, view, pass) : undefined}
-      details={<SessionDetails createdAt={session?.createdAt ?? null} updatedAt={updatedAt} nodeCount={draft.characters.length + draft.objects.length + draft.cameras.length + (draft.cameraBoxes?.length ?? 0)} locale={i18n.resolvedLanguage ?? "zh-CN"}
+      details={<><SessionDetails createdAt={session?.createdAt ?? null} updatedAt={updatedAt} nodeCount={draft.characters.length + draft.objects.length + draft.cameras.length + (draft.cameraBoxes?.length ?? 0)} locale={i18n.resolvedLanguage ?? "zh-CN"}
         agentCommand={() => Promise.resolve(t("sessionDetails.agentCommand", { command: buildSessionCliCommand(sessionId, window.location.origin) }))}
-        labels={{ title: t("sessionDetails.title"), created: t("sessionDetails.created"), updated: t("sessionDetails.updated"), nodes: t("sessionDetails.nodes"), agent: t("sessionDetails.agent"), copyCommand: t("sessionDetails.copyCommand"), copying: t("sessionDetails.copying"), copied: t("clipboard.copied"), copyFailed: t("sessionDetails.copyFailed"), emptyValue: t("sessionDetails.emptyValue") }} />}
+        labels={{ title: t("sessionDetails.title"), created: t("sessionDetails.created"), updated: t("sessionDetails.updated"), nodes: t("sessionDetails.nodes"), agent: t("sessionDetails.agent"), copyCommand: t("sessionDetails.copyCommand"), copying: t("sessionDetails.copying"), copied: t("clipboard.copied"), copyFailed: t("sessionDetails.copyFailed"), emptyValue: t("sessionDetails.emptyValue") }} />
+        <SessionStyleControl controller={sessionStyle} category="spatial" showProcessingStatus={false} disabled={loading || saving || Boolean(error)} />
+      </>}
     />}
   </Human2AiShell>;
 }

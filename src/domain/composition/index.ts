@@ -16,6 +16,7 @@ export {
   isCompositionTextRegion,
   moveFrame,
   moveItem,
+  moveTextRegionCorner,
   pasteCompositionItems,
   removeItem,
   resizeArea,
@@ -54,6 +55,7 @@ export {
   compositionDraftWorldSize,
   compositionImageBounds,
   directionLineGeometry,
+  textRegionLines,
 } from "./geometry.ts";
 export {
   areaClippedSides,

@@ -102,7 +102,7 @@ npx --no-install human2ai session open --session <session-id>
 
 `session connect` returns the browser URL, the latest Capture version, and the commands supported by the current session. `capture get` reads a specific version, `capture save` saves a new version, and `capture undo` appends a restored version. Project IDs and session IDs organize work from different projects within the same local service.
 
-Composition and UI sessions can use the style library at `/styles/`. Agents can work with the same library through `style list|get|create|update|add-reference|remove-reference|delete`. See the [Human2AI skill](skills/human2ai/SKILL.md) for the full command reference and collaboration workflow.
+Composition, UI, and 3D space sessions can use the style library at `/styles/`, with Visual, UI, and 3D categories. A consumer project’s Agent can combine the full style specification with spatial layout, scale, pose, and camera guidance to build models in that project. Binding a style does not modify the guide scene. Agents can work with the same library through `style list|get|create|update|add-reference|remove-reference|delete`. See the [Human2AI skill](skills/human2ai/SKILL.md) for the full command reference and collaboration workflow.
 
 ## Data and generated files
 

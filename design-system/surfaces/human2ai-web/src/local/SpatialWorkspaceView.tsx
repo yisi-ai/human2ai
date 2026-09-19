@@ -1,7 +1,7 @@
 "use client";
 
-import { CameraOutlined, DeleteOutlined, DragOutlined, PlusOutlined, RedoOutlined, CopyOutlined, UndoOutlined, UserOutlined, BorderOutlined, AimOutlined, LinkOutlined, LockOutlined, InfoCircleOutlined, DownloadOutlined } from "@ant-design/icons";
-import { Alert, Checkbox, Input, InputNumber, Select, Slider, Tooltip } from "antd";
+import { CameraOutlined, DeleteOutlined, DragOutlined, PlusOutlined, RedoOutlined, CopyOutlined, UndoOutlined, UserOutlined, BorderOutlined, AimOutlined, LinkOutlined, LockOutlined, InfoCircleOutlined, DownloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { Alert, Checkbox, Input, InputNumber, Modal, Select, Slider, Tooltip } from "antd";
 import { useLayoutEffect, useState, type Key, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { TabSwitch } from "../vendor/yisiui/runtime/src/components/TabSwitch";
@@ -10,11 +10,13 @@ import { AssetSkeletonTree, type AssetSkeletonTreeNode } from "../vendor/yisiui/
 import { BasicButton } from "../vendor/yisiui/runtime/src/components/BasicButton";
 import { LoadingState } from "../vendor/yisiui/runtime/src/components/LoadingState";
 import { ConfirmAction } from "../vendor/yisiui/runtime/src/patterns/ConfirmAction";
+import { TextMarkEditorField, TextMarkEditorTextArea } from "../vendor/yisiui/runtime/src/patterns/TextMarkEditor";
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 import { applySpatialOperations, createSpatialCamera, createSpatialCameraBox, fitSpatialCameraBox, SPATIAL_BOX_FACES, cameraBoxImageSize, DEFAULT_TORSO_RATIO, TORSO_RATIO_LIMITS, BODY_SHAPE_LIMITS, SpatialConstraintError, jointWorldTransforms, fingerPart, owningHand, handJointIds, SPATIAL_FINGERS, fingerCurlAngles, isRigidBodyConnector, type SpatialBodyShape, type SpatialFinger, type SpatialBone, type SpatialCharacter, type SpatialDraft, type SpatialOperation, type Vec3 } from "../../../../../src/domain/spatial";
 import zh from "../../../../../locales/zh-CN/common.json";
 import type { SpatialCamera, SpatialBoxView, SpatialRenderPass } from "../../../../../src/domain/spatial/types";
 import { SpatialViewport, type SpatialSelection } from "./SpatialViewport";
+import { CompositionWorkflowView } from "./CompositionWorkflowView";
 import "./SpatialWorkspaceView.css";
 
 export type SpatialLabels = Record<keyof typeof zh.spatial, string>;
@@ -22,10 +24,10 @@ export interface SpatialWorkspaceViewProps {
   draft: SpatialDraft;
   onOperation(operation: SpatialOperation): void;
   labels?: SpatialLabels;
+  noteLabel?: string;
   loading?: boolean;
   disabled?: boolean;
   error?: string | null;
-  status?: string | null;
   onRetry?(): void;
   historyControls?: ReactNode;
   interactionResetKey?: number;
@@ -39,11 +41,14 @@ export interface SpatialWorkspaceViewProps {
   actions?: { retry: string; delete: string; cancel: string };
 }
 
-export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, loading, disabled, error, status, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
+export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, noteLabel = zh.notes.element.label, loading, disabled, error, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
   const [selection, setSelection] = useState<SpatialSelection>(initialCameraId ? { cameraId: initialCameraId } : null);
   const [panelTab, setPanelTab] = useState(initialCameraId ? "parameters" : "info");
+  const [workspaceView, setWorkspaceView] = useState("space");
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
   const [showRig, setShowRig] = useState(true);
+  const [showCameras, setShowCameras] = useState(true);
+  const [editor, setEditor] = useState<{ id: string; name: string; x: number; y: number } | null>(null);
   const [proportionPreview, setProportionPreview] = useState<{ source: SpatialDraft; draft: SpatialDraft; characterId: string } | null>(null);
   const [proportionError, setProportionError] = useState<string | null>(null);
   const [handPreview, setHandPreview] = useState<{ source: SpatialDraft; draft: SpatialDraft } | null>(null);
@@ -65,6 +70,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
   const referenceSource = cameraBox ? cameraBoxSource?.(cameraBox.id, boxView, referencePass) : cameraSource?.(camera.id, referencePass);
   const faceLabel = (face: SpatialBoxView) => labels[`cameraBox${face[0].toUpperCase()}${face.slice(1)}` as keyof SpatialLabels];
   const selected = actor ?? object ?? editingCamera ?? cameraBox;
+  const edited = editor && [...draft.characters, ...draft.objects, ...draft.cameras, ...(draft.cameraBoxes ?? [])].find(item => item.id === editor.id);
   const world = actor && joint ? jointWorldTransforms(actor)[joint.id] : undefined;
   const preview = proportionPreview?.source === draft && proportionPreview.characterId === actor?.id && !part && !disabled && panelTab === "parameters" ? proportionPreview : null;
   const previewActor = preview?.draft.characters.find(c => c.id === actor?.id) ?? actor;
@@ -95,6 +101,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
     setProportionError(null);
     setHandPreview(null);
     setHandError(null);
+    setEditor(null);
   }, [interactionResetKey]);
   const perform = (operation: SpatialOperation) => { if (!disabled) onOperation(operation); };
   const poseHand = (patch: Partial<Extract<SpatialOperation, { type: "pose-hand" }>>, previewOnly = false) => {
@@ -134,6 +141,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
     : "objectId" in value ? JSON.stringify(["object", value.objectId]) : "cameraBoxId" in value ? JSON.stringify(["camera-box", value.cameraBoxId]) : JSON.stringify(["camera", value.cameraId]);
   const nodes: AssetSkeletonTreeNode[] = [];
   const selections = new Map<string, SpatialSelection>();
+  const noteIcon = (note?: string) => note?.trim() ? <Tooltip title={<span className="spatial-note-tooltip">{note}</span>}><InfoCircleOutlined tabIndex={0} aria-label={noteLabel} /></Tooltip> : undefined;
   const addNode = (value: SpatialSelection, title: string, parentKey: string | null, order: number, trailing?: ReactNode) => {
     const key = selectionKey(value)!;
     selections.set(key, value);
@@ -141,7 +149,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
   };
   draft.characters.forEach((item, index) => {
     const key = selectionKey({ characterId: item.id })!;
-    addNode({ characterId: item.id }, item.name, null, index);
+    addNode({ characterId: item.id }, item.name, null, index, noteIcon(item.note));
     const hands = item.bones.filter(b => b.modelPart.endsWith("-hand"));
     const parents = new Map<string,string>();
     hands.forEach(h => {
@@ -160,10 +168,11 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
     });
 
   });
-  draft.objects.forEach((item, index) => addNode({ objectId: item.id }, item.name, null, draft.characters.length + index));
-  draft.cameras.forEach((item, index) => addNode({ cameraId: item.id }, item.name, null, draft.characters.length + draft.objects.length + index));
-  draft.cameraBoxes?.forEach((item, index) => addNode({ cameraBoxId: item.id }, item.name, null, draft.characters.length + draft.objects.length + draft.cameras.length + index));
+  draft.objects.forEach((item, index) => addNode({ objectId: item.id }, item.name, null, draft.characters.length + index, noteIcon(item.note)));
+  draft.cameras.forEach((item, index) => addNode({ cameraId: item.id }, item.name, null, draft.characters.length + draft.objects.length + index, noteIcon(item.note)));
+  draft.cameraBoxes?.forEach((item, index) => addNode({ cameraBoxId: item.id }, item.name, null, draft.characters.length + draft.objects.length + draft.cameras.length + index, noteIcon(item.note)));
   const choose = (value: SpatialSelection, openParameters = true) => {
+    setEditor(null);
     setProportionPreview(null); setProportionError(null);
     setHandPreview(null); setHandError(null);
     setSelection(value);
@@ -181,6 +190,15 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
       const parent = owner ? selectionKey({ characterId:value.characterId,handBoneId:owner.id })! : undefined;
       setExpandedKeys(keys => [...new Set([...keys,key,...(parent ? [parent] : [])])]);
     }
+  };
+  const openEditor = (value: NonNullable<SpatialSelection>, position: { x: number; y: number }) => {
+    if (disabled || loading) return;
+    const target = "characterId" in value ? { characterId: value.characterId } : value;
+    const id = "characterId" in target ? target.characterId : "objectId" in target ? target.objectId : "cameraId" in target ? target.cameraId : target.cameraBoxId;
+    const item = [...draft.characters, ...draft.objects, ...draft.cameras, ...(draft.cameraBoxes ?? [])].find(item => item.id === id);
+    if (!item) return;
+    choose(target);
+    setEditor({ id, name: item.name, ...position });
   };
   const modeButtons = <>
     <Tooltip title={labels.translate}><BasicButton mode="with-icon" aria-label={labels.translate} aria-pressed={mode === "translate"} icon={<DragOutlined aria-hidden="true" />} disabled={disabled || loading || Boolean(bone || hand)} onClick={() => setMode("translate")}>{labels.translateMode}</BasicButton></Tooltip>
@@ -214,6 +232,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
             perform({ type: "put-object", object: { id, name: labels[kind], kind, position: [0, 0.3, 0], rotation: [0, 0, 0], size: kind === "plane" ? [2, 1, 2] : [0.6, 0.6, 0.6], color: "#b6a58c" } }); choose({ objectId: id });
           }} />)}</div>
           <Checkbox checked={draft.lightingEnabled ?? false} disabled={disabled || loading} onChange={event => perform({ type: "set-lighting", enabled: event.target.checked })}>{labels.lightingEffects}</Checkbox>
+          <Checkbox checked={showCameras} onChange={event => setShowCameras(event.target.checked)}>{labels.showCameras}</Checkbox>
           <Checkbox checked={showRig} onChange={e=>setShowRig(e.target.checked)}>{labels.showRig}</Checkbox>
           <div className="spatial-rig-legend"><span><i className="spatial-joint-dot" />{labels.joints}</span><span><i className="spatial-bone-dot" />{labels.bones}</span></div>
           <div className="spatial-tool-modes">
@@ -235,6 +254,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
         <h2>{labels.parameters}</h2>
         {!editingCamera && !part && <div className="spatial-tool-modes">{modeButtons}</div>}
         <label className="spatial-field"><span>{joint ? labels.joints : bone ? labels.bones : labels.name}</span><Input key={`${selected.id}/${part?.id ?? ""}/${selected.name}`} aria-label={labels.name} defaultValue={joint ? jointLabel(joint.id, joint.name,actor?.bones.find(b => b.endJointId === joint.id)?.modelPart) : bone ? boneLabel(bone.id,bone.name,bone.modelPart) : hand ? handLabel(hand) : selected.name} disabled={disabled || Boolean(part)} onBlur={event => { if (event.target.value.trim() && event.target.value !== selected.name) updateSelected({ name: event.target.value.trim() }); }} /></label>
+        {!part && <TextMarkEditorField label={noteLabel}><TextMarkEditorTextArea aria-label={noteLabel} value={selected.note ?? ""} disabled={disabled} onChange={event => updateSelected({ note: event.target.value })} /></TextMarkEditorField>}
         {world && joint && actor ? <>
           <div className="spatial-locks"><Checkbox checked={joint.lockPosition} disabled={disabled} onChange={e => perform({ type: "lock-joint", characterId: actor.id, jointId: joint.id, position: e.target.checked })}>{labels.lockPosition}</Checkbox></div>
           {vectorField(labels.position, world.position.toArray() as Vec3, position => perform({ type: "move-joint", characterId: actor.id, jointId: joint.id, position }), joint.lockPosition, fingerPart(actor.bones.find(b => b.endJointId === joint.id)?.modelPart ?? "") ? .005 : .05)}
@@ -336,18 +356,63 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
   </div>;
   return <>
     <section {...uiAssetAttributes({ namespace: "human2ai", id: "spatial-workspace-view", name: "SpatialWorkspaceView", category: "composition", origin: "project", status: "candidate" })} className="spatial-workspace" data-canvas-editor aria-label={labels.title}>
+      <CompositionWorkflowView className="spatial-workflow" data-active-stage={workspaceView} stateControls={
+        <div className="spatial-workspace-controls">
+        {error && <span className="spatial-workspace-error" role="alert" aria-label={error}>
+          <Tooltip title={onRetry ? `${error} · ${actions.retry}` : error} trigger={["hover", "focus"]}>
+            <BasicButton mode="icon-only" size="small" textColor="color.status.danger" backgroundColor="none" aria-label={onRetry ? `${error} · ${actions.retry}` : error} icon={<ExclamationCircleOutlined aria-hidden="true" />} onClick={onRetry} />
+          </Tooltip>
+        </span>}
+        <TabSwitch className="spatial-workspace-tabs" aria-label={labels.workspaceViews} value={workspaceView} onChange={setWorkspaceView} items={[
+          { key: "space", label: labels.spaceTab, mode: "text-only" },
+          { key: "cameras", label: labels.cameras, mode: "text-only" },
+        ]} />
+        </div>
+      }>
       <div className="spatial-center">
-        {historyControls}
-        {error && <Alert type="error" message={error} action={onRetry && <BasicButton size="small" onClick={onRetry}>{actions.retry}</BasicButton>} />}
-        {status && <div className="spatial-status" role="status">{status}</div>}
-        {loading ? <LoadingState label={labels.title} rows={6} /> : <SpatialViewport interactionResetKey={interactionResetKey} showRig={showRig} draft={handPreview?.source === draft ? handPreview.draft : preview?.draft ?? draft} selection={selection} mode={mode} onSelect={choose} onOperation={perform} onViewChange={setView} label={labels.viewport} errorLabel={labels.webglFailed} disabled={disabled} />}
+        {loading ? <LoadingState label={labels.title} rows={6} /> : <>
+          <div className="spatial-space" hidden={workspaceView !== "space"}>
+            {historyControls}
+            <SpatialViewport interactionResetKey={interactionResetKey} showRig={showRig} showCameras={showCameras} draft={handPreview?.source === draft ? handPreview.draft : preview?.draft ?? draft} selection={selection} mode={mode} onSelect={choose} onEdit={openEditor} onOperation={perform} onViewChange={setView} label={labels.viewport} errorLabel={labels.webglFailed} disabled={disabled} />
+          </div>
+          {workspaceView === "cameras" && <section className="spatial-camera-gallery" aria-label={labels.cameras}>
+            {draft.cameras.map(item => {
+              const source = cameraSource?.(item.id, "color");
+              return <figure className="spatial-camera-card" key={item.id} data-selected={editingCamera?.id === item.id}>
+                <BasicButton className="spatial-camera-select" backgroundColor="none" aria-label={`${item.name} · ${labels.parameters}`} aria-pressed={editingCamera?.id === item.id} onClick={() => choose({ cameraId: item.id })} />
+                <div className="spatial-camera-image">
+                  {source ? <CameraReferencePreview key={source} source={source} camera={item} pass="color" labels={labels} retryLabel={actions.retry} disabled={disabled} gallery /> : <p className="spatial-camera-pending">{labels.cameraPreviewPending}</p>}
+                </div>
+                <figcaption>{item.name}</figcaption>
+              </figure>;
+            })}
+          </section>}
+        </>}
       </div>
+      </CompositionWorkflowView>
     </section>
     {panelHost && createPortal(panel, panelHost)}
+    {editor && edited && <Modal open title={labels.editObject} footer={null} width={360}
+      rootClassName="spatial-object-editor-modal" destroyOnHidden mask={{ closable: true }}
+      closable={{ "aria-label": actions.cancel }} onCancel={() => setEditor(null)}
+      style={{ position: "absolute", margin: 0, left: `min(${Math.max(16, editor.x + 12)}px, calc(100vw - 376px))`, top: `min(${Math.max(16, editor.y + 12)}px, calc(100vh - 360px))` }}>
+      <div className="spatial-object-editor-fields" data-spatial-object-editor={edited.id} data-human2ai-auto-save-node-editor>
+        <TextMarkEditorField label={labels.name}>
+          <Input aria-label={labels.name} value={editor.name} maxLength={200} disabled={disabled} onChange={event => {
+            const name = event.target.value;
+            setEditor({ ...editor, name });
+            if (name.trim() && name.trim() !== edited.name) updateSelected({ name: name.trim() });
+          }} onBlur={() => setEditor(value => value ? { ...value, name: edited.name } : null)} />
+        </TextMarkEditorField>
+        <TextMarkEditorField label={noteLabel}>
+          <TextMarkEditorTextArea autoFocus aria-label={noteLabel} value={edited.note ?? ""} disabled={disabled} onChange={event => updateSelected({ note: event.target.value })} />
+        </TextMarkEditorField>
+      </div>
+    </Modal>}
   </>;
 }
 
-function CameraReferencePreview({ source, camera, pass, labels, retryLabel, disabled }: { source: string; camera: Pick<SpatialCamera, "id" | "name" | "width" | "height">; pass: SpatialRenderPass; labels: SpatialLabels; retryLabel: string; disabled?: boolean }) {
+function CameraReferencePreview({ source, camera, pass, labels, retryLabel, disabled, gallery }: { source: string; camera: Pick<SpatialCamera, "id" | "name" | "width" | "height">; pass: SpatialRenderPass; labels: SpatialLabels; retryLabel: string; disabled?: boolean; gallery?: boolean }) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
   const label = pass === "color" ? labels.referenceColor : pass === "structure" ? labels.referenceStructure : pass === "depth" ? labels.referenceDepth : labels.referenceSkeleton;
@@ -355,7 +420,7 @@ function CameraReferencePreview({ source, camera, pass, labels, retryLabel, disa
     {state === "loading" && <LoadingState label={label} rows={1} />}
     {state === "error" && <Alert type="error" message={labels.referenceLoadFailed} action={<BasicButton size="small" disabled={disabled} onClick={() => { setState("loading"); setAttempt(value => value + 1); }}>{retryLabel}</BasicButton>} />}
     <img key={attempt} src={source} alt={`${camera.name} · ${label}`} width={camera.width} height={camera.height} onLoad={() => setState("ready")} onError={() => setState("error")}
-      style={{ display: state === "error" ? "none" : undefined, visibility: state === "loading" ? "hidden" : undefined, aspectRatio: `${camera.width} / ${camera.height}`, maxWidth: 230 * camera.width / camera.height }} />
-    <BasicButton mode="with-icon" size="small" icon={<DownloadOutlined aria-hidden="true" />} disabled={disabled || state !== "ready"} href={!disabled && state === "ready" ? source : undefined} download={`${camera.id}-${pass}.png`}>{labels.downloadReference}</BasicButton>
+      style={{ display: state === "error" ? "none" : undefined, visibility: state === "loading" ? "hidden" : undefined, aspectRatio: `${camera.width} / ${camera.height}`, maxWidth: gallery ? undefined : 230 * camera.width / camera.height }} />
+    {!gallery && <BasicButton mode="with-icon" size="small" icon={<DownloadOutlined aria-hidden="true" />} disabled={disabled || state !== "ready"} href={!disabled && state === "ready" ? source : undefined} download={`${camera.id}-${pass}.png`}>{labels.downloadReference}</BasicButton>}
   </>;
 }

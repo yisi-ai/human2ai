@@ -864,7 +864,7 @@
         "optional-shape-rotation",
         "item-double-click-forwarding",
         "composition-node-note-and-shot-scale-editing",
-        "node-note-hover-focus-tooltip",
+        "node-description-display-text-note-tooltip",
         "auto-save-node-editor-layout",
         "node-editor-delete-confirmation",
         "shape-point-line-composition-metadata-adaptation",
@@ -921,7 +921,7 @@
         "responsive-svg",
         "one-shot-node-placement",
         "click-or-drag-node-creation",
-        "text-placement-opens-editor",
+        "text-region-drag-sized-placement",
         "placement-cancel-without-draft-change",
         "shape-light-source-toggle",
         "shared-light-source-reference-rendering",
@@ -931,7 +931,10 @@
         "cancel-editor-interactions-after-history-restore",
         "clipboard-image-upload-and-node-creation",
         "two-point-direction-line-editing",
-        "direction-control-keyboard-nudging"
+        "direction-control-keyboard-nudging",
+        "ctrl-text-region-corner-dragging",
+        "convex-text-region-outlines",
+        "outline-fitted-text-marks"
       ],
       "slots": [
         "draft",
@@ -972,7 +975,7 @@
         "需要组件直接读取 API、保存会话或管理业务历史",
         "需要通用图片裁剪或自由绘图画布"
       ],
-      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片的非空备注不进入节点图形，改由节点 hover/focus Tooltip 按需显示。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字放置后打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。",
+      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片复用 CanvasNode 的 tooltip 插槽，悬停或聚焦时按节点说明、显示文字、备注分段显示；显示文字仅适用于文字区域，空字符串及纯空白整段隐藏，全部为空时无提示。标题复用既有中英文编辑字段语义，内容保留换行且按纯文本呈现，每段最多六行，完整内容沿用双击编辑器；不增加常驻画布文案。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形、文字区域或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字区域放置后保持选中并可直接调整宽高，双击打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。 文字区域支持按住 Ctrl 独立拖动四个角点，聚焦后可用方向键微调；只允许凸四边形且交叉或退化时保留最近有效轮廓。普通移动、缩放、旋转和复制保留四点轮廓，参考图和文字占位线同步呈现；角点控件在内容层上方且尺寸不随缩放变化。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1260,7 +1263,8 @@
       "useWhen": [
         "在 human2ai 构图流程中并列呈现用户草图、独立精修结果和生图结构参考",
         "构图编辑器通过 stateControls 组合可自定义状态栏并显示当前可编辑布局",
-        "UI 界面通过 children 插入自己的画布，并把状态栏纳入与构图相同的工作区布局"
+        "UI 界面通过 children 插入自己的画布，并把状态栏纳入与构图相同的工作区布局",
+        "3D 空间通过 children 插入空间编辑器或摄像机总览，stateControls 使用固定 TabSwitch，复用相同顶部布局"
       ],
       "doNotUseWhen": [
         "需要组件自行选择构图美学算法或生成加工方案",
@@ -1407,7 +1411,7 @@
       "storyId": "human2ai-style-library-view--default",
       "capabilities": [
         "flat-style-library",
-        "visual-and-ui-category-filter",
+        "visual-ui-and-spatial-category-filter",
         "user-and-agent-creator-filter",
         "immutable-creator-marker",
         "style-search",
@@ -1442,13 +1446,13 @@
         "VisualReferenceLibrary"
       ],
       "useWhen": [
-        "human2ai 需要按画面或 UI 扁平保存一组可选参考图和一段总说明，并区分 User 与 Agent 创建来源"
+        "human2ai 需要按画面、UI 或 3D 扁平保存一组可选参考图和一段总说明，并区分 User 与 Agent 创建来源"
       ],
       "doNotUseWhen": [
         "需要文章、音乐、来源资料、说明文档、自动提示词、归档状态或多级风格目录",
         "需要组件直接调用 API、变更创建来源或持久化图片"
       ],
-      "differenceSummary": "项目本地受控页面视图，组合共享实验态 ImageTitleCard、TabSwitch、BasicButton、LoadingState、Modal 与 ConfirmAction。列表只提供画面/UI 和 User/Agent 两组扁平筛选；列表项用 ImageTitleCard 展示最多三张完整参考图与单行标题，分类和创建来源仅在详情面板标题栏右上角以小号弱化文字显示；本地原生按钮提供整项点击与键盘焦点，空图保留媒体区域，详情仍展示全部参考图。预览正文严格左右分栏，左侧只显示零到多张参考图，右侧只显示一段总说明；创建与编辑弹窗支持本地选图和粘贴图片。创建来源由应用层提供并保持不可编辑，删除为永久删除且必须确认。组件不拥有 API、Agent 调用、文件存储、归档、提示词或资料树。 支持只选择风格的受控入口，复用现有图片标题卡片和预览；设计规范供 Agent 加工，风格短句供提示词导出。",
+      "differenceSummary": "项目本地受控页面视图，组合共享实验态 ImageTitleCard、TabSwitch、BasicButton、LoadingState、Modal 与 ConfirmAction。列表只提供画面/UI/3D 和 User/Agent 两组扁平筛选；列表项用 ImageTitleCard 展示最多三张完整参考图与单行标题，分类和创建来源仅在详情面板标题栏右上角以小号弱化文字显示；本地原生按钮提供整项点击与键盘焦点，空图保留媒体区域，详情仍展示全部参考图。预览正文严格左右分栏，左侧只显示零到多张参考图，右侧只显示一段总说明；创建与编辑弹窗支持本地选图和粘贴图片。创建来源由应用层提供并保持不可编辑，删除为永久删除且必须确认。组件不拥有 API、Agent 调用、文件存储、归档、提示词或资料树。 支持只选择风格的受控入口，复用现有图片标题卡片和预览；设计规范供 Agent 加工，风格短句供提示词导出。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1497,7 +1501,7 @@
         "CanvasStylePicker"
       ],
       "useWhen": [
-        "构图与 UI 会话需要选择、预览、解除同一种风格并显示加工状态"
+        "构图、UI 和 3D 空间会话需要选择、预览和解除风格；加工状态由调用方按实际工作流提供"
       ],
       "doNotUseWhen": [
         "需要组件读取 API、保存会话或运行 Agent"
@@ -1547,7 +1551,7 @@
         "需要组件创建领域节点、持久化草稿或读取 API",
         "需要编辑既有节点、提供完整绘图软件或连续绘制"
       ],
-      "differenceSummary": "项目本地 SVG 放置交互层，作为 CanvasScene 最后的子层，只在工具激活时挂载。tool 提供预览形状、默认宽高及仅单击选项；viewportBounds 覆盖当前可视世界范围。鼠标单击使用起点和默认尺寸，超过 3 个屏幕像素的拖动确定宽高（最小 8 个世界单位）；焦点和文字由调用方选择仅单击。预览通过独立 path 按动画帧更新，松手才通过 onPlace 上报世界坐标 bounds、start、end 和 dragged；调用方创建并选中领域节点，随后卸载该层。工具切换须以工具和阶段作为 key 重新挂载。Esc、窗口失焦、pointercancel 或意外丢失捕获调用 onCancel；卸载清除预览和待执行帧。右键及空格加左键平移由上层 InfiniteCanvasViewport 捕获阶段优先处理。工具按钮保持键盘可达，激活后把焦点交给有名称的 CanvasScene，使空格平移可直接使用；Esc 可取消；不包含 loading、error、destructive 或持久化状态。",
+      "differenceSummary": "项目本地 SVG 放置交互层，作为 CanvasScene 最后的子层，只在工具激活时挂载。tool 提供预览形状、默认宽高及仅单击选项；viewportBounds 覆盖当前可视世界范围。鼠标单击使用起点和默认尺寸，超过 3 个屏幕像素的拖动确定宽高（最小 8 个世界单位）；焦点和 UI 界面文字由调用方选择仅单击，构图文字区域支持拖动宽高。预览通过独立 path 按动画帧更新，松手才通过 onPlace 上报世界坐标 bounds、start、end 和 dragged；调用方创建并选中领域节点，随后卸载该层。工具切换须以工具和阶段作为 key 重新挂载。Esc、窗口失焦、pointercancel 或意外丢失捕获调用 onCancel；卸载清除预览和待执行帧。右键及空格加左键平移由上层 InfiniteCanvasViewport 捕获阶段优先处理。工具按钮保持键盘可达，激活后把焦点交给有名称的 CanvasScene，使空格平移可直接使用；Esc 可取消；不包含 loading、error、destructive 或持久化状态。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1633,7 +1637,9 @@
         "selected-camera-frustum",
         "scene-lighting-toggle",
         "observation-box-transforms",
-        "cancel-editor-interactions-after-history-restore"
+        "cancel-editor-interactions-after-history-restore",
+        "all-camera-guide-visibility",
+        "object-double-click-metadata-editor"
       ],
       "slots": [
         "draft",
@@ -1646,7 +1652,9 @@
         "errorLabel",
         "disabled",
         "showRig",
-        "interactionResetKey"
+        "showCameras",
+        "interactionResetKey",
+        "onEdit"
       ],
       "aliases": [],
       "useWhen": [
@@ -1656,7 +1664,7 @@
         "二维构图或 UI 草图",
         "需要组件自行读取 API 或持久化"
       ],
-      "differenceSummary": "受控 WebGL 空间编辑区域，OrbitControls 管理独立观察视角；选关节自动移动，选骨段自动绕上游关节旋转，世界位置与世界旋转分别固定。人物网格和摄像机 PNG 共享领域变形结果，骨架叠加和选中变色只用于编辑。方向键/PageUp/PageDown 按部位类型编辑 XYZ，Shift 加大步长，Escape 取消拖动并清除选择；松手仅提交一次操作。不读取 API，不持久化，不重写领域约束。 选中摄像机时以浅色辅助线显示目标平面上的取景范围，复用输出摄像机投影，随参数更新；仅编辑视图显示，不参与拾取或 PNG 输出。 整手选择高亮手掌与五指并绕手腕旋转；手指骨段工具使用解剖局部轴，指尖可拖动，键盘移动步长随人物身高缩小。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 观察盒显示编辑用线框与选中色，支持点击边框选择及三轴移动/旋转；不进入输出镜头。 几何人偶五指按身份异色，左右及复制手一致；选中五指时保留色系并提亮，方便在整手操作中辨认分指。",
+      "differenceSummary": "受控 WebGL 空间编辑区域，OrbitControls 管理独立观察视角；选关节自动移动，选骨段自动绕上游关节旋转，世界位置与世界旋转分别固定。人物网格和摄像机 PNG 共享领域变形结果，骨架叠加和选中变色只用于编辑。方向键/PageUp/PageDown 按部位类型编辑 XYZ，Shift 加大步长，Escape 取消拖动并清除选择；松手仅提交一次操作。不读取 API，不持久化，不重写领域约束。 默认显示全部摄像机在目标平面上的取景辅助线，复用输出摄像机投影，随参数更新；选中镜头高亮，showCameras 统一控制显隐，仅编辑视图显示，不进入 PNG；辅助线允许双击进入元数据编辑。 整手选择高亮手掌与五指并绕手腕旋转；手指骨段工具使用解剖局部轴，指尖可拖动，键盘移动步长随人物身高缩小。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 观察盒显示编辑用线框与选中色，支持点击边框选择及三轴移动/旋转；不进入输出镜头。 几何人偶五指按身份异色，左右及复制手一致；选中五指时保留色系并提亮，方便在整手操作中辨认分指。 双击实体或已显示的摄像机/观察盒辅助线发出元数据编辑回调，人物任意表面和部位归并到整个人物；Enter 可编辑当前对象。移动超过阈值的手势不触发双击编辑，单击选择与姿态操作保留。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1697,7 +1705,15 @@
         "six-view-camera-boxes",
         "skeleton-reference-preview",
         "geometric-character-appearance",
-        "cancel-editor-interactions-after-history-restore"
+        "cancel-editor-interactions-after-history-restore",
+        "fixed-space-and-camera-views",
+        "three-column-camera-gallery",
+        "retained-spatial-editor-view",
+        "workspace-error-icon-tooltip",
+        "camera-gallery-properties-selection",
+        "camera-guide-visibility-toggle",
+        "spatial-object-notes",
+        "anchored-object-metadata-editor"
       ],
       "slots": [
         "draft",
@@ -1714,7 +1730,8 @@
         "onRequestProperties",
         "cameraBoxSource",
         "interactionResetKey",
-        "historyControls"
+        "historyControls",
+        "noteLabel"
       ],
       "aliases": [],
       "useWhen": [
@@ -1724,7 +1741,7 @@
         "二维构图或 UI 草图",
         "需要组件自行读取 API 或持久化"
       ],
-      "differenceSummary": "AppShellFrame 右栏通过 panelHost 接纳信息与工具、空间对象、参数三个 TabSwitch 标签。AssetSkeletonTree 独占对象标签，统一列出角色、关节、骨段、物体和摄像机，角色下身体部位同级、手部独立分组，关节与骨段使用不同颜色图标；角色与摄像机分别添加。树选择留在列表，画布选择和新建打开参数，切换标签保留选中与展开状态。参数按选择显示世界位置或局部旋转/六个角度边界，位置与旋转分开固定；角色支持复原姿势、比例和Quaternius 男女性底模。API、历史和冲突由应用层负责。Story 覆盖空、加载、错误、禁用、四臂、双头、长名称、英文、桌面最小尺寸，以及标签隔离/固定/复原/键盘交互。 头身比例与身高并排，躯干/腿部用真实占比分界滑杆调整，各限 30%–70%；使用 Ant Design Slider 的键盘与 ARIA 语义，拖动只预览，结束提交一次，固定冲突提示，比例可单独复原。 比例滑杆每步 2 个百分点；头身比例联动身体宽厚和肩胯间距，网格与关节控制一致。 人物参数复用现有 Select 选择男性/女性，低头身在 2/3/4/7 参考形态之间连续过渡，协调脸型、颈长、肩胯、躯干及四肢，并独立平衡头部和躯干的侧面厚度；小数头身输入使用 0.5 步进并允许一位小数；切换共用比例操作与固定冲突提示。 镜头预览按设置的输出宽高比居中显示，适应右栏宽度并限制最大高度；支持横向、纵向、正方形及多镜头切换。 手部作为人物下独立容器，内部平铺手腕、掌心、手掌骨段和五指关节/骨段；指尖可选，固定指根连接不作为旋转骨段展示。整手参数提供五指弯曲、张开、拇指内收和单手复原；滑杆预览与提交沿用领域约束，使用原有受控参数与存储边界。 整个人物参数增加颈长、手掌大小、手指长度和脚部大小，左右共用、限制上下界，沿用滑杆预览/松手提交及百分比输入。 镜头预览复用 TabSwitch 切换普通图、结构线及全空间深度，BasicButton 下载当前版本的 PNG，包含加载、错误、重试与禁用；切换不发出空间操作。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 六面观察盒作为同级空间对象，通过独立按钮添加，支持移动、旋转、边长、分辨率以及按实际网格框住全部对象/手部；参数复用现有取景类型、Select、PNG 下载与加载/失败状态，导出六宫格或单面，场景保存由应用层负责。 摄像机与观察盒预览增加骨架投影，四种参考以两列显示，沿用同一画幅、下载与只读状态；骨架展示关节点、骨段及手指，左右配色区分，允许透过模型表面查看。 人物参数复用 Select 增加模型样式，在人体模型与几何人偶间切换；通过原有 put-character 仅保存外观，保留姿势、比例、固定和自定义肢体。几何关节可直接选择位置、骨段选择旋转，选中沿用高亮；镜头与观察盒复用同一模型输出。 通过 historyControls 插槽在画布左下角接入共享操作级撤销与重做，替代按上一保存版本恢复的按钮。",
+      "differenceSummary": "AppShellFrame 右栏通过 panelHost 接纳信息与工具、空间对象、参数三个 TabSwitch 标签。AssetSkeletonTree 独占对象标签，统一列出角色、关节、骨段、物体和摄像机，角色下身体部位同级、手部独立分组，关节与骨段使用不同颜色图标；角色与摄像机分别添加。树选择留在列表，画布选择和新建打开参数，切换标签保留选中与展开状态。参数按选择显示世界位置或局部旋转/六个角度边界，位置与旋转分开固定；角色支持复原姿势、比例和Quaternius 男女性底模。API、历史和冲突由应用层负责。Story 覆盖空、加载、错误、禁用、四臂、双头、长名称、英文、桌面最小尺寸，以及标签隔离/固定/复原/键盘交互。 头身比例与身高并排，躯干/腿部用真实占比分界滑杆调整，各限 30%–70%；使用 Ant Design Slider 的键盘与 ARIA 语义，拖动只预览，结束提交一次，固定冲突提示，比例可单独复原。 比例滑杆每步 2 个百分点；头身比例联动身体宽厚和肩胯间距，网格与关节控制一致。 人物参数复用现有 Select 选择男性/女性，低头身在 2/3/4/7 参考形态之间连续过渡，协调脸型、颈长、肩胯、躯干及四肢，并独立平衡头部和躯干的侧面厚度；小数头身输入使用 0.5 步进并允许一位小数；切换共用比例操作与固定冲突提示。 镜头预览按设置的输出宽高比居中显示，适应右栏宽度并限制最大高度；支持横向、纵向、正方形及多镜头切换。 手部作为人物下独立容器，内部平铺手腕、掌心、手掌骨段和五指关节/骨段；指尖可选，固定指根连接不作为旋转骨段展示。整手参数提供五指弯曲、张开、拇指内收和单手复原；滑杆预览与提交沿用领域约束，使用原有受控参数与存储边界。 整个人物参数增加颈长、手掌大小、手指长度和脚部大小，左右共用、限制上下界，沿用滑杆预览/松手提交及百分比输入。 镜头预览复用 TabSwitch 切换普通图、结构线及全空间深度，BasicButton 下载当前版本的 PNG，包含加载、错误、重试与禁用；切换不发出空间操作。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 六面观察盒作为同级空间对象，通过独立按钮添加，支持移动、旋转、边长、分辨率以及按实际网格框住全部对象/手部；参数复用现有取景类型、Select、PNG 下载与加载/失败状态，导出六宫格或单面，场景保存由应用层负责。 摄像机与观察盒预览增加骨架投影，四种参考以两列显示，沿用同一画幅、下载与只读状态；骨架展示关节点、骨段及手指，左右配色区分，允许透过模型表面查看。 人物参数复用 Select 增加模型样式，在人体模型与几何人偶间切换；通过原有 put-character 仅保存外观，保留姿势、比例、固定和自定义肢体。几何关节可直接选择位置、骨段选择旋转，选中沿用高亮；镜头与观察盒复用同一模型输出。 通过 historyControls 插槽在画布左下角接入共享操作级撤销与重做，替代按上一保存版本恢复的按钮。 复用 CompositionWorkflowView 的顶部布局，通过固定空间/摄像机 TabSwitch 切换编辑器和三列摄像机总览；切换保留编辑器实例与轨道视角，预览复用注入的当前 revision 普通图，待保存与逐项失败状态不显示旧图，名称和列表随草稿更新。 画布不展示保存或错误文字；空间标签左侧的错误图标通过 Tooltip 展示原因并保留失败重试。 点击摄像机总览卡片复用已有选择逻辑展开右侧参数，名称、投影参数和选中态同步；保持总览视图，选择不写入文档，失败重试独立。 摄像机总览和参数区隐藏滚动条，仍可内部滚动；外层布局不产生额外滚动轨道。 信息与工具复用 Checkbox 提供默认开启的显示摄像机开关，统一控制编辑画布内全部镜头辅助线，独立于骨架显隐；只修改本地视图，不保存或刷新镜头预览。 双击打开物件附近的紧凑 Modal，复用 TextMarkEditorField/TextMarkEditorTextArea 编辑名称与备注，自动保存、外部或 Escape 关闭；右侧参数同样提供备注，列表图标按需显示完整多行备注。位置随桌面边缘约束，复用原有 put 操作及历史，不拥有新 API；备注编辑不重建几何或刷新预览。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1737,7 +1754,13 @@
         "AssetSkeletonTree",
         "TabSwitch",
         "CompositeButton",
-        "SessionDetails"
+        "SessionDetails",
+        "CompositionWorkflowView",
+        "UiSketchStateTabs",
+        "ImageTitleCard",
+        "TextMarkEditor",
+        "Human2AiCanvasNodeEditor",
+        "Ant Design Modal"
       ]
     },
     {

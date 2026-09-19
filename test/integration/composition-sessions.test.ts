@@ -9,6 +9,7 @@ import { ProjectSessionRepository } from "../../src/database/project-session-rep
 import {
   addArea,
   addFocus,
+  addTextRegion,
   createDraft,
   changeFrame,
   createCompositionState,
@@ -19,6 +20,7 @@ import {
   draftFingerprint,
   moveFrame,
   moveItem,
+  moveTextRegionCorner,
   setProcessingSemantic,
   updateAreaMetadata,
   type CompositionDraft,
@@ -71,6 +73,30 @@ describe("composition session API", () => {
       payload: { changeRevision: 2, expectedLatestRevision: 2 } });
     expect(undo.statusCode, undo.body).toBe(201);
     expect(repository.getDraftVersion(sessionId, 3).draft).toEqual(restored);
+  });
+
+  it("saves text outlines and restores the rectangular draft on undo", async () => {
+    ({ database, server } = createTestServer());
+    const sessionId = await createSession(server, "image-composition", "文字轮廓");
+    const original = addTextRegion(createDraft()).draft;
+    const repository = new CompositionSessionRepository(database);
+    repository.createDraftVersion(sessionId, { expectedLatestRevision: 0, draft: original });
+    const edited = moveTextRegionCorner(original, "area-1", 0, { x: 0.42, y: 0.4 });
+    const saved = await server.inject({ method: "POST",
+      url: `/api/v1/sessions/${sessionId}/composition/drafts`,
+      payload: { expectedLatestRevision: 1, draft: edited } });
+    expect(saved.statusCode, saved.body).toBe(201);
+    const restored = repository.getDraftVersion(sessionId, 2).draft;
+    expect(restored.areas[0].corners).toHaveLength(4);
+    expect(restored).toEqual(edited);
+    const loaded = await server.inject({ method: "GET", url: `/api/v1/sessions/${sessionId}/composition/drafts` });
+    expect(loaded.json().draftVersions.some((version: { draft: CompositionDraft }) =>
+      JSON.stringify(version.draft.areas[0].corners) === JSON.stringify(edited.areas[0].corners))).toBe(true);
+    const undo = await server.inject({ method: "POST",
+      url: `/api/v1/sessions/${sessionId}/composition/drafts/undo`,
+      payload: { changeRevision: 2, expectedLatestRevision: 2 } });
+    expect(undo.statusCode, undo.body).toBe(201);
+    expect(undo.json().draft).toEqual(original);
   });
 
   it("persists light source toggles and restores the original flag on undo", async () => {

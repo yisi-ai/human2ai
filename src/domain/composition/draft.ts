@@ -11,6 +11,9 @@ import {
 import {
   calculateVisibleAreaMetrics,
   freeDimensionsFromArea,
+  areaGeometry,
+  isConvexTextOutline,
+  polygonArea,
 } from "./geometry.ts";
 import {
   COMPOSITION_CANVAS,
@@ -113,6 +116,15 @@ export function validateDraft(input: unknown): CompositionDraft {
     ? { ...draft.directionLine, rotation: normalizeRotation(draft.directionLine.rotation) }
     : null;
   draft.areas.forEach((area) => {
+    if (area.corners) {
+      if (!isConvexTextOutline(area.corners)) throw new Error("Text region corners must form a convex quadrilateral.");
+      const xs = area.corners.map((point) => point.x), ys = area.corners.map((point) => point.y);
+      if (Math.min(...xs) > 1e-8 || Math.min(...ys) > 1e-8
+        || Math.max(...xs) < 1 - 1e-8 || Math.max(...ys) < 1 - 1e-8) {
+        throw new Error("Text region corners must span their normalized bounding box.");
+      }
+      area.area = area.width! * area.height! * polygonArea(area.corners);
+    }
     if (area.primitive === "circle" && area.aspect !== "free") area.rotation = 0;
     if (
       area.primitive === "quadrilateral" &&
@@ -355,6 +367,45 @@ export function moveItem(input: CompositionDraft, id: string, point: Point): Com
   return draft;
 }
 
+export function moveTextRegionCorner(
+  input: CompositionDraft,
+  id: string,
+  index: number,
+  point: Point,
+): CompositionDraft {
+  const draft = validateDraft(input);
+  const area = findArea(draft, id);
+  if (!isCompositionTextRegion(area) || !Number.isInteger(index) || index < 0 || index > 3) return input;
+  if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return input;
+  const geometry = areaGeometry({ ...area, x: 0, y: 0, rotation: 0 }, COMPOSITION_CANVAS);
+  if (geometry.type !== "polygon") return input;
+  const angle = (area.rotation ?? 0) * Math.PI / 180;
+  const dx = (point.x - area.x) * COMPOSITION_CANVAS.width;
+  const dy = (point.y - area.y) * COMPOSITION_CANVAS.height;
+  geometry.points[index] = {
+    x: dx * Math.cos(angle) + dy * Math.sin(angle),
+    y: -dx * Math.sin(angle) + dy * Math.cos(angle),
+  };
+  const xs = geometry.points.map((point) => point.x);
+  const ys = geometry.points.map((point) => point.y);
+  const left = Math.min(...xs), top = Math.min(...ys);
+  const width = Math.max(...xs) - left, height = Math.max(...ys) - top;
+  if (width < 8 || height < 8) return input;
+  const corners = geometry.points.map((point) => ({
+    x: (point.x - left) / width, y: (point.y - top) / height,
+  })) as NonNullable<CompositionArea["corners"]>;
+  if (!isConvexTextOutline(corners)) return input;
+  const offsetX = left + width / 2, offsetY = top + height / 2;
+  area.x += (offsetX * Math.cos(angle) - offsetY * Math.sin(angle)) / COMPOSITION_CANVAS.width;
+  area.y += (offsetX * Math.sin(angle) + offsetY * Math.cos(angle)) / COMPOSITION_CANVAS.height;
+  area.width = width / COMPOSITION_CANVAS.width;
+  area.height = height / COMPOSITION_CANVAS.height;
+  area.aspect = "free";
+  area.corners = corners;
+  area.area = area.width * area.height * polygonArea(corners);
+  return draft;
+}
+
 export function resizeArea(
   input: CompositionDraft,
   id: string,
@@ -364,7 +415,7 @@ export function resizeArea(
   const area = findArea(draft, id);
   if (!Number.isFinite(nextArea) || nextArea <= 0) return draft;
   if (area.aspect === "free") {
-    const scale = Math.sqrt(nextArea / (area.width! * area.height!));
+    const scale = Math.sqrt(nextArea / (area.corners ? area.area : area.width! * area.height!));
     area.width! *= scale;
     area.height! *= scale;
   }
@@ -387,7 +438,8 @@ export function resizeFreeArea(
   area.width = width;
   area.height = height;
   area.aspect = "free";
-  const areaFactor = area.primitive === "circle" ? Math.PI / 4 : area.primitive === "triangle" ? 0.5 : 1;
+  const areaFactor = area.corners ? polygonArea(area.corners)
+    : area.primitive === "circle" ? Math.PI / 4 : area.primitive === "triangle" ? 0.5 : 1;
   area.area = width * height * areaFactor;
   return draft;
 }
@@ -458,6 +510,7 @@ export function setAreaAspect(
       freeDimensionsFromArea(area.area, COMPOSITION_CANVAS, 1.6, area.primitive),
     );
   } else if (aspect !== "free") {
+    delete area.corners;
     delete area.width;
     delete area.height;
   }
