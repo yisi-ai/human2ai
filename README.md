@@ -178,10 +178,10 @@ npx --no-install human2ai integration sync
 npm run repository:check
 npm run i18n:check
 npm run domain-baseline:check
+npm run pack:check
 npm run domain-baseline:test
 npm run typecheck
 npm test
-npm run pack:check
 ```
 
 生成安装包后，在独立消费项目中安装验证：
@@ -191,7 +191,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.1.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
+在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.2.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
 
 ## 许可证
 

@@ -22,17 +22,17 @@
 1. 确认发布准备已合并。记录远端 `main` 上计划发布的准确提交 SHA，确认该提交的三个 CI 工作流通过。
 2. 使用全新的独立 checkout 或 worktree 固定到该 SHA，避免旧构建产物混入。原工作区的无关改动保持原状；后续打包、标签和 Release 都使用同一 SHA。
 3. 核对包名、包版本、授权的发布渠道与身份。查询 npm 版本、dist-tags、对应 Git 标签和 GitHub Release。版本已存在时进入“中断恢复”，不要盲目重试；区分包不存在和网络/认证失败。
-4. 在固定的发布源码目录执行安装和当前完整验证。现有命令如下；工作流或脚本变更后以源码为准：
+4. 在固定的发布源码目录执行安装和当前完整验证。先构建，再运行类型检查和测试；消费项目接入测试需要 `dist/cli/main.js`，Web 类型检查需要生成的路由类型。现有命令如下；工作流或脚本变更后以源码为准：
 
    ```bash
    npm ci
    npm run repository:check
    npm run i18n:check
    npm run domain-baseline:check
+   npm run pack:check
    npm run domain-baseline:test
    npm run typecheck
    npm test
-   npm run pack:check
    npm run storybook:build
    mkdir -p .human2ai-data/output/releases
    npm pack --pack-destination .human2ai-data/output/releases

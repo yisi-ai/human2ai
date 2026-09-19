@@ -178,10 +178,10 @@ Stop the service and back up its data directory before upgrading. Run `human2ai 
 npm run repository:check
 npm run i18n:check
 npm run domain-baseline:check
+npm run pack:check
 npm run domain-baseline:test
 npm run typecheck
 npm test
-npm run pack:check
 ```
 
 Create a package, then test its installation in a separate consuming project:
@@ -191,7 +191,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-In that separate project, run `npm install --save-dev /absolute/path/to/human2ai-0.1.1.tgz`, then follow the integration and startup steps above. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
+In that separate project, run `npm install --save-dev /absolute/path/to/human2ai-0.1.2.tgz`, then follow the integration and startup steps above. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
 
 ## License
 
