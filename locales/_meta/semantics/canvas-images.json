@@ -1,0 +1,354 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "canvas-images",
+  "concepts": {
+    "canvas.image-node": {
+      "meaning": "An editable canvas node whose visible content is an image placeholder, a bitmap, or an SVG document, while retaining the same layout and semantic responsibilities as other canvas nodes.",
+      "scope": "Shared by composition drafts and UI sketches, including their toolbars, node editors, accessible labels, and exported prompts.",
+      "referent": "The image node as a canvas element, not the source file, composition session type, exported sketch, or ordinary page image.",
+      "precedence": "Peer to shape, region, point, line, and text nodes; the uploaded asset is subordinate content owned by the node.",
+      "canonicalKey": "canvas.imageNode.label",
+      "searchTerms": [
+        "图片节点",
+        "图片",
+        "图像",
+        "添加图片",
+        "Image node",
+        "Image",
+        "Add image"
+      ],
+      "examples": [
+        "A placeholder image node created from a canvas toolbar.",
+        "The numbered image-node heading in an exported composition or UI prompt."
+      ],
+      "nonExamples": [
+        "The image-composition session type.",
+        "A button that copies the whole sketch as PNG.",
+        "The URL or original dimensions of an uploaded image file."
+      ]
+    },
+    "canvas.image-asset-binding": {
+      "meaning": "The operation and status for binding an uploaded image file, selected locally or pasted from the clipboard, to a new or existing canvas image node, or replacing the file already bound to that node.",
+      "scope": "Image upload feedback on composition and UI canvases and in their shared image-node editor.",
+      "referent": "The image content displayed inside the selected image node.",
+      "precedence": "Upload applies when the node has no asset; replace supersedes the current asset while preserving the node itself.",
+      "canonicalKey": "canvas.imageEditor.upload",
+      "searchTerms": [
+        "上传图片",
+        "替换图片",
+        "图片内容",
+        "上传失败",
+        "Upload image",
+        "Replace image",
+        "Image content"
+      ],
+      "examples": [
+        "Choose a PNG, JPEG, WebP, or self-contained SVG file for the selected image node.",
+        "Replace the image content while keeping the image node's note and geometry.",
+        "Paste a clipboard image onto the canvas to upload it into a new node, or paste in the image-node editor to replace its content."
+      ],
+      "nonExamples": [
+        "Creating the image node from the canvas toolbar.",
+        "Typing an arbitrary local filesystem path or remote URL.",
+        "Cropping the image already attached to the node."
+      ]
+    },
+    "canvas.image-crop": {
+      "meaning": "A non-destructive edit that directly selects a freely sized normalized part of an uploaded image and makes that source-pixel aspect ratio the image node's aspect ratio.",
+      "scope": "The inline crop selection preview in the shared image-node editor's right-side image-content panel.",
+      "referent": "The visible portion of the source image inside one canvas image node.",
+      "precedence": "Crop requires an uploaded asset, does not change the source file, updates the image node's aspect ratio while preserving its width and center, and is reset when that asset is replaced.",
+      "canonicalKey": "canvas.imageCrop.title",
+      "searchTerms": [
+        "裁剪",
+        "裁剪图片",
+        "Crop",
+        "Crop image"
+      ],
+      "examples": [
+        "Drag the selection rectangle directly over the image preview.",
+        "Resize the selection rectangle's width and height independently from its corner handles, then apply the resulting source-pixel aspect ratio to the node."
+      ],
+      "nonExamples": [
+        "Opening a secondary crop dialog or adjusting crop sliders.",
+        "Resizing the image node on the canvas.",
+        "Permanently rewriting the uploaded source file.",
+        "Cropping the overall composition frame."
+      ]
+    },
+    "canvas.svg-source": {
+      "meaning": "The complete SVG text document used as the content of one canvas image node, which can be entered and copied verbatim directly from the image-content panel for use elsewhere.",
+      "scope": "The shared image-content panel in composition and UI-layout sessions.",
+      "referent": "The persisted SVG image document, or the replacement SVG document currently being entered.",
+      "precedence": "SVG is a content format of the existing image node. Applying source replaces its image content; copying does not change the node or its geometry and does not open a source viewer. Agent-authored SVG has a transparent background by default; uploaded content retains its original background choices.",
+      "canonicalKey": "canvas.imageEditor.svgSource",
+      "searchTerms": [
+        "SVG",
+        "SVG 源码",
+        "粘贴 SVG",
+        "复制源码",
+        "SVG source",
+        "Paste SVG",
+        "Copy source"
+      ],
+      "examples": [
+        "Paste a complete SVG document into an empty image node.",
+        "Copy the stored SVG source, including viewBox and inline styles.",
+        "Read a previously saved SVG before an Agent replaces the node content."
+      ],
+      "nonExamples": [
+        "A vector asset library or a new session type.",
+        "Editing path handles with drawing tools.",
+        "Copying a PNG rendering of the entire canvas."
+      ]
+    },
+    "canvas.image-content-reading": {
+      "meaning": "Read the complete persisted image file for the shared image editor, preserving its format and bytes for downloading and, for SVG, source copying.",
+      "scope": "Composition and UI image-node content panels.",
+      "referent": "The file currently bound to the selected image node.",
+      "precedence": "Reading precedes downloading or copying SVG source; it does not upload, replace, crop or modify the image.",
+      "canonicalKey": "canvas.imageEditor.sourceLoading",
+      "searchTerms": [
+        "读取图片内容",
+        "图片内容读取失败",
+        "Loading image content",
+        "Read image file"
+      ],
+      "examples": [
+        "Load an existing PNG for download.",
+        "Read a stored SVG for both download and source copying."
+      ],
+      "nonExamples": [
+        "Uploading a replacement image.",
+        "Rendering a new canvas preview."
+      ]
+    },
+    "canvas.image-file-download": {
+      "meaning": "Save the original file currently bound to an image node to the user’s computer, using a chosen file destination when supported or the browser download mechanism.",
+      "scope": "Shared image-content editor for composition and UI-layout image nodes, including read-only nodes.",
+      "referent": "The complete source image file in its stored PNG, JPEG, WebP or SVG format.",
+      "precedence": "Requires loaded image content; independent of canvas crop, rotation and node geometry. Cancelling the save dialog does not report success or failure.",
+      "canonicalKey": "canvas.imageEditor.download",
+      "searchTerms": [
+        "下载图片",
+        "保存图片",
+        "另存为",
+        "Download image",
+        "Save image"
+      ],
+      "examples": [
+        "Save a generated cover as a PNG file to a chosen folder.",
+        "Download the full original SVG from a cropped image node."
+      ],
+      "nonExamples": [
+        "Exporting the whole canvas preview.",
+        "Downloading a newly rendered spatial camera reference.",
+        "Uploading or replacing the image asset."
+      ]
+    }
+  },
+  "keys": {
+    "canvas.imageNode.label": {
+      "conceptId": "canvas.image-node",
+      "variant": "label",
+      "role": "node kind and placeholder label",
+      "grammar": "noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageNode.add": {
+      "conceptId": "canvas.image-node",
+      "variant": "add-action",
+      "role": "canvas toolbar action label",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageNode.promptHeading": {
+      "conceptId": "canvas.image-node",
+      "variant": "prompt-heading",
+      "role": "heading for the image-node section of an exported prompt",
+      "grammar": "heading noun phrase",
+      "tone": "instructional",
+      "reusePolicy": "contextual"
+    },
+    "composition.prompt.imageNumber": {
+      "conceptId": "canvas.image-node",
+      "variant": "composition-numbered-prompt-heading",
+      "role": "numbered image-node heading in a composition prompt",
+      "grammar": "numbered heading noun phrase",
+      "tone": "instructional",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Composition and UI prompt translators use separate namespaces even though their numbered image headings intentionally render the same."
+    },
+    "uiSketch.prompt.imageNumber": {
+      "conceptId": "canvas.image-node",
+      "variant": "ui-sketch-numbered-prompt-heading",
+      "role": "numbered image-node heading in a UI sketch prompt",
+      "grammar": "numbered heading noun phrase",
+      "tone": "instructional",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Composition and UI prompt translators use separate namespaces even though their numbered image headings intentionally render the same."
+    },
+    "canvas.imageEditor.content": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "panel-heading",
+      "role": "heading for the image-node editor's right-side image-content panel",
+      "grammar": "noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.upload": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "upload-action",
+      "role": "action that chooses the first local file for an image node",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageEditor.replace": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "replace-action",
+      "role": "action that replaces the file bound to an image node",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.uploading": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "uploading-status",
+      "role": "temporary status while an image file is uploaded",
+      "grammar": "progressive verb phrase",
+      "tone": "brief and reassuring",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.uploadFailed": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "upload-error",
+      "role": "visible error after an image upload fails",
+      "grammar": "complete sentence",
+      "tone": "clear and actionable",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.fileTypes": {
+      "conceptId": "canvas.image-asset-binding",
+      "variant": "accepted-file-hint",
+      "role": "hint describing accepted local image types and maximum size",
+      "grammar": "short descriptive sentence",
+      "tone": "concise and informative",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageCrop.title": {
+      "conceptId": "canvas.image-crop",
+      "variant": "inline-selection-label",
+      "role": "accessible name for the inline crop selection preview",
+      "grammar": "imperative verb phrase",
+      "tone": "clear and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageCrop.loadFailed": {
+      "conceptId": "canvas.image-crop",
+      "variant": "source-load-error",
+      "role": "visible error when the inline crop preview cannot load the uploaded source image",
+      "grammar": "complete sentence",
+      "tone": "clear and actionable",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgSource": {
+      "conceptId": "canvas.svg-source",
+      "variant": "document-label",
+      "role": "label for the replacement SVG source textarea",
+      "grammar": "noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageEditor.svgPaste": {
+      "conceptId": "canvas.svg-source",
+      "variant": "paste-action",
+      "role": "action that opens SVG text input for the current image node",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgApply": {
+      "conceptId": "canvas.svg-source",
+      "variant": "apply-action",
+      "role": "action that saves entered SVG as the image node content",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgSaveFailed": {
+      "conceptId": "canvas.svg-source",
+      "variant": "save-error",
+      "role": "error after entered SVG cannot be accepted or saved",
+      "grammar": "complete sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgCopy": {
+      "conceptId": "canvas.svg-source",
+      "variant": "copy-action",
+      "role": "image-content panel action that directly copies the complete persisted SVG source without opening a source viewer",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgCopying": {
+      "conceptId": "canvas.svg-source",
+      "variant": "copy-pending",
+      "role": "pending feedback while SVG source is copied",
+      "grammar": "progressive verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.svgCopyFailed": {
+      "conceptId": "canvas.svg-source",
+      "variant": "copy-error",
+      "role": "error feedback when SVG source copying fails",
+      "grammar": "complete sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.sourceLoading": {
+      "conceptId": "canvas.image-content-reading",
+      "variant": "source-loading",
+      "role": "temporary status while the selected image file is read",
+      "grammar": "progressive verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageEditor.sourceLoadFailed": {
+      "conceptId": "canvas.image-content-reading",
+      "variant": "source-load-error",
+      "role": "visible retryable error when the selected image file cannot be read",
+      "grammar": "complete sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.download": {
+      "conceptId": "canvas.image-file-download",
+      "variant": "download-action",
+      "role": "image-content panel action label",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageEditor.downloading": {
+      "conceptId": "canvas.image-file-download",
+      "variant": "download-status",
+      "role": "temporary status while the file is saved or handed to browser downloads",
+      "grammar": "progressive verb phrase",
+      "tone": "brief and reassuring",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.downloadFailed": {
+      "conceptId": "canvas.image-file-download",
+      "variant": "download-error",
+      "role": "visible retryable error when writing or initiating the download fails",
+      "grammar": "complete sentence",
+      "tone": "clear and actionable",
+      "reusePolicy": "contextual"
+    }
+  }
+}

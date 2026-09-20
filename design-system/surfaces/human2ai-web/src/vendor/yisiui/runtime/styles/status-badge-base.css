@@ -1,0 +1,9 @@
+.yisi-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yisiui-space-1);
+  font-family: var(--yisiui-typography-status-font-family);
+  font-size: var(--yisiui-typography-status-font-size);
+  line-height: var(--yisiui-typography-status-line-height);
+  letter-spacing: var(--yisiui-typography-status-letter-spacing);
+}

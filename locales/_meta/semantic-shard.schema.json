@@ -1,0 +1,130 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://human2ai.local/schemas/i18n-semantic-shard.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "domain", "concepts", "keys"],
+  "properties": {
+    "$schema": {
+      "const": "../semantic-shard.schema.json"
+    },
+    "domain": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "concepts": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z][a-z0-9]*)*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "meaning",
+          "scope",
+          "referent",
+          "precedence",
+          "canonicalKey",
+          "searchTerms",
+          "examples",
+          "nonExamples"
+        ],
+        "properties": {
+          "meaning": {
+            "type": "string",
+            "minLength": 1
+          },
+          "scope": {
+            "type": "string",
+            "minLength": 1
+          },
+          "referent": {
+            "type": "string",
+            "minLength": 1
+          },
+          "precedence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "canonicalKey": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+          },
+          "searchTerms": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "examples": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          "nonExamples": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
+      }
+    },
+    "keys": {
+      "type": "object",
+      "propertyNames": {
+        "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+      },
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "conceptId",
+          "variant",
+          "role",
+          "grammar",
+          "tone",
+          "reusePolicy"
+        ],
+        "properties": {
+          "conceptId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variant": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "type": "string",
+            "minLength": 1
+          },
+          "grammar": {
+            "type": "string",
+            "minLength": 1
+          },
+          "tone": {
+            "type": "string",
+            "minLength": 1
+          },
+          "reusePolicy": {
+            "enum": ["canonical", "contextual"]
+          },
+          "duplicateReason": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "selector": "[data-yisiui-asset][data-yisiui-name][data-yisiui-category]",
+  "attributes": {
+    "data-yisiui-asset": "<namespace>/<asset-id>",
+    "data-yisiui-name": "Registry asset name",
+    "data-yisiui-category": "Registry asset category",
+    "data-yisiui-origin": "shared | project",
+    "data-yisiui-status": "candidate | experimental | stable | deprecated"
+  },
+  "blockingLayerSelector": "[aria-modal='true'], [data-yisiui-inspection-layer='blocking']",
+  "inspectorRoot": "data-yisiui-inspector-root"
+}
+

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 2,
+  "project": "human2ai",
+  "surface": "human2ai-web",
+  "applicationRoot": "web",
+  "distribution": "source-sync",
+  "sourceRelease": {
+    "surface": "web-react",
+    "version": "0.14.0"
+  },
+  "vendorRoot": "design-system/surfaces/human2ai-web/src/vendor/yisiui",
+  "localRegistry": "design-system/surfaces/human2ai-web/registry/assets.json",
+  "inspector": {
+    "developmentOnly": true
+  },
+  "skills": {
+    "mode": "managed-source-sync",
+    "integrationVersion": 9
+  },
+  "storybook": {
+    "applicationRoot": "storybook",
+    "framework": "react-webpack5",
+    "sharedStories": "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories",
+    "localStories": "design-system/surfaces/human2ai-web/src/local"
+  },
+  "packageManager": "npm",
+  "surfaceRoot": "design-system/surfaces/human2ai-web",
+  "commandScript": "yisiui"
+}

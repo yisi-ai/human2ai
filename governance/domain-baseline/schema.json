@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://human2ai.local/schemas/domain-baseline.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "categories", "capabilities"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "categories": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/category"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/capability"
+      }
+    }
+  },
+  "$defs": {
+    "identifier": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "nonEmptyText": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "category": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "description"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/identifier"
+        },
+        "description": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      }
+    },
+    "implementation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["role", "path"],
+      "properties": {
+        "role": {
+          "enum": ["current", "canonical", "adapter"]
+        },
+        "path": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "consumer": {
+          "$ref": "#/$defs/identifier"
+        }
+      }
+    },
+    "exception": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["consumer", "reason", "reviewTrigger"],
+      "properties": {
+        "consumer": {
+          "$ref": "#/$defs/identifier"
+        },
+        "reason": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "reviewTrigger": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      }
+    },
+    "capability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "category",
+        "contractVersion",
+        "status",
+        "responsibility",
+        "invariants",
+        "implementations",
+        "consumers",
+        "variationPoints",
+        "contractTests",
+        "exceptions",
+        "reviewTrigger"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*(?:\\.[a-z0-9]+(?:-[a-z0-9]+)*)+$"
+        },
+        "category": {
+          "$ref": "#/$defs/identifier"
+        },
+        "contractVersion": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "status": {
+          "enum": ["local", "candidate", "shared", "deprecated"]
+        },
+        "responsibility": {
+          "$ref": "#/$defs/nonEmptyText"
+        },
+        "invariants": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          }
+        },
+        "implementations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/implementation"
+          }
+        },
+        "consumers": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/identifier"
+          }
+        },
+        "variationPoints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          }
+        },
+        "contractTests": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          }
+        },
+        "reviewEvidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/nonEmptyText"
+          }
+        },
+        "exceptions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/exception"
+          }
+        },
+        "reviewTrigger": {
+          "$ref": "#/$defs/nonEmptyText"
+        }
+      }
+    }
+  }
+}

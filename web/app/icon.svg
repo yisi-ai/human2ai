@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <style>@media (prefers-color-scheme: dark) { #ha { fill: #F4F4F1; } }</style>
+  <g id="ha" fill="#17191C">
+    <path id="h" d="M160 144H256A48 48 0 0 1 304 192V400A48 48 0 0 0 352 448H556.6863A8 8 0 0 1 562.3431 461.6569L452.6863 571.3137A16 16 0 0 1 441.3726 576H352A48 48 0 0 0 304 624V832A48 48 0 0 1 256 880H160A48 48 0 0 1 112 832V192A48 48 0 0 1 160 144Z"/>
+    <path id="a" fill-rule="evenodd" d="M646.6274 448H784A128 128 0 0 1 912 576V832A48 48 0 0 1 864 880H432A96 96 0 0 1 336 784V720A96 96 0 0 1 432 624H720A24 24 0 0 0 720 576H531.3137A8 8 0 0 1 525.6569 562.3431L635.3137 452.6863A16 16 0 0 1 646.6274 448ZM504 704H720A16 16 0 0 1 736 720V752A16 16 0 0 1 720 768H504A16 16 0 0 1 488 752V720A16 16 0 0 1 504 704Z"/>
+  </g>
+  <path id="two" d="M32 88V80A48 48 0 0 1 80 32H176A48 48 0 0 1 224 80V88C224 108 216.9362 118 196 130L32 224H224" transform="translate(656 144)" stroke="#009FEF" stroke-width="64" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

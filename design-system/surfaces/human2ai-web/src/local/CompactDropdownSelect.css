@@ -1,0 +1,146 @@
+.human2ai-compact-dropdown-select {
+  display: inline-block;
+  width: 100%;
+  min-width: 0;
+}
+
+.human2ai-compact-dropdown-select__control.ant-select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: var(--yisiui-component-button-height);
+  padding: var(--yisiui-space-2) var(--yisiui-space-3);
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-radius: var(--yisiui-radius-sm);
+  color: var(--yisiui-color-text-primary);
+  background: var(--yisiui-color-surface-panel);
+  box-shadow: none;
+  font-family: var(--yisiui-font-family-sans);
+  transition:
+    border-color var(--yisiui-motion-fast),
+    background-color var(--yisiui-motion-fast),
+    box-shadow var(--yisiui-motion-fast),
+    border-radius var(--yisiui-motion-fast);
+}
+
+.human2ai-compact-dropdown-select__control.ant-select:not(.ant-select-disabled):hover {
+  border-color: var(--yisiui-color-border-hover);
+  background: var(--yisiui-color-surface-hover);
+}
+
+.human2ai-compact-dropdown-select__control.ant-select-focused,
+.human2ai-compact-dropdown-select__control.ant-select-open {
+  border-color: var(--yisiui-color-border-focus);
+  box-shadow: 0 0 0 2px color-mix(
+    in srgb,
+    var(--yisiui-color-border-focus) 16%,
+    transparent
+  );
+}
+
+.human2ai-compact-dropdown-select__control.ant-select-disabled {
+  border-color: var(--yisiui-color-border-disabled);
+  background: var(--yisiui-color-surface-disabled);
+  color: var(--yisiui-color-text-disabled);
+}
+
+.human2ai-compact-dropdown-select[data-open="true"][data-placement="bottom"]
+  .human2ai-compact-dropdown-select__control {
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.human2ai-compact-dropdown-select[data-open="true"][data-placement="top"]
+  .human2ai-compact-dropdown-select__control {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+
+.human2ai-compact-dropdown-select__value {
+  overflow: hidden;
+  color: var(--yisiui-color-text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.human2ai-compact-dropdown-select__control .ant-select-placeholder {
+  color: var(--yisiui-color-text-muted);
+}
+
+.human2ai-compact-dropdown-select__suffix {
+  color: var(--yisiui-color-text-secondary);
+}
+
+.human2ai-compact-dropdown-select__arrow {
+  transition: transform var(--yisiui-motion-normal);
+}
+
+.human2ai-compact-dropdown-select[data-open="true"]
+  .human2ai-compact-dropdown-select__arrow {
+  transform: rotate(180deg);
+}
+
+.human2ai-compact-dropdown-select__popup.ant-select-dropdown {
+  box-sizing: border-box;
+  padding: var(--yisiui-space-1);
+  border: 1px solid var(--yisiui-color-border-subtle);
+  background: var(--yisiui-color-surface-panel);
+  box-shadow: var(--yisiui-shadow-card);
+}
+
+.human2ai-compact-dropdown-select__popup.ant-select-dropdown-placement-bottomLeft {
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+  border-end-start-radius: var(--yisiui-radius-sm);
+  border-end-end-radius: var(--yisiui-radius-sm);
+}
+
+.human2ai-compact-dropdown-select__popup.ant-select-dropdown-placement-topLeft {
+  border-start-start-radius: var(--yisiui-radius-sm);
+  border-start-end-radius: var(--yisiui-radius-sm);
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+}
+
+.human2ai-compact-dropdown-select__popup-content,
+.human2ai-compact-dropdown-select__list {
+  background: var(--yisiui-color-surface-panel);
+}
+
+.human2ai-compact-dropdown-select__option.ant-select-item-option {
+  min-height: var(--yisiui-component-button-height);
+  align-items: center;
+  padding: var(--yisiui-space-2);
+  border-radius: var(--yisiui-radius-sm);
+  color: var(--yisiui-color-text-primary);
+}
+
+.human2ai-compact-dropdown-select__option.ant-select-item-option-active:not(
+    .ant-select-item-option-disabled
+  ) {
+  background: var(--yisiui-color-surface-hover);
+}
+
+.human2ai-compact-dropdown-select__option.ant-select-item-option-selected:not(
+    .ant-select-item-option-disabled
+  ) {
+  color: var(--yisiui-color-selection-text);
+  background: var(--yisiui-color-surface-selected);
+}
+
+.human2ai-compact-dropdown-select__option .ant-select-item-option-content {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.human2ai-compact-dropdown-select__option .ant-select-item-option-state {
+  color: var(--yisiui-color-selection-text);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .human2ai-compact-dropdown-select__control.ant-select,
+  .human2ai-compact-dropdown-select__arrow {
+    transition: none;
+  }
+}

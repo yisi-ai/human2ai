@@ -1,0 +1,469 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "workspace-sidebar",
+  "concepts": {
+    "session.create-image-composition": {
+      "meaning": "Create a new image-composition session, either without a project from the sidebar action area or already assigned to the project named by a project-row action.",
+      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session.",
+      "referent": "A newly persisted image-composition session and its initial composition draft.",
+      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing composition session or creating a project.",
+      "canonicalKey": "workspaceSidebar.newComposition",
+      "searchTerms": [
+        "新建构图",
+        "在项目中新建构图",
+        "New composition",
+        "create composition in project"
+      ],
+      "examples": [
+        "Create an unassigned composition from the sidebar action area.",
+        "Create a composition already assigned to Brand refresh from that project's row.",
+        "Create and immediately open a fresh session from a home-page card."
+      ],
+      "nonExamples": [
+        "Open an existing composition session.",
+        "Create a project without creating a session."
+      ]
+    },
+    "session.create-ui-layout": {
+      "meaning": "Create a new UI-layout session, either without a project from the sidebar action area or already assigned to the project named by a project-row action.",
+      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session.",
+      "referent": "A newly persisted UI-layout session and its initial UI sketch draft.",
+      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing UI-layout session or creating a project.",
+      "canonicalKey": "workspaceSidebar.newUiSketch",
+      "searchTerms": [
+        "新建 UI 界面",
+        "在项目中新建 UI 界面",
+        "New interface",
+        "create interface in project"
+      ],
+      "examples": [
+        "Create an unassigned interface from the sidebar action area.",
+        "Create an interface already assigned to Brand refresh from that project's row.",
+        "Create and immediately open a fresh session from a home-page card."
+      ],
+      "nonExamples": [
+        "Open an existing interface session.",
+        "Create a composition session."
+      ]
+    },
+    "workspace.unassigned-sessions": {
+      "meaning": "A virtual final group containing every session that is not assigned to any project, shown only while at least one such session exists.",
+      "scope": "The project-session hierarchy in the Human2AI workspace sidebar.",
+      "referent": "Sessions whose persisted projectId is null, not an actual project record.",
+      "precedence": "It follows every real project and contains only unassigned sessions; it is distinct from an empty project and from the absence of all projects.",
+      "canonicalKey": "workspaceSidebar.unassigned",
+      "searchTerms": [
+        "无项目",
+        "未分配会话",
+        "No project",
+        "unassigned sessions"
+      ],
+      "examples": [
+        "Show No project last when an unassigned composition exists."
+      ],
+      "nonExamples": [
+        "An empty named project.",
+        "A placeholder shown when there are no unassigned sessions."
+      ]
+    },
+    "project.create": {
+      "meaning": "Begin creating a named workspace project used to organize sessions.",
+      "scope": "Workspace New project launcher and its creation dialog title.",
+      "referent": "A new project record, initially without sessions.",
+      "precedence": "Opens the form; actions.create submits it. Distinct from creating a session within an existing project.",
+      "canonicalKey": "workspaceSidebar.newProject",
+      "searchTerms": [
+        "新建项目",
+        "New project",
+        "create project"
+      ],
+      "examples": [
+        "Open the dialog for a new project."
+      ],
+      "nonExamples": [
+        "Create a composition in an existing project."
+      ]
+    },
+    "project.name": {
+      "meaning": "The user-entered display name of a workspace project; project names must be unique among projects.",
+      "scope": "Workspace project creation and renaming forms.",
+      "referent": "The name of a real project, not the virtual unassigned-session group.",
+      "precedence": "Creating and renaming use the same input instruction and uniqueness feedback; project names do not constrain session titles.",
+      "canonicalKey": "workspaceSidebar.projectNamePlaceholder",
+      "searchTerms": [
+        "输入项目名称",
+        "Enter project name",
+        "项目名称不能重复",
+        "Project names must be unique"
+      ],
+      "examples": [
+        "Enter a new project name.",
+        "Report an existing project name used for another project."
+      ],
+      "nonExamples": [
+        "Rename a session.",
+        "Edit the No project group label."
+      ]
+    },
+    "session.name": {
+      "meaning": "The user-editable display name of an existing workspace session.",
+      "scope": "Workspace session-renaming input.",
+      "referent": "The selected session title, not its project name or persisted identifier.",
+      "precedence": "Renaming preserves session identity and contents; unlike project names, this field does not present a uniqueness constraint.",
+      "canonicalKey": "workspaceSidebar.renameSessionPlaceholder",
+      "searchTerms": [
+        "输入会话名称",
+        "Enter session name",
+        "session title"
+      ],
+      "examples": [
+        "Enter a new display name for a composition session."
+      ],
+      "nonExamples": [
+        "Choose the session destination project.",
+        "Change a session identifier."
+      ]
+    },
+    "project.deletion-consequences": {
+      "meaning": "A project can be deleted only when it contains no sessions, and deletion cannot be undone.",
+      "scope": "Workspace project deletion confirmation, disabled menu explanation, and nonempty-project error.",
+      "referent": "The selected project record and its contained sessions.",
+      "precedence": "Does not cascade into child sessions; distinct from session deletion, which removes its drafts and refinement records.",
+      "canonicalKey": "workspaceSidebar.deleteProjectDescription",
+      "searchTerms": [
+        "删除后无法恢复",
+        "项目包含子项",
+        "cannot be undone",
+        "Projects with child items"
+      ],
+      "examples": [
+        "Warn before deleting an empty project.",
+        "Disable deletion while a project contains a session."
+      ],
+      "nonExamples": [
+        "Delete a project together with all sessions."
+      ]
+    },
+    "session.deletion-consequences": {
+      "meaning": "Deleting a session also removes its drafts and refinement records.",
+      "scope": "Workspace session deletion confirmation.",
+      "referent": "The selected session and its associated draft and refinement data.",
+      "precedence": "Unlike deleting an empty project, this removes dependent session content; it does not delete the containing project.",
+      "canonicalKey": "workspaceSidebar.deleteSessionDescription",
+      "searchTerms": [
+        "删除会话",
+        "草图和加工记录",
+        "session deletion",
+        "drafts",
+        "refinement records"
+      ],
+      "examples": [
+        "Warn about related draft removal before deleting a session."
+      ],
+      "nonExamples": [
+        "Delete only one node in a draft."
+      ]
+    },
+    "workspace.loading": {
+      "meaning": "Progress and failure feedback for loading the workspace project-session hierarchy.",
+      "scope": "Workspace sidebar loading boundary.",
+      "referent": "Projects and sessions fetched to populate sidebar navigation.",
+      "precedence": "Not mutation feedback; retry uses actions.retry.",
+      "canonicalKey": "workspaceSidebar.loading",
+      "searchTerms": [
+        "正在加载项目",
+        "项目列表加载失败",
+        "Loading projects",
+        "Could not load projects"
+      ],
+      "examples": [
+        "Show loading feedback while fetching sidebar data."
+      ],
+      "nonExamples": [
+        "Report failure to rename a session."
+      ]
+    },
+    "workspace.action-area": {
+      "meaning": "The sidebar section containing creation and feature-entry controls.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "The sidebar action section.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.functionArea",
+      "searchTerms": [
+        "功能区",
+        "Actions",
+        "sidebar actions"
+      ],
+      "examples": [
+        "Group New project and New composition controls."
+      ],
+      "nonExamples": [
+        "Tools for editing the current canvas."
+      ]
+    },
+    "workspace.project-area": {
+      "meaning": "The sidebar hierarchy of projects and their sessions, including the virtual unassigned group.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "The project-session navigation section.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.projectArea",
+      "searchTerms": [
+        "项目",
+        "Projects",
+        "project hierarchy"
+      ],
+      "examples": [
+        "Display project rows and child sessions."
+      ],
+      "nonExamples": [
+        "A destination selector in a move dialog."
+      ]
+    },
+    "workspace.project-actions": {
+      "meaning": "The menu of operations on one existing project.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "The selected project row action menu.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.projectActions",
+      "searchTerms": [
+        "项目操作",
+        "Project actions"
+      ],
+      "examples": [
+        "Accessible name for the project menu trigger."
+      ],
+      "nonExamples": [
+        "Global project creation controls."
+      ]
+    },
+    "workspace.session-actions": {
+      "meaning": "The menu of operations on one existing session.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "The selected session row action menu.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.sessionActions",
+      "searchTerms": [
+        "会话操作",
+        "Session actions"
+      ],
+      "examples": [
+        "Accessible name for the session menu trigger."
+      ],
+      "nonExamples": [
+        "Editing tools inside a session canvas."
+      ]
+    },
+    "session.composition-kind": {
+      "meaning": "The type label identifying an image-composition session.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "A composition session in sidebar navigation.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.imageCompositionSession",
+      "searchTerms": [
+        "构图会话",
+        "Composition session"
+      ],
+      "examples": [
+        "Describe a composition session row."
+      ],
+      "nonExamples": [
+        "The command that creates a new composition."
+      ]
+    },
+    "session.interface-kind": {
+      "meaning": "The type label identifying a UI-layout session.",
+      "scope": "Workspace sidebar navigation.",
+      "referent": "An interface session in sidebar navigation.",
+      "precedence": "Classification or section identity, not an executable action.",
+      "canonicalKey": "workspaceSidebar.uiLayoutSession",
+      "searchTerms": [
+        "UI 界面会话",
+        "Interface session"
+      ],
+      "examples": [
+        "Describe an interface session row."
+      ],
+      "nonExamples": [
+        "The command that creates a new interface."
+      ]
+    }
+  },
+  "keys": {
+    "workspaceSidebar.newComposition": {
+      "conceptId": "session.create-image-composition",
+      "variant": "global-action-label",
+      "role": "visible label for the sidebar action that creates an unassigned composition session",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.newCompositionInProject": {
+      "conceptId": "session.create-image-composition",
+      "variant": "project-icon-action-label",
+      "role": "tooltip and accessible name for an icon-only action that creates a composition in the named project",
+      "grammar": "imperative verb phrase with a project-name placeholder",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.newUiSketch": {
+      "conceptId": "session.create-ui-layout",
+      "variant": "global-action-label",
+      "role": "visible label for the sidebar action that creates an unassigned UI-layout session",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.newUiSketchInProject": {
+      "conceptId": "session.create-ui-layout",
+      "variant": "project-icon-action-label",
+      "role": "tooltip and accessible name for an icon-only action that creates a UI-layout session in the named project",
+      "grammar": "imperative verb phrase with a project-name placeholder",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.unassigned": {
+      "conceptId": "workspace.unassigned-sessions",
+      "variant": "group-label",
+      "role": "label for the final virtual group of sessions without a project",
+      "grammar": "concise noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.newProject": {
+      "conceptId": "project.create",
+      "variant": "launcher-and-dialog-title",
+      "role": "creation launcher label and matching task title",
+      "grammar": "concise noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.projectNamePlaceholder": {
+      "conceptId": "project.name",
+      "variant": "input-prompt",
+      "role": "placeholder and accessible instruction for project-name entry",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.projectNameConflict": {
+      "conceptId": "project.name",
+      "variant": "uniqueness-error",
+      "role": "validation feedback for a duplicate project name",
+      "grammar": "declarative sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.renameSessionPlaceholder": {
+      "conceptId": "session.name",
+      "variant": "input-prompt",
+      "role": "placeholder and accessible instruction for editing a session name",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.deleteProjectDescription": {
+      "conceptId": "project.deletion-consequences",
+      "variant": "confirmation-description",
+      "role": "irreversibility warning in the project deletion dialog",
+      "grammar": "declarative sentence",
+      "tone": "cautionary",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.deleteProjectDisabled": {
+      "conceptId": "project.deletion-consequences",
+      "variant": "nonempty-explanation",
+      "role": "disabled menu tooltip and nonempty-project error",
+      "grammar": "declarative sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.deleteSessionDescription": {
+      "conceptId": "session.deletion-consequences",
+      "variant": "confirmation-description",
+      "role": "explanation of data removed with the session",
+      "grammar": "declarative sentence",
+      "tone": "cautionary",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.loading": {
+      "conceptId": "workspace.loading",
+      "variant": "progress-label",
+      "role": "accessible loading label",
+      "grammar": "progress phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.loadFailed": {
+      "conceptId": "workspace.loading",
+      "variant": "load-error",
+      "role": "visible failure state for loading sidebar data",
+      "grammar": "declarative sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.functionArea": {
+      "conceptId": "workspace.action-area",
+      "variant": "label",
+      "role": "section heading",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.projectArea": {
+      "conceptId": "workspace.project-area",
+      "variant": "label",
+      "role": "section heading",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.projectActions": {
+      "conceptId": "workspace.project-actions",
+      "variant": "label",
+      "role": "tooltip and accessible menu name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.sessionActions": {
+      "conceptId": "workspace.session-actions",
+      "variant": "label",
+      "role": "tooltip and accessible menu name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.imageCompositionSession": {
+      "conceptId": "session.composition-kind",
+      "variant": "label",
+      "role": "session-kind description",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.uiLayoutSession": {
+      "conceptId": "session.interface-kind",
+      "variant": "label",
+      "role": "session-kind description",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "home.createComposition": {
+      "conceptId": "session.create-image-composition",
+      "variant": "home-create-action",
+      "role": "prominent home-page card action that persists a new unassigned session and opens it",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "home.createUiSketch": {
+      "conceptId": "session.create-ui-layout",
+      "variant": "home-create-action",
+      "role": "prominent home-page card action that persists a new unassigned session and opens it",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    }
+  }
+}

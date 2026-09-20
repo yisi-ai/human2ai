@@ -1,0 +1,25 @@
+.yisi-number-badge {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 50%;
+  background: var(--yisiui-color-brand-primary);
+  color: var(--yisiui-color-brand-on-primary);
+  font-family: var(--yisiui-typography-body-small-font-family);
+  font-size: var(--yisiui-typography-body-small-font-size);
+  font-variant-numeric: var(--yisiui-typography-numeric-font-variant-numeric);
+  font-weight: var(--yisiui-typography-body-strong-font-weight);
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.yisi-number-badge-value {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+}
+

@@ -1,0 +1,38 @@
+.human2ai-app-shell {
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  color: var(--yisiui-color-text-primary);
+  font-family: var(--yisiui-font-family-sans);
+}
+
+.human2ai-app-shell .yisi-app-shell-content-body {
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-bottom: 0;
+}
+
+.human2ai-app-shell__page-title {
+  margin: 0;
+  overflow: hidden;
+  font: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.human2ai-app-shell__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+  color: inherit;
+  text-decoration: none;
+  border-radius: var(--yisiui-radius-sm);
+}
+
+.human2ai-app-shell__brand-icon {
+  flex-shrink: 0;
+}
+
+.human2ai-app-shell__brand:focus-visible {
+  outline: 2px solid var(--yisiui-color-brand-primary);
+  outline-offset: 4px;
+}

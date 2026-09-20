@@ -1,0 +1,83 @@
+.yisi-status-light {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yisiui-space-1);
+  width: 24px;
+  padding: var(--yisiui-space-1) var(--yisiui-space-2);
+  border: 1px solid color-mix(in srgb, var(--yisiui-color-text-inverse) 14%, transparent);
+  border-radius: var(--yisiui-radius-sm);
+  background: var(--yisiui-component-status-light-background);
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-status-light-motion-blink .yisi-status-light-lamp-active {
+    animation: none;
+  }
+}
+
+.yisi-status-light-background-none {
+  border-color: transparent;
+  background: transparent;
+}
+
+.yisi-status-light-background-dark {
+  border-color: color-mix(in srgb, var(--yisiui-color-text-inverse) 14%, transparent);
+  background: var(--yisiui-component-status-light-background);
+}
+
+.yisi-status-light-lamp {
+  display: block;
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: var(--yisiui-status-light-lamp-color);
+  opacity: 0.22;
+  transition: opacity var(--yisiui-motion-fast), box-shadow var(--yisiui-motion-fast), filter var(--yisiui-motion-fast);
+}
+
+.yisi-status-light-lamp-green {
+  --yisiui-status-light-lamp-color: var(--yisiui-component-status-light-green);
+}
+
+.yisi-status-light-lamp-yellow {
+  --yisiui-status-light-lamp-color: var(--yisiui-component-status-light-yellow);
+}
+
+.yisi-status-light-background-none .yisi-status-light-lamp-yellow {
+  --yisiui-status-light-lamp-color: var(--yisiui-component-status-light-yellow-on-light);
+}
+
+.yisi-status-light-lamp-red {
+  --yisiui-status-light-lamp-color: var(--yisiui-component-status-light-red);
+}
+
+.yisi-status-light-lamp-active {
+  opacity: 1;
+  box-shadow: 0 0 7px var(--yisiui-status-light-lamp-color);
+  filter: brightness(1.08);
+}
+
+.yisi-status-light-motion-blink .yisi-status-light-lamp-active {
+  animation: yisi-status-light-blink 1.1s ease-in-out infinite;
+}
+
+@keyframes yisi-status-light-blink {
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: 0 0 7px var(--yisiui-status-light-lamp-color);
+    filter: brightness(1.08);
+  }
+
+  50% {
+    opacity: 0.28;
+    box-shadow: 0 0 0 transparent;
+    filter: brightness(0.92);
+  }
+}

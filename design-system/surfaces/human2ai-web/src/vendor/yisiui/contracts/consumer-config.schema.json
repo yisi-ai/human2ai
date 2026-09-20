@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "yisiui/consumer-config",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "project",
+    "surface",
+    "applicationRoot",
+    "distribution",
+    "sourceRelease",
+    "vendorRoot",
+    "localRegistry",
+    "inspector",
+    "skills"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 2
+    },
+    "project": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "surface": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "applicationRoot": {
+      "$ref": "#/$defs/directory",
+      "default": "web"
+    },
+    "distribution": {
+      "const": "source-sync"
+    },
+    "sourceRelease": {
+      "type": "object",
+      "required": [
+        "surface",
+        "version"
+      ],
+      "properties": {
+        "surface": {
+          "const": "web-react"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "vendorRoot": {
+      "type": "string",
+      "minLength": 1
+    },
+    "localRegistry": {
+      "type": "string",
+      "minLength": 1
+    },
+    "inspector": {
+      "type": "object",
+      "required": [
+        "developmentOnly"
+      ],
+      "properties": {
+        "developmentOnly": {
+          "const": true
+        }
+      }
+    },
+    "skills": {
+      "type": "object",
+      "required": [
+        "mode",
+        "integrationVersion"
+      ],
+      "properties": {
+        "mode": {
+          "const": "managed-source-sync"
+        },
+        "integrationVersion": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    },
+    "packageManager": {
+      "enum": [
+        "npm",
+        "pnpm"
+      ],
+      "default": "npm"
+    },
+    "surfaceRoot": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Repository-relative Surface directory; defaults to design-system/surfaces/<surface>.",
+      "$ref": "#/$defs/directory"
+    },
+    "commandScript": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9:-]*$",
+      "default": "yisiui"
+    },
+    "storybook": {
+      "type": "object",
+      "required": [
+        "applicationRoot",
+        "framework",
+        "sharedStories",
+        "localStories"
+      ],
+      "properties": {
+        "applicationRoot": {
+          "type": "string",
+          "minLength": 1,
+          "default": "storybook",
+          "$ref": "#/$defs/directory"
+        },
+        "framework": {
+          "const": "react-webpack5"
+        },
+        "sharedStories": {
+          "type": "string",
+          "minLength": 1
+        },
+        "localStories": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  },
+  "$defs": {
+    "directory": {
+      "type": "string",
+      "pattern": "^[a-zA-Z0-9_-]+(?:/(?!\\.\\.?(?:/|$))[a-zA-Z0-9_.-]+)*$"
+    }
+  }
+}

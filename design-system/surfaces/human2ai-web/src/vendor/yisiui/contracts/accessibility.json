@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "requirements": {
+    "keyboard": [
+      "所有可操作元素可通过键盘到达",
+      "focus-visible 不被全局样式移除",
+      "阻塞浮层关闭后焦点返回触发元素"
+    ],
+    "semantics": [
+      "状态不只用颜色表达",
+      "图标按钮具有可访问名称",
+      "共享组件不擅自决定页面标题层级"
+    ],
+    "contrast": {
+      "body": "4.5:1",
+      "largeText": "3:1",
+      "focusIndicator": "3:1"
+    },
+    "motion": "不依赖动画传达唯一信息，并遵守 prefers-reduced-motion"
+  }
+}
+

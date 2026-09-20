@@ -1,0 +1,167 @@
+.yisi-app-shell-frame {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: var(
+    --yisi-app-shell-sidebar-grid-width,
+    var(--yisi-app-shell-sidebar-width, var(--yisiui-surface-desktop-web-sidebar-width))
+  ) minmax(0, 1fr) var(
+    --yisi-app-shell-right-panel-grid-width,
+    var(--yisi-app-shell-right-panel-width, var(--yisiui-surface-desktop-web-sidebar-width))
+  );
+  width: 100%;
+  height: 100dvh;
+  min-height: 100vh;
+  overflow: hidden;
+  color: var(--yisiui-color-text-primary);
+  background: var(--yisiui-color-surface-page);
+}
+
+.yisi-app-shell-frame--sidebar-hidden {
+  --yisi-app-shell-sidebar-grid-width: 0px;
+}
+
+.yisi-app-shell-frame--sidebar-hidden .yisi-app-shell-sidebar {
+  display: none;
+}
+
+.yisi-app-shell-frame--right-panel-hidden {
+  --yisi-app-shell-right-panel-grid-width: 0px;
+}
+
+.yisi-app-shell-frame--right-panel-hidden .yisi-app-shell-right-panel {
+  display: none;
+}
+
+.yisi-app-shell-sidebar {
+  position: relative;
+  grid-column: 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+.yisi-app-shell-sidebar-content {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.yisi-app-shell-sidebar-top {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--yisiui-space-4);
+  padding: var(--yisiui-space-5) var(--yisiui-space-4) var(--yisiui-space-4);
+}
+
+.yisi-app-shell-sidebar-heading {
+  display: flex;
+  width: 100%;
+  min-height: var(--yisiui-component-button-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+}
+
+.yisi-app-shell-sidebar-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-lg);
+  font-weight: var(--yisiui-font-weight-semibold);
+  line-height: var(--yisiui-font-line-height-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yisi-app-shell-sidebar-navigation {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--yisiui-space-1);
+}
+
+.yisi-app-shell-sidebar-slot {
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+}
+
+.yisi-app-shell-content {
+  display: grid;
+  grid-column: 2;
+  grid-template-rows:
+    calc(var(--yisiui-component-button-height) + var(--yisiui-space-6))
+    minmax(0, 1fr);
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.yisi-app-shell-content-header {
+  box-sizing: border-box;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--yisiui-space-3);
+  padding: 0 var(--yisiui-space-5);
+}
+
+.yisi-app-shell-content-leading,
+.yisi-app-shell-sidebar-collapsed-actions,
+.yisi-app-shell-content-trailing {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+}
+
+.yisi-app-shell-content-trailing {
+  margin-left: auto;
+}
+
+.yisi-app-shell-content-title {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-md);
+  font-weight: var(--yisiui-font-weight-semibold);
+  line-height: var(--yisiui-font-line-height-normal);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yisi-app-shell-content-body {
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 0;
+  border-radius: var(--yisiui-radius-lg);
+  background: var(--yisiui-color-surface-panel);
+}
+
+.yisi-app-shell-right-panel {
+  box-sizing: border-box;
+  grid-column: 3;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--yisiui-color-surface-page);
+}
+
+.yisi-app-shell-sidebar-toggle,
+.yisi-app-shell-content-toggle,
+.yisi-app-shell-content-back,
+.yisi-app-shell-right-panel-toggle {
+  flex: 0 0 auto;
+  width: var(--yisiui-component-button-height);
+  height: var(--yisiui-component-button-height);
+}

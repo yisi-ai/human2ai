@@ -1,0 +1,122 @@
+.yisi-animated-icon {
+  display: inline-block;
+  flex: none;
+  vertical-align: -0.125em;
+  overflow: visible;
+}
+
+.yisi-animated-icon-motion,
+.yisi-animated-icon-layer {
+  transform-box: view-box;
+  transform-origin: 12px 12px;
+}
+
+.yisi-animated-icon[data-playing="true"] .yisi-animated-icon-motion,
+.yisi-animated-icon[data-playing="true"] .yisi-animated-icon-layer {
+  animation: var(--yisiui-animated-icon-animation) var(--yisiui-animated-icon-duration, 720ms) ease-in-out 1;
+}
+
+.yisi-animated-icon[data-playing="true"][data-loop="true"] .yisi-animated-icon-motion,
+.yisi-animated-icon[data-playing="true"][data-loop="true"] .yisi-animated-icon-layer {
+  animation-iteration-count: infinite;
+}
+
+.yisi-animated-icon[data-icon="plus"] { --yisiui-animated-icon-animation: yisi-icon-plus; }
+.yisi-animated-icon[data-icon="upload"] { --yisiui-animated-icon-animation: yisi-icon-upload; }
+.yisi-animated-icon[data-icon="send"] { --yisiui-animated-icon-animation: yisi-icon-send; }
+.yisi-animated-icon[data-icon="refresh"] { --yisiui-animated-icon-animation: yisi-icon-refresh; }
+.yisi-animated-icon[data-icon="copy"] { --yisiui-animated-icon-animation: yisi-icon-copy; }
+.yisi-animated-icon[data-icon="star"] { --yisiui-animated-icon-animation: yisi-icon-star; }
+.yisi-animated-icon[data-icon="bell"] { --yisiui-animated-icon-animation: yisi-icon-bell; }
+.yisi-animated-icon[data-icon="close"] { --yisiui-animated-icon-animation: yisi-icon-close; }
+
+@keyframes yisi-icon-plus {
+  0%, 78%, 100% { transform: scale(1); }
+  22% { transform: scale(0.9); }
+  48% { transform: scale(1.08); }
+  64% { transform: scale(0.98); }
+}
+@keyframes yisi-icon-upload {
+  0%, 12%, 78%, 100% { transform: translateY(0); }
+  26% { transform: translateY(0.8px); }
+  48% { transform: translateY(-1.8px); }
+  65% { transform: translateY(0.4px); }
+}
+@keyframes yisi-icon-send {
+  0%, 82%, 100% { transform: translate(0, 0); opacity: 1; }
+  18% { transform: translate(-0.8px, 0.8px); opacity: 1; }
+  44% { transform: translate(3px, -3px); opacity: 0; }
+  45% { transform: translate(-2px, 2px); opacity: 0; }
+  70% { transform: translate(0.3px, -0.3px); opacity: 1; }
+}
+@keyframes yisi-icon-refresh {
+  0%, 10% { transform: rotate(0); }
+  23% { transform: rotate(-12deg); }
+  72% { transform: rotate(365deg); }
+  84%, 100% { transform: rotate(360deg); }
+}
+@keyframes yisi-icon-copy {
+  0%, 10%, 78%, 100% { transform: translate(0, 0) rotate(0); }
+  26% { transform: translate(-0.6px, 0.4px) rotate(-3deg); }
+  48% { transform: translate(1px, -1.8px) rotate(4deg); }
+  65% { transform: translate(0, 0.5px) rotate(-1deg); }
+}
+@keyframes yisi-icon-star {
+  0%, 82%, 100% { transform: scale(1); }
+  22% { transform: scale(0.9); }
+  48% { transform: scale(1.06); }
+  66% { transform: scale(0.98); }
+}
+@keyframes yisi-icon-bell {
+  0%, 8%, 84%, 100% { transform: rotate(0); }
+  24% { transform: rotate(11deg); }
+  42% { transform: rotate(-9deg); }
+  58% { transform: rotate(5deg); }
+  72% { transform: rotate(-2deg); }
+}
+@keyframes yisi-icon-close {
+  0%, 80%, 100% { transform: scale(1); }
+  30% { transform: scale(0.84); }
+  56% { transform: scale(1.04); }
+}
+
+.yisi-animated-icon[data-icon="bell"] .yisi-animated-icon-motion,
+.yisi-icon-bell-clapper { transform-origin: 12px 4px; }
+.yisi-icon-bell-clapper { --yisiui-animated-icon-animation: yisi-icon-bell-clapper; }
+@keyframes yisi-icon-bell-clapper {
+  0%, 16%, 90%, 100% { transform: rotate(0); }
+  32% { transform: rotate(13deg); }
+  50% { transform: rotate(-10deg); }
+  66% { transform: rotate(6deg); }
+  80% { transform: rotate(-2deg); }
+}
+
+.yisi-animated-icon[data-icon="reset"] { --yisiui-animated-icon-animation: yisi-icon-reset; }
+.yisi-animated-icon[data-icon="sidebar-left"],
+.yisi-animated-icon[data-icon="sidebar-right"] { --yisiui-animated-icon-animation: yisi-icon-sidebar; }
+.yisi-animated-icon[data-icon="sidebar-left"] .yisi-animated-icon-motion,
+.yisi-animated-icon[data-icon="sidebar-right"] .yisi-animated-icon-motion { transform-origin: 5.5px 12px; }
+.yisi-animated-icon[data-icon="loading"] { --yisiui-animated-icon-animation: yisi-icon-loading; }
+.yisi-animated-icon[data-icon="loading"][data-playing="true"] .yisi-animated-icon-motion { animation-timing-function: linear; }
+@keyframes yisi-icon-reset {
+  0%, 10% { transform: rotate(0); }
+  24% { transform: rotate(12deg); }
+  74% { transform: rotate(-364deg); }
+  86%, 100% { transform: rotate(-360deg); }
+}
+@keyframes yisi-icon-sidebar {
+  0%, 12%, 84%, 100% { transform: scaleX(1); }
+  42% { transform: scaleX(0.25); }
+  66% { transform: scaleX(1.06); }
+}
+@keyframes yisi-icon-loading {
+  from { transform: rotate(0); }
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-animated-icon[data-playing="true"] .yisi-animated-icon-motion,
+  .yisi-animated-icon[data-playing="true"] .yisi-animated-icon-layer {
+    animation: none;
+  }
+}

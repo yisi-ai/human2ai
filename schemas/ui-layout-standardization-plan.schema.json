@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceFingerprint", "alignments"],
+  "properties": {
+    "sourceFingerprint": { "type": "string", "minLength": 1 },
+    "alignments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["stageId", "axis", "edge", "anchorId", "itemIds"],
+        "properties": {
+          "stageId": { "type": "string", "minLength": 1 },
+          "axis": { "enum": ["x", "y"] },
+          "edge": { "enum": ["start", "center", "end"] },
+          "anchorId": { "type": "string", "minLength": 1 },
+          "itemIds": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "type": "string", "minLength": 1 }
+          }
+        }
+      }
+    }
+  }
+}

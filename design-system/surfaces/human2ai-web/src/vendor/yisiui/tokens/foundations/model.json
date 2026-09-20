@@ -1,0 +1,42 @@
+{
+  "$schema": "../../tooling/schemas/token-model.schema.json",
+  "schemaVersion": 1,
+  "status": "draft",
+  "format": "DTCG",
+  "prefix": "yisiui",
+  "layers": [
+    {
+      "id": "core",
+      "owner": "yisiui",
+      "purpose": "原始色阶、字体、间距、圆角、阴影和动效数值"
+    },
+    {
+      "id": "semantic",
+      "owner": "yisiui",
+      "purpose": "跨项目稳定的文本、表面、边框、动作和反馈语义"
+    },
+    {
+      "id": "component",
+      "owner": "yisiui",
+      "purpose": "已批准共享资产的稳定局部视觉契约"
+    },
+    {
+      "id": "product-surface",
+      "owner": "consumer-project",
+      "purpose": "产品品牌、页面、领域状态和 Surface 专属映射"
+    }
+  ],
+  "sources": [
+    "core.tokens.json",
+    "semantic.tokens.json",
+    "themes.tokens.json",
+    "../../surfaces/web-react/tokens/source/surface.tokens.json",
+    "../../surfaces/web-react/tokens/source/component.tokens.json"
+  ],
+  "provenance": {
+    "repository": "writer-harness",
+    "surface": "desktop-web",
+    "migrationDate": "2026-08-22"
+  },
+  "note": "按用户指定迁移 Writer Harness 当前全部 Token；在 YisiUI 首次消费项目验证和视觉基线批准前保持 draft。"
+}

@@ -1,0 +1,16 @@
+{
+  "$schema": "./semantic-catalog.schema.json",
+  "schemaVersion": 1,
+  "locales": ["en", "zh-CN"],
+  "resource": "common.json",
+  "catalogs": [
+    "semantics/canvas-images.json",
+    "semantics/composition.json",
+    "semantics/integrations.json",
+    "semantics/shared.json",
+    "semantics/spatial.json",
+    "semantics/style-library.json",
+    "semantics/ui-sketch.json",
+    "semantics/workspace-sidebar.json"
+  ]
+}

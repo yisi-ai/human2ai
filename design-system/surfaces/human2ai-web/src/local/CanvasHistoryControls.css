@@ -1,0 +1,12 @@
+.human2ai-canvas-history-controls {
+  position: absolute;
+  z-index: 4;
+  left: var(--yisiui-space-4);
+  bottom: var(--yisiui-space-4);
+  display: flex;
+  gap: var(--yisiui-space-1);
+  padding: var(--yisiui-space-1);
+  background: var(--yisiui-color-surface-panel);
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-radius: var(--yisiui-radius-md);
+}

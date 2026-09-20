@@ -1,0 +1,53 @@
+.storyFrame {
+  box-sizing: border-box;
+  min-height: 100vh;
+  padding: var(--yisiui-space-8);
+  background: var(--yisiui-color-surface-page);
+}
+
+.storyContent {
+  display: grid;
+  width: min(760px, 100%);
+  gap: var(--yisiui-space-8);
+}
+
+.example {
+  display: grid;
+  gap: var(--yisiui-space-3);
+}
+
+.heading {
+  margin: 0;
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-md);
+  font-weight: var(--yisiui-font-weight-semibold);
+  line-height: var(--yisiui-font-line-height-compact);
+}
+
+.description,
+.status {
+  margin: 0;
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-sm);
+  line-height: var(--yisiui-font-line-height-normal);
+}
+
+.stateGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--yisiui-space-6);
+}
+
+@media (max-width: 720px) {
+  .stateGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.attachment {
+  padding: var(--yisiui-space-2) var(--yisiui-space-3);
+  border-radius: var(--yisiui-radius-md);
+  background: var(--yisiui-color-surface-active);
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-sm);
+}

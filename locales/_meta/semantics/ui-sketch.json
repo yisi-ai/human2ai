@@ -1,0 +1,866 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "ui-sketch",
+  "concepts": {
+    "ui-sketch.perceptible-layout-intent": {
+      "meaning": "An implementation instruction that limits a UI sketch to the key interface elements and spatial relationships users can perceive, while excluding component-tree structure and layout-only containers.",
+      "scope": "Static and motion UI-sketch prompts exported for downstream interface implementation.",
+      "referent": "The interpretation boundary for rectangles and other nodes in an exported UI-layout draft.",
+      "precedence": "It governs which draft geometry becomes interface content before responsive and component constraints are applied; an independently perceptible surface may be implemented, while code nesting alone must not create a container.",
+      "canonicalKey": "uiSketch.prompt.perceptibleElementGuidance",
+      "searchTerms": [
+        "用户可感知元素",
+        "不要实现容器",
+        "perceptible interface elements",
+        "component tree wrapper"
+      ],
+      "examples": [
+        "Implement a visibly bounded card and its primary action when both carry distinct visual meaning."
+      ],
+      "nonExamples": [
+        "Create separate interface containers for AppShell, Main, Grid, and Stack solely because they exist in the implementation tree."
+      ]
+    },
+    "ui-sketch.clear-canvas": {
+      "meaning": "A destructive action that removes all user-placed regions, text, and images from the UI sketch while preserving its interface frame, global note, and motion-stage structure.",
+      "scope": "The icon-only action beside the UI-sketch workbench's tool-section heading and its destructive confirmation.",
+      "referent": "The shared canvas content of the current UI sketch across its retained stages.",
+      "precedence": "Broader than deleting selected UI-sketch nodes; distinct from resetting the interface frame and from resetting an entire composition draft to defaults. Clearing draft content is one undoable editor operation in the current open session.",
+      "canonicalKey": "uiSketch.canvasLabels.clearCanvas",
+      "searchTerms": [
+        "清空画布",
+        "清空 UI 界面",
+        "Clear canvas",
+        "clear UI sketch"
+      ],
+      "examples": [
+        "Remove every region, text node, and image while keeping the UI sketch's frame and motion stages."
+      ],
+      "nonExamples": [
+        "Reset only the interface frame.",
+        "Delete only the selected UI-sketch node.",
+        "Delete the UI-sketch session."
+      ]
+    },
+    "ui-sketch.canvas-structure": {
+      "meaning": "The interface editor canvas and its nested navigation viewport and drawing scene.",
+      "scope": "UI-sketch canvas accessibility landmarks.",
+      "referent": "The main editing canvas, its infinite pan/zoom viewport, and the scene rendered inside that viewport.",
+      "precedence": "The canvas contains the viewport, which contains the scene; none is the bounded interface frame being designed.",
+      "canonicalKey": "uiSketch.canvas",
+      "searchTerms": [
+        "UI 界面画布",
+        "Interface canvas",
+        "UI 界面无限画布",
+        "Interface infinite canvas",
+        "UI 界面场景",
+        "Interface scene"
+      ],
+      "examples": [
+        "Name the main editing canvas landmark.",
+        "Distinguish its nested pan/zoom region."
+      ],
+      "nonExamples": [
+        "Describe the dimensions of the interface frame."
+      ]
+    },
+    "ui-sketch.visibility": {
+      "meaning": "Whether an interface element is shown in a particular sketch stage, with transitions describing changes between stages.",
+      "scope": "UI-sketch element editor and static or motion prompt exports.",
+      "referent": "An element visible boolean for the selected stage.",
+      "precedence": "A hidden element still exists in the draft; changing visibility is not deletion. State labels differ from transition instructions.",
+      "canonicalKey": "uiSketch.canvasLabels.visibility",
+      "searchTerms": [
+        "显示状态",
+        "显示",
+        "隐藏",
+        "Visibility",
+        "Visible",
+        "Hidden"
+      ],
+      "examples": [
+        "Mark an element hidden in the final stage.",
+        "Describe a transition from hidden to visible."
+      ],
+      "nonExamples": [
+        "Delete a node.",
+        "Collapse editor tools."
+      ]
+    },
+    "ui-sketch.font-size": {
+      "meaning": "The reference text size in pixels for a UI-sketch text element.",
+      "scope": "UI-sketch text editor and generated layout prompts.",
+      "referent": "The current text element fontSize value.",
+      "precedence": "Not canvas zoom, frame size, visual prominence, or a requirement for pixel-perfect final implementation. Increase and decrease operate in one-pixel steps with a minimum.",
+      "canonicalKey": "uiSketch.canvasLabels.fontSize",
+      "searchTerms": [
+        "字号",
+        "Font size",
+        "增大字号",
+        "减小字号",
+        "reference font size"
+      ],
+      "examples": [
+        "Increase the reference text size by one pixel.",
+        "Export a suggested text size in a prompt."
+      ],
+      "nonExamples": [
+        "Zoom the entire canvas."
+      ]
+    },
+    "ui-sketch.motion-prompt": {
+      "meaning": "Copy an implementation prompt describing the interface initial state and changes leading to its final state.",
+      "scope": "The Motion option in the prompt-copy menu and generated motion prompt instructions.",
+      "referent": "Text produced from the start and end interface states, not a video, animated image, or arbitrary sequence of frames.",
+      "precedence": "Distinct from copying a static single-stage prompt or preview image. Geometry communicates layout intent; unchanged final properties inherit the initial state. Include a node when it is visible and overlaps the interface frame in either the initial or final state; preserve both states for entering and exiting nodes. Omit nodes with no visible overlap in either state.",
+      "canonicalKey": "uiSketch.motion.copyPrompt",
+      "searchTerms": [
+        "动效",
+        "Motion",
+        "copyAllStages",
+        "motion prompt",
+        "状态过渡"
+      ],
+      "examples": [
+        "Copy a prompt describing how an element moves from Start to End."
+      ],
+      "nonExamples": [
+        "Download an animation file.",
+        "Copy only the End stage as a static layout."
+      ]
+    },
+    "ui-sketch.static-prompt": {
+      "meaning": "A request to design and implement one static interface state from the sketch.",
+      "scope": "Static UI-sketch prompt export, including export of a single motion stage.",
+      "referent": "The selected stage resolved as a static layout.",
+      "precedence": "Includes only visible nodes with positive-area overlap with the interface frame in the selected stage. Partially overlapping nodes retain their complete geometry; fully outside nodes and nodes touching only the frame edge are omitted. Does not describe transitions between stages.",
+      "canonicalKey": "uiSketch.prompt.staticTitle",
+      "searchTerms": [
+        "设计并实现界面",
+        "static interface prompt",
+        "single stage"
+      ],
+      "examples": [
+        "Export only the final stage as a static interface."
+      ],
+      "nonExamples": [
+        "Request an animation between two stages."
+      ]
+    },
+    "ui-sketch.prompt-layout-guidance": {
+      "meaning": "Instructions treating sketch geometry as approximate interface layout guidance subject to real content, component and responsive constraints.",
+      "scope": "Shared layout section of static and motion UI-sketch prompts.",
+      "referent": "Spatial relationships and reference coordinates, dimensions and font sizes in the exported sketch.",
+      "precedence": "Complements perceptible-element guidance; does not prescribe fixed positioning or pixel-perfect reproduction and is distinct from image-generation composition instructions.",
+      "canonicalKey": "uiSketch.prompt.layoutHeading",
+      "searchTerms": [
+        "布局说明",
+        "参考值",
+        "responsive layout",
+        "layout guidance"
+      ],
+      "examples": [
+        "Adapt reference dimensions to a responsive implementation."
+      ],
+      "nonExamples": [
+        "Reproduce every draft coordinate as fixed CSS."
+      ]
+    },
+    "ui-sketch.prompt-geometry": {
+      "meaning": "Pixel-based reference geometry measured relative to the current interface frame.",
+      "scope": "Static and motion UI-sketch prompt dimensions, origins, positions and sizes.",
+      "referent": "Rounded interface-frame width and height and frame-relative element geometry.",
+      "precedence": "The exported origin is the interface frame top-left, not the infinite editor camera. Values are pixels, unlike composition percentage positions, and are recommendations rather than fixed implementation constraints.",
+      "canonicalKey": "uiSketch.prompt.canvasSize",
+      "searchTerms": [
+        "画布建议尺寸",
+        "参考位置",
+        "参考尺寸",
+        "Suggested canvas size",
+        "Reference position",
+        "Reference size",
+        "pixels"
+      ],
+      "examples": [
+        "Describe a region at x=24px relative to the interface frame."
+      ],
+      "nonExamples": [
+        "Describe a region at 24% of an image width."
+      ]
+    },
+    "ui-sketch.prompt-element-list": {
+      "meaning": "The exported list of perceptible interface elements and their layout requirements.",
+      "scope": "The elements section in static and motion UI-sketch prompts.",
+      "referent": "Exported regions, text nodes and images selected by the exporter visibility rules.",
+      "precedence": "A list of perceptible content, not a DOM tree or component nesting specification.",
+      "canonicalKey": "uiSketch.prompt.elementsHeading",
+      "searchTerms": [
+        "界面元素",
+        "Interface elements",
+        "element list"
+      ],
+      "examples": [
+        "Introduce exported image, region and text descriptions."
+      ],
+      "nonExamples": [
+        "List invisible layout-only wrapper components."
+      ]
+    },
+    "ui-sketch.region": {
+      "meaning": "A rectangular draft footprint representing perceptible interface content or a visual surface.",
+      "scope": "UI-sketch region creation, node editing and exported region headings.",
+      "referent": "A rectangle node, its editable metadata and its position in exported region order.",
+      "precedence": "Not an invisible layout wrapper or a composition-image area. Export indices use one-based source rectangle-list positions before visibility filtering, so hidden nodes can leave numbering gaps; they are not stable identifiers.",
+      "canonicalKey": "uiSketch.canvasLabels.region",
+      "searchTerms": [
+        "区域",
+        "添加区域",
+        "编辑区域信息",
+        "Region",
+        "Add region",
+        "Edit region details"
+      ],
+      "examples": [
+        "Add a region for a perceptible card surface."
+      ],
+      "nonExamples": [
+        "Add a rectangle only to represent a DOM wrapper."
+      ]
+    },
+    "ui-sketch.text-node": {
+      "meaning": "A draft node containing literal static text shown in the intended interface.",
+      "scope": "UI-sketch text creation controls, node editor and exported text headings.",
+      "referent": "The text node rather than its note or its reference font size.",
+      "precedence": "Distinct from a generic region representing dynamic text content and from a composition text region that can request generated copy. Prompt indices use source text-list positions before visibility filtering, so numbering can have gaps.",
+      "canonicalKey": "uiSketch.canvasLabels.text",
+      "searchTerms": [
+        "文字",
+        "添加文字",
+        "编辑文字",
+        "Text",
+        "Add text",
+        "Edit text"
+      ],
+      "examples": [
+        "Add a static heading text node."
+      ],
+      "nonExamples": [
+        "Represent a dynamic list as literal hardcoded text."
+      ]
+    },
+    "ui-sketch.initial-text-content": {
+      "meaning": "The localized initial literal content assigned to a newly created text node.",
+      "scope": "UI-sketch browser text-creation action.",
+      "referent": "The newly added node text value, editable and stored as user content.",
+      "precedence": "Unlike a tool label, this string becomes draft content and is not replaced merely because the interface locale changes.",
+      "canonicalKey": "uiSketch.canvasLabels.newText",
+      "searchTerms": [
+        "文字",
+        "Text",
+        "initial text",
+        "new text content"
+      ],
+      "examples": [
+        "Create a text node initially containing Text in the English interface."
+      ],
+      "nonExamples": [
+        "Label the Add text tool without creating content."
+      ]
+    },
+    "ui-sketch.empty-text-marker": {
+      "meaning": "An editor-only marker shown when a text node has no displayed text.",
+      "scope": "UI-sketch canvas rendering, accessible text-node names and editor selected-text preview.",
+      "referent": "The absence of displayed text in an existing text node.",
+      "precedence": "Does not write the marker into stored text or request generated copy; absence checks follow each caller rather than modifying the draft.",
+      "canonicalKey": "uiSketch.canvasLabels.emptyText",
+      "searchTerms": [
+        "文字未输入",
+        "No text entered",
+        "empty text marker"
+      ],
+      "examples": [
+        "Show a visible marker for an empty text node while leaving its text empty."
+      ],
+      "nonExamples": [
+        "Insert the marker into generated interface copy."
+      ]
+    },
+    "ui-sketch.missing-region-note": {
+      "meaning": "A fallback identifying a region whose note is absent or whitespace-only.",
+      "scope": "UI-sketch region accessible names and editor selected-text preview.",
+      "referent": "An existing region with no nonblank note.",
+      "precedence": "Missing descriptive metadata, not a missing region or an empty text node; the fallback is not saved as a note.",
+      "canonicalKey": "uiSketch.canvasLabels.missingRegionNote",
+      "searchTerms": [
+        "未填写备注",
+        "No note",
+        "missing region note"
+      ],
+      "examples": [
+        "Describe an unnamed region as Region: No note."
+      ],
+      "nonExamples": [
+        "Write No note into the region metadata."
+      ]
+    },
+    "ui-sketch.interface-frame": {
+      "meaning": "The bounded interface area being designed within the infinite editing canvas.",
+      "scope": "UI-sketch frame heading, dimension controls and canvas frame label.",
+      "referent": "The draft frame x, y, width and height.",
+      "precedence": "Defines the intended interface and prompt export area within an infinite canvas, without constraining node movement. Nodes outside remain editable and saved; only nodes with visible overlap contribute to the selected-stage prompt. Reset restores default frame geometry without clearing nodes, notes, or stages.",
+      "canonicalKey": "uiSketch.canvasLabels.frameRange",
+      "searchTerms": [
+        "界面范围",
+        "范围",
+        "重置范围",
+        "Interface frame",
+        "Size",
+        "Reset frame"
+      ],
+      "examples": [
+        "Edit the intended interface width and height.",
+        "Reset only frame geometry to defaults."
+      ],
+      "nonExamples": [
+        "Fit the viewport without changing frame dimensions.",
+        "Clear all interface nodes."
+      ]
+    },
+    "ui-sketch.feature": {
+      "meaning": "The interface layout and state-transition design feature.",
+      "scope": "Home-page feature-entry heading and reusable interface feature title.",
+      "referent": "The UI-sketch workbench as a product capability.",
+      "precedence": "Not an individual session title, a stage name or the nested drawing canvas.",
+      "canonicalKey": "uiSketch.title",
+      "searchTerms": [
+        "UI 界面",
+        "Interface",
+        "interface design feature"
+      ],
+      "examples": [
+        "Identify the interface feature above its Start button."
+      ],
+      "nonExamples": [
+        "Label a specific user-named interface session."
+      ]
+    },
+    "ui-sketch.selection-count": {
+      "meaning": "The number of selected editable items announced by the UI-sketch canvas.",
+      "scope": "The canvas live-region selection summary.",
+      "referent": "selectedItemKeys.length; the frame is tracked separately and excluded.",
+      "precedence": "Not total draft-node count or composition selected-ID listing. The current component concatenates prefix + count + suffix; fragments and their whitespace must be used together, not as generic reusable words.",
+      "canonicalKey": "uiSketch.canvasLabels.noSelection",
+      "searchTerms": [
+        "未选择元素",
+        "已选择",
+        "个元素",
+        "No items selected",
+        "Selected",
+        "items"
+      ],
+      "examples": [
+        "Announce the number of selected sketch elements."
+      ],
+      "nonExamples": [
+        "Count every node regardless of selection.",
+        "Reuse the suffix as an unrelated item label."
+      ]
+    },
+    "ui-sketch.group-items": {
+      "meaning": "Create a persistent, non-visual, single-level group from selected UI sketch elements so they can be selected and moved together while retaining editable members.",
+      "scope": "UI sketch canvas context menu.",
+      "referent": "The membership relation between selected rectangles, text nodes and images.",
+      "precedence": "Grouping preserves every node, its geometry and stage state. It is independent of visual surfaces, component hierarchy and temporary multi-selection.",
+      "canonicalKey": "uiSketch.canvasLabels.groupItems",
+      "searchTerms": [
+        "建组",
+        "组合",
+        "Group",
+        "group canvas elements"
+      ],
+      "examples": [
+        "Group a button surface with its editable label."
+      ],
+      "nonExamples": [
+        "Draw a container around a button.",
+        "Group sessions under a project.",
+        "Copy a preview image."
+      ]
+    },
+    "ui-sketch.ungroup-items": {
+      "meaning": "Remove selected persistent UI sketch groups while retaining their individual elements, content, geometry and stage states.",
+      "scope": "UI sketch canvas context menu.",
+      "referent": "Existing group membership relations touched by the selection.",
+      "precedence": "Removes membership only; does not delete elements or clear the canvas.",
+      "canonicalKey": "uiSketch.canvasLabels.ungroupItems",
+      "searchTerms": [
+        "解组",
+        "取消组合",
+        "Ungroup"
+      ],
+      "examples": [
+        "Separate a button label from its surface for independent movement."
+      ],
+      "nonExamples": [
+        "Delete a button and its label.",
+        "Deselect a group."
+      ]
+    },
+    "ui-sketch.missing-state": {
+      "meaning": "The requested UI state id is absent from the saved document’s editable state tabs.",
+      "scope": "UI state selection for CLI preview export.",
+      "referent": "The stable state id requested by the Agent.",
+      "precedence": "An absent or deleted state must not silently select a different state.",
+      "canonicalKey": "uiSketch.states.notFound",
+      "searchTerms": [
+        "找不到界面状态",
+        "Unknown UI state"
+      ],
+      "examples": [
+        "Render a state that was deleted from this revision."
+      ],
+      "nonExamples": [
+        "Render an existing state with no visible nodes."
+      ]
+    },
+    "ui-sketch.preview-output-format": {
+      "meaning": "The CLI preview destination must use a supported PNG or SVG filename extension.",
+      "scope": "UI preview export command validation.",
+      "referent": "The local output filename and its format.",
+      "precedence": "Export format is independent of the source image asset format.",
+      "canonicalKey": "uiSketch.preview.outputFormatError",
+      "searchTerms": [
+        "预览导出格式",
+        "PNG or SVG output"
+      ],
+      "examples": [
+        "Reject a preview destination ending in .jpg."
+      ],
+      "nonExamples": [
+        "Reject an uploaded JPEG image."
+      ]
+    }
+  },
+  "keys": {
+    "uiSketch.prompt.perceptibleElementGuidance": {
+      "conceptId": "ui-sketch.perceptible-layout-intent",
+      "variant": "implementation-guidance",
+      "role": "instruction in exported UI-sketch prompts that prevents perceptible layout regions from being treated as component-tree containers",
+      "grammar": "complete declarative and imperative guidance",
+      "tone": "direct and implementation-aware",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.clearCanvas": {
+      "conceptId": "ui-sketch.clear-canvas",
+      "variant": "icon-action-label",
+      "role": "visible tooltip, accessible name, and destructive confirmation button label for the UI-sketch clear action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical",
+      "duplicateReason": "It intentionally shares copy with composition.clearCanvas, but this action preserves the UI sketch's frame, global note, and motion-stage structure instead of resetting an entire composition draft."
+    },
+    "uiSketch.canvasLabels.clearCanvasConfirmTitle": {
+      "conceptId": "ui-sketch.clear-canvas",
+      "variant": "confirmation-title",
+      "role": "title of the destructive confirmation shown before clearing UI-sketch content",
+      "grammar": "concise confirmation question",
+      "tone": "direct and cautionary",
+      "reusePolicy": "contextual",
+      "duplicateReason": "It intentionally parallels composition.clearCanvasConfirmTitle, but the UI-sketch action preserves the frame, global note, and motion-stage structure."
+    },
+    "uiSketch.canvasLabels.clearCanvasConfirmDescription": {
+      "conceptId": "ui-sketch.clear-canvas",
+      "variant": "confirmation-description",
+      "role": "consequence statement in the destructive confirmation shown before clearing UI-sketch content",
+      "grammar": "complete explanatory sentence",
+      "tone": "specific and cautionary",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvas": {
+      "conceptId": "ui-sketch.canvas-structure",
+      "variant": "canvas-name",
+      "role": "accessible name for the main UI-sketch canvas",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.canvasViewport": {
+      "conceptId": "ui-sketch.canvas-structure",
+      "variant": "viewport-name",
+      "role": "accessible name for the nested infinite canvas viewport",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.scene": {
+      "conceptId": "ui-sketch.canvas-structure",
+      "variant": "scene-name",
+      "role": "accessible name for the drawing scene within the viewport",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.visibility": {
+      "conceptId": "ui-sketch.visibility",
+      "variant": "field-label",
+      "role": "editor visibility field label and switch accessible name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.visible": {
+      "conceptId": "ui-sketch.visibility",
+      "variant": "visible-state",
+      "role": "switch state text and prompt state value",
+      "grammar": "state adjective",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.hidden": {
+      "conceptId": "ui-sketch.visibility",
+      "variant": "hidden-state",
+      "role": "switch state text and prompt state value",
+      "grammar": "state adjective",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.changeVisible": {
+      "conceptId": "ui-sketch.visibility",
+      "variant": "show-transition",
+      "role": "prompt instruction describing a transition to visible",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.changeHidden": {
+      "conceptId": "ui-sketch.visibility",
+      "variant": "hide-transition",
+      "role": "prompt instruction describing a transition to hidden",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.fontSize": {
+      "conceptId": "ui-sketch.font-size",
+      "variant": "field-label",
+      "role": "text size control group label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.increaseFontSize": {
+      "conceptId": "ui-sketch.font-size",
+      "variant": "increase-action",
+      "role": "accessible name of the increment button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.decreaseFontSize": {
+      "conceptId": "ui-sketch.font-size",
+      "variant": "decrease-action",
+      "role": "accessible name of the decrement button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.referenceFontSize": {
+      "conceptId": "ui-sketch.font-size",
+      "variant": "prompt-reference",
+      "role": "prompt reference font size in pixels",
+      "grammar": "label with numeric placeholder and unit",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.motion.copyPrompt": {
+      "conceptId": "ui-sketch.motion-prompt",
+      "variant": "copy-menu-option",
+      "role": "concise Motion option under the Copy prompt menu",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.prompt.motionTitle": {
+      "conceptId": "ui-sketch.motion-prompt",
+      "variant": "opening-instruction",
+      "role": "opening request to implement the interface and its state transitions",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.motionStateGuidance": {
+      "conceptId": "ui-sketch.motion-prompt",
+      "variant": "state-inheritance-guidance",
+      "role": "explanation of sequential transitions and changed-property inheritance within each pair",
+      "grammar": "explanatory sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.motionClosing": {
+      "conceptId": "ui-sketch.motion-prompt",
+      "variant": "closing-instruction",
+      "role": "request for natural layout transitions rather than rigid reproduction of coordinates",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.staticTitle": {
+      "conceptId": "ui-sketch.static-prompt",
+      "variant": "opening-instruction",
+      "role": "opening instruction for implementing a static interface",
+      "grammar": "instructional sentence",
+      "tone": "direct",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.prompt.layoutHeading": {
+      "conceptId": "ui-sketch.prompt-layout-guidance",
+      "variant": "section-heading",
+      "role": "heading introducing interface layout guidance",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.prompt.referenceValues": {
+      "conceptId": "ui-sketch.prompt-layout-guidance",
+      "variant": "reference-guidance",
+      "role": "explanation of coordinates, dimensions and font sizes as approximate guidance",
+      "grammar": "explanatory sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.flexibleImplementation": {
+      "conceptId": "ui-sketch.prompt-layout-guidance",
+      "variant": "adaptation-guidance",
+      "role": "instruction to adapt geometry to content, components and responsive layout",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.canvasSize": {
+      "conceptId": "ui-sketch.prompt-geometry",
+      "variant": "frame-size-line",
+      "role": "suggested interface width and height in pixels",
+      "grammar": "label with dimension placeholders",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.prompt.canvasOrigin": {
+      "conceptId": "ui-sketch.prompt-geometry",
+      "variant": "origin-guidance",
+      "role": "explanation of the exported interface coordinate origin",
+      "grammar": "explanatory sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.referencePosition": {
+      "conceptId": "ui-sketch.prompt-geometry",
+      "variant": "position-line",
+      "role": "element top-left reference position relative to the frame",
+      "grammar": "label with pixel position placeholders",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.referenceSize": {
+      "conceptId": "ui-sketch.prompt-geometry",
+      "variant": "size-line",
+      "role": "reference region or image width and height",
+      "grammar": "label with pixel dimension placeholders",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.elementsHeading": {
+      "conceptId": "ui-sketch.prompt-element-list",
+      "variant": "section-heading",
+      "role": "heading introducing exported interface elements",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.region": {
+      "conceptId": "ui-sketch.region",
+      "variant": "kind-label",
+      "role": "region creation-tool label, node accessible-name prefix and editor field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.addRegion": {
+      "conceptId": "ui-sketch.region",
+      "variant": "add-action",
+      "role": "collapsed creation control label for adding a region",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.editRegionNote": {
+      "conceptId": "ui-sketch.region",
+      "variant": "editor-title",
+      "role": "title of the region metadata editor, not limited to editing the note",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.regionNumber": {
+      "conceptId": "ui-sketch.region",
+      "variant": "numbered-prompt-heading",
+      "role": "region heading using its one-based source rectangle-list index before visibility filtering",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.text": {
+      "conceptId": "ui-sketch.text-node",
+      "variant": "kind-label",
+      "role": "text creation-tool label, accessible node-name prefix and node-kind field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "uiSketch.canvasLabels.newText supplies editable initial content; this identical Text/文字 expression labels a node kind and must remain independently translatable."
+    },
+    "uiSketch.canvasLabels.addText": {
+      "conceptId": "ui-sketch.text-node",
+      "variant": "add-action",
+      "role": "collapsed creation control label for adding text",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.editText": {
+      "conceptId": "ui-sketch.text-node",
+      "variant": "editor-title",
+      "role": "title of the text-node editor",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.textNumber": {
+      "conceptId": "ui-sketch.text-node",
+      "variant": "numbered-prompt-heading",
+      "role": "text heading using its one-based source text-list index before visibility filtering",
+      "grammar": "noun phrase with index placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.newText": {
+      "conceptId": "ui-sketch.initial-text-content",
+      "variant": "default-content",
+      "role": "initial editable text supplied to a new node",
+      "grammar": "standalone text",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "Matches the Text/文字 kind labels but is actual initial node content, not a UI label; these must remain independently translatable."
+    },
+    "uiSketch.canvasLabels.emptyText": {
+      "conceptId": "ui-sketch.empty-text-marker",
+      "variant": "empty-value",
+      "role": "visible and accessible placeholder for missing text content",
+      "grammar": "status phrase with delimiters",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.missingRegionNote": {
+      "conceptId": "ui-sketch.missing-region-note",
+      "variant": "empty-value",
+      "role": "fallback region description when note is blank",
+      "grammar": "status phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.frameRange": {
+      "conceptId": "ui-sketch.interface-frame",
+      "variant": "frame-label",
+      "role": "section heading, size-control accessible name and on-canvas frame label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.rangeTitle": {
+      "conceptId": "ui-sketch.interface-frame",
+      "variant": "size-control-title",
+      "role": "compact title for the interface frame size control",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.frameAction": {
+      "conceptId": "ui-sketch.interface-frame",
+      "variant": "geometry-action",
+      "role": "accessible label for moving or resizing the interface frame",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.resetFrame": {
+      "conceptId": "ui-sketch.interface-frame",
+      "variant": "reset-action",
+      "role": "tooltip and accessible name for restoring default frame geometry",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.title": {
+      "conceptId": "ui-sketch.feature",
+      "variant": "feature-title",
+      "role": "feature-entry heading and general interface feature title",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.noSelection": {
+      "conceptId": "ui-sketch.selection-count",
+      "variant": "empty-selection",
+      "role": "live-region message when no editable element is selected",
+      "grammar": "status phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.selectedItemsPrefix": {
+      "conceptId": "ui-sketch.selection-count",
+      "variant": "count-prefix",
+      "role": "localized prefix immediately preceding the numeric selection count; preserve trailing spacing",
+      "grammar": "sentence fragment",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.selectedItemsSuffix": {
+      "conceptId": "ui-sketch.selection-count",
+      "variant": "count-suffix",
+      "role": "localized suffix immediately following the numeric selection count; preserve leading spacing",
+      "grammar": "sentence fragment",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.groupItems": {
+      "conceptId": "ui-sketch.group-items",
+      "variant": "context-menu-action",
+      "role": "canvas context menu action",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.ungroupItems": {
+      "conceptId": "ui-sketch.ungroup-items",
+      "variant": "context-menu-action",
+      "role": "canvas context menu action",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.states.notFound": {
+      "conceptId": "ui-sketch.missing-state",
+      "variant": "default",
+      "role": "CLI validation error",
+      "grammar": "complete sentence",
+      "tone": "clear and actionable",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.preview.outputFormatError": {
+      "conceptId": "ui-sketch.preview-output-format",
+      "variant": "default",
+      "role": "CLI validation error",
+      "grammar": "complete sentence",
+      "tone": "clear and actionable",
+      "reusePolicy": "canonical"
+    }
+  }
+}
