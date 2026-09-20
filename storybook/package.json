@@ -1,0 +1,28 @@
+{
+  "name": "@human2ai/storybook",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "storybook": "storybook dev -p 6006",
+    "build": "storybook build",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@human2ai/ui": "*",
+    "@ant-design/icons": "6.3.4",
+    "@ant-design/x": "2.5.0",
+    "antd": "6.6.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
+  },
+  "devDependencies": {
+    "@storybook/addon-a11y": "10.6.0",
+    "@storybook/addon-webpack5-compiler-swc": "4.0.3",
+    "@storybook/react-webpack5": "10.6.0",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "storybook": "10.6.0",
+    "typescript": "5.8.3"
+  }
+}

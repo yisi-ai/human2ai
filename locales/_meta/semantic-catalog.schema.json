@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://human2ai.local/schemas/i18n-semantic-catalog.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schemaVersion",
+    "locales",
+    "resource",
+    "catalogs"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "./semantic-catalog.schema.json"
+    },
+    "schemaVersion": {
+      "const": 1
+    },
+    "locales": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "resource": {
+      "const": "common.json"
+    },
+    "catalogs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "pattern": "^semantics/[a-z0-9]+(?:-[a-z0-9]+)*\\.json$"
+      }
+    }
+  }
+}

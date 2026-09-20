@@ -1,0 +1,7 @@
+.human2ai-workspace-sidebar-story-frame {
+  box-sizing: border-box;
+  width: 280px;
+  height: 100dvh;
+  padding-top: var(--yisiui-space-5);
+  background: var(--yisiui-color-surface-page);
+}

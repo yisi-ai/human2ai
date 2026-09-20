@@ -1,0 +1,22 @@
+---
+name: yisiui-migrate-product-ui
+description: Migrate legacy, page-private, or project-local product UI into synchronized YisiUI assets or governed local Surface assets while preserving product behavior; do not use it for release synchronization or upstream shared authoring.
+---
+
+Resolve all paths from `.yisiui/config.json`: `applicationRoot`, `surfaceRoot` (legacy default `design-system/surfaces/<surface>`), `vendorRoot`, `localRegistry`, and `storybook.applicationRoot` (legacy default `storybook`). Use `packageManager` (legacy default `npm`) for installation and workspace builds. Invoke `node .yisiui/launcher.mjs` from the consumer root, or the configured `commandScript`; existing product `yisiui:*` commands may belong to WeChat and must retain their purpose. Never reset configured directories during sync.
+
+# YisiUI Migrate Product UI
+
+Read `.yisiui/config.json`, `.yisiui/sync-lock.json`, `design-system/system.json`, the selected Surface, shared and local Registries, Story catalogs, migration inventory, baseline, exceptions, `DESIGN.md`, the real route, and the legacy implementation and CSS. Scope one page family or reusable primitive at a time and capture the current route, data flow, reachable states, accessibility behavior, visual evidence, and references before changing it.
+
+For every legacy responsibility, query YisiUI by category, capability, slot, alias, status, and id. Record a migration mapping to one of four outcomes: synchronized shared asset, composition of synchronized assets, governed project-local component, or page-only composition. Include the preserved behavior, nearby assets rejected, deletion condition, and evidence required. Storybook is the isolation and evidence layer, not the migration destination.
+
+When the synchronized Registry or release provides `assetMigrations`, treat its replacement key, migration guide and removal boundary as the upstream contract. Migrate every CLI-reported import/re-export reference, then search for dynamic imports, string-built module paths and runtime registries that static scanning cannot prove absent. A deprecated adapter may remain in vendor source during the migration window; a removed asset reference is a release blocker and must reach zero without editing `.yisiui/sync-lock.json` or synchronized files.
+
+Prefer an allowed synchronized asset, then composition, then a local component created through `yisiui-author-local-component`. Treat vendor source and shared metadata as read-only. Do not move a product-specific component upstream merely because it is reusable inside one project; only proven cross-project responsibilities proceed separately through `yisiui-propose-component`. Experimental shared assets require explicit migration or review evidence and remain experimental.
+
+Check Story ownership during migration. Product-local components, wrappers, and Page Views use `<project>/...` titles with the exact configured project id; only synchronized upstream Stories use `yisiui-` roots. Correct misplaced local titles within the migration scope, preserving existing Story ids and Registry/catalog links. Moving a title does not promote an asset.
+
+Preserve API and SSE contracts, URLs, routing, persistence, business state, user-visible copy unless intentionally changed, destructive confirmations, keyboard and focus behavior, and loading, empty, error, disabled, long-content, and narrow-viewport states. Separate presentation from product orchestration where needed, but do not silently redesign behavior under a migration task.
+
+Verify the replacement in an existing or updated representative Story or Page View and on the real route at supported viewports. Retain additional Stories only for meaningfully different, complete states or uses, not for individual fixes or assertions. Remove task-created temporary reproduction Stories and their exclusive fixtures/helpers and references after they pass, preserving useful regression checks in focused tests or appropriate retained Stories. Run focused interaction and accessibility tests, Registry and CSS-debt checks, `node .yisiui/launcher.mjs doctor`, Storybook checks, and the production build. Update the migration inventory, baseline or exception evidence, and local Registry before reporting completion. Keep the old implementation until the replacement is verified and all intended references are zero; remove only the exact obsolete files and report what was deleted.

@@ -1,0 +1,235 @@
+.human2ai-canvas-scene {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  outline: none;
+}
+
+.human2ai-canvas-scene[data-canvas-dragging="node"],
+.human2ai-canvas-scene[data-canvas-dragging="node"] * {
+  cursor: grabbing !important;
+}
+
+.human2ai-canvas-node[role="button"] {
+  cursor: grab;
+  outline: none;
+}
+
+.human2ai-canvas-node[role="button"]:active {
+  cursor: grabbing;
+}
+
+.human2ai-canvas-node[data-locked="true"] {
+  pointer-events: none;
+}
+
+.human2ai-canvas-node__tooltip {
+  display: grid;
+  gap: var(--yisiui-space-2);
+  margin: 0;
+}
+
+.human2ai-canvas-node__tooltip dt {
+  font-weight: var(--yisiui-font-weight-semibold);
+}
+
+.human2ai-canvas-node__tooltip dd {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.human2ai-canvas-node__outline {
+  fill: none;
+  stroke: transparent;
+  stroke-width: var(--yisiui-component-focus-outline-width);
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  transition: stroke var(--yisiui-motion-fast) ease;
+}
+
+.human2ai-canvas-node[role="button"]:hover > .human2ai-canvas-node__outline,
+.human2ai-canvas-node[data-selected="true"] > .human2ai-canvas-node__outline,
+.human2ai-canvas-node:focus-visible > .human2ai-canvas-node__outline,
+.human2ai-canvas-node:has(.human2ai-canvas-node__resize-hit:hover)
+  > .human2ai-canvas-node__outline {
+  stroke: var(--yisiui-component-focus-outline);
+}
+
+.human2ai-canvas-node[data-has-operation-outline="true"][data-selected="true"]
+  > .human2ai-canvas-shape,
+.human2ai-canvas-node[data-has-operation-outline="true"][role="button"]:hover
+  > .human2ai-canvas-shape,
+.human2ai-canvas-node[data-has-operation-outline="true"]:focus-visible
+  > .human2ai-canvas-shape,
+.human2ai-canvas-node[data-has-operation-outline="true"]:has(
+    .human2ai-canvas-node__resize-hit:hover
+  )
+  > .human2ai-canvas-shape {
+  stroke: transparent !important;
+}
+
+.human2ai-canvas-node__resize-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+}
+
+.human2ai-canvas-node__resize-hit[data-resize-handle="top-left"],
+.human2ai-canvas-node__resize-hit[data-resize-handle="bottom-right"] {
+  cursor: nwse-resize;
+}
+
+.human2ai-canvas-node__resize-hit[data-resize-handle="top-right"],
+.human2ai-canvas-node__resize-hit[data-resize-handle="bottom-left"] {
+  cursor: nesw-resize;
+}
+
+.human2ai-canvas-node__resize-hit[data-resize-handle="top"],
+.human2ai-canvas-node__resize-hit[data-resize-handle="bottom"] {
+  cursor: ns-resize;
+}
+
+.human2ai-canvas-node__resize-hit[data-resize-handle="left"],
+.human2ai-canvas-node__resize-hit[data-resize-handle="right"] {
+  cursor: ew-resize;
+}
+
+.human2ai-canvas-node__rotation-stem,
+.human2ai-canvas-node__rotation-handle {
+  vector-effect: non-scaling-stroke;
+}
+
+.human2ai-canvas-node__rotation-stem {
+  stroke: var(--yisiui-component-focus-outline);
+  stroke-width: 2;
+  stroke-dasharray: 5 4;
+  pointer-events: none;
+}
+
+.human2ai-canvas-node__rotation-handle {
+  fill: var(--yisiui-color-surface-panel);
+  stroke: var(--yisiui-component-focus-outline);
+  stroke-width: 2;
+  pointer-events: none;
+}
+
+.human2ai-canvas-node__rotation-hit {
+  fill: transparent;
+  stroke: none;
+  pointer-events: all;
+  cursor: grab;
+}
+
+.human2ai-canvas-node__rotation-hit:active {
+  cursor: grabbing;
+}
+
+.human2ai-canvas-shape.human2ai-canvas-frame__border {
+  fill: none;
+  stroke: var(--yisiui-color-border-hover);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.human2ai-canvas-frame__hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 24;
+  vector-effect: non-scaling-stroke;
+  pointer-events: stroke;
+}
+
+.human2ai-canvas-frame__hit[data-frame-movable="true"] {
+  cursor: move;
+}
+
+.human2ai-canvas-frame__hit[data-frame-movable="true"]:active {
+  cursor: grabbing;
+}
+
+.human2ai-canvas-shape {
+  fill: var(--yisiui-color-paper-sky);
+  stroke: var(--yisiui-color-border-hover);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.human2ai-canvas-line__visible,
+.human2ai-canvas-line__hit {
+  vector-effect: non-scaling-stroke;
+}
+
+.human2ai-canvas-line__visible {
+  stroke: var(--yisiui-color-action-primary);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.human2ai-canvas-line__hit {
+  stroke: transparent;
+  stroke-width: 18;
+  pointer-events: stroke;
+}
+
+.human2ai-canvas-point {
+  fill: var(--yisiui-color-feedback-warning);
+  stroke: var(--yisiui-color-surface-panel);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.human2ai-canvas-text {
+  fill: var(--yisiui-color-text-primary);
+  font-family: var(--yisiui-font-family-sans);
+  font-weight: var(--yisiui-font-weight-regular);
+  white-space: pre;
+  user-select: none;
+}
+
+.human2ai-canvas-image__boundary {
+  fill: var(--yisiui-color-surface-soft);
+  stroke: var(--yisiui-color-border-hover);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.human2ai-canvas-image:has(> .human2ai-canvas-image__content)
+  > .human2ai-canvas-image__boundary {
+  fill: transparent;
+}
+
+.human2ai-composition-canvas--reference .human2ai-canvas-image__boundary {
+  display: none;
+}
+
+.human2ai-canvas-image__content {
+  pointer-events: none;
+}
+
+.human2ai-canvas-image__status {
+  fill: var(--yisiui-color-text-muted);
+  font-family: var(--yisiui-font-family-sans);
+  font-size: var(--yisiui-font-size-sm);
+  pointer-events: none;
+}
+
+.human2ai-canvas-image[data-image-status="error"] .human2ai-canvas-image__boundary {
+  stroke: var(--yisiui-color-border-error);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .human2ai-canvas-node__outline {
+    transition: none;
+  }
+}
+
+.human2ai-canvas-scene[data-canvas-dragging] [data-canvas-controls] {
+  display: none;
+}

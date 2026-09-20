@@ -1,0 +1,154 @@
+.yisi-composite-button {
+  box-sizing: border-box;
+  display: flex;
+  position: relative;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  border: none;
+  border-radius: var(--yisiui-radius-sm);
+  background: transparent;
+  box-shadow: none;
+  transition: background-color var(--yisiui-motion-fast);
+}
+
+.yisi-composite-button:hover,
+.yisi-composite-button:focus-within {
+  background: color-mix(in srgb, var(--yisiui-color-surface-panel) 78%, transparent);
+}
+
+.yisi-composite-button--collapsed {
+  justify-content: center;
+}
+
+.yisi-composite-button--collapsed .yisi-composite-button-main.ant-btn {
+  width: var(--yisiui-space-6);
+  min-width: var(--yisiui-space-6);
+  height: var(--yisiui-space-6);
+  flex: 0 0 var(--yisiui-space-6);
+  justify-content: center;
+  padding: 0;
+}
+
+.yisi-composite-button-main.ant-btn {
+  min-width: 0;
+  flex: 1 1 auto;
+  justify-content: flex-start;
+  width: auto;
+  padding-inline: var(--yisiui-space-2);
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  transition: none;
+}
+
+.yisi-composite-button-main.ant-btn .ant-btn-content,
+.yisi-composite-button-label.ant-typography {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.yisi-composite-button-label.ant-typography {
+  font-family: var(--yisiui-typography-button-font-family);
+  font-size: var(--yisiui-typography-button-font-size);
+  font-weight: var(--yisiui-typography-button-font-weight);
+  line-height: var(--yisiui-typography-button-line-height);
+  letter-spacing: var(--yisiui-typography-button-letter-spacing);
+}
+
+.yisi-composite-button-main.ant-btn:hover,
+.yisi-composite-button-main.ant-btn:focus,
+.yisi-composite-button-main.ant-btn:active {
+  border: none;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.yisi-composite-button-main.ant-btn:not(:disabled):not(.ant-btn-disabled):hover {
+  border: none;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.yisi-composite-button-description.ant-typography {
+  box-sizing: border-box;
+  display: block;
+  flex: 0 1 40%;
+  min-width: 0;
+  width: 40%;
+  max-width: 40%;
+  margin-inline-start: var(--yisiui-space-2);
+  padding-inline-end: var(--yisiui-space-2);
+  overflow: hidden;
+  color: var(--yisiui-color-text-muted);
+  font-family: var(--yisiui-typography-meta-font-family);
+  font-size: var(--yisiui-typography-meta-font-size);
+  font-weight: var(--yisiui-typography-meta-font-weight);
+  line-height: var(--yisiui-typography-meta-line-height);
+  letter-spacing: var(--yisiui-typography-meta-letter-spacing);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  transition: opacity var(--yisiui-motion-fast), visibility var(--yisiui-motion-fast);
+}
+
+.yisi-composite-button-actions {
+  position: absolute;
+  inset-inline-end: var(--yisiui-space-1);
+  top: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-1);
+  transform: translateY(-50%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity var(--yisiui-motion-fast), visibility var(--yisiui-motion-fast);
+}
+
+.yisi-composite-button--has-actions:hover .yisi-composite-button-description,
+.yisi-composite-button--has-actions:focus-within .yisi-composite-button-description {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.yisi-composite-button--has-actions:hover .yisi-composite-button-actions,
+.yisi-composite-button--has-actions:focus-within .yisi-composite-button-actions {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+.yisi-composite-button-action.ant-btn {
+  width: var(--yisiui-space-6);
+  height: var(--yisiui-space-6);
+  flex: 0 0 var(--yisiui-space-6);
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  transition: none;
+}
+
+.yisi-composite-button-action.ant-btn:hover,
+.yisi-composite-button-action.ant-btn:focus,
+.yisi-composite-button-action.ant-btn:active {
+  border: none;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+
+.yisi-composite-button-action.ant-btn:not(:disabled):not(.ant-btn-disabled):hover {
+  border: none;
+  background: transparent;
+  color: inherit;
+  box-shadow: none;
+}
+

@@ -1,0 +1,18 @@
+.human2ai-compact-dropdown-select-story {
+  box-sizing: border-box;
+  width: 180px;
+  min-height: 360px;
+  margin: 0 auto;
+  padding-top: var(--yisiui-space-10);
+}
+
+.human2ai-compact-dropdown-select-story--top {
+  display: flex;
+  min-height: 420px;
+  align-items: flex-end;
+  padding-bottom: var(--yisiui-space-10);
+}
+
+.human2ai-compact-dropdown-select-story--narrow {
+  width: 128px;
+}

@@ -1,0 +1,89 @@
+.yisi-underline-tab-switch {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: repeat(var(--yisiui-underline-tab-switch-count), minmax(0, 1fr));
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  border-bottom: 1px solid var(--yisiui-color-border-default);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-underline-tab-switch-item,
+  .yisi-underline-tab-switch-item::after {
+    transition: none;
+  }
+}
+
+.yisi-underline-tab-switch-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  appearance: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--yisiui-color-text-secondary);
+  cursor: pointer;
+  font-family: var(--yisiui-typography-body-font-family);
+  font-size: var(--yisiui-typography-body-font-size);
+  font-weight: var(--yisiui-font-weight-regular);
+  line-height: var(--yisiui-typography-body-line-height);
+  padding: var(--yisiui-space-2);
+  text-align: center;
+  transition:
+    background-color var(--yisiui-motion-normal) ease,
+    color var(--yisiui-motion-normal) ease;
+}
+
+.yisi-underline-tab-switch-item::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  background: var(--yisiui-underline-tab-switch-active-color);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.5);
+  transition:
+    opacity var(--yisiui-motion-normal) ease,
+    transform var(--yisiui-motion-normal) ease;
+}
+
+.yisi-underline-tab-switch-item:hover:not(:disabled):not(.yisi-underline-tab-switch-item-active) {
+  background: var(--yisiui-color-surface-hover);
+  color: var(--yisiui-color-text-primary);
+}
+
+.yisi-underline-tab-switch-item:focus-visible {
+  z-index: 1;
+  outline: 2px solid var(--yisiui-color-border-focus);
+  outline-offset: -2px;
+}
+
+.yisi-underline-tab-switch-item-active,
+.yisi-underline-tab-switch-item-active:hover {
+  color: var(--yisiui-underline-tab-switch-active-color);
+}
+
+.yisi-underline-tab-switch-item-active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.yisi-underline-tab-switch-item:disabled {
+  color: var(--yisiui-color-text-disabled);
+  cursor: not-allowed;
+}
+
+.yisi-underline-tab-switch-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

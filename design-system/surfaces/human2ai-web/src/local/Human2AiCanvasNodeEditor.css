@@ -1,0 +1,95 @@
+.human2ai-canvas-node-editor,
+.human2ai-canvas-node-editor * {
+  box-sizing: border-box;
+}
+
+.human2ai-canvas-node-editor {
+  display: grid;
+  gap: var(--yisiui-space-3);
+}
+
+.human2ai-canvas-node-editor__primary-fields {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: var(--yisiui-space-3);
+}
+
+.human2ai-canvas-node-editor__side-fields {
+  min-width: 0;
+}
+
+.human2ai-canvas-node-editor__origin {
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-sm);
+}
+
+.human2ai-canvas-node-editor__description {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.human2ai-canvas-node-editor[data-node-kind="image"] {
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr);
+  align-items: start;
+  column-gap: var(--yisiui-space-6);
+}
+
+.human2ai-canvas-node-editor__properties {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: start;
+  column-gap: var(--yisiui-space-6);
+  row-gap: var(--yisiui-space-3);
+}
+
+.human2ai-canvas-node-editor__properties > * {
+  min-width: 0;
+}
+
+.human2ai-canvas-node-editor[data-node-kind="image"]
+  .human2ai-canvas-node-editor__properties {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.yisi-text-mark-editor-modal:has(
+  .human2ai-canvas-node-editor[data-node-kind="image"]
+) .ant-modal {
+  width: min(880px, calc(100vw - 32px)) !important;
+}
+
+.human2ai-canvas-node-editor__properties > * > :last-child {
+  width: auto;
+  justify-self: start;
+}
+
+.human2ai-canvas-node-editor__properties
+  .human2ai-canvas-node-editor__property-select {
+  width: 100%;
+  min-width: min(140px, 100%);
+}
+
+.yisi-text-mark-editor-modal:has([data-human2ai-auto-save-node-editor])
+  .yisi-text-mark-editor-context,
+.yisi-text-mark-editor-modal:has([data-human2ai-auto-save-node-editor])
+  .yisi-text-mark-editor-actions > button:nth-last-child(2),
+.yisi-text-mark-editor-modal:has([data-human2ai-auto-save-node-editor])
+  .yisi-text-mark-editor-actions > button:last-child {
+  display: none;
+}
+
+.yisi-text-mark-editor-modal:has([data-human2ai-auto-save-node-editor])
+  .yisi-text-mark-editor[data-has-delete="false"]
+  .yisi-text-mark-editor-actions {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .human2ai-canvas-node-editor[data-node-kind="image"] {
+    grid-template-columns: 1fr;
+  }
+
+  .human2ai-canvas-node-editor__properties {
+    grid-template-columns: 1fr;
+  }
+}

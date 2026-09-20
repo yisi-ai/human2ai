@@ -1,0 +1,46 @@
+.yisi-text-shine {
+  --yisiui-text-shine-color: var(--yisiui-component-text-shine-color);
+  --yisiui-text-shine-beam-width: var(--yisiui-component-text-shine-beam-width);
+  --yisiui-text-shine-beam-angle: var(--yisiui-component-text-shine-beam-angle);
+  position: relative;
+  display: inline-grid;
+  max-width: 100%;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.yisi-text-shine-base,
+.yisi-text-shine-overlay {
+  grid-area: 1 / 1;
+  min-width: 0;
+  white-space: inherit;
+}
+
+.yisi-text-shine-overlay {
+  background-image: linear-gradient(
+    var(--yisiui-text-shine-beam-angle),
+    transparent 0%,
+    color-mix(in srgb, var(--yisiui-text-shine-color) 38%, transparent) 28%,
+    var(--yisiui-text-shine-color) 50%,
+    color-mix(in srgb, var(--yisiui-text-shine-color) 38%, transparent) 72%,
+    transparent 100%
+  );
+  background-position: calc(-1 * var(--yisiui-text-shine-beam-width)) 0;
+  background-repeat: no-repeat;
+  background-size: var(--yisiui-text-shine-beam-width) 100%;
+  color: transparent;
+  pointer-events: none;
+  user-select: none;
+  will-change: background-position;
+  -webkit-background-clip: text;
+  background-clip: text;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-text-shine-overlay {
+    display: none;
+  }
+}

@@ -1,0 +1,2199 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "shared",
+  "concepts": {
+    "session.agent-connection-instruction": {
+      "meaning": "An instruction handed from an open Human2AI session to an external Agent, containing the CLI command that discovers the current session, its latest capture, its UI URL, and its supported operations before the Agent waits for the user's next request.",
+      "scope": "The shared session-details panel used by composition, UI-sketch, and 3D space workbenches.",
+      "referent": "The current persisted Human2AI session and the machine-readable CLI connection command injected by the page.",
+      "precedence": "It is the entry point for Agent collaboration; it precedes capture retrieval and type-specific processing, and differs from copying a prompt, preview image, or raw session identifier.",
+      "canonicalKey": "sessionDetails.agentCommand",
+      "searchTerms": [
+        "连接当前会话",
+        "Agent 命令",
+        "session connect",
+        "connect to the current session",
+        "Agent CLI command"
+      ],
+      "examples": [
+        "Give an external Agent a session connect command from the composition workbench and ask it to wait after connecting."
+      ],
+      "nonExamples": [
+        "Copy the image-generation prompt.",
+        "Copy a preview image from the current canvas.",
+        "List capture revisions without discovering the rest of the session contract."
+      ]
+    },
+    "session.agent-command-copy-action": {
+      "meaning": "Copy the current session Agent connection instruction, with instruction-specific pending and failure feedback. Success uses the shared clipboard.copied status.",
+      "scope": "The shared session-details panel used by composition, UI-sketch, and 3D space workbenches.",
+      "referent": "The complete localized Agent connection instruction generated for the current persisted session.",
+      "precedence": "It acts on the session Agent connection instruction and differs from copying an image-generation prompt, a preview image, or a raw session identifier.",
+      "canonicalKey": "sessionDetails.copyCommand",
+      "searchTerms": [
+        "复制命令",
+        "复制中",
+        "复制成功",
+        "复制失败",
+        "Copy command",
+        "Copying",
+        "Copied",
+        "Copy failed"
+      ],
+      "examples": [
+        "Copy the generated human2ai session connect instruction from the session-details panel."
+      ],
+      "nonExamples": [
+        "Copy an image-generation prompt from the canvas tools.",
+        "Copy or download the current preview image.",
+        "Copy a session identifier without the Agent connection instructions."
+      ]
+    },
+    "actions.delete": {
+      "meaning": "A destructive command that removes the target identified by the surrounding interface, after confirmation when confirmation is required.",
+      "scope": "Shared product deletion controls: menu and button commands plus target-specific confirmation questions.",
+      "referent": "The project, session, or other item made explicit by the current control or dialog.",
+      "precedence": "None; this is an action rather than hierarchical content.",
+      "canonicalKey": "actions.delete",
+      "searchTerms": [
+        "删除",
+        "移除",
+        "确认删除",
+        "Delete",
+        "Remove",
+        "confirm delete"
+      ],
+      "examples": [
+        "A Delete item in an actions menu.",
+        "The destructive Delete button in a confirmation dialog."
+      ],
+      "nonExamples": [
+        "Archiving an item without deleting it.",
+        "A sentence explaining what data deletion removes.",
+        "A Keep or Cancel action that dismisses deletion."
+      ]
+    },
+    "actions.keep": {
+      "meaning": "Dismiss a deletion confirmation and retain the targeted item.",
+      "scope": "Deletion confirmations in composition and UI-sketch node editors.",
+      "referent": "The node, region, or text element whose deletion is pending.",
+      "precedence": "The non-destructive alternative to deletion; retaining the item does not undo its previously saved edits.",
+      "canonicalKey": "actions.keep",
+      "searchTerms": [
+        "保留",
+        "Keep",
+        "取消删除",
+        "cancel deletion"
+      ],
+      "examples": [
+        "Keep a region after opening its deletion confirmation."
+      ],
+      "nonExamples": [
+        "Cancel a rename dialog.",
+        "Restore an already deleted item."
+      ]
+    },
+    "actions.cancel": {
+      "meaning": "Dismiss the current dialog or editor without executing its pending action. Already saved changes in an immediate-save editor remain saved; closing does not promise an undo.",
+      "scope": "Shared confirmation and editing controls across the product.",
+      "referent": "The currently open transient flow, rather than the underlying project, session, draft, or canvas content.",
+      "precedence": "Paired with the primary or destructive action presented by the same transient flow.",
+      "canonicalKey": "actions.cancel",
+      "searchTerms": [
+        "取消",
+        "Cancel",
+        "dismiss"
+      ],
+      "examples": [
+        "Dismiss a clear-canvas confirmation without changing the canvas.",
+        "Close an immediate-save node editor without reverting saved changes."
+      ],
+      "nonExamples": [
+        "Navigate back to a previous page.",
+        "Keep an item in a deletion confirmation when the product intentionally uses reassuring copy."
+      ]
+    },
+    "notes.global": {
+      "meaning": "The highest-level note that gives direction for the entire editable artifact and governs subordinate element notes when both are present.",
+      "scope": "Shared by composition drafts and UI sketches.",
+      "referent": "The whole composition draft or UI sketch being edited.",
+      "precedence": "Top-level; applies across node, region, text, and annotation notes rather than describing one element.",
+      "canonicalKey": "notes.global.label",
+      "searchTerms": [
+        "全局备注",
+        "总备注",
+        "整体备注",
+        "Global note",
+        "Overall note",
+        "top-level note"
+      ],
+      "examples": [
+        "Keep the entire interface quiet and emphasize the primary action.",
+        "Emphasize the subject on the left across the whole composition."
+      ],
+      "nonExamples": [
+        "A note attached only to one region, text element, node, or annotation.",
+        "An internal implementation comment that users never see."
+      ]
+    },
+    "clipboard.group": {
+      "meaning": "Heading grouping tools that copy representations of the current artifact.",
+      "scope": "Composition and UI-sketch tool panels.",
+      "referent": "The copy tool group.",
+      "precedence": "A heading rather than an unspecified copy action.",
+      "canonicalKey": "clipboard.group",
+      "searchTerms": [
+        "复制",
+        "Copy",
+        "copy group"
+      ],
+      "examples": [
+        "Heading above Copy prompt and Copy preview."
+      ],
+      "nonExamples": [
+        "Copy selected text."
+      ]
+    },
+    "clipboard.prompt": {
+      "meaning": "Copy generated text instructions for the current artifact or selected UI stages.",
+      "scope": "Composition and UI-sketch tools.",
+      "referent": "The generated prompt determined by the active editor.",
+      "precedence": "Distinct from copying a rendered image or connection command.",
+      "canonicalKey": "clipboard.copyPrompt",
+      "searchTerms": [
+        "复制提示词",
+        "Copy prompt"
+      ],
+      "examples": [
+        "Copy layout instructions for a selected UI stage."
+      ],
+      "nonExamples": [
+        "Copy a PNG preview."
+      ]
+    },
+    "clipboard.preview": {
+      "meaning": "Copy a PNG preview rendered from the authored artifact; download it if image clipboard access is unavailable.",
+      "scope": "Composition and selected UI-sketch stage copy tools.",
+      "referent": "The current authored composition or selected UI stage preview.",
+      "precedence": "Same user-facing operation across renderers; excludes uploaded images and Agent-refined references.",
+      "canonicalKey": "clipboard.copyPreview",
+      "searchTerms": [
+        "复制预览图",
+        "复制草图",
+        "Copy preview",
+        "Copy sketch"
+      ],
+      "examples": [
+        "Copy the authored composition preview.",
+        "Copy the selected UI stage preview."
+      ],
+      "nonExamples": [
+        "Switch to the Preview tab.",
+        "Copy an uploaded image node."
+      ]
+    },
+    "clipboard.success": {
+      "meaning": "The requested clipboard write completed successfully; the initiating control identifies its payload.",
+      "scope": "Prompt, preview and connection-command feedback.",
+      "referent": "The completed clipboard operation.",
+      "precedence": "A result independent of payload; excludes download, pending and failed operations.",
+      "canonicalKey": "clipboard.copied",
+      "searchTerms": [
+        "复制成功",
+        "Copied"
+      ],
+      "examples": [
+        "Show success after writing a prompt or command to the clipboard."
+      ],
+      "nonExamples": [
+        "Report a download as a successful clipboard write."
+      ]
+    },
+    "canvas.visual-weight": {
+      "meaning": "The intended relative visual prominence of an element, independent of physical size and depth.",
+      "scope": "Composition and UI-sketch element editors and exported prompts.",
+      "referent": "An element relative to other elements in the artifact.",
+      "precedence": "High, medium, low and decorative describe prominence; auto leaves it unspecified.",
+      "canonicalKey": "visualWeight.label",
+      "searchTerms": [
+        "视觉权重",
+        "Visual weight",
+        "显著程度"
+      ],
+      "examples": [
+        "Give the main subject high visual weight."
+      ],
+      "nonExamples": [
+        "Foreground or background depth.",
+        "Physical height."
+      ]
+    },
+    "dimensions.width": {
+      "meaning": "The horizontal extent of a frame or its horizontal ratio component; units and interpretation come from the enclosing size or ratio control.",
+      "scope": "Composition ratio and UI interface size controls.",
+      "referent": "The horizontal input of the current frame control.",
+      "precedence": "Paired with the other dimension; unrelated to visual prominence.",
+      "canonicalKey": "dimensions.width",
+      "searchTerms": [
+        "宽",
+        "width"
+      ],
+      "examples": [
+        "The width input in a width-to-height control."
+      ],
+      "nonExamples": [
+        "High visual weight."
+      ]
+    },
+    "dimensions.height": {
+      "meaning": "The vertical extent of a frame or its vertical ratio component; units and interpretation come from the enclosing size or ratio control.",
+      "scope": "Composition ratio and UI interface size controls.",
+      "referent": "The vertical input of the current frame control.",
+      "precedence": "Paired with the other dimension; unrelated to visual prominence.",
+      "canonicalKey": "dimensions.height",
+      "searchTerms": [
+        "高",
+        "height"
+      ],
+      "examples": [
+        "The height input in a width-to-height control."
+      ],
+      "nonExamples": [
+        "High visual weight."
+      ]
+    },
+    "notes.element": {
+      "meaning": "User instructions about the meaning or requirements of one canvas element.",
+      "scope": "Composition nodes, UI regions, text or images, and top-level 3D characters, objects, cameras and observation boxes, including shared composition and UI node tooltips, exported prompts and spatial inspection data.",
+      "referent": "The currently edited or numbered element.",
+      "precedence": "Subordinate to the global note; distinct from visible text and Agent-authored node descriptions. Reference-composition imports leave this field empty for the user, while preserving existing user notes.",
+      "canonicalKey": "notes.element.label",
+      "searchTerms": [
+        "备注",
+        "Note",
+        "element note",
+        "局部备注"
+      ],
+      "examples": [
+        "Ask the Agent to enlarge a region or change what it represents.",
+        "Explain that a spatial box represents a reception desk while preserving its footprint."
+      ],
+      "nonExamples": [
+        "Requirements for the entire artifact.",
+        "Literal text to render.",
+        "An Agent's description of a visual group recovered from a reference picture."
+      ]
+    },
+    "text.content": {
+      "meaning": "The literal visible text content of a text element.",
+      "scope": "Composition text regions and UI-sketch text elements, including their shared node tooltips.",
+      "referent": "Text that appears in the output.",
+      "precedence": "Distinct from instructions about the text; blank input retains domain-specific behavior in its placeholder.",
+      "canonicalKey": "textContent.label",
+      "searchTerms": [
+        "显示文字",
+        "Display text",
+        "text content"
+      ],
+      "examples": [
+        "The exact title printed in a text region."
+      ],
+      "nonExamples": [
+        "A note describing the title mood."
+      ]
+    },
+    "service.sync-error": {
+      "meaning": "The editor could not synchronize with Human2AI and displays the supplied error detail.",
+      "scope": "Composition and UI-sketch session error presentation.",
+      "referent": "A service synchronization failure and its message.",
+      "precedence": "Generic fallback; revision conflict and wrong session type retain specific recovery messages.",
+      "canonicalKey": "errors.serviceSync",
+      "searchTerms": [
+        "无法同步",
+        "synchronize",
+        "service error"
+      ],
+      "examples": [
+        "Display a failed request detail during loading or saving."
+      ],
+      "nonExamples": [
+        "A revision-conflict message with recovery instructions."
+      ]
+    },
+    "actions.create": {
+      "meaning": "Commit creation of a new item identified by the surrounding dialog.",
+      "scope": "Shared creation confirmation buttons; currently the workspace project form.",
+      "referent": "The new item described by the enclosing form.",
+      "precedence": "Commits creation; does not merely open a creation form or duplicate an existing item.",
+      "canonicalKey": "actions.create",
+      "searchTerms": [
+        "创建",
+        "Create",
+        "submit creation"
+      ],
+      "examples": [
+        "Create a project after entering its name."
+      ],
+      "nonExamples": [
+        "Open the New project dialog."
+      ]
+    },
+    "actions.rename": {
+      "meaning": "Change the display name of an existing item without replacing its identity or contents.",
+      "scope": "Shared rename menus and dialogs for projects, sessions, and canvas layout states.",
+      "referent": "The existing project or session selected by the user.",
+      "precedence": "The menu opens editing; the confirmation commits the edited name. Neither creates a new item nor moves it.",
+      "canonicalKey": "actions.rename",
+      "searchTerms": [
+        "重命名",
+        "Rename",
+        "确认",
+        "Confirm",
+        "rename project",
+        "rename session"
+      ],
+      "examples": [
+        "Rename an existing project or session."
+      ],
+      "nonExamples": [
+        "Create another project.",
+        "Move a session into another project."
+      ]
+    },
+    "actions.move": {
+      "meaning": "Change the container assignment of an existing item while retaining the item and its contents.",
+      "scope": "Container relocation commands; currently workspace session-to-project assignment.",
+      "referent": "The selected item and its destination container; in Workspace, a session and another project.",
+      "precedence": "Not geometric movement on a canvas, copying content, or renaming. Workspace destinations exclude the current project and require an existing project.",
+      "canonicalKey": "actions.move",
+      "searchTerms": [
+        "移动",
+        "Move",
+        "移动会话",
+        "Move session",
+        "选择项目",
+        "Select project",
+        "destination project"
+      ],
+      "examples": [
+        "Assign an unassigned session to a project.",
+        "Move a session to another project."
+      ],
+      "nonExamples": [
+        "Drag a canvas node to a new position.",
+        "Copy a session."
+      ]
+    },
+    "actions.retry": {
+      "meaning": "Repeat a failed data-loading request for the view identified by the surrounding error state.",
+      "scope": "Shared recovery buttons in workspace, style-library, and UI-sketch session load failures.",
+      "referent": "The failed view-owned loading request.",
+      "precedence": "Retries loading only; does not confirm, recreate, or automatically repeat a potentially destructive mutation. Request ownership does not change the label meaning.",
+      "canonicalKey": "actions.retry",
+      "searchTerms": [
+        "重试",
+        "Retry",
+        "重新加载",
+        "retry loading"
+      ],
+      "examples": [
+        "Reload projects after a workspace loading failure.",
+        "Reload styles after a style-library loading failure.",
+        "Reload the current UI-sketch session after its initial request fails."
+      ],
+      "nonExamples": [
+        "Repeat deletion of a style.",
+        "Refresh data when no failure occurred."
+      ]
+    },
+    "errors.operation-failed": {
+      "meaning": "A requested mutation failed without a more specific user-facing explanation; the user may try the operation again.",
+      "scope": "Fallback mutation errors in workspace and style-library dialogs and actions.",
+      "referent": "The operation initiated by the surrounding control.",
+      "precedence": "Does not assert that no partial work occurred, promise automatic retries, or replace specific validation and loading errors.",
+      "canonicalKey": "errors.operationFailed",
+      "searchTerms": [
+        "操作失败",
+        "请重试",
+        "action failed",
+        "operation failed"
+      ],
+      "examples": [
+        "Report failed session renaming.",
+        "Report failed style saving."
+      ],
+      "nonExamples": [
+        "Report a duplicate project name.",
+        "Display a failed initial list load."
+      ]
+    },
+    "session.details": {
+      "meaning": "The shared information panel for the current editing session.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "Session metadata and Agent connection controls.",
+      "precedence": "Contains metadata fields; not a session name or the canvas tools.",
+      "canonicalKey": "sessionDetails.title",
+      "searchTerms": [
+        "基本信息",
+        "Session details"
+      ],
+      "examples": [
+        "Title the session information panel."
+      ],
+      "nonExamples": [
+        "Name a new session."
+      ]
+    },
+    "session.created-at": {
+      "meaning": "The creation timestamp of the persisted session.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "sessionMetadata.createdAt.",
+      "precedence": "Distinct from draft edit time and time of the latest save.",
+      "canonicalKey": "sessionDetails.created",
+      "searchTerms": [
+        "创建时间",
+        "Created",
+        "session created at"
+      ],
+      "examples": [
+        "Show when the current session was created."
+      ],
+      "nonExamples": [
+        "Show the current draft modification time."
+      ]
+    },
+    "session.updated-at": {
+      "meaning": "The modification timestamp loaded from or returned by the service for the current session draft, falling back to the session timestamp when no draft exists.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "The editor lastModifiedAt value.",
+      "precedence": "Local unsaved edits do not advance this value; the timestamp alone does not certify that all current edits have been saved.",
+      "canonicalKey": "sessionDetails.updated",
+      "searchTerms": [
+        "修改时间",
+        "Last updated",
+        "last modified"
+      ],
+      "examples": [
+        "Show the editor modification timestamp."
+      ],
+      "nonExamples": [
+        "Report that all changes have been saved."
+      ]
+    },
+    "session.node-count": {
+      "meaning": "The total number of editable draft nodes counted by the current session editor.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "Composition areas, images, focus points and optional direction line; UI-sketch regions, texts and images; or spatial characters and primitive objects.",
+      "precedence": "Counts model nodes, not DOM elements, project children, or selected items.",
+      "canonicalKey": "sessionDetails.nodes",
+      "searchTerms": [
+        "节点数",
+        "Nodes",
+        "node count"
+      ],
+      "examples": [
+        "Show the current draft node count."
+      ],
+      "nonExamples": [
+        "Count selected nodes only."
+      ]
+    },
+    "session.agent-connection-field": {
+      "meaning": "The field identifying controls for connecting an external Agent to the current session.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "The Agent connection command row.",
+      "precedence": "Not the creator classification of a style entry or the provenance of a canvas node.",
+      "canonicalKey": "sessionDetails.agent",
+      "searchTerms": [
+        "Agent",
+        "会话连接",
+        "Agent connection field"
+      ],
+      "examples": [
+        "Label the row containing Copy command."
+      ],
+      "nonExamples": [
+        "Filter styles created by an Agent."
+      ]
+    },
+    "session.missing-timestamp": {
+      "meaning": "A dash standing in for an unavailable or invalid session timestamp.",
+      "scope": "Shared session-details panel in composition, UI-sketch, and 3D space editors.",
+      "referent": "A missing or invalid createdAt or updatedAt field.",
+      "precedence": "Not a literal stored value, zero nodes, empty user text, or a loading indicator.",
+      "canonicalKey": "sessionDetails.emptyValue",
+      "searchTerms": [
+        "—",
+        "缺失时间",
+        "missing timestamp"
+      ],
+      "examples": [
+        "Display a dash before session creation time is available."
+      ],
+      "nonExamples": [
+        "Display zero when the draft contains no nodes."
+      ]
+    },
+    "canvas.tools": {
+      "meaning": "The controls for adding or manipulating elements in the current editing canvas.",
+      "scope": "Composition, UI-sketch, and 3D space tool sections and collapsible canvas side-action panels.",
+      "referent": "The current editor tool group.",
+      "precedence": "Distinct from global navigation actions and session metadata; expand and collapse affect the tool panel, not its elements.",
+      "canonicalKey": "canvas.tools.label",
+      "searchTerms": [
+        "操作工具",
+        "Tools",
+        "收起操作工具",
+        "展开操作工具",
+        "UI 界面操作"
+      ],
+      "examples": [
+        "Heading above canvas editing controls.",
+        "Accessible name of the canvas tool group."
+      ],
+      "nonExamples": [
+        "Workspace New project action area."
+      ]
+    },
+    "shell.sidebar": {
+      "meaning": "The application-level sidebar containing workspace navigation and feature-entry controls.",
+      "scope": "Shared application shell across product pages.",
+      "referent": "The left application sidebar, not a canvas-local tool panel.",
+      "precedence": "Contains navigation; collapsing it changes shell presentation without deleting sessions or hiding draft elements.",
+      "canonicalKey": "shell.sidebar",
+      "searchTerms": [
+        "应用侧栏",
+        "application sidebar",
+        "收起应用侧栏",
+        "展开应用侧栏"
+      ],
+      "examples": [
+        "Name the application sidebar landmark.",
+        "Collapse the workspace sidebar to leave more editing space."
+      ],
+      "nonExamples": [
+        "Collapse tools inside the canvas.",
+        "Hide a sketch element."
+      ]
+    },
+    "shell.navigation": {
+      "meaning": "The application navigation region presented within the shell sidebar.",
+      "scope": "Shared application shell navigation landmark.",
+      "referent": "The navigation region containing the supplied workspace sidebar content.",
+      "precedence": "Nested within the sidebar; distinct from a single destination label and the surrounding sidebar landmark.",
+      "canonicalKey": "shell.navigation",
+      "searchTerms": [
+        "应用导航",
+        "application navigation",
+        "navigation landmark"
+      ],
+      "examples": [
+        "Name the sidebar navigation region for assistive technology."
+      ],
+      "nonExamples": [
+        "Name the entire sidebar.",
+        "Label the Composition destination."
+      ]
+    },
+    "shell.action-panel": {
+      "meaning": "The page-level panel containing session information and controls for the current editor.",
+      "scope": "The shared shell right-side panel used by composition and UI-sketch pages.",
+      "referent": "The supplied page-level rightPanel content.",
+      "precedence": "Contains more than canvas tools; expanding or collapsing changes the panel presentation, not session persistence or element visibility. Distinct from the left workspace sidebar.",
+      "canonicalKey": "shell.rightPanel",
+      "searchTerms": [
+        "操作面板",
+        "Action panel",
+        "收起操作面板",
+        "展开操作面板",
+        "rightPanel"
+      ],
+      "examples": [
+        "Show session details and editing controls beside the composition canvas."
+      ],
+      "nonExamples": [
+        "Expand the workspace project list.",
+        "Hide a region in the final interface stage."
+      ]
+    },
+    "language.interface-selector": {
+      "meaning": "Choose the locale used for the application interface and localized generated copy.",
+      "scope": "The language selector supplied by Human2AiShell to workspace navigation.",
+      "referent": "The active application i18n locale, currently Chinese or English.",
+      "precedence": "Does not translate user-authored notes or select a programming language; locale changes affect application translations.",
+      "canonicalKey": "language.selectorLabel",
+      "searchTerms": [
+        "界面语言",
+        "Interface language",
+        "locale",
+        "语言选择"
+      ],
+      "examples": [
+        "Switch application translations from Chinese to English."
+      ],
+      "nonExamples": [
+        "Rewrite user-entered notes in English.",
+        "Select a programming language for generated code."
+      ]
+    },
+    "actions.enter-feature": {
+      "meaning": "Open the feature identified by the surrounding home-page section.",
+      "scope": "Home-page entry buttons for composition, interface design, and the style library.",
+      "referent": "The destination feature route shown by the adjacent section heading.",
+      "precedence": "Navigation only; does not itself request Agent processing, playback, or creation of a persisted session. Distinct from the initial stage of an interface transition.",
+      "canonicalKey": "actions.start",
+      "searchTerms": [
+        "开始",
+        "Start",
+        "进入功能",
+        "open feature"
+      ],
+      "examples": [
+        "Open the style library from its home-page section.",
+        "Enter the composition workbench."
+      ],
+      "nonExamples": [
+        "Select the initial UI-sketch motion stage.",
+        "Start an Agent refinement run."
+      ]
+    },
+    "canvas.viewport-zoom": {
+      "meaning": "Change or report the viewing magnification of the canvas without resizing draft elements.",
+      "scope": "Canvas viewport zoom controls; currently localized through the composition viewport labels.",
+      "referent": "The viewport zoom factor and its percentage display.",
+      "precedence": "Presentation only, distinct from changing element area, font size, frame dimensions, or generated output size.",
+      "canonicalKey": "composition.canvasZoom",
+      "searchTerms": [
+        "当前缩放",
+        "放大画布",
+        "缩小画布",
+        "Current zoom",
+        "Zoom in",
+        "Zoom out"
+      ],
+      "examples": [
+        "Increase viewing magnification to inspect a small node.",
+        "Announce the current zoom percentage."
+      ],
+      "nonExamples": [
+        "Increase a region area by 10%.",
+        "Increase text font size."
+      ]
+    },
+    "canvas.fit-view": {
+      "meaning": "Adjust the viewport camera and zoom to show the bounds specified by the current editor.",
+      "scope": "Fit-view controls in composition and UI-sketch canvases.",
+      "referent": "Composition content bounds or the UI-sketch interface frame bounds.",
+      "precedence": "Does not resize or move stored draft elements. Composition fits its content bounds; UI sketch fits the interface frame, not every out-of-frame element.",
+      "canonicalKey": "composition.fitAll",
+      "searchTerms": [
+        "适应全部",
+        "适应界面范围",
+        "Fit all",
+        "Fit interface frame",
+        "fit bounds"
+      ],
+      "examples": [
+        "Fit composition content in the viewport.",
+        "Fit the UI interface frame while leaving its dimensions unchanged."
+      ],
+      "nonExamples": [
+        "Resize the interface frame to match the browser window.",
+        "Reset the frame geometry."
+      ]
+    },
+    "canvas.frame-edit-lock": {
+      "meaning": "Prevent or allow direct editing of the current output frame geometry through editor controls.",
+      "scope": "Composition frame and UI-sketch interface-frame lock toggles.",
+      "referent": "The frame editing lock flag maintained by the current editor.",
+      "precedence": "Does not lock viewport pan or zoom, freeze all nodes, or make the persisted session read-only. The button names the next action: unlock while locked and lock while unlocked.",
+      "canonicalKey": "composition.lockFrame",
+      "searchTerms": [
+        "锁定画框",
+        "解锁画框",
+        "锁定范围",
+        "解锁范围",
+        "Lock frame",
+        "Unlock frame"
+      ],
+      "examples": [
+        "Disable direct movement and resizing of the interface frame while continuing to edit elements.",
+        "Unlock the composition frame for geometry changes."
+      ],
+      "nonExamples": [
+        "Disable canvas zoom.",
+        "Lock a session against concurrent service writes."
+      ]
+    },
+    "session.editor-loading": {
+      "meaning": "Progress feedback while preparing the selected editor and loading its session data.",
+      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "referent": "The composition or interface session being opened.",
+      "precedence": "Transient loading feedback, not an Agent refinement status or a mutation failure.",
+      "canonicalKey": "composition.session.loading",
+      "searchTerms": [
+        "正在加载构图",
+        "正在加载 UI 界面",
+        "Loading composition",
+        "Loading interface"
+      ],
+      "examples": [
+        "Announce that a composition session is loading."
+      ],
+      "nonExamples": [
+        "Announce that an Agent is processing the draft."
+      ]
+    },
+    "session.new-editor-title": {
+      "meaning": "A fallback page title when the editor does not yet have a session title.",
+      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "referent": "The new-session editing context before a session title is available.",
+      "precedence": "Presentation only; not the default name sent to session creation and not a command to create another session.",
+      "canonicalKey": "composition.session.new",
+      "searchTerms": [
+        "新构图会话",
+        "新 UI 界面会话",
+        "New composition session",
+        "New interface session"
+      ],
+      "examples": [
+        "Title the editor while sessionTitle is null."
+      ],
+      "nonExamples": [
+        "Persist an Untitled composition name during session creation."
+      ]
+    },
+    "session.default-name": {
+      "meaning": "The localized default name supplied when creating a session without a user-entered name.",
+      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "referent": "The persisted title of a newly created composition or interface session.",
+      "precedence": "Unlike a fallback page title, this is sent to the service and can later be renamed; changing interface locale does not itself translate an existing stored title.",
+      "canonicalKey": "composition.session.untitled",
+      "searchTerms": [
+        "未命名构图",
+        "未命名 UI 界面",
+        "Untitled composition",
+        "Untitled interface"
+      ],
+      "examples": [
+        "Create a composition with its localized default title from the sidebar."
+      ],
+      "nonExamples": [
+        "Replace an existing user-authored session title on locale change."
+      ]
+    },
+    "session.draft-revision-conflict": {
+      "meaning": "The submitted draft revision is stale because another operation has already updated the persisted draft; the message reports the latest revision and asks the user to reopen the session.",
+      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "referent": "DRAFT_REVISION_CONFLICT and its actualLatestRevision value for the current editor.",
+      "precedence": "Specific recovery feedback rather than generic synchronization failure; it does not automatically overwrite, merge, or discard local edits.",
+      "canonicalKey": "composition.session.revisionConflict",
+      "searchTerms": [
+        "版本冲突",
+        "重新打开会话",
+        "draft revision conflict",
+        "Reopen the session"
+      ],
+      "examples": [
+        "Report that another operation advanced a draft to revision 7."
+      ],
+      "nonExamples": [
+        "Report a network outage without a known revision conflict."
+      ]
+    },
+    "session.editor-type-mismatch": {
+      "meaning": "The requested session has a type incompatible with the editor used to open it.",
+      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "referent": "The loaded session type versus the composition or interface editor.",
+      "precedence": "Different from a missing session, unsupported service endpoint, or corrupted draft; this message does not convert the session to another type.",
+      "canonicalKey": "composition.session.typeMismatch",
+      "searchTerms": [
+        "不是构图会话",
+        "不是 UI 界面会话",
+        "session type mismatch",
+        "wrong editor"
+      ],
+      "examples": [
+        "Reject opening an interface session in the composition editor."
+      ],
+      "nonExamples": [
+        "Report that a session identifier does not exist."
+      ]
+    },
+    "app.product-name": {
+      "meaning": "The localized product identity shown by the application.",
+      "scope": "Browser document title, home-page heading, shared shell product name, and connector or Skill marketplace product identity. The application sidebar brand also links to the home page.",
+      "referent": "The Human2AI product, named 以形塑形 in Chinese and human2ai in English.",
+      "precedence": "The product name is distinct from individual feature names, session titles and implementation readiness messages.",
+      "canonicalKey": "app.title",
+      "searchTerms": [
+        "以形塑形",
+        "human2ai",
+        "Human2AI",
+        "product name"
+      ],
+      "examples": [
+        "Show the product name in the shell and browser title."
+      ],
+      "nonExamples": [
+        "Use a session title as the product identity."
+      ]
+    },
+    "canvas.viewport-help": {
+      "meaning": "On-demand instructions for placing nodes, cancelling placement, zooming and panning the editor canvas.",
+      "scope": "Composition and UI-sketch viewport help controls.",
+      "referent": "The shared one-shot tool placement gestures and InfiniteCanvasViewport wheel, secondary-button drag and Space plus primary-button drag gestures.",
+      "precedence": "Selecting a node tool arms placement without creating data; clicking places a default-sized node, dragging sizes a shape or image, and Escape cancels. Panning retains priority over placement. This help does not explain node metadata or frame resizing.",
+      "canonicalKey": "canvas.viewport.help",
+      "searchTerms": [
+        "画布操作说明",
+        "Canvas controls",
+        "滚轮缩放",
+        "pan",
+        "zoom",
+        "Space",
+        "放置节点",
+        "拖动确定尺寸",
+        "Escape",
+        "place node"
+      ],
+      "examples": [
+        "Explain Space plus primary-button drag to pan either editor canvas.",
+        "Explain selecting a tool followed by a canvas click or drag, with Escape to cancel."
+      ],
+      "nonExamples": [
+        "Explain how arrow keys move a selected node."
+      ]
+    },
+    "canvas.node-description": {
+      "meaning": "A read-only explanation supplied by an Agent of what a canvas node represents and contributes. In composition work it explains the visual relationship and perceptual effect, without becoming the user's revision instruction.",
+      "scope": "Read-only node metadata in composition and UI canvas editors, including their shared node tooltips.",
+      "referent": "The user-perceived region, static text, or image represented by the selected node.",
+      "precedence": "It explains the current node's role and remains separate from the editable node note, which carries the user's direction for changing that node. Composition explanations prioritize contribution to the whole over pictured-object identity.",
+      "canonicalKey": "canvas.node.nodeDescription",
+      "searchTerms": [
+        "节点说明",
+        "只读说明",
+        "Node description",
+        "projected node meaning"
+      ],
+      "examples": [
+        "Describe an imported rectangle as the dynamic project-list region while leaving its user note editable.",
+        "Explain how a low repeated foreground rhythm supplies scale and overlap, making the main mass feel larger and more distant, while leaving its user note empty.",
+        "Explain how a broad lower image mass counterbalances dense type across a gap, rather than merely naming the photographed object."
+      ],
+      "nonExamples": [
+        "A user instruction asking the Agent to widen the project list.",
+        "The visible static text rendered by a text node."
+      ]
+    },
+    "canvas.node-origin-user": {
+      "meaning": "The immutable canvas node origin for a node created directly by the user in the browser canvas.",
+      "scope": "Read-only node metadata in composition and UI canvas editors.",
+      "referent": "A canvas node whose initial creation action came from the user.",
+      "precedence": "It records original creation only and does not change when an Agent later edits the node.",
+      "canonicalKey": "canvas.node.originUser",
+      "searchTerms": [
+        "user node",
+        "用户创建节点",
+        "node origin user"
+      ],
+      "examples": [
+        "A rectangle added with the canvas Add region action."
+      ],
+      "nonExamples": [
+        "A node proposed by an Agent.",
+        "A node imported from an existing UI."
+      ]
+    },
+    "canvas.node-origin-agent": {
+      "meaning": "The immutable canvas node origin for a new design element proposed by an Agent, beyond content already present in the source UI or reference picture.",
+      "scope": "Read-only node metadata in composition and UI canvas editors.",
+      "referent": "A new canvas node created by an Agent as design intent.",
+      "precedence": "It differs from import because the represented element is a new design proposal; editing an imported node does not change its origin to agent.",
+      "canonicalKey": "canvas.node.originAgent",
+      "searchTerms": [
+        "agent node",
+        "Agent 创建节点",
+        "node origin agent"
+      ],
+      "examples": [
+        "An Agent adds a proposed status-summary region to a layout draft."
+      ],
+      "nonExamples": [
+        "A browser-created user node.",
+        "A node imported from an existing UI."
+      ]
+    },
+    "canvas.node-origin-import": {
+      "meaning": "The immutable canvas node origin for an abstract visual element that an Agent recovered from existing project UI or a supplied reference picture.",
+      "scope": "Read-only node metadata in composition and UI canvas editors.",
+      "referent": "A canvas node representing a perceptible region, text, focal point, or visual flow already present in the source UI or picture.",
+      "precedence": "It records recovered content rather than a new proposal. UI projection interprets accepted edits against the existing UI; composition projection records revised visual intent without editing the source picture.",
+      "canonicalKey": "canvas.node.originImport",
+      "searchTerms": [
+        "import node",
+        "旧 UI 投影",
+        "已有界面",
+        "node origin import",
+        "参考画面构图",
+        "reference picture projection"
+      ],
+      "examples": [
+        "An Agent represents an existing dynamic project list as one imported rectangle.",
+        "An Agent represents the main subject or title in a reference picture as an editable composition region."
+      ],
+      "nonExamples": [
+        "A screenshot of the old UI.",
+        "A newly proposed Agent layout node."
+      ]
+    },
+    "canvas.layer-bring-to-front": {
+      "meaning": "Move selected canvas nodes above all other content nodes.",
+      "scope": "Composition and UI canvas context menus; UI order is shared across motion states.",
+      "referent": "The selected content nodes in the persisted back-to-front stacking order.",
+      "precedence": "Changes visual occlusion only, independently of shot scale, visual weight, numbering, and geometry. Frames, guides and selection controls are excluded.",
+      "canonicalKey": "canvasLayers.bringToFront",
+      "searchTerms": [
+        "置于顶层",
+        "Bring to front",
+        "层级",
+        "stacking order"
+      ],
+      "examples": [
+        "Bring to front for an image overlapping a region."
+      ],
+      "nonExamples": [
+        "Move a node spatially.",
+        "Change foreground/background scene depth."
+      ]
+    },
+    "canvas.layer-bring-forward": {
+      "meaning": "Move selected canvas nodes forward by one unselected neighbor, preserving their relative order.",
+      "scope": "Composition and UI canvas context menus; UI order is shared across motion states.",
+      "referent": "The selected content nodes in the persisted back-to-front stacking order.",
+      "precedence": "Changes visual occlusion only, independently of shot scale, visual weight, numbering, and geometry. Frames, guides and selection controls are excluded.",
+      "canonicalKey": "canvasLayers.bringForward",
+      "searchTerms": [
+        "上移一层",
+        "Bring forward",
+        "层级",
+        "stacking order"
+      ],
+      "examples": [
+        "Bring forward for an image overlapping a region."
+      ],
+      "nonExamples": [
+        "Move a node spatially.",
+        "Change foreground/background scene depth."
+      ]
+    },
+    "canvas.layer-send-backward": {
+      "meaning": "Move selected canvas nodes backward by one unselected neighbor, preserving their relative order.",
+      "scope": "Composition and UI canvas context menus; UI order is shared across motion states.",
+      "referent": "The selected content nodes in the persisted back-to-front stacking order.",
+      "precedence": "Changes visual occlusion only, independently of shot scale, visual weight, numbering, and geometry. Frames, guides and selection controls are excluded.",
+      "canonicalKey": "canvasLayers.sendBackward",
+      "searchTerms": [
+        "下移一层",
+        "Send backward",
+        "层级",
+        "stacking order"
+      ],
+      "examples": [
+        "Send backward for an image overlapping a region."
+      ],
+      "nonExamples": [
+        "Move a node spatially.",
+        "Change foreground/background scene depth."
+      ]
+    },
+    "canvas.layer-send-to-back": {
+      "meaning": "Move selected canvas nodes below all other content nodes.",
+      "scope": "Composition and UI canvas context menus; UI order is shared across motion states.",
+      "referent": "The selected content nodes in the persisted back-to-front stacking order.",
+      "precedence": "Changes visual occlusion only, independently of shot scale, visual weight, numbering, and geometry. Frames, guides and selection controls are excluded.",
+      "canonicalKey": "canvasLayers.sendToBack",
+      "searchTerms": [
+        "置于底层",
+        "Send to back",
+        "层级",
+        "stacking order"
+      ],
+      "examples": [
+        "Send to back for an image overlapping a region."
+      ],
+      "nonExamples": [
+        "Move a node spatially.",
+        "Change foreground/background scene depth."
+      ]
+    },
+    "canvas-history.undo": {
+      "meaning": "Restore the preceding complete local canvas operation, including unsaved edits.",
+      "scope": "Composition, UI sketch and 3D space editor history controls and keyboard actions.",
+      "referent": "Restore the preceding complete local canvas operation, including unsaved edits.",
+      "precedence": "Applies to draft content in the current open session; excludes viewport navigation, native text-input undo and historical version browsing. A complete gesture is one operation.",
+      "canonicalKey": "canvasHistory.undo",
+      "searchTerms": [
+        "撤销",
+        "Undo",
+        "canvas history"
+      ],
+      "examples": [
+        "Undo a drag as one operation; redo restores its final position."
+      ],
+      "nonExamples": [
+        "Undo each pointer event or move the viewport camera."
+      ]
+    },
+    "canvas-history.redo": {
+      "meaning": "Reapply the next locally undone canvas operation until a new edit replaces that branch.",
+      "scope": "Composition, UI sketch and 3D space editor history controls and keyboard actions.",
+      "referent": "Reapply the next locally undone canvas operation until a new edit replaces that branch.",
+      "precedence": "Applies to draft content in the current open session; excludes viewport navigation, native text-input undo and historical version browsing. A complete gesture is one operation.",
+      "canonicalKey": "canvasHistory.redo",
+      "searchTerms": [
+        "重做",
+        "Redo",
+        "canvas history"
+      ],
+      "examples": [
+        "Undo a drag as one operation; redo restores its final position."
+      ],
+      "nonExamples": [
+        "Undo each pointer event or move the viewport camera."
+      ]
+    },
+    "canvas-history.label": {
+      "meaning": "The pair of controls for local canvas operation history.",
+      "scope": "Composition, UI sketch and 3D space editor history controls and keyboard actions.",
+      "referent": "The pair of controls for local canvas operation history.",
+      "precedence": "Applies to draft content in the current open session; excludes viewport navigation, native text-input undo and historical version browsing. A complete gesture is one operation.",
+      "canonicalKey": "canvasHistory.label",
+      "searchTerms": [
+        "编辑历史",
+        "Edit history",
+        "canvas history"
+      ],
+      "examples": [
+        "Undo a drag as one operation; redo restores its final position."
+      ],
+      "nonExamples": [
+        "Undo each pointer event or move the viewport camera."
+      ]
+    },
+    "canvas.layout-states": {
+      "meaning": "Named, ordered editable layout states of one canvas, sharing node content.",
+      "scope": "Composition and UI-sketch state controls, state copy menus and UI transition headings.",
+      "referent": "Persisted state identities, names, order and layout snapshots.",
+      "precedence": "State selection restores layout without changing shared node content. Composition includes independent frame geometry and layer order; UI retains its existing shared frame and layers. State names and stable numbers persist; UI transitions follow displayed state order.",
+      "canonicalKey": "canvasStates.switch",
+      "searchTerms": [
+        "界面状态",
+        "状态名称",
+        "状态排序",
+        "Interface states",
+        "State name",
+        "State order"
+      ],
+      "examples": [
+        "Rename State 2 to Enabled.",
+        "Reorder states without changing their contents."
+      ],
+      "nonExamples": [
+        "Start an Agent job.",
+        "Play a rendered animation."
+      ]
+    },
+    "canvas.create-state": {
+      "meaning": "Add an editable layout state by copying its source immediately after it.",
+      "scope": "Composition and UI-sketch Add state buttons and New state menus.",
+      "referent": "The ordered layout states of the current canvas.",
+      "precedence": "Copies layout, retains shared node content, selects the new state and persists it through existing draft saving. UI additionally copies per-state visibility.",
+      "canonicalKey": "uiSketch.views.enableMotion",
+      "searchTerms": [
+        "添加状态",
+        "新建状态",
+        "Add state",
+        "New state"
+      ],
+      "examples": [
+        "Add State 2 so its layout can be edited separately.",
+        "Use the compact Add state button beside the only state tab; after a second state exists, create further states from the state menu."
+      ],
+      "nonExamples": [
+        "Copy the motion implementation prompt.",
+        "Start animation playback."
+      ]
+    },
+    "canvas.delete-state": {
+      "meaning": "Remove one editable layout state while preserving shared nodes and all remaining layouts.",
+      "scope": "Composition and UI-sketch state menus and deletion confirmations.",
+      "referent": "The targeted state tab and its snapshot.",
+      "precedence": "Requires confirmation and retains at least one state. Deleting the current state selects a neighboring state; it does not delete the session or shared elements.",
+      "canonicalKey": "uiSketch.states.delete",
+      "searchTerms": [
+        "删除状态",
+        "Delete state"
+      ],
+      "examples": [
+        "Delete an unused expanded state."
+      ],
+      "nonExamples": [
+        "Delete all interface nodes."
+      ]
+    }
+  },
+  "keys": {
+    "notes.element.nodePlaceholder": {
+      "conceptId": "notes.element",
+      "variant": "node-placeholder",
+      "role": "prompt for instructions describing a composition node or UI image node",
+      "grammar": "imperative instruction",
+      "tone": "concise and explanatory",
+      "reusePolicy": "contextual"
+    },
+    "notes.element.regionPlaceholder": {
+      "conceptId": "notes.element",
+      "variant": "region-placeholder",
+      "role": "prompt for the layout content represented by one UI region",
+      "grammar": "instruction naming the region context",
+      "tone": "concise and explanatory",
+      "reusePolicy": "contextual"
+    },
+    "notes.element.textPlaceholder": {
+      "conceptId": "notes.element",
+      "variant": "text-placeholder",
+      "role": "prompt for what a text element communicates, separate from its literal visible text",
+      "grammar": "instruction naming the text context",
+      "tone": "concise and explanatory",
+      "reusePolicy": "contextual"
+    },
+    "textContent.compositionPlaceholder": {
+      "conceptId": "text.content",
+      "variant": "composition-placeholder",
+      "role": "prompt for exact composition text, explaining that blank input requests generated copy",
+      "grammar": "input instruction with a blank-input alternative",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "textContent.uiSketchPlaceholder": {
+      "conceptId": "text.content",
+      "variant": "ui-sketch-placeholder",
+      "role": "prompt for the literal text stored in a UI text element; does not promise generated copy for blank input",
+      "grammar": "imperative input instruction",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "actions.keep": {
+      "conceptId": "actions.keep",
+      "variant": "label",
+      "role": "non-destructive alternative in a deletion confirmation",
+      "grammar": "imperative verb",
+      "tone": "concise and reassuring",
+      "reusePolicy": "canonical"
+    },
+    "actions.deleteNode": {
+      "conceptId": "actions.delete",
+      "variant": "node-action",
+      "role": "delete the edited canvas node",
+      "grammar": "imperative verb with target noun",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "actions.deleteRegion": {
+      "conceptId": "actions.delete",
+      "variant": "region-action",
+      "role": "delete the edited UI region",
+      "grammar": "imperative verb with target noun",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "actions.deleteText": {
+      "conceptId": "actions.delete",
+      "variant": "text-action",
+      "role": "delete the entire edited text element, not merely clear its text content",
+      "grammar": "imperative verb with target noun",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "confirmations.deleteNode": {
+      "conceptId": "actions.delete",
+      "variant": "node-confirmation",
+      "role": "confirmation question before deleting the edited canvas node",
+      "grammar": "question identifying the target",
+      "tone": "direct and cautionary",
+      "reusePolicy": "contextual"
+    },
+    "confirmations.deleteRegion": {
+      "conceptId": "actions.delete",
+      "variant": "region-confirmation",
+      "role": "confirmation question before deleting the edited UI region",
+      "grammar": "question identifying the target",
+      "tone": "direct and cautionary",
+      "reusePolicy": "contextual"
+    },
+    "confirmations.deleteText": {
+      "conceptId": "actions.delete",
+      "variant": "text-confirmation",
+      "role": "confirmation question before deleting the entire text element",
+      "grammar": "question identifying the target",
+      "tone": "direct and cautionary",
+      "reusePolicy": "contextual"
+    },
+    "sessionDetails.agentCommand": {
+      "conceptId": "session.agent-connection-instruction",
+      "variant": "handoff-instruction",
+      "role": "instructional text copied for an external Agent with an injected CLI command",
+      "grammar": "two imperative sentences surrounding a command placeholder",
+      "tone": "direct and procedural",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.copyCommand": {
+      "conceptId": "session.agent-command-copy-action",
+      "variant": "idle-action",
+      "role": "button label that initiates copying the current Agent connection instruction",
+      "grammar": "concise imperative verb phrase",
+      "tone": "direct and concise",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.copying": {
+      "conceptId": "session.agent-command-copy-action",
+      "variant": "pending-status",
+      "role": "button label and live status while the Agent connection instruction is being prepared and copied",
+      "grammar": "progressive state phrase",
+      "tone": "concise and immediate",
+      "reusePolicy": "contextual"
+    },
+    "sessionDetails.copyFailed": {
+      "conceptId": "session.agent-command-copy-action",
+      "variant": "error-status",
+      "role": "button feedback and adjacent alert when the Agent connection instruction cannot be copied",
+      "grammar": "failed result phrase",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "actions.delete": {
+      "conceptId": "actions.delete",
+      "variant": "label",
+      "role": "destructive action label",
+      "grammar": "imperative verb",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "actions.cancel": {
+      "conceptId": "actions.cancel",
+      "variant": "label",
+      "role": "shared cancel action label",
+      "grammar": "imperative verb",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "notes.global.label": {
+      "conceptId": "notes.global",
+      "variant": "label",
+      "role": "shared editor control label",
+      "grammar": "noun phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "notes.global.promptHeading": {
+      "conceptId": "notes.global",
+      "variant": "prompt-heading",
+      "role": "heading before the global note in an exported prompt",
+      "grammar": "heading noun phrase",
+      "tone": "instructional",
+      "reusePolicy": "contextual"
+    },
+    "composition.globalNote.title": {
+      "conceptId": "notes.global",
+      "variant": "composition-editor-title",
+      "role": "composition note editor title",
+      "grammar": "descriptive noun phrase",
+      "tone": "clear and invitational",
+      "reusePolicy": "contextual"
+    },
+    "composition.globalNote.placeholder": {
+      "conceptId": "notes.global",
+      "variant": "composition-placeholder",
+      "role": "composition note input example",
+      "grammar": "example sentence",
+      "tone": "concise and instructive",
+      "reusePolicy": "contextual"
+    },
+    "composition.globalNote.ariaLabel": {
+      "conceptId": "notes.global",
+      "variant": "composition-aria-label",
+      "role": "accessible name for the composition note input",
+      "grammar": "noun phrase",
+      "tone": "explicit",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.globalNote.title": {
+      "conceptId": "notes.global",
+      "variant": "ui-sketch-editor-title",
+      "role": "UI sketch note editor title",
+      "grammar": "descriptive noun phrase",
+      "tone": "clear and invitational",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.globalNote.placeholder": {
+      "conceptId": "notes.global",
+      "variant": "ui-sketch-placeholder",
+      "role": "UI sketch note input example",
+      "grammar": "example sentence",
+      "tone": "concise and instructive",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.globalNote.ariaLabel": {
+      "conceptId": "notes.global",
+      "variant": "ui-sketch-aria-label",
+      "role": "accessible name for the UI sketch note input",
+      "grammar": "noun phrase",
+      "tone": "explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.group": {
+      "conceptId": "clipboard.group",
+      "variant": "heading",
+      "role": "Copy tool group heading",
+      "grammar": "Noun used as a heading",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "clipboard.copyPrompt": {
+      "conceptId": "clipboard.prompt",
+      "variant": "action",
+      "role": "Copy generated prompt button",
+      "grammar": "Imperative verb phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "clipboard.promptFailed": {
+      "conceptId": "clipboard.prompt",
+      "variant": "failure",
+      "role": "Prompt copy error notification",
+      "grammar": "Failure sentence",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.promptUnsupported": {
+      "conceptId": "clipboard.prompt",
+      "variant": "unsupported",
+      "role": "Prompt copy unavailable notification",
+      "grammar": "Capability explanation",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.copyPreview": {
+      "conceptId": "clipboard.preview",
+      "variant": "action",
+      "role": "Copy rendered preview button",
+      "grammar": "Imperative verb phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "clipboard.previewFailed": {
+      "conceptId": "clipboard.preview",
+      "variant": "failure",
+      "role": "Preview copy error notification",
+      "grammar": "Failure sentence",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.previewDownloaded": {
+      "conceptId": "clipboard.preview",
+      "variant": "downloaded",
+      "role": "Download fallback notification",
+      "grammar": "Result explanation sentence",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.copied": {
+      "conceptId": "clipboard.success",
+      "variant": "status",
+      "role": "Copy success feedback",
+      "grammar": "Completed result phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "visualWeight.label": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "label",
+      "role": "Element prominence field label",
+      "grammar": "Noun phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "visualWeight.auto": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "auto",
+      "role": "Unspecified prominence inferred from context option in editors and prompts",
+      "grammar": "Option name",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Auto for prominence differs from automatic depth in composition.depth.auto."
+    },
+    "visualWeight.high": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "high",
+      "role": "Strong prominence option in editors and prompts",
+      "grammar": "Option name",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Chinese 高 names prominence here, but physical height in dimensions.height."
+    },
+    "visualWeight.medium": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "medium",
+      "role": "Moderate prominence option in editors and prompts",
+      "grammar": "Option name",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "visualWeight.low": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "low",
+      "role": "Subdued prominence option in editors and prompts",
+      "grammar": "Option name",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "visualWeight.decorative": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "decorative",
+      "role": "Supporting decorative prominence option in editors and prompts",
+      "grammar": "Option name",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "visualWeight.prompt": {
+      "conceptId": "canvas.visual-weight",
+      "variant": "prompt",
+      "role": "Prompt line naming visual prominence",
+      "grammar": "Label with interpolated option",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "dimensions.width": {
+      "conceptId": "dimensions.width",
+      "variant": "label",
+      "role": "Frame horizontal dimension label",
+      "grammar": "Noun",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "dimensions.height": {
+      "conceptId": "dimensions.height",
+      "variant": "label",
+      "role": "Frame vertical dimension label",
+      "grammar": "Noun",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical",
+      "duplicateReason": "Chinese 高 also names high visual weight; physical extent and prominence are separate concepts."
+    },
+    "notes.element.label": {
+      "conceptId": "notes.element",
+      "variant": "label",
+      "role": "Element note input label and shared canvas node tooltip section heading",
+      "grammar": "Noun",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "notes.element.prompt": {
+      "conceptId": "notes.element",
+      "variant": "prompt",
+      "role": "Element note line in a prompt",
+      "grammar": "Label with interpolated note",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "textContent.label": {
+      "conceptId": "text.content",
+      "variant": "label",
+      "role": "Literal text input label and shared canvas text-node tooltip section heading",
+      "grammar": "Noun phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "textContent.prompt": {
+      "conceptId": "text.content",
+      "variant": "prompt",
+      "role": "Literal text line in a prompt",
+      "grammar": "Label with interpolated text",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "errors.serviceSync": {
+      "conceptId": "service.sync-error",
+      "variant": "message",
+      "role": "Service synchronization error alert",
+      "grammar": "Sentence with error-detail placeholder",
+      "tone": "Concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "actions.create": {
+      "conceptId": "actions.create",
+      "variant": "action-label",
+      "role": "submit a creation form",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "actions.rename": {
+      "conceptId": "actions.rename",
+      "variant": "menu-action",
+      "role": "open name editing for the selected item",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.confirmRename": {
+      "conceptId": "actions.rename",
+      "variant": "confirmation-action",
+      "role": "commit the edited project or session name; not a generic confirmation for unrelated actions",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.renameProjectTitle": {
+      "conceptId": "actions.rename",
+      "variant": "project-dialog-title",
+      "role": "title identifying project-name editing",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.renameSessionTitle": {
+      "conceptId": "actions.rename",
+      "variant": "session-dialog-title",
+      "role": "title identifying session-name editing",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "actions.move": {
+      "conceptId": "actions.move",
+      "variant": "action-label",
+      "role": "menu command opening destination selection and dialog button committing relocation",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical",
+      "duplicateReason": "actions.move relocates an item between project containers; spatial.translateMode is geometric movement of a selected 3D joint or object. Their short Move labels coincide, but referents and effects differ."
+    },
+    "workspaceSidebar.moveSessionTitle": {
+      "conceptId": "actions.move",
+      "variant": "session-dialog-title",
+      "role": "title identifying session relocation",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.selectProject": {
+      "conceptId": "actions.move",
+      "variant": "destination-project-prompt",
+      "role": "disabled initial option and accessible name for the destination-project selector",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.moveUnavailable": {
+      "conceptId": "actions.move",
+      "variant": "no-destination-explanation",
+      "role": "tooltip explaining that no project other than the current assignment is available",
+      "grammar": "declarative phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "actions.retry": {
+      "conceptId": "actions.retry",
+      "variant": "recovery-action",
+      "role": "button retrying failed view loading",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.deleteProjectTitle": {
+      "conceptId": "actions.delete",
+      "variant": "project-dialog-title",
+      "role": "title identifying project deletion",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.deleteSessionTitle": {
+      "conceptId": "actions.delete",
+      "variant": "session-dialog-title",
+      "role": "title identifying session deletion",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "errors.operationFailed": {
+      "conceptId": "errors.operation-failed",
+      "variant": "fallback-error",
+      "role": "visible fallback mutation error",
+      "grammar": "declarative sentence with recovery instruction",
+      "tone": "concise",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.title": {
+      "conceptId": "session.details",
+      "variant": "panel-heading",
+      "role": "session details heading or metadata field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.created": {
+      "conceptId": "session.created-at",
+      "variant": "field-label",
+      "role": "session details heading or metadata field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.updated": {
+      "conceptId": "session.updated-at",
+      "variant": "field-label",
+      "role": "session details heading or metadata field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.nodes": {
+      "conceptId": "session.node-count",
+      "variant": "field-label",
+      "role": "session details heading or metadata field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionDetails.agent": {
+      "conceptId": "session.agent-connection-field",
+      "variant": "field-label",
+      "role": "session details heading or metadata field label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "Agent here labels session connection controls; styleLibrary.creatorAgent is a creator category and uiSketch.canvasLabels.originAgent is node provenance."
+    },
+    "sessionDetails.emptyValue": {
+      "conceptId": "session.missing-timestamp",
+      "variant": "missing-value",
+      "role": "placeholder for unavailable timestamps",
+      "grammar": "standalone punctuation",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvas.tools.label": {
+      "conceptId": "canvas.tools",
+      "variant": "group-label",
+      "role": "tool section heading and accessible group name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.collapseTools": {
+      "conceptId": "canvas.tools",
+      "variant": "collapse-action",
+      "role": "collapse the composition tool panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.expandTools": {
+      "conceptId": "canvas.tools",
+      "variant": "expand-action",
+      "role": "expand the composition tool panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.sideActions": {
+      "conceptId": "canvas.tools",
+      "variant": "interface-group-label",
+      "role": "accessible name for interface-specific canvas actions",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.collapseSideActions": {
+      "conceptId": "canvas.tools",
+      "variant": "interface-collapse-action",
+      "role": "collapse the interface canvas action panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.canvasLabels.expandSideActions": {
+      "conceptId": "canvas.tools",
+      "variant": "interface-expand-action",
+      "role": "expand the interface canvas action panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "shell.sidebar": {
+      "conceptId": "shell.sidebar",
+      "variant": "landmark-name",
+      "role": "accessible name of the application sidebar",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "shell.collapseSidebar": {
+      "conceptId": "shell.sidebar",
+      "variant": "collapse-action",
+      "role": "accessible control label for collapsing the application sidebar",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "shell.expandSidebar": {
+      "conceptId": "shell.sidebar",
+      "variant": "expand-action",
+      "role": "accessible control label for expanding the application sidebar",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "shell.navigation": {
+      "conceptId": "shell.navigation",
+      "variant": "landmark-name",
+      "role": "accessible name of the application navigation region",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "shell.rightPanel": {
+      "conceptId": "shell.action-panel",
+      "variant": "panel-name",
+      "role": "accessible name of the page-level action panel",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "shell.collapseRightPanel": {
+      "conceptId": "shell.action-panel",
+      "variant": "collapse-action",
+      "role": "accessible control label for collapsing the page-level action panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "shell.expandRightPanel": {
+      "conceptId": "shell.action-panel",
+      "variant": "expand-action",
+      "role": "accessible control label for expanding the page-level action panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "language.selectorLabel": {
+      "conceptId": "language.interface-selector",
+      "variant": "selector-name",
+      "role": "accessible name of the application locale selector",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "actions.start": {
+      "conceptId": "actions.enter-feature",
+      "variant": "entry-action",
+      "role": "button opening the feature named by the surrounding heading",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical",
+      "duplicateReason": "uiSketch.views.start labels an initial motion stage; actions.start navigates into a feature. Equal Start/开始 text does not make their meanings or roles interchangeable."
+    },
+    "composition.canvasZoom": {
+      "conceptId": "canvas.viewport-zoom",
+      "variant": "zoom-status-label",
+      "role": "accessible zoom control group name and prefix of the current zoom percentage",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.zoomIn": {
+      "conceptId": "canvas.viewport-zoom",
+      "variant": "zoom-in-action",
+      "role": "tooltip and accessible name of the viewport zoom-in button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.zoomOut": {
+      "conceptId": "canvas.viewport-zoom",
+      "variant": "zoom-out-action",
+      "role": "tooltip and accessible name of the viewport zoom-out button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.fitAll": {
+      "conceptId": "canvas.fit-view",
+      "variant": "content-fit-action",
+      "role": "tooltip and accessible name for fitting composition content bounds",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.canvasLabels.fitFrame": {
+      "conceptId": "canvas.fit-view",
+      "variant": "interface-frame-fit-action",
+      "role": "tooltip and accessible name for fitting only the interface frame bounds",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.lockFrame": {
+      "conceptId": "canvas.frame-edit-lock",
+      "variant": "composition-lock-action",
+      "role": "tooltip and accessible name for locking the composition output frame",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "Matches uiSketch.canvasLabels.lockFrame in English; the Chinese variants explicitly name the composition 画框 versus the interface 范围."
+    },
+    "composition.unlockFrame": {
+      "conceptId": "canvas.frame-edit-lock",
+      "variant": "composition-unlock-action",
+      "role": "tooltip and accessible name for unlocking the composition output frame",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Matches uiSketch.canvasLabels.unlockFrame in English; the target-specific Chinese frame terminology remains distinct."
+    },
+    "uiSketch.canvasLabels.lockFrame": {
+      "conceptId": "canvas.frame-edit-lock",
+      "variant": "interface-lock-action",
+      "role": "tooltip and accessible name for locking the interface frame geometry",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "The shared frame-lock concept uses 锁定范围 for the interface frame and 锁定画框 for composition, though both are Lock frame in English."
+    },
+    "uiSketch.canvasLabels.unlockFrame": {
+      "conceptId": "canvas.frame-edit-lock",
+      "variant": "interface-unlock-action",
+      "role": "tooltip and accessible name for unlocking the interface frame geometry",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "The shared frame-lock concept uses 解锁范围 for the interface frame and 解锁画框 for composition, though both are Unlock frame in English."
+    },
+    "composition.session.loading": {
+      "conceptId": "session.editor-loading",
+      "variant": "composition-loading",
+      "role": "accessible label for editor loading placeholders",
+      "grammar": "progress phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.session.loading": {
+      "conceptId": "session.editor-loading",
+      "variant": "interface-loading",
+      "role": "accessible label for editor loading placeholders",
+      "grammar": "progress phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.session.new": {
+      "conceptId": "session.new-editor-title",
+      "variant": "composition-new",
+      "role": "fallback page heading when no session title is available",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.session.new": {
+      "conceptId": "session.new-editor-title",
+      "variant": "interface-new",
+      "role": "fallback page heading when no session title is available",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.session.untitled": {
+      "conceptId": "session.default-name",
+      "variant": "composition-untitled",
+      "role": "default user-visible title supplied to session creation",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.session.untitled": {
+      "conceptId": "session.default-name",
+      "variant": "interface-untitled",
+      "role": "default user-visible title supplied to session creation",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.session.revisionConflict": {
+      "conceptId": "session.draft-revision-conflict",
+      "variant": "composition-revisionConflict",
+      "role": "specific error and recovery instruction with latest revision placeholder",
+      "grammar": "declarative sentence followed by recovery instruction",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.session.revisionConflict": {
+      "conceptId": "session.draft-revision-conflict",
+      "variant": "interface-revisionConflict",
+      "role": "specific error and recovery instruction with latest revision placeholder",
+      "grammar": "declarative sentence followed by recovery instruction",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.session.typeMismatch": {
+      "conceptId": "session.editor-type-mismatch",
+      "variant": "composition-typeMismatch",
+      "role": "specific error explaining why this editor cannot open the session",
+      "grammar": "declarative sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.session.typeMismatch": {
+      "conceptId": "session.editor-type-mismatch",
+      "variant": "interface-typeMismatch",
+      "role": "specific error explaining why this editor cannot open the session",
+      "grammar": "declarative sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "app.title": {
+      "conceptId": "app.product-name",
+      "variant": "product-label",
+      "role": "localized product name for title and branding surfaces; visible name of the brand link returning to the home page",
+      "grammar": "proper name",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvas.viewport.help": {
+      "conceptId": "canvas.viewport-help",
+      "variant": "help-control-name",
+      "role": "accessible name and label of the viewport help control",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvas.viewport.instructions": {
+      "conceptId": "canvas.viewport-help",
+      "variant": "gesture-instructions",
+      "role": "tooltip explaining the common viewport zoom and pan gestures",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "canvas.node.nodeDescription": {
+      "conceptId": "canvas.node-description",
+      "variant": "read-only-field-label",
+      "role": "label for the read-only Agent-authored node description in the canvas editor and shared canvas node tooltip section heading",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvas.node.originUser": {
+      "conceptId": "canvas.node-origin-user",
+      "variant": "compact-origin-marker",
+      "role": "fixed lowercase English marker for a browser-created canvas node",
+      "grammar": "lowercase role identifier",
+      "tone": "technical and compact",
+      "reusePolicy": "canonical"
+    },
+    "canvas.node.originAgent": {
+      "conceptId": "canvas.node-origin-agent",
+      "variant": "compact-origin-marker",
+      "role": "fixed lowercase English marker for an Agent-proposed canvas node",
+      "grammar": "lowercase role identifier",
+      "tone": "technical and compact",
+      "reusePolicy": "canonical"
+    },
+    "canvas.node.originImport": {
+      "conceptId": "canvas.node-origin-import",
+      "variant": "compact-origin-marker",
+      "role": "fixed lowercase English marker for a canvas node recovered from existing UI or a reference picture",
+      "grammar": "lowercase origin identifier",
+      "tone": "technical and compact",
+      "reusePolicy": "canonical"
+    },
+    "canvasLayers.bringToFront": {
+      "conceptId": "canvas.layer-bring-to-front",
+      "variant": "menu-action",
+      "role": "context menu action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvasLayers.bringForward": {
+      "conceptId": "canvas.layer-bring-forward",
+      "variant": "menu-action",
+      "role": "context menu action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvasLayers.sendBackward": {
+      "conceptId": "canvas.layer-send-backward",
+      "variant": "menu-action",
+      "role": "context menu action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvasLayers.sendToBack": {
+      "conceptId": "canvas.layer-send-to-back",
+      "variant": "menu-action",
+      "role": "context menu action",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "canvasHistory.undo": {
+      "conceptId": "canvas-history.undo",
+      "variant": "default",
+      "role": "action button label",
+      "grammar": "verb",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvasHistory.redo": {
+      "conceptId": "canvas-history.redo",
+      "variant": "default",
+      "role": "action button label",
+      "grammar": "verb",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvasHistory.label": {
+      "conceptId": "canvas-history.label",
+      "variant": "default",
+      "role": "accessible group name",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.views.switch": {
+      "conceptId": "canvas.layout-states",
+      "variant": "interface-state-switch",
+      "role": "accessible label of the UI-sketch state toolbar",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.views.start": {
+      "conceptId": "canvas.layout-states",
+      "variant": "first-state-label",
+      "role": "State 1 tab and single-state export menu label",
+      "grammar": "state name",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.views.end": {
+      "conceptId": "canvas.layout-states",
+      "variant": "second-state-label",
+      "role": "State 2 tab and single-state export menu label",
+      "grammar": "state name",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.startState": {
+      "conceptId": "canvas.layout-states",
+      "variant": "first-state-heading",
+      "role": "heading for an element State 1 properties in a transition prompt",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.endState": {
+      "conceptId": "canvas.layout-states",
+      "variant": "second-state-heading",
+      "role": "heading for changed State 2 properties in a transition prompt",
+      "grammar": "heading phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.states.defaultName": {
+      "conceptId": "canvas.layout-states",
+      "variant": "numbered-name",
+      "role": "fallback label for an unnamed state",
+      "grammar": "noun phrase with number",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.states.name": {
+      "conceptId": "canvas.layout-states",
+      "variant": "name-field",
+      "role": "accessible label of the state name input",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.states.actions": {
+      "conceptId": "canvas.layout-states",
+      "variant": "actions-trigger",
+      "role": "accessible label of the state actions menu with target name",
+      "grammar": "noun phrase with name",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.states.reorderHint": {
+      "conceptId": "canvas.layout-states",
+      "variant": "reorder-help",
+      "role": "on-demand instructions for pointer and keyboard state reordering",
+      "grammar": "instructional sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.prompt.stateHeading": {
+      "conceptId": "canvas.layout-states",
+      "variant": "named-state-heading",
+      "role": "heading for a named state in a transition prompt",
+      "grammar": "heading with name",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.views.enableMotion": {
+      "conceptId": "canvas.create-state",
+      "variant": "add-state-action",
+      "role": "compact toolbar action shown only for a single canvas state, inserting a copy after the currently selected state",
+      "grammar": "imperative verb phrase",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.states.new": {
+      "conceptId": "canvas.create-state",
+      "variant": "menu-action",
+      "role": "menu command to insert a copy after the targeted state",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.states.delete": {
+      "conceptId": "canvas.delete-state",
+      "variant": "delete-action",
+      "role": "menu command to delete the targeted state",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.states.deleteTitle": {
+      "conceptId": "canvas.delete-state",
+      "variant": "confirmation-title",
+      "role": "confirmation question naming the state to delete",
+      "grammar": "question with name",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "canvasStates.switch": {
+      "conceptId": "canvas.layout-states",
+      "variant": "default",
+      "role": "accessible label of a canvas layout state toolbar",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    }
+  }
+}

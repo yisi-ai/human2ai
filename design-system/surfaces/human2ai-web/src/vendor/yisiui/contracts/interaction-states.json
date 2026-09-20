@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "requiredStates": [
+    "default",
+    "hover",
+    "focus",
+    "active",
+    "disabled",
+    "loading",
+    "empty",
+    "error",
+    "long-content",
+    "boundary"
+  ],
+  "optionalStates": [
+    "selected",
+    "dragging",
+    "resizing",
+    "read-only",
+    "stale",
+    "conflict"
+  ]
+}
+

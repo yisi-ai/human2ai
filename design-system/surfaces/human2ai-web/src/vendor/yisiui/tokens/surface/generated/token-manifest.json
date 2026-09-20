@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "surface": "web-react",
+  "sourceFiles": {
+    "design-system/foundations/tokens/core.tokens.json": "4bbd1e8377f7b514eea1fb506cd123fc6128aa63ca3b2305dfb5d7e8b6005100",
+    "design-system/foundations/tokens/semantic.tokens.json": "7d1c46f4ef02b9c2f18ef9b66a016968f932c9946fca5bb8c7a2f9d8090e981a",
+    "design-system/foundations/tokens/themes.tokens.json": "c6aaa30899ee7b54bc1b3480b1c386aeffc08d1eb64433d7ee39da2f78c5c314",
+    "design-system/surfaces/web-react/tokens/source/surface.tokens.json": "627fa1fa05a72fc6b5aaef334e2b8ace03e65bac3efdb60713259ee48213516c",
+    "design-system/surfaces/web-react/tokens/source/component.tokens.json": "9eaea433cb6d727caab5a3f8c6dea1a53ffbc208260b54bf8c65d822185302c3"
+  },
+  "sourceHash": "e907876065a198dc1620dc40d0f5c5cd78d6a473ddc909019f2949826ba2e2ba",
+  "generatedFiles": {
+    "packages/react/src/tokens/tokens.ts": "9bc3687f7e54a9f427051415be5a2bb8ac90b483cc962c2bcbe97af6e680e835",
+    "packages/react/src/tokens/antdTheme.ts": "d248a434e0d3acf9944b96ad45272b90e01aad04f625e3abf4f398e84686c944",
+    "packages/react/styles/tokens.css": "80e47637c39b336aef5aaaee2e4870c6be7f684fadb7c290904d0085b0d76154"
+  }
+}

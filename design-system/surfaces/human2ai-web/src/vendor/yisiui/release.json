@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "surface": "web-react",
+  "version": "0.14.0",
+  "channel": "experimental",
+  "status": "candidate",
+  "approvedByUser": false,
+  "distribution": "source-sync",
+  "stack": {
+    "packageManager": "npm",
+    "node": ">=22",
+    "next": "16.3.5",
+    "postcss": "8.5.26",
+    "sharp": "0.35.4",
+    "react": "19.2.8",
+    "reactDom": "19.2.8",
+    "typescript": "5.8.3",
+    "antd": "6.6.3",
+    "antDesignIcons": "6.3.4",
+    "tailwindcss": "3.4.17",
+    "storybook": "10.6.0",
+    "storybookCompiler": "@storybook/addon-webpack5-compiler-swc@4.0.3"
+  },
+  "compatibility": {
+    "integrationVersion": 9,
+    "consumerConfigSchema": 2,
+    "packageManagers": {
+      "npm": ">=11",
+      "pnpm": "10.25.0"
+    },
+    "node": ">=22",
+    "configurableLayout": true,
+    "registrySchema": 2,
+    "assetMarker": 1,
+    "inspector": "0.14.0",
+    "skills": 12
+  },
+  "assetMigrations": [
+    {
+      "asset": "yisiui/form-actions",
+      "id": "form-actions",
+      "name": "FormActions",
+      "status": "removed",
+      "kind": "remove",
+      "replacement": null,
+      "deprecatedSince": "0.12.0",
+      "removeAfter": "0.12.0",
+      "removedIn": "0.12.0",
+      "migrationGuide": "migrations/2026-09-06-form-actions-removal.md",
+      "importNames": [
+        "FormActions",
+        "FormActionsProps"
+      ]
+    },
+    {
+      "asset": "yisiui/copy-action",
+      "id": "copy-action",
+      "name": "CopyAction",
+      "status": "removed",
+      "kind": "replace",
+      "replacement": "yisiui/action-button",
+      "deprecatedSince": "0.11.0",
+      "removeAfter": "0.12.0",
+      "removedIn": "0.12.0",
+      "migrationGuide": "migrations/2026-09-03-copy-action-to-action-button.md",
+      "importNames": [
+        "CopyAction",
+        "CopyActionProps",
+        "CopyActionWriter"
+      ]
+    }
+  ]
+}

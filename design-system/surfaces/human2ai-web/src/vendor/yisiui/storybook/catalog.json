@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "surface": "web-react",
+  "stories": [
+    {
+      "id": "foundations-tokens--colors",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "颜色",
+      "kind": "foundation",
+      "description": "基础、语义和产品颜色 Token。",
+      "source": "apps/storybook/stories/Foundations.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--typography",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "字体",
+      "kind": "foundation",
+      "description": "字体刻度和语义文字角色。",
+      "source": "apps/storybook/stories/FoundationsTypography.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--spacing",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "间距",
+      "kind": "foundation",
+      "description": "间距刻度。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--radius",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "圆角",
+      "kind": "foundation",
+      "description": "圆角刻度。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--shadows",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "阴影",
+      "kind": "foundation",
+      "description": "面板、卡片和浮层深度。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--motion",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "动效",
+      "kind": "foundation",
+      "description": "交互时长和文字动效速度倍率。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--layout-metrics",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "布局尺寸",
+      "kind": "foundation",
+      "description": "共享桌面 Web Surface 布局尺寸。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "foundations-tokens--component-geometry",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "组件尺寸",
+      "kind": "foundation",
+      "description": "按钮、输入和卡片几何 Token。",
+      "source": "apps/storybook/stories/FoundationsTokenScales.stories.tsx"
+    },
+    {
+      "id": "buttons-basicbutton--default",
+      "title": "yisiui-Components/Buttons/BasicButton",
+      "kind": "experimental",
+      "assetKey": "yisiui/basic-button",
+      "description": "需要统一的基础操作按钮",
+      "source": "apps/storybook/stories/BasicButton.stories.tsx"
+    },
+    {
+      "id": "buttons-actionbutton--default",
+      "title": "yisiui-Components/Buttons/ActionButton",
+      "kind": "experimental",
+      "assetKey": "yisiui/action-button",
+      "description": "按钮需要执行消费方提供的同步或异步动作，并在执行中、成功和失败之间提供明确反馈",
+      "source": "apps/storybook/stories/ActionButton.stories.tsx"
+    },
+    {
+      "id": "buttons-compositebutton--default",
+      "title": "yisiui-Components/Buttons/CompositeButton",
+      "kind": "experimental",
+      "assetKey": "yisiui/composite-button",
+      "description": "需要全宽、左对齐并带辅助说明和悬浮操作的行级按钮",
+      "source": "apps/storybook/stories/CompositeButton.stories.tsx"
+    },
+    {
+      "id": "components-states-statusbadge--default",
+      "title": "yisiui-Components/States/StatusBadge",
+      "kind": "experimental",
+      "assetKey": "yisiui/status-badge",
+      "description": "状态标签和小型结果提示",
+      "source": "apps/storybook/stories/ComponentStatus.stories.tsx"
+    },
+    {
+      "id": "components-status-statuslight--default",
+      "title": "yisiui-Components/States/StatusLight",
+      "kind": "experimental",
+      "assetKey": "yisiui/status-light",
+      "description": "需要用竖向绿、黄、红灯表达一个当前状态",
+      "source": "apps/storybook/stories/StatusLight.stories.tsx"
+    },
+    {
+      "id": "cards-statuscard--default",
+      "title": "yisiui-Components/Cards/StatusCard",
+      "kind": "experimental",
+      "assetKey": "yisiui/status-card",
+      "description": "需要左侧标题/副标题和右侧 StatusLight 的状态卡片",
+      "source": "apps/storybook/stories/StatusCard.stories.tsx"
+    },
+    {
+      "id": "cards-imagetitlecard--default",
+      "title": "yisiui-Components/Cards/ImageTitleCard",
+      "kind": "experimental",
+      "assetKey": "yisiui/image-title-card",
+      "description": "需要以紧凑的上图下标题结构展示一张或多张由消费方提供的图片",
+      "source": "apps/storybook/stories/ImageTitleCard.stories.tsx"
+    },
+    {
+      "id": "components-states-loadingstate--default",
+      "title": "yisiui-Components/States/LoadingState",
+      "kind": "experimental",
+      "assetKey": "yisiui/loading-state",
+      "description": "页面或有界面板等待数据并需要通过骨架保持布局节奏",
+      "source": "apps/storybook/stories/LoadingState.stories.tsx"
+    },
+    {
+      "id": "numbers-numberbadge--default",
+      "title": "yisiui-Components/Numbers/NumberBadge",
+      "kind": "experimental",
+      "assetKey": "yisiui/number-badge",
+      "description": "需要在固定尺寸的圆形底色中显示数字",
+      "source": "apps/storybook/stories/NumberBadge.stories.tsx"
+    },
+    {
+      "id": "numbers-animatednumber--default",
+      "title": "yisiui-Components/Numbers/AnimatedNumber",
+      "kind": "experimental",
+      "assetKey": "yisiui/animated-number",
+      "description": "需要以纯数字形式展示会变化的指标",
+      "source": "apps/storybook/stories/AnimatedNumber.stories.tsx"
+    },
+    {
+      "id": "motion-borderscan--default",
+      "title": "yisiui-Components/Motion/BorderScan",
+      "kind": "experimental",
+      "assetKey": "yisiui/border-scan",
+      "description": "需要为已知固定宽高的矩形或圆角矩形组件叠加一条沿边框循环运动的扫光",
+      "source": "apps/storybook/stories/BorderScan.stories.tsx"
+    },
+    {
+      "id": "motion-textshine--default",
+      "title": "yisiui-Components/Motion/TextShine",
+      "kind": "experimental",
+      "assetKey": "yisiui/text-shine",
+      "description": "需要只在文字字形内部显示循环扫光提醒",
+      "source": "apps/storybook/stories/TextShine.stories.tsx"
+    },
+    {
+      "id": "switching-tabswitch--default",
+      "title": "yisiui-Components/Switching/TabSwitch",
+      "kind": "experimental",
+      "assetKey": "yisiui/tab-switch",
+      "description": "需要在两个或多个同级视图之间切换",
+      "source": "apps/storybook/stories/TabSwitch.stories.tsx"
+    },
+    {
+      "id": "switching-underlinetabswitch--default",
+      "title": "yisiui-Components/Switching/UnderlineTabSwitch",
+      "kind": "experimental",
+      "assetKey": "yisiui/underline-tab-switch",
+      "description": "需要全宽、等分宽度的同级视图切换",
+      "source": "apps/storybook/stories/UnderlineTabSwitch.stories.tsx"
+    },
+    {
+      "id": "modules-sideactionpanel--default",
+      "title": "yisiui-Modules/SideActionPanel",
+      "kind": "experimental",
+      "assetKey": "yisiui/side-action-panel",
+      "description": "需要在页面或工作台一侧组织紧凑 Icon 工具与纵向行级操作",
+      "source": "apps/storybook/stories/SideActionPanel.stories.tsx"
+    },
+    {
+      "id": "modules-assetskeletontree--article-list",
+      "title": "yisiui-Modules/AssetSkeletonTree",
+      "kind": "experimental",
+      "assetKey": "yisiui/asset-skeleton-tree",
+      "description": "需要查看或编辑资产骨架层级",
+      "source": "apps/storybook/stories/AssetSkeletonTree.stories.tsx"
+    },
+    {
+      "id": "buttons-confirmaction--default",
+      "title": "yisiui-Components/Buttons/ConfirmAction",
+      "kind": "experimental",
+      "assetKey": "yisiui/confirm-action",
+      "description": "删除、忽略、覆盖或不可逆操作的就地确认",
+      "source": "apps/storybook/stories/ConfirmAction.stories.tsx"
+    },
+    {
+      "id": "modules-messagecomposer--default",
+      "title": "yisiui-Modules/MessageComposer",
+      "kind": "experimental",
+      "assetKey": "yisiui/message-composer",
+      "description": "需要向 AI 发送受控的单条消息，并统一输入、发送、加载、禁用和错误状态",
+      "source": "apps/storybook/stories/MessageComposer.stories.tsx"
+    },
+    {
+      "id": "modules-textmarkeditor--default",
+      "title": "yisiui-Modules/TextMarkEditor",
+      "kind": "experimental",
+      "assetKey": "yisiui/text-mark-editor",
+      "description": "需要在紧凑模态框中编辑已标记文字关联的一个或多个调用方字段",
+      "source": "apps/storybook/stories/TextMarkEditor.stories.tsx"
+    },
+    {
+      "id": "modules-aspectratioselector--default",
+      "title": "yisiui-Modules/AspectRatioSelector",
+      "kind": "experimental",
+      "assetKey": "yisiui/aspect-ratio-selector",
+      "description": "需要从常用预设或手动输入中选择宽高比，并同步查看当前比例的几何预览",
+      "source": "apps/storybook/stories/AspectRatioSelector.stories.tsx"
+    },
+    {
+      "id": "layouts-appshellframe--default",
+      "title": "yisiui-Layouts/AppShellFrame",
+      "kind": "experimental",
+      "assetKey": "yisiui/app-shell-frame",
+      "description": "桌面应用需要全屏壳层、持久侧栏、全局标题栏和独立滚动内容区",
+      "source": "apps/storybook/stories/AppShellFrame.stories.tsx"
+    },
+    {
+      "id": "modules-sectionnavigationpanel--default",
+      "title": "yisiui-Modules/SectionNavigationPanel",
+      "kind": "experimental",
+      "assetKey": "yisiui/section-navigation-panel",
+      "description": "需要在一个有界区域内通过左侧 Icon 与文字导航切换右侧业务内容",
+      "source": "apps/storybook/stories/SectionNavigationPanel.stories.tsx"
+    },
+    {
+      "id": "typography-decorativetitle--default",
+      "title": "yisiui-Components/Typography/DecorativeTitle",
+      "kind": "experimental",
+      "assetKey": "yisiui/decorative-title",
+      "description": "需要左右大圆角、底部和右侧厚边的特殊标题",
+      "source": "apps/storybook/stories/DecorativeTitle.stories.tsx"
+    },
+    {
+      "id": "icons-animatedicon--default",
+      "title": "yisiui-Components/Icons/AnimatedIcon",
+      "kind": "experimental",
+      "assetKey": "yisiui/animated-icon",
+      "description": "需要具有统一默认姿态和复位动效的通用 SVG 图标",
+      "source": "apps/storybook/stories/AnimatedIcon.stories.tsx"
+    },
+    {
+      "id": "modules-modelselector--default",
+      "title": "yisiui-Modules/ModelSelector",
+      "kind": "experimental",
+      "assetKey": "yisiui/model-selector",
+      "description": "需要在紧凑面板中切换模式、来源、模型型号和离散推理档位",
+      "source": "apps/storybook/stories/ModelSelector.stories.tsx"
+    },
+    {
+      "id": "system-architecture-status--migration-candidate",
+      "title": "yisiui-System/Architecture Status",
+      "kind": "supporting",
+      "description": "展示迁移候选状态；不代表共享组件。",
+      "source": "apps/storybook/stories/SystemOverview.stories.tsx"
+    }
+  ]
+}

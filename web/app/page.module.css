@@ -1,0 +1,67 @@
+.page {
+  box-sizing: border-box;
+  display: grid;
+  min-height: 100%;
+  align-items: center;
+  padding: var(--yisiui-surface-desktop-web-page-padding);
+}
+
+.content {
+  width: 100%;
+  max-width: 904px;
+  margin-inline: auto;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--yisiui-space-5);
+}
+
+.workspaceEntry.workspaceEntry {
+  position: relative;
+  width: 100%;
+  height: auto;
+  min-height: 300px;
+  aspect-ratio: 3 / 4;
+  padding: var(--yisiui-space-6) var(--yisiui-space-4);
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-radius: var(--yisiui-radius-lg);
+  box-shadow: none;
+  white-space: normal;
+}
+
+.cardBody {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  gap: var(--yisiui-space-6);
+}
+
+.cardIcon {
+  font-size: 72px;
+  color: var(--yisiui-color-text-secondary);
+}
+
+.cardLabel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yisiui-space-2);
+  font-size: var(--yisiui-font-size-lg);
+  font-weight: var(--yisiui-font-weight-medium);
+  line-height: var(--yisiui-font-line-height-normal);
+}
+
+.workspaceEntry :global(.ant-btn-loading-icon) {
+  position: absolute;
+  inset-block-start: var(--yisiui-space-4);
+  inset-inline-end: var(--yisiui-space-4);
+}
+
+.error {
+  margin: var(--yisiui-space-4) 0 0;
+  color: var(--yisiui-color-feedback-error);
+}

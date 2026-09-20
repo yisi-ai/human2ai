@@ -1,0 +1,50 @@
+.human2ai-app-shell-story-content {
+  box-sizing: border-box;
+  min-height: 100%;
+  padding: var(--yisiui-space-6);
+}
+
+.human2ai-app-shell-story-canvas {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.human2ai-app-shell-story-panel {
+  box-sizing: border-box;
+  height: 100%;
+  padding: var(--yisiui-space-5);
+}
+
+.human2ai-app-shell-story-panel h2 {
+  margin: 0 0 var(--yisiui-space-3);
+  font-size: var(--yisiui-font-size-lg);
+}
+
+.human2ai-app-shell-story-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+  margin-bottom: var(--yisiui-space-3);
+}
+
+.human2ai-app-shell-story-section-heading h2 {
+  margin: 0;
+}
+
+.human2ai-app-shell-story-tool-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--yisiui-space-2);
+}
+
+.human2ai-app-shell-story-capacity-tool {
+  grid-column: 1 / -1;
+}
+
+.human2ai-app-shell-story-sidebar {
+  box-sizing: border-box;
+  height: 100%;
+  padding: 0 var(--yisiui-space-4) var(--yisiui-space-4);
+}

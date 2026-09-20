@@ -1,0 +1,4 @@
+.yisi-confirm-action-description {
+  display: grid;
+  gap: var(--yisiui-space-1);
+}

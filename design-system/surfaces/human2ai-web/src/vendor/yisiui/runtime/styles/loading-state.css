@@ -1,0 +1,38 @@
+.yisi-loading-state {
+  display: grid;
+  width: 100%;
+  gap: var(--yisiui-space-2);
+  padding: var(--yisiui-space-6);
+  border: 1px solid var(--yisiui-color-border-default);
+  border-radius: var(--yisiui-component-card-radius);
+  background: var(--yisiui-color-surface-panel);
+}
+
+.yisi-loading-state-compact {
+  padding: var(--yisiui-space-4);
+}
+
+.yisi-loading-state-skeleton {
+  width: 100%;
+}
+
+.yisi-loading-state-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-title,
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-paragraph > li,
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-avatar,
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-button,
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-input,
+  .yisi-loading-state .ant-skeleton.ant-skeleton-active .ant-skeleton-image {
+    animation: none;
+  }
+}

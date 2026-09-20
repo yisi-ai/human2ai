@@ -1,0 +1,11 @@
+.human2ai-session-details-story {
+  box-sizing: border-box;
+  width: 320px;
+  padding: var(--yisiui-space-5);
+  color: var(--yisiui-color-text-primary);
+  background: var(--yisiui-color-surface-panel);
+}
+
+.human2ai-session-details-story--narrow {
+  width: 220px;
+}

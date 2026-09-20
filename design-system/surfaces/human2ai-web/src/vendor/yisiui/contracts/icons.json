@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "status": "experimental",
+  "asset": "yisiui/animated-icon",
+  "catalogSource": "packages/react/src/icons/catalog.ts",
+  "geometry": {
+    "viewBox": "0 0 24 24",
+    "strokeWidth": 1.8,
+    "strokeLinecap": "round",
+    "strokeLinejoin": "round",
+    "fill": "none",
+    "color": "currentColor",
+    "solidDetails": "currentColor on upload head and base, refresh arrows, copy fold and bell accents",
+    "construction": "parametric paired cubic corners: zero boundary curvature and C2 midpoint joins; symmetric trim budgets; stroke-aware generous inner corners; shared computed junctions for send; circular-arc approximation for bell dome",
+    "pathSource": "packages/react/src/icons/geometry.ts",
+    "precisionDecimals": 6,
+    "continuityScope": "smoothed outline corners only; intentional seams, folded-paper vertices, bell side transitions and separate parts excluded"
+  },
+  "playback": {
+    "default": "static",
+    "durationMs": 720,
+    "repeatTrigger": "restart-from-default",
+    "complete": "restore-default",
+    "stop": "restore-default-without-completion-callback",
+    "loop": "explicit-opt-in",
+    "reducedMotion": "static-default",
+    "layerTiming": "secondary layers share primary duration, with per-layer keyframe timing and a final static hold",
+    "connectedGeometry": "shared rigid transform; connected parts must not animate independently",
+    "loading": "explicit loop; linear full-turn rotation without static hold; default remains static"
+  },
+  "accessibility": {
+    "decorative": "aria-hidden",
+    "informative": "label-prop",
+    "interactionOwner": "parent-button-or-consumer"
+  },
+  "visualBaselineApproved": false,
+  "redrawnSamples": [
+    "plus",
+    "upload",
+    "send",
+    "refresh",
+    "copy",
+    "star",
+    "bell",
+    "close"
+  ],
+  "authoring": {
+    "guide": "design-system/docs/animated-icon-authoring.md",
+    "guideScope": "authoring-repository",
+    "recommendedHandleRatio": 0.56,
+    "helperLegacyDefault": 0.72,
+    "explicitHandleRatioRequired": true,
+    "trimMeaning": "edge cutback distance, not radius",
+    "reviewSizesPx": [
+      16,
+      20,
+      24,
+      32
+    ],
+    "innerRoundness": "inspect both sides of the stroke; curvature continuity alone is insufficient"
+  },
+  "catalogSize": 12
+}
