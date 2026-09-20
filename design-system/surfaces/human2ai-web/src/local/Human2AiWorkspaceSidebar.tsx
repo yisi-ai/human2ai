@@ -2,7 +2,7 @@
 
 import {
   BgColorsOutlined,
-  BoxPlotOutlined,
+  CodeSandboxOutlined,
   FolderAddOutlined,
   LayoutOutlined,
   MoreOutlined,
@@ -327,7 +327,7 @@ export function Human2AiWorkspaceSidebar({
             onPointerDown={(event) => event.stopPropagation()}
           />
         </Tooltip>
-        {onCreateSpatial && <Tooltip title={labels.newSpatialInProject(project.name)}><Button className="human2ai-workspace-sidebar__node-action" type="text" size="small" icon={<BoxPlotOutlined />} aria-label={labels.newSpatialInProject(project.name)} disabled={Boolean(pendingAction)} onClick={event => { event.stopPropagation(); void createSpatial(project.id); }} onPointerDown={event => event.stopPropagation()} /></Tooltip>}
+        {onCreateSpatial && <Tooltip title={labels.newSpatialInProject(project.name)}><Button className="human2ai-workspace-sidebar__node-action" type="text" size="small" icon={<CodeSandboxOutlined />} aria-label={labels.newSpatialInProject(project.name)} disabled={Boolean(pendingAction)} onClick={event => { event.stopPropagation(); void createSpatial(project.id); }} onPointerDown={event => event.stopPropagation()} /></Tooltip>}
         {renderProjectMenu(project)}
       </span>
     );
@@ -614,7 +614,7 @@ export function Human2AiWorkspaceSidebar({
           )}
           onClick={() => void createUiSketch()}
         />
-        {onCreateSpatial && <CompositeButton icon={<BoxPlotOutlined aria-hidden="true" />} label={labels.newSpatial} collapsedLabel={labels.newSpatial} loading={pendingAction === "spatial" && pendingSessionProjectId === null} disabled={Boolean(pendingAction && pendingAction !== "spatial")} onClick={() => void createSpatial()} />}
+        {onCreateSpatial && <CompositeButton icon={<CodeSandboxOutlined aria-hidden="true" />} label={labels.newSpatial} collapsedLabel={labels.newSpatial} loading={pendingAction === "spatial" && pendingSessionProjectId === null} disabled={Boolean(pendingAction && pendingAction !== "spatial")} onClick={() => void createSpatial()} />}
         <CompositeButton
           icon={<FolderAddOutlined aria-hidden="true" />}
           label={labels.newProject}
@@ -949,7 +949,7 @@ function renderSessionTypeIcon(
       aria-label={label}
       title={label}
     >
-      {sessionType === "spatial" ? <BoxPlotOutlined aria-hidden="true" /> : isComposition ? (
+      {sessionType === "spatial" ? <CodeSandboxOutlined aria-hidden="true" /> : isComposition ? (
         <PictureOutlined aria-hidden="true" />
       ) : (
         <LayoutOutlined aria-hidden="true" />

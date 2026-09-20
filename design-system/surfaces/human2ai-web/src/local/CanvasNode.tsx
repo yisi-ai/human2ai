@@ -52,6 +52,17 @@ export type CanvasNodeSelectEvent =
   | MouseEvent<SVGGElement>
   | KeyboardEvent<SVGGElement>;
 
+export interface CanvasNodeTooltip {
+  annotation?: string;
+  displayText?: string;
+  note?: string;
+  labels: {
+    nodeDescription: string;
+    displayText: string;
+    note: string;
+  };
+}
+
 export interface CanvasNodeProps
   extends Omit<
     SVGProps<SVGGElement>,
@@ -84,7 +95,7 @@ export interface CanvasNodeProps
   rotationHandleOffset?: number;
   nudgeStep?: number;
   largeNudgeStep?: number;
-  tooltip?: ReactNode;
+  tooltip?: CanvasNodeTooltip;
   onSelect?: (id: string, event: CanvasNodeSelectEvent) => void;
   onNudge?: (delta: CanvasNodePoint) => void;
   onResize?: (change: CanvasNodeResizeChange) => void;
@@ -433,9 +444,24 @@ export function CanvasNode({
     </g>
   );
 
-  return tooltip ? (
+  const tooltipFields = tooltip ? [
+    [tooltip.labels.nodeDescription, tooltip.annotation],
+    [tooltip.labels.displayText, tooltip.displayText],
+    [tooltip.labels.note, tooltip.note],
+  ].filter(([, value]) => value?.trim()) : [];
+
+  return tooltipFields.length > 0 ? (
     <Tooltip
-      title={tooltip}
+      title={(
+        <dl className="human2ai-canvas-node__tooltip">
+          {tooltipFields.map(([fieldLabel, value]) => (
+            <div key={fieldLabel}>
+              <dt>{fieldLabel}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
       mouseEnterDelay={0}
       mouseLeaveDelay={0}
       trigger={["hover", "focus"]}

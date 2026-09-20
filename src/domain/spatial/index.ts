@@ -14,6 +14,7 @@ import { BODY_SHAPE_LIMITS } from "./proportions.ts";
 import type { SpatialAppearance, SpatialBodyShape } from "./types.ts";
 import { fitSpatialCameraBox } from "./camera-box.ts";
 export * from "./camera-box.ts";
+export * from "./camera-box-sheet.ts";
 
 import operationsSchema from "../../../schemas/spatial-operations.schema.json" with { type: "json" };
 const validateOperations = new Ajv2020({ allErrors: true }).compile(operationsSchema);

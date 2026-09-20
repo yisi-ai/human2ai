@@ -23,7 +23,7 @@ function Harness({ initial = fixture, loading = false, disabled = false, error, 
   const copy = english ? en : zh;
   return <Human2AiAppShell title={copy.spatial.title} sidebar={null} rightPanelOpen={panelOpen} onRightPanelOpenChange={setPanelOpen}
     labels={copy.shell} rightPanel={<div ref={setPanelHost} className="spatial-panel-host" />}>
-    <SpatialWorkspaceView panelHost={panelHost} onRequestProperties={() => setPanelOpen(true)} toolsLabel={copy.canvas.tools.label} noteLabel={copy.notes.element.label}
+    <SpatialWorkspaceView panelHost={panelHost} onRequestProperties={() => setPanelOpen(true)} toolsLabel={copy.canvas.tools.label} noteLabel={copy.notes.element.label} copiedLabel={copy.clipboard.copied}
     details={<SessionDetails createdAt="2026-09-09T12:00:00Z" updatedAt="2026-09-09T12:00:00Z" nodeCount={draft.characters.length + draft.objects.length} locale={english ? "en" : "zh-CN"} agentCommand={null} labels={{ ...copy.sessionDetails, copied: copy.clipboard.copied }} />}
     draft={draft} loading={loading} disabled={disabled} error={error ?? constraintError} onRetry={onRetry} labels={copy.spatial} actions={copy.actions} initialCameraId={initialCameraId} cameraSource={cameraSource} cameraBoxSource={cameraBoxSource} onOperation={op => {
     try { const result = applySpatialOperations(draft, [op]); setDraft(result.draft); onApplied?.(result.draft); setConstraintError(result.constrained ? copy.spatial.constrained : null); }

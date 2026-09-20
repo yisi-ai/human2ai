@@ -19,4 +19,5 @@ export { groupUiSketchItems, ungroupUiSketchItems, uiSketchSelectionWithGroups, 
 export { uiSketchStateTabs, renameUiSketchState, deleteUiSketchState, reorderUiSketchStates } from "./states.ts";
 
 export { uiSketchLayerOrder, reorderUiSketchLayers } from "./layers.ts";
+export { copyUiSketchItems, pasteUiSketchItems, type UiSketchClipboard } from "./clipboard.ts";
 export { renderUiSketchSvg } from "./render.ts";

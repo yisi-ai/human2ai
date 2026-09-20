@@ -4,6 +4,8 @@ import type { SpatialSessionRepository } from "../../database/spatial-session-re
 import { createSpatialDraft, SpatialConstraintError, type SpatialOperation } from "../../domain/spatial/index.ts";
 import { renderSpatialPng, renderSpatialCameraBoxPng } from "../spatial-render.ts";
 import { SPATIAL_BOX_FACES, SPATIAL_RENDER_PASSES, type SpatialBoxView, type SpatialRenderPass } from "../../domain/spatial/types.ts";
+import { parseSpatialBoxViews } from "../../domain/spatial/camera-box-sheet.ts";
+import en from "../../../locales/en/common.json" with { type: "json" };
 import { registerDraftVersionRoutes, replyToDraftVersionError } from "./draft-version-routes.ts";
 
 export function registerSpatialSessionRoutes(server: FastifyInstance, repository: SpatialSessionRepository): void {
@@ -56,20 +58,24 @@ export function registerSpatialSessionRoutes(server: FastifyInstance, repository
       }
     },
   );
-  server.get<{ Params: { sessionId: string; boxId: string }; Querystring: { revision?: number; pass?: SpatialRenderPass; view?: SpatialBoxView } }>(
+  server.get<{ Params: { sessionId: string; boxId: string }; Querystring: { revision?: number; pass?: SpatialRenderPass; view?: SpatialBoxView; views?: string } }>(
     "/api/v1/sessions/:sessionId/spatial/camera-boxes/:boxId.png",
-    { schema: { querystring: { type: "object", properties: { revision: { type: "integer", minimum: 1 }, pass: { type: "string", enum: [...SPATIAL_RENDER_PASSES] }, view: { type: "string", enum: ["sheet", ...SPATIAL_BOX_FACES] } } } } },
+    { schema: { querystring: { type: "object", properties: { revision: { type: "integer", minimum: 1 }, pass: { type: "string", enum: [...SPATIAL_RENDER_PASSES] }, view: { type: "string", enum: ["sheet", ...SPATIAL_BOX_FACES] }, views: { type: "string", minLength: 1, maxLength: 128 } } } } },
     async (request, reply) => {
       try {
+        if (request.query.view !== undefined && request.query.views !== undefined) return reply.code(400).send({ code: "SPATIAL_INVALID", message: en.spatial.cameraBoxViewConflict });
+        const views = request.query.views === undefined ? undefined : parseSpatialBoxViews(request.query.views);
+        if (views === null) return reply.code(400).send({ code: "SPATIAL_INVALID", message: en.spatial.cameraBoxViewsError });
         const { sessionId, boxId } = request.params;
         const version = request.query.revision ? repository.getDraftVersion(sessionId, request.query.revision) : repository.listDraftVersions(sessionId).at(-1);
         const box = version?.draft.cameraBoxes?.find(box => box.id === boxId);
         if (!box || !version) return reply.code(404).send({ code: "SPATIAL_CAMERA_NOT_FOUND", message: "Camera box not found" });
-        const pass = request.query.pass ?? "color", view = request.query.view ?? "sheet";
+        const pass = request.query.pass ?? "color", view = views ?? request.query.view ?? "sheet";
         const key = JSON.stringify([sessionId, version.revision, "camera-box", boxId, view, pass]);
         const png = cached(key, () => renderSpatialCameraBoxPng(version.draft, box, view, pass));
         return reply.header("cache-control", request.query.revision ? "private, max-age=31536000, immutable" : "no-cache")
-          .header("x-spatial-revision", version.revision).header("x-spatial-render-pass", pass).header("x-spatial-box-view", view).type("image/png").send(await png);
+          .header("x-spatial-revision", version.revision).header("x-spatial-render-pass", pass).header("x-spatial-box-view", typeof view === "string" ? view : "sheet")
+          .header("x-spatial-box-views", views?.join(",") ?? (view === "sheet" ? SPATIAL_BOX_FACES.join(",") : view)).type("image/png").send(await png);
       } catch (error) {
         const handled = replyToDraftVersionError(reply, error);
         if (handled) return handled;

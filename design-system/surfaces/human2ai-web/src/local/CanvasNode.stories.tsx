@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import { assertStorySelector } from "../vendor/yisiui/storybook/interactionChecks";
 import { CanvasImage } from "./CanvasImage";
@@ -52,6 +53,15 @@ function InteractiveNode({ locked = false }: { locked?: boolean }) {
           <CanvasNode
             id="node-1"
             label="选择示例节点"
+            tooltip={{
+              annotation: "展示节点的选择、缩放和旋转。",
+              note: "保留当前方向。",
+              labels: {
+                nodeDescription: zh.canvas.node.nodeDescription,
+                displayText: zh.textContent.label,
+                note: zh.notes.element.label,
+              },
+            }}
             x={position.x}
             y={position.y}
             rotation={rotation}

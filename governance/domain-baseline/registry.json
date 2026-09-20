@@ -504,7 +504,8 @@
       ],
       "variationPoints": [
         "浏览器适配层使用 Ctrl/Cmd+C 与 Ctrl/Cmd+V，并把 24px 偏移换算为构图世界坐标",
-        "节点快照只存在于当前挂载的构图画布组件内；系统剪贴板仅写入与该快照匹配的随机自定义 MIME 标记，不写入节点内容或持久化草稿"
+        "节点快照只存在于当前挂载的构图画布组件内；系统剪贴板仅写入与该快照匹配的随机自定义 MIME 标记，不写入节点内容或持久化草稿",
+        "UI 草图通过 ui-sketch.item-clipboard 保留像素几何、分组和状态初始化规则；与构图复用 useCanvasImagePaste 事件接入，但不复用构图容量约束或节点模型"
       ],
       "contractTests": [
         "test/unit/composition-draft.test.ts"
@@ -513,7 +514,7 @@
         "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
       ],
       "exceptions": [],
-      "reviewTrigger": "将节点剪贴板扩展到 UI 草图、跨会话或系统剪贴板，修改焦点/动势线上限，或改变粘贴选择与偏移规则之前"
+      "reviewTrigger": "引入跨会话或系统剪贴板节点序列化、合并 UI 与构图的节点复制规则，修改焦点/动势线上限，或改变粘贴选择与偏移规则之前"
     },
     {
       "id": "composition.layout-states",
@@ -786,7 +787,7 @@
       "id": "spatial.scene-authoring",
       "category": "spatial",
       "status": "local",
-      "contractVersion": 25,
+      "contractVersion": 26,
       "responsibility": "管理多人可扩展骨架、世界位置与旋转固定、关节范围、多摄像机、六面观察盒、对象备注和确定性镜头输出",
       "invariants": [
         "用户与 Agent 共用关节位置、骨段旋转和约束；骨段以上游关节为轴心，标准拓扑与骨长不可通过姿势编辑改写，三轴上下界只能显式配置且包含默认姿势",
@@ -808,7 +809,8 @@
         "geometric 外观由实际关节世界坐标驱动：圆球关节、圆柱骨段、刚性长方体手掌/脚和仅有双眼的椭球头；头顶与脚尖末端标记由实体包容，手指末端保留圆球。手指与复制肢体共用当前轴、比例和固定约束；手掌形体不随手指弯曲变形，脚底高度与温和脚踝抬升一致。关节球选择位置，骨段及手掌/脚/头选择旋转，几何体参与统一光照、深度、结构线和观察盒取景；编辑器不重复叠加辅助骨架。add-character 可指定 appearance，缺省仍为 quaternius；put-character 只切换 appearance 时必须保留全部姿势、骨架、锁定、比例和自定义肢体；set-proportions 与复原保留外观，保存和撤销复用共享 DraftVersionStore。",
         "几何人偶五指按解剖身份固定配色：拇指橙、食指蓝、中指绿、无名指紫、小指粉；左右手及复制手同名手指一致，关节球为对应颜色的浅色，人物显示颜色不覆盖此识别配色。编辑器选中几何手指时仅提亮原色系，普通镜头和观察盒使用未选中的统一模型材质；骨架投影、结构线与深度保持各自语义。更新镜头及观察盒渲染 URL 版本以刷新已保存姿势的浏览器缓存，不写入新草稿版本。",
         "几何人偶关节球与骨段共用有明度对比的材质：五指关节保留对应色系并提亮，身体关节依据人物颜色选择深浅对比。普通镜头与观察盒 color PNG 在可见几何部位边界叠加随输出尺寸调整的细线，近侧表面拥有描线；隐藏部位、三角面接缝与画幅裁切边缘不产生描线，透明轮廓保持原样。描线不应用于人体模型或场景物体，不修改 structure/depth/skeleton、姿势、光照设置和草稿；编辑视口复用材质，参考图描线仅由 PNG 渲染器派生。",
-        "人物、基础物体、摄像机和观察盒支持可选 note 字符串，缺省为空语义，旧 v2 草稿不补写；复用对应 put 操作保存，保留稳定 ID、几何及其他元数据，文档指纹和共享历史包含备注，inspect 返回完整备注。名称和备注不参与实体渲染、接触明暗或 Web 镜头预览失效判断；统一的 spatialEntityRenderKey 排除实体顶层名称与备注，并复用 canonicalJson 消除接口序列化或历史恢复的字段顺序差异，修改文字保留模型实例及已保存预览，PNG 不包含备注。"
+        "人物、基础物体、摄像机和观察盒支持可选 note 字符串，缺省为空语义，旧 v2 草稿不补写；复用对应 put 操作保存，保留稳定 ID、几何及其他元数据，文档指纹和共享历史包含备注，inspect 返回完整备注。名称和备注不参与实体渲染、接触明暗或 Web 镜头预览失效判断；统一的 spatialEntityRenderKey 排除实体顶层名称与备注，并复用 canonicalJson 消除接口序列化或历史恢复的字段顺序差异，修改文字保留模型实例及已保存预览，PNG 不包含备注。",
+        "观察盒组合导出通过 CLI --views 和 HTTP views 指定 1–6 个不重复的 front/back/left/right/top/bottom，逗号分隔并去除方向两侧空白，保留传入顺序；拒绝空列表、重复、sheet 或未知方向，与单项 view 互斥且只能用于观察盒。沿用同一不可变场景版本、原六面裁切与四种渲染类型；按所选数量每行最多三张，保留单图分辨率、28 px 方向标签与 12 px 间隔，单项组合仍有标签。既有单面无标签输出和默认固定六面 sheet 保持不变；缓存区分组合及其顺序，响应 x-spatial-box-views 和 CLI views 反映实际顺序。session connect 暴露 spatial.render-box-views@1，spatial methods 暴露 cameraBoxViewSelection。合图尺寸与排布由 cameraBoxSheetLayout 统一，浏览器 Canvas 与服务端 Sharp 仅负责各自绘制；网页标签按界面语言，CLI 标签保持英文局部方向。导出不保存新版本，不改变人物、观察盒或浏览器激活状态。"
       ],
       "implementations": [
         {
@@ -874,6 +876,14 @@
         {
           "role": "current",
           "path": "src/domain/spatial/render-inputs.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/camera-box-sheet.ts"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/spatialObservationImage.ts"
         }
       ],
       "consumers": [
@@ -885,7 +895,8 @@
         "自定义骨架通过明确形态操作增加肢体",
         "透视与正交摄像机",
         "Quaternius 男性与女性源网格及解剖尺寸",
-        "人体表面与几何人偶外观共用同一骨架及操作"
+        "人体表面与几何人偶外观共用同一骨架及操作",
+        "观察图可导出原单面、默认六面合图或明确指定方向及顺序的组合；浏览器与服务端共用合图排布，保留本地化标签和 Canvas/Sharp 绘制适配。"
       ],
       "contractTests": [
         "test/unit/spatial.test.ts",
@@ -1102,6 +1113,45 @@
       ],
       "exceptions": [],
       "reviewTrigger": "加入自动关系推断、等间距或尺寸 token 吸附，调整容差或把标准化放入普通保存入口之前"
+    },
+    {
+      "id": "ui-sketch.item-clipboard",
+      "category": "ui-sketch",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "管理 UI 画布区域、文字和图片的会话内复制快照、连续粘贴及副本分组和层级",
+      "invariants": [
+        "复制读取当前活动状态，按现有整组选取规则捕获区域、文字和图片的深拷贝快照；后续修改或删除原节点不改变快照",
+        "粘贴为所有副本及其组分配新的不冲突 id；保留文字、备注、说明、语义、视觉权重、可见性、几何、图片资产引用和裁切，副本来源为用户新建 user",
+        "多选和整组复制保留成员相对位置、组关系与相对遮挡顺序，副本整体置于原有节点上方，完成后只选择新副本",
+        "每次成功粘贴相对快照向右下累计偏移 24 个画布像素；再次复制重新开始计数，画框和全局备注不进入剪贴板",
+        "粘贴通过 updateUiSketchStageDraft 在活动状态加入节点，沿用现有新增节点的跨状态初始化，不修改原节点各状态的几何",
+        "一次粘贴只调用一次既有草稿变更回调，自动保存和撤销重做复用现有 capture.canvas-edit-history 与 capture.draft-versioning",
+        "原生复制粘贴复用 useCanvasImagePaste 的画布焦点边界；文本编辑保留浏览器行为，外部图片优先上传，其他外部剪贴板内容不能触发旧节点粘贴"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/clipboard.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.tsx",
+          "consumer": "ui-sketch-editor"
+        }
+      ],
+      "consumers": [
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "与 composition.item-clipboard 比较后保留 UI 领域实现：UI 使用像素几何、单层分组和共享节点状态，构图使用归一化坐标并限制焦点和动势线数量；两者共用已有剪贴板事件接入，不引入统一节点模型",
+        "Ctrl/Cmd+C 与 Ctrl/Cmd+V 作用于当前挂载画布；节点快照保存在组件内存，系统剪贴板只写入随机自定义 MIME 标记，不写入节点内容或复制图片文件",
+        "节点复制不复制动效状态列表或原节点完整运动轨迹；新节点按当前复制快照初始化各状态"
+      ],
+      "contractTests": [],
+      "reviewEvidence": [],
+      "exceptions": [],
+      "reviewTrigger": "扩展到跨会话或跨画布类型粘贴、系统剪贴板节点序列化、复制完整动效轨迹，或统一构图与 UI 节点模型之前"
     },
     {
       "id": "ui-sketch.item-groups",

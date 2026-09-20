@@ -2,7 +2,8 @@ import { Box3, Mesh, OrthographicCamera, Vector3 } from "three";
 import { quaternion, vector } from "./kinematics.ts";
 import { fingerPart } from "./hands.ts";
 import { createSpatialScene, disposeSpatialScene } from "./scene.ts";
-import { SPATIAL_BOX_GAP, SPATIAL_BOX_LABEL_HEIGHT, type SpatialBoxFace, type SpatialBoxView, type SpatialCamera, type SpatialCameraBox, type SpatialDraft, type Vec3 } from "./types.ts";
+import { SPATIAL_BOX_FACES, type SpatialBoxFace, type SpatialBoxView, type SpatialCamera, type SpatialCameraBox, type SpatialDraft, type Vec3 } from "./types.ts";
+import { cameraBoxSheetLayout } from "./camera-box-sheet.ts";
 
 // All directions are box-local. Top and bottom have explicit, non-degenerate up axes.
 const axes: Record<SpatialBoxFace, { normal: Vec3; up: Vec3 }> = {
@@ -13,8 +14,10 @@ const axes: Record<SpatialBoxFace, { normal: Vec3; up: Vec3 }> = {
 export function createSpatialCameraBox(id: string, name: string): SpatialCameraBox {
   return { id, name, position: [0, .9, 0], rotation: [0,0,0], size: 2.4, resolution: 512 };
 }
-export function cameraBoxImageSize(box: SpatialCameraBox, view: SpatialBoxView) {
-  return view === "sheet" ? { width: box.resolution * 3 + SPATIAL_BOX_GAP * 2, height: (box.resolution + SPATIAL_BOX_LABEL_HEIGHT) * 2 + SPATIAL_BOX_GAP } : { width: box.resolution, height: box.resolution };
+export function cameraBoxImageSize(box: SpatialCameraBox, view: SpatialBoxView | readonly SpatialBoxFace[]) {
+  if (typeof view === "string" && view !== "sheet") return { width: box.resolution, height: box.resolution };
+  const { width, height } = cameraBoxSheetLayout(box.resolution, typeof view === "string" ? SPATIAL_BOX_FACES : view);
+  return { width, height };
 }
 export function cameraBoxView(box: SpatialCameraBox, face: SpatialBoxFace): { source: SpatialCamera; camera: OrthographicCamera } {
   const rotation = quaternion(box.rotation), half = box.size / 2;

@@ -3,6 +3,8 @@ export {
   UI_SKETCH_END_STAGE_ID,
   UI_SKETCH_START_STAGE_ID,
   cloneUiSketchDraft,
+  copyUiSketchItems,
+  pasteUiSketchItems,
   uiSketchLayerOrder,
   reorderUiSketchLayers,
   groupUiSketchItems,
@@ -20,6 +22,7 @@ export {
   updateUiSketchStageDraft,
 } from "../../../../../src/domain/ui-sketch/index.ts";
 export type {
+  UiSketchClipboard,
   UiSketchBounds,
   UiSketchDraft,
   UiSketchImage,

@@ -41,6 +41,7 @@ import {
   type CanvasNodeBounds,
   type CanvasNodeResizeChange,
   type CanvasNodeSelectEvent,
+  type CanvasNodeTooltip,
 } from "./CanvasNode";
 import { CanvasScene } from "./CanvasScene";
 import { CanvasShape } from "./CanvasShape";
@@ -57,6 +58,8 @@ import {
 } from "./uiSketchExport";
 import {
   cloneUiSketchDraft,
+  copyUiSketchItems,
+  pasteUiSketchItems,
   groupUiSketchItems,
   ungroupUiSketchItems,
   uiSketchSelectionWithGroups,
@@ -68,6 +71,7 @@ import {
   updateUiSketchImageCrop,
   updateUiSketchStageDraft,
   type UiSketchBounds,
+  type UiSketchClipboard,
   type UiSketchRectangle,
   type UiSketchDraft,
   type UiSketchImage,
@@ -87,6 +91,8 @@ const MINIMUM_FRAME_HEIGHT = 10;
 const MINIMUM_TEXT_FONT_SIZE = 8;
 const DEFAULT_TEXT_FONT_SIZE = 14;
 const NOTICE_DURATION_MS = 2_000;
+const CLIPBOARD_PASTE_OFFSET = 24;
+const CLIPBOARD_TYPE = "application/x-human2ai-ui-sketch";
 
 type UiSketchItemKind = "rectangle" | "text" | "image";
 type UiSketchItemKey = `${UiSketchItemKind}:${string}`;
@@ -401,6 +407,9 @@ export function UiSketchCanvas({
   const textResizeSourceRef = useRef<TextResizeSource | null>(null);
   const suppressClickRef = useRef(false);
   const suppressItemSelectionRef = useRef(false);
+  const clipboardRef = useRef<UiSketchClipboard | null>(null);
+  const clipboardTokenRef = useRef("");
+  const pasteCountRef = useRef(0);
   const stateTabs = uiSketchStateTabs(draft);
   const motionSketchEnabled = stateTabs.length > 1;
   const visualWeightOptions: Array<{
@@ -430,6 +439,8 @@ export function UiSketchCanvas({
       addImage({ x: x - width / 2, y: y - height / 2, width, height }, assetId);
       setPlacementTool(null);
     },
+    onCopy: handleCanvasCopy,
+    onPasteFallback: handleCanvasPaste,
   });
   const selectedIds = selectedItemKeys.map(keyId);
   const selectedGroups = state.groups.filter((group) => (
@@ -563,6 +574,19 @@ export function UiSketchCanvas({
     });
   }
 
+  function itemTooltip(item: UiSketchRectangle | UiSketchText | UiSketchImage): CanvasNodeTooltip {
+    return {
+      annotation: item.annotation,
+      displayText: "text" in item ? item.text : undefined,
+      note: item.note,
+      labels: {
+        nodeDescription: labels.nodeDescription,
+        displayText: labels.textContent,
+        note: labels.note,
+      },
+    };
+  }
+
   function selectItem(key: UiSketchItemKey, event: CanvasNodeSelectEvent): void {
     if (suppressItemSelectionRef.current) {
       suppressItemSelectionRef.current = false;
@@ -594,6 +618,41 @@ export function UiSketchCanvas({
     updateDraft((current) => (
       moveItemsByDelta(current, keys, delta)
     ));
+  }
+
+  function handleCanvasCopy(event: ClipboardEvent): void {
+    if (!event.clipboardData || selectedItemKeys.length === 0) return;
+    const clipboard = copyUiSketchItems(state, selectedIds);
+    if (clipboard.layerOrder.length === 0) return;
+    clipboardRef.current = clipboard;
+    clipboardTokenRef.current = createId("ui-sketch-clipboard");
+    pasteCountRef.current = 0;
+    event.clipboardData.setData(CLIPBOARD_TYPE, clipboardTokenRef.current);
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  function handleCanvasPaste(event: ClipboardEvent): void {
+    if (event.defaultPrevented || !onDraftChange || !clipboardRef.current
+      || event.clipboardData?.getData(CLIPBOARD_TYPE) !== clipboardTokenRef.current) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const pasteCount = pasteCountRef.current + 1;
+    const pasted = pasteUiSketchItems(draft, clipboardRef.current, {
+      x: CLIPBOARD_PASTE_OFFSET * pasteCount,
+      y: CLIPBOARD_PASTE_OFFSET * pasteCount,
+    }, activeStageId);
+    if (pasted.ids.length === 0) return;
+    pasteCountRef.current = pasteCount;
+    closeEditor();
+    setPlacementTool(null);
+    onDraftChange(pasted.draft);
+    const ids = new Set(pasted.ids);
+    setSelectedKeys([
+      ...pasted.draft.rectangles.filter((item) => ids.has(item.id)).map((item) => itemKey("rectangle", item.id)),
+      ...pasted.draft.texts.filter((item) => ids.has(item.id)).map((item) => itemKey("text", item.id)),
+      ...pasted.draft.images.filter((item) => ids.has(item.id)).map((item) => itemKey("image", item.id)),
+    ]);
   }
 
   function deleteItem(key: UiSketchItemKey): void {
@@ -1269,6 +1328,7 @@ export function UiSketchCanvas({
                 bounds={viewport.viewportBounds}
                 className="human2ai-ui-sketch-canvas__scene"
                 aria-label={labels.scene}
+                aria-keyshortcuts={onDraftChange ? "Control+C Meta+C Control+V Meta+V" : undefined}
                 data-ui-sketch-scene
                 tabIndex={-1}
                 onPointerDownCapture={(event) => event.currentTarget.focus()}
@@ -1365,6 +1425,7 @@ export function UiSketchCanvas({
                         controlsHost={state.layerOrder ? controlsHost : undefined}
                         id={image.id}
                         label={`${labels.image}：${image.note.trim() || labels.image}`}
+                        tooltip={itemTooltip(image)}
                         x={center.x}
                         y={center.y}
                         selected={selected}
@@ -1411,7 +1472,7 @@ export function UiSketchCanvas({
                         controlsHost={state.layerOrder ? controlsHost : undefined}
                         id={rectangle.id}
                         label={`${labels.region}：${rectangle.note.trim() || labels.missingRegionNote}`}
-                        tooltip={rectangle.note.trim() || undefined}
+                        tooltip={itemTooltip(rectangle)}
                         x={center.x}
                         y={center.y}
                         selected={selected}
@@ -1461,6 +1522,7 @@ export function UiSketchCanvas({
                         controlsHost={state.layerOrder ? controlsHost : undefined}
                         id={text.id}
                         label={`${labels.text}：${displayedText}`}
+                        tooltip={itemTooltip(text)}
                         x={center.x}
                         y={center.y}
                         selected={selected}

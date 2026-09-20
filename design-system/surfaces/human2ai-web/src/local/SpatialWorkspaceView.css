@@ -19,6 +19,22 @@
 .spatial-camera-image > img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .spatial-camera-image > .ant-alert { box-sizing: border-box; }
 .spatial-camera-pending { margin: 0; padding: var(--yisiui-space-3); color: var(--yisiui-color-text-secondary); font-size: var(--yisiui-font-size-sm); text-align: center; }
+.spatial-observation { display: flex; flex: 1; flex-direction: column; gap: var(--yisiui-space-4); min-width: 0; min-height: 0; overflow: hidden; }
+.spatial-observation-toolbar { display: flex; flex: none; flex-wrap: wrap; align-items: center; gap: var(--yisiui-space-3); }
+.spatial-observation-select { width: 180px; max-width: 100%; }
+.spatial-observation-directions { display: flex; align-items: center; gap: var(--yisiui-space-2); margin-left: auto; }
+.spatial-observation-cube { flex: none; width: 58px; height: 60px; overflow: visible; }
+.spatial-observation-cube polygon { fill: var(--yisiui-color-text-secondary); fill-opacity: .03; stroke: var(--yisiui-color-text-secondary); stroke-opacity: .35; stroke-width: 1.25; stroke-linejoin: round; }
+.spatial-observation-cube polygon[data-rear="true"] { stroke-dasharray: 3 3; }
+.spatial-observation-cube polygon[data-enabled="true"] { fill: var(--yisiui-color-action-primary); fill-opacity: .25; stroke: var(--yisiui-color-action-primary); stroke-opacity: 1; }
+.spatial-observation-cube polygon[data-rear="true"][data-enabled="true"] { fill-opacity: .14; }
+.spatial-observation-face-buttons { display: grid; grid-template-columns: repeat(7, 28px); row-gap: var(--yisiui-space-1); column-gap: var(--yisiui-space-2); }
+.spatial-observation-face-button { min-width: 0; padding-inline: var(--yisiui-space-1); font-size: var(--yisiui-font-size-sm); }
+.spatial-observation-preview { display: grid; flex: 1; grid-template: minmax(0, 1fr) / minmax(0, 1fr); place-items: center; min-width: 0; min-height: 0; overflow: auto; background: var(--yisiui-color-surface-soft); border-radius: var(--yisiui-radius-md); }
+.spatial-observation-preview > img { display: block; width: 100%; height: 100%; min-width: 0; min-height: 0; object-fit: contain; }
+.spatial-observation-preview > .ant-alert { box-sizing: border-box; max-width: 100%; }
+.spatial-observation-actions { display: flex; flex: none; flex-wrap: wrap; justify-content: center; gap: var(--yisiui-space-3); }
+.spatial-observation-status { margin: 0; color: var(--yisiui-color-text-secondary); font-size: var(--yisiui-font-size-sm); text-align: center; }
 .spatial-panel-host { height: 100%; min-height: 0; }
 .spatial-panel { box-sizing: border-box; display: flex; flex-direction: column; gap: var(--yisiui-space-5); height: 100%; min-height: 0; padding: var(--yisiui-space-5); color: var(--yisiui-color-text-primary); }
 .spatial-panel .spatial-panel-tabs { min-width: 0; }

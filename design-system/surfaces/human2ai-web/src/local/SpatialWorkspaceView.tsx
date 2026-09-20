@@ -1,6 +1,6 @@
 "use client";
 
-import { CameraOutlined, DeleteOutlined, DragOutlined, PlusOutlined, RedoOutlined, CopyOutlined, UndoOutlined, UserOutlined, BorderOutlined, AimOutlined, LinkOutlined, LockOutlined, InfoCircleOutlined, DownloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { CameraOutlined, DeleteOutlined, DragOutlined, CodepenOutlined, GlobalOutlined, RedoOutlined, CopyOutlined, UndoOutlined, UserOutlined, BorderOutlined, BuildOutlined, AimOutlined, LinkOutlined, LockOutlined, InfoCircleOutlined, DownloadOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { Alert, Checkbox, Input, InputNumber, Modal, Select, Slider, Tooltip } from "antd";
 import { useLayoutEffect, useState, type Key, type ReactNode } from "react";
 import { createPortal } from "react-dom";
@@ -17,7 +17,14 @@ import zh from "../../../../../locales/zh-CN/common.json";
 import type { SpatialCamera, SpatialBoxView, SpatialRenderPass } from "../../../../../src/domain/spatial/types";
 import { SpatialViewport, type SpatialSelection } from "./SpatialViewport";
 import { CompositionWorkflowView } from "./CompositionWorkflowView";
+import { SpatialCameraBoxView } from "./SpatialCameraBoxView";
 import "./SpatialWorkspaceView.css";
+
+const objectTools = [
+  { kind: "box", Icon: CodepenOutlined },
+  { kind: "sphere", Icon: GlobalOutlined },
+  { kind: "plane", Icon: BorderOutlined },
+] as const;
 
 export type SpatialLabels = Record<keyof typeof zh.spatial, string>;
 export interface SpatialWorkspaceViewProps {
@@ -25,6 +32,7 @@ export interface SpatialWorkspaceViewProps {
   onOperation(operation: SpatialOperation): void;
   labels?: SpatialLabels;
   noteLabel?: string;
+  copiedLabel?: string;
   loading?: boolean;
   disabled?: boolean;
   error?: string | null;
@@ -41,7 +49,7 @@ export interface SpatialWorkspaceViewProps {
   actions?: { retry: string; delete: string; cancel: string };
 }
 
-export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, noteLabel = zh.notes.element.label, loading, disabled, error, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
+export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, noteLabel = zh.notes.element.label, copiedLabel = zh.clipboard.copied, loading, disabled, error, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
   const [selection, setSelection] = useState<SpatialSelection>(initialCameraId ? { cameraId: initialCameraId } : null);
   const [panelTab, setPanelTab] = useState(initialCameraId ? "parameters" : "info");
   const [workspaceView, setWorkspaceView] = useState("space");
@@ -56,6 +64,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
   const [mode, setMode] = useState<"translate" | "rotate">("translate");
   const [cameraId, setCameraId] = useState(initialCameraId ?? draft.cameras[0].id);
   const [boxView, setBoxView] = useState<SpatialBoxView>("sheet");
+  const [observationBoxId, setObservationBoxId] = useState<string>();
   const [referencePass, setReferencePass] = useState<SpatialRenderPass>("color");
   const [view, setView] = useState<{ position: Vec3; target: Vec3 }>({ position: [3, 2.2, 5], target: [0, 0.9, 0] });
   const actor = selection && "characterId" in selection ? draft.characters.find(c => c.id === selection.characterId) : undefined;
@@ -180,6 +189,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
     if (openParameters) setPanelTab("parameters");
     onRequestProperties?.();
     if ("cameraId" in value) setCameraId(value.cameraId);
+    if ("cameraBoxId" in value) setObservationBoxId(value.cameraBoxId);
     if ("characterId" in value) {
       if (value.jointId) setMode("translate");
       if (value.boneId || value.handBoneId) setMode("rotate");
@@ -223,21 +233,18 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
               const id = nextId("camera"); perform({ type: "put-camera", camera: createSpatialCamera(id, labels.camera.replace("{{number}}", String(draft.cameras.length + 1))) }); choose({ cameraId: id });
             }} />
           </div>
-          <CompositeButton icon={<BorderOutlined aria-hidden="true" />} label={labels.addCameraBox} disabled={disabled || loading} onClick={() => {
+          <CompositeButton icon={<BuildOutlined aria-hidden="true" />} label={labels.addCameraBox} disabled={disabled || loading} onClick={() => {
             const id = nextId("camera-box"), box = fitSpatialCameraBox(createSpatialCameraBox(id, labels.cameraBox), draft, "scene");
             perform({ type: "put-camera-box", box }); choose({ cameraBoxId: id }); setBoxView("sheet");
           }} />
-          <div className="spatial-add-actions">{(["box", "sphere", "plane"] as const).map(kind => <CompositeButton key={kind} icon={<PlusOutlined aria-hidden="true" />} label={labels[kind]} disabled={disabled || loading} onClick={() => {
+          <div className="spatial-add-actions">{objectTools.map(({ kind, Icon }) => <CompositeButton key={kind} icon={<Icon aria-hidden="true" />} label={labels[kind]} disabled={disabled || loading} onClick={() => {
             const id = nextId(kind);
             perform({ type: "put-object", object: { id, name: labels[kind], kind, position: [0, 0.3, 0], rotation: [0, 0, 0], size: kind === "plane" ? [2, 1, 2] : [0.6, 0.6, 0.6], color: "#b6a58c" } }); choose({ objectId: id });
           }} />)}</div>
           <Checkbox checked={draft.lightingEnabled ?? false} disabled={disabled || loading} onChange={event => perform({ type: "set-lighting", enabled: event.target.checked })}>{labels.lightingEffects}</Checkbox>
           <Checkbox checked={showCameras} onChange={event => setShowCameras(event.target.checked)}>{labels.showCameras}</Checkbox>
           <Checkbox checked={showRig} onChange={e=>setShowRig(e.target.checked)}>{labels.showRig}</Checkbox>
-          <div className="spatial-rig-legend"><span><i className="spatial-joint-dot" />{labels.joints}</span><span><i className="spatial-bone-dot" />{labels.bones}</span></div>
-          <div className="spatial-tool-modes">
-            {modeButtons}
-          </div>
+          {showRig && <div className="spatial-rig-legend"><span><i className="spatial-joint-dot" />{labels.joints}</span><span><i className="spatial-bone-dot" />{labels.bones}</span></div>}
         </section>
       </> : panelTab === "objects" ? <>
         <section className="spatial-objects" aria-label={labels.objects}>
@@ -246,7 +253,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
             nodes={nodes} mode="view" showCurrent={false} showContentOrder={false} showStatus={false} showDraft={false} showLock={false}
             showIcon expandAction={false} expandedKeys={expandedKeys} onExpand={keys => setExpandedKeys(keys)}
             selectedKeys={selection ? [selectionKey(selection)!] : []} onSelect={keys => choose(selections.get(String(keys[0])) ?? null, false)}
-            icon={({ eventKey }) => { const value = selections.get(String(eventKey)); return value && "cameraId" in value ? <CameraOutlined aria-hidden="true" /> : value && ("objectId" in value || "cameraBoxId" in value) ? <BorderOutlined aria-hidden="true" /> : value && "characterId" in value && value.jointId ? <AimOutlined className="spatial-joint-icon" aria-hidden="true" /> : value && "characterId" in value && value.boneId ? <LinkOutlined className="spatial-bone-icon" aria-hidden="true" /> : <UserOutlined aria-hidden="true" />; }} />}
+            icon={({ eventKey }) => { const value = selections.get(String(eventKey)); return value && "cameraId" in value ? <CameraOutlined aria-hidden="true" /> : value && "cameraBoxId" in value ? <BuildOutlined aria-hidden="true" /> : value && "objectId" in value ? <BorderOutlined aria-hidden="true" /> : value && "characterId" in value && value.jointId ? <AimOutlined className="spatial-joint-icon" aria-hidden="true" /> : value && "characterId" in value && value.boneId ? <LinkOutlined className="spatial-bone-icon" aria-hidden="true" /> : <UserOutlined aria-hidden="true" />; }} />}
         </section>
       </> : <>
       {!selected && <p className="spatial-parameters-empty">{labels.selectObjectForParameters}</p>}
@@ -366,6 +373,7 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
         <TabSwitch className="spatial-workspace-tabs" aria-label={labels.workspaceViews} value={workspaceView} onChange={setWorkspaceView} items={[
           { key: "space", label: labels.spaceTab, mode: "text-only" },
           { key: "cameras", label: labels.cameras, mode: "text-only" },
+          { key: "cameraBoxes", label: labels.cameraBoxTab, mode: "text-only" },
         ]} />
         </div>
       }>
@@ -387,6 +395,9 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
               </figure>;
             })}
           </section>}
+          <SpatialCameraBoxView active={workspaceView === "cameraBoxes"} boxes={draft.cameraBoxes ?? []} selectedBoxId={observationBoxId}
+            onSelectBox={id => choose({ cameraBoxId: id })} pass={referencePass} onPassChange={setReferencePass} source={cameraBoxSource}
+            labels={labels} copiedLabel={copiedLabel} retryLabel={actions.retry} disabled={disabled} />
         </>}
       </div>
       </CompositionWorkflowView>

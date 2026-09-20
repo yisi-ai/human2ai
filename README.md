@@ -126,6 +126,14 @@ mkdir -p .human2ai-data/output
 npm run cli -- --api-url http://127.0.0.1:4180 ui-layout render --session <session-id> --revision <revision> --output .human2ai-data/output/ui-layout.png
 ```
 
+观察盒可以按需导出三视图等方向组合，`--views` 按传入顺序排列，每行最多三张；可选方向为 `front,back,left,right,top,bottom`，支持普通图、结构线、深度图和骨架投影。例如：
+
+```bash
+npm run cli -- --api-url http://127.0.0.1:4180 spatial render --session <session-id> --revision <revision> --box <box-id> --views front,left,top --pass color --output .human2ai-data/output/three-views.png
+```
+
+`--views` 接受 1–6 个不重复方向，与原有 `--view` 互斥。Agent 可通过 `session connect` 发现组合导出命令，通过 `spatial methods` 读取方向参数契约；导出不修改场景或网页当前激活的方向。
+
 内部 `docs/` 和 `.human2ai-data/` 保留在本地，均不提交 Git、不进入 npm 包。数据库及其 WAL/SHM 文件也由忽略规则排除。停服后备份整个数据目录，可同时保留数据库和图片；在线备份数据库应使用 SQLite backup API。
 
 ## 源码开发与日常使用

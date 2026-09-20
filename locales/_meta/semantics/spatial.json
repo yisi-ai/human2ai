@@ -123,6 +123,8 @@
       "searchTerms": [
         "添加人物",
         "Add character",
+        "人物",
+        "Character",
         "addCharacter"
       ],
       "examples": [
@@ -159,6 +161,8 @@
       "searchTerms": [
         "添加摄像机",
         "Add camera",
+        "摄像机",
+        "Camera",
         "addCamera"
       ],
       "examples": [
@@ -963,7 +967,7 @@
     },
     "spatial.translate": {
       "meaning": "Gizmo mode that edits a selected joint world position or object position.",
-      "scope": "3D workspace tool section and selected joint, character or primitive parameters.",
+      "scope": "3D workspace selected joint, character or primitive parameters; manual mode switches appear above selected object parameters.",
       "referent": "Gizmo mode that edits a selected joint world position or object position.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.translate",
@@ -1552,7 +1556,8 @@
         "showRig"
       ],
       "examples": [
-        "Editor-only overlay for selecting joints and bones on the character mesh; not rendered in camera output."
+        "Editor-only overlay for selecting joints and bones on the character mesh; not rendered in camera output.",
+        "Show the joint and bone color legend below the visibility checkbox only while this overlay is enabled."
       ],
       "nonExamples": [
         "Moving a whole character or changing the output camera."
@@ -2771,7 +2776,7 @@
     },
     "spatial.camera-box": {
       "meaning": "Saved cubic region viewed inward by six orthographic cameras; distinct from an output camera or solid cube.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes the fixed observation-box tab and its saved-box selector.",
       "referent": "Saved cubic region viewed inward by six orthographic cameras; distinct from an output camera or solid cube.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBox",
@@ -2796,6 +2801,8 @@
       "searchTerms": [
         "添加观察盒",
         "Add camera box",
+        "观察盒",
+        "Camera box",
         "addCameraBox"
       ],
       "examples": [
@@ -2879,14 +2886,16 @@
     },
     "spatial.camera-box-front": {
       "meaning": "Inward view from the positive local Z face of the observation box.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the positive local Z face of the observation box.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxFront",
       "searchTerms": [
         "正面（+Z）",
         "Front (+Z)",
-        "cameraBoxFront"
+        "cameraBoxFront",
+        "前",
+        "Front"
       ],
       "examples": [
         "Inward view from the positive local Z face of the observation box."
@@ -2897,14 +2906,16 @@
     },
     "spatial.camera-box-back": {
       "meaning": "Inward view from the negative local Z face of the observation box.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the negative local Z face of the observation box.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxBack",
       "searchTerms": [
         "背面（−Z）",
         "Back (−Z)",
-        "cameraBoxBack"
+        "cameraBoxBack",
+        "后",
+        "Back"
       ],
       "examples": [
         "Inward view from the negative local Z face of the observation box."
@@ -2915,14 +2926,16 @@
     },
     "spatial.camera-box-left": {
       "meaning": "Inward view from the negative local X face of the observation box.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the negative local X face of the observation box.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxLeft",
       "searchTerms": [
         "左面（−X）",
         "Left (−X)",
-        "cameraBoxLeft"
+        "cameraBoxLeft",
+        "左",
+        "Left"
       ],
       "examples": [
         "Inward view from the negative local X face of the observation box."
@@ -2933,14 +2946,16 @@
     },
     "spatial.camera-box-right": {
       "meaning": "Inward view from the positive local X face of the observation box.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the positive local X face of the observation box.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxRight",
       "searchTerms": [
         "右面（+X）",
         "Right (+X)",
-        "cameraBoxRight"
+        "cameraBoxRight",
+        "右",
+        "Right"
       ],
       "examples": [
         "Inward view from the positive local X face of the observation box."
@@ -2951,14 +2966,16 @@
     },
     "spatial.camera-box-top": {
       "meaning": "Inward view from the positive local Y face, with local negative Z upward in the image.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the positive local Y face, with local negative Z upward in the image.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxTop",
       "searchTerms": [
         "顶面（+Y）",
         "Top (+Y)",
-        "cameraBoxTop"
+        "cameraBoxTop",
+        "顶",
+        "Top"
       ],
       "examples": [
         "Inward view from the positive local Y face, with local negative Z upward in the image."
@@ -2969,14 +2986,16 @@
     },
     "spatial.camera-box-bottom": {
       "meaning": "Inward view from the negative local Y face, with local positive Z upward in the image.",
-      "scope": "Spatial camera-box editing, export, and Agent reference workflow.",
+      "scope": "Spatial camera-box editing, export, and Agent reference workflow. Includes independent face visibility toggle buttons in the observation-box tab.",
       "referent": "Inward view from the negative local Y face, with local positive Z upward in the image.",
       "precedence": "The box owns its six local directions and bounded volume; the ordinary output camera owns final composition. Directions do not name anatomical left or right.",
       "canonicalKey": "spatial.cameraBoxBottom",
       "searchTerms": [
         "底面（−Y）",
         "Bottom (−Y)",
-        "cameraBoxBottom"
+        "cameraBoxBottom",
+        "底",
+        "Bottom"
       ],
       "examples": [
         "Inward view from the negative local Y face, with local positive Z upward in the image."
@@ -3058,15 +3077,16 @@
       ]
     },
     "spatial.camera-box-view-target-error": {
-      "meaning": "Reject an observation direction for a regular output camera.",
+      "meaning": "Reject either a single observation direction or a direction combination for a regular output camera.",
       "scope": "Spatial Agent rendering and image-generation reference workflow.",
-      "referent": "Reject an observation direction for a regular output camera.",
+      "referent": "Reject either a single observation direction or a direction combination for a regular output camera.",
       "precedence": "Main camera controls composition; six box-local views provide auxiliary pose evidence.",
       "canonicalKey": "spatial.cameraBoxViewTargetError",
       "searchTerms": [
         "观察方向参数只能用于观察盒。",
         "--view requires --box.",
-        "cameraBoxViewTargetError"
+        "cameraBoxViewTargetError",
+        "--views requires --box"
       ],
       "examples": [
         "Reject an observation direction for a regular output camera."
@@ -3095,13 +3115,13 @@
     },
     "spatial.camera-box-generation-guidance": {
       "meaning": "Prompt guidance giving the main camera composition precedence over simultaneous auxiliary box views and preserving approximate anatomical intent without reproducing guide marks or multiplying subjects.",
-      "scope": "Spatial Agent rendering and image-generation reference workflow.",
+      "scope": "Spatial Agent rendering and image-generation reference workflow. Applies to both the fixed six-view sheet and an explicit subset of box-local directions.",
       "referent": "Prompt guidance giving the main camera composition precedence over simultaneous auxiliary box views and preserving approximate anatomical intent without reproducing guide marks or multiplying subjects.",
-      "precedence": "Main camera controls composition; six box-local views provide auxiliary pose evidence.",
+      "precedence": "The main camera controls composition; selected box-local views provide auxiliary pose evidence.",
       "canonicalKey": "spatial.cameraBoxGenerationGuidance",
       "searchTerms": [
-        "主镜头决定最终构图。六方位合图展示同一空间同一时刻，方向标签是观察盒的局部坐标，不是身体左右标记。仅用辅助图理解遮挡、手指归属和大致弯曲意图。最终画面不出现合图排版、重复人物、方向文字或关节/身体分块线；允许自然地修正姿势和手指接触，不必逐像素复原。",
-        "The main camera sets the final composition. The six-view sheet shows the same scene at one moment; labels identify box-local directions, not anatomical left and right. Use auxiliary views to understand occlusion, digit ownership, and approximate bending intent. Produce a single image without a contact-sheet layout, duplicated subjects, direction labels, or joint/body guide lines. Correct anatomy and finger contact naturally instead of reproducing the references pixel for pixel.",
+        "主镜头决定最终构图。观察盒合图展示同一空间同一时刻，方向标签是观察盒的局部坐标，不是身体左右标记。仅用辅助图理解遮挡、手指归属和大致弯曲意图。最终画面不出现合图排版、重复人物、方向文字或关节/身体分块线；允许自然地修正姿势和手指接触，不必逐像素复原。",
+        "The main camera sets the final composition. The observation sheet shows the same scene at one moment; labels identify box-local directions, not anatomical left and right. Use auxiliary views to understand occlusion, digit ownership, and approximate bending intent. Produce a single image without a contact-sheet layout, duplicated subjects, direction labels, or joint/body guide lines. Correct anatomy and finger contact naturally instead of reproducing the references pixel for pixel.",
         "cameraBoxGenerationGuidance"
       ],
       "examples": [
@@ -3202,9 +3222,9 @@
       ]
     },
     "spatial.workspace-views": {
-      "meaning": "Switch between the editable scene and its output camera gallery.",
+      "meaning": "Switch between the editable scene, output-camera gallery and observation-box preview.",
       "scope": "3D workspace camera gallery.",
-      "referent": "The fixed Space and Cameras switch above the central workspace.",
+      "referent": "The fixed Space, Cameras and Camera box tabs above the central workspace.",
       "precedence": "Separate from the right panel tabs and from changing the selected output camera.",
       "canonicalKey": "spatial.workspaceViews",
       "searchTerms": [
@@ -3220,7 +3240,7 @@
     },
     "spatial.camera-preview-pending": {
       "meaning": "The current camera preview will become available after the scene changes are saved.",
-      "scope": "3D workspace camera gallery.",
+      "scope": "Saved camera and observation-box preview availability while scene changes are pending.",
       "referent": "A gallery camera whose current saved preview source is not yet available.",
       "precedence": "Retain the camera name while waiting; never display an older scene revision as current.",
       "canonicalKey": "spatial.cameraPreviewPending",
@@ -3274,6 +3294,110 @@
       "nonExamples": [
         "Rotate a bone.",
         "Edit the entire space or its style."
+      ]
+    },
+    "spatial.observation-copy": {
+      "meaning": "Copy one PNG sheet containing the currently enabled box-local views in the chosen render type to the image clipboard.",
+      "scope": "Observation-box workspace preview and image export.",
+      "referent": "Copy one PNG sheet containing the currently enabled box-local views in the chosen render type to the image clipboard.",
+      "precedence": "Uses the selected saved box, render type and enabled box-local directions; does not mutate the scene or replace the main composition camera.",
+      "canonicalKey": "spatial.copyObservationImage",
+      "searchTerms": [
+        "复制观察图",
+        "Copy observation image"
+      ],
+      "examples": [
+        "Copy front and top structure views together."
+      ],
+      "nonExamples": [
+        "Copy an editable box object or a scene document."
+      ]
+    },
+    "spatial.observation-download": {
+      "meaning": "Save one PNG sheet containing the currently enabled box-local views in the chosen render type.",
+      "scope": "Observation-box workspace preview and image export.",
+      "referent": "Save one PNG sheet containing the currently enabled box-local views in the chosen render type.",
+      "precedence": "Uses the selected saved box, render type and enabled box-local directions; does not mutate the scene or replace the main composition camera.",
+      "canonicalKey": "spatial.downloadObservationImage",
+      "searchTerms": [
+        "下载观察图",
+        "Download observation image"
+      ],
+      "examples": [
+        "Download the same observation sheet shown in the preview."
+      ],
+      "nonExamples": [
+        "Download all six views regardless of the switches."
+      ]
+    },
+    "spatial.observation-empty": {
+      "meaning": "The current scene has no saved observation boxes to preview.",
+      "scope": "Observation-box workspace preview and image export.",
+      "referent": "The current scene has no saved observation boxes to preview.",
+      "precedence": "Uses the selected saved box, render type and enabled box-local directions; does not mutate the scene or replace the main composition camera.",
+      "canonicalKey": "spatial.noCameraBoxes",
+      "searchTerms": [
+        "暂无观察盒",
+        "No camera boxes"
+      ],
+      "examples": [
+        "An empty box selector in a scene that only has a camera."
+      ],
+      "nonExamples": [
+        "A box exists but its images are loading."
+      ]
+    },
+    "spatial.observation-directions-empty": {
+      "meaning": "No box-local directions are enabled, so no observation image can be shown or exported.",
+      "scope": "Observation-box workspace preview and image export.",
+      "referent": "No box-local directions are enabled, so no observation image can be shown or exported.",
+      "precedence": "Uses the selected saved box, render type and enabled box-local directions; does not mutate the scene or replace the main composition camera.",
+      "canonicalKey": "spatial.noObservationDirections",
+      "searchTerms": [
+        "请选择至少一个观察方向",
+        "Select at least one direction"
+      ],
+      "examples": [
+        "All six face switches are off."
+      ],
+      "nonExamples": [
+        "The scene contains no objects."
+      ]
+    },
+    "spatial.camera-box-views-error": {
+      "meaning": "Reject an empty, duplicate or unsupported selection of box-local directions for one observation sheet.",
+      "scope": "Spatial CLI and HTTP observation-box image export.",
+      "referent": "Reject an empty, duplicate or unsupported selection of box-local directions for one observation sheet.",
+      "precedence": "The saved box defines six local directions. Export selection is read-only and independent from browser-local activation buttons.",
+      "canonicalKey": "spatial.cameraBoxViewsError",
+      "searchTerms": [
+        "观察方向组合",
+        "--views",
+        "comma-separated directions"
+      ],
+      "examples": [
+        "Reject front,front, sheet, an empty list or an unknown direction."
+      ],
+      "nonExamples": [
+        "A valid request for front,left,top in that order."
+      ]
+    },
+    "spatial.camera-box-view-conflict": {
+      "meaning": "Reject using the single-view selector and explicit view-combination selector in the same export request.",
+      "scope": "Spatial CLI and HTTP observation-box image export.",
+      "referent": "Reject using the single-view selector and explicit view-combination selector in the same export request.",
+      "precedence": "The saved box defines six local directions. Export selection is read-only and independent from browser-local activation buttons.",
+      "canonicalKey": "spatial.cameraBoxViewConflict",
+      "searchTerms": [
+        "--view",
+        "--views",
+        "观察方向参数冲突"
+      ],
+      "examples": [
+        "Reject --view sheet combined with --views front,left."
+      ],
+      "nonExamples": [
+        "An explicit view combination on its own."
       ]
     }
   },
@@ -3335,11 +3459,11 @@
     "spatial.addCharacter": {
       "conceptId": "spatial.add-character",
       "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
+      "role": "Object-creation toolbar button named by the object type, without an add verb.",
+      "grammar": "noun phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical",
-      "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
+      "duplicateReason": "Creates a character; spatial.character is the editable default name of the created object, not the creation action."
     },
     "spatial.character": {
       "conceptId": "spatial.character",
@@ -3353,8 +3477,8 @@
     "spatial.addCamera": {
       "conceptId": "spatial.add-camera",
       "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
+      "role": "Object-creation toolbar button named by the object type, without an add verb.",
+      "grammar": "noun phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical",
       "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
@@ -3479,7 +3603,7 @@
     "spatial.joints": {
       "conceptId": "spatial.joints",
       "variant": "default",
-      "role": "control or status label",
+      "role": "Joint parameter label and color legend below the enabled rig visibility checkbox.",
       "grammar": "phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical",
@@ -4007,7 +4131,7 @@
     "spatial.bones": {
       "conceptId": "spatial.bones",
       "variant": "default",
-      "role": "control or status label",
+      "role": "Bone parameter label and color legend below the enabled rig visibility checkbox.",
       "grammar": "phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical",
@@ -4061,7 +4185,7 @@
     "spatial.showRig": {
       "conceptId": "spatial.show-rig",
       "variant": "default",
-      "role": "control or status label",
+      "role": "Checkbox controlling the editor rig overlay and the joint and bone color legend below it.",
       "grammar": "phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical",
@@ -4654,15 +4778,17 @@
       "role": "label",
       "grammar": "phrase",
       "tone": "concise and neutral",
-      "reusePolicy": "canonical"
+      "reusePolicy": "canonical",
+      "duplicateReason": "Names a saved camera-box region; spatial.addCameraBox is a toolbar action that creates a new region."
     },
     "spatial.addCameraBox": {
       "conceptId": "spatial.add-camera-box",
       "variant": "default",
-      "role": "action",
-      "grammar": "phrase",
+      "role": "Object-creation toolbar button named by the object type, without an add verb.",
+      "grammar": "noun phrase",
       "tone": "concise and neutral",
-      "reusePolicy": "canonical"
+      "reusePolicy": "canonical",
+      "duplicateReason": "Creates a new camera-box region; spatial.cameraBox names the saved region rather than the creation action."
     },
     "spatial.cameraBoxSize": {
       "conceptId": "spatial.camera-box-size",
@@ -4886,6 +5012,133 @@
       "role": "Dialog title",
       "grammar": "Verb phrase",
       "tone": "Concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.cameraBoxTab": {
+      "conceptId": "spatial.camera-box",
+      "variant": "workspace-tab",
+      "role": "Workspace tab and observation-box selector accessible name",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "The tab names the observation-box view; spatial.addCameraBox creates a box. English shares the saved object name spatial.cameraBox while Chinese uses the shorter tab form."
+    },
+    "spatial.cameraBoxFrontToggle": {
+      "conceptId": "spatial.camera-box-front",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.cameraBoxBackToggle": {
+      "conceptId": "spatial.camera-box-back",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.cameraBoxLeftToggle": {
+      "conceptId": "spatial.camera-box-left",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.cameraBoxRightToggle": {
+      "conceptId": "spatial.camera-box-right",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.cameraBoxTopToggle": {
+      "conceptId": "spatial.camera-box-top",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.cameraBoxBottomToggle": {
+      "conceptId": "spatial.camera-box-bottom",
+      "variant": "compact-face-toggle",
+      "role": "Face visibility toggle button label without a tooltip; the full direction remains the accessible name.",
+      "grammar": "noun phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Names a box-local inward view in a compact toggle button, not a body side, text alignment or a layout edge; the canonical label includes the local axis."
+    },
+    "spatial.copyObservationImage": {
+      "conceptId": "spatial.observation-copy",
+      "variant": "default",
+      "role": "Action button",
+      "grammar": "verb phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.observationCopyFailed": {
+      "conceptId": "spatial.observation-copy",
+      "variant": "failure",
+      "role": "Error message",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual"
+    },
+    "spatial.downloadObservationImage": {
+      "conceptId": "spatial.observation-download",
+      "variant": "default",
+      "role": "Action button",
+      "grammar": "verb phrase",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.observationDownloadFailed": {
+      "conceptId": "spatial.observation-download",
+      "variant": "failure",
+      "role": "Error message",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual"
+    },
+    "spatial.noCameraBoxes": {
+      "conceptId": "spatial.observation-empty",
+      "variant": "default",
+      "role": "Empty state",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.noObservationDirections": {
+      "conceptId": "spatial.observation-directions-empty",
+      "variant": "default",
+      "role": "Empty state",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.cameraBoxViewsError": {
+      "conceptId": "spatial.camera-box-views-error",
+      "variant": "default",
+      "role": "error message",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "spatial.cameraBoxViewConflict": {
+      "conceptId": "spatial.camera-box-view-conflict",
+      "variant": "default",
+      "role": "error message",
+      "grammar": "sentence",
+      "tone": "concise and neutral",
       "reusePolicy": "canonical"
     }
   }

@@ -5,8 +5,9 @@ import { fingerPart } from "../domain/spatial/hands.ts";
 import { jointWorldTransforms } from "../domain/spatial/kinematics.ts";
 import { applySpatialContactShading, getSpatialLighting, spatialShadowSampler } from "../domain/spatial/lighting.ts";
 import type { SpatialCamera, SpatialDraft, SpatialRenderPass } from "../domain/spatial/types.ts";
-import { SPATIAL_BOX_FACES, SPATIAL_BOX_GAP, SPATIAL_BOX_LABEL_HEIGHT, type SpatialBoxView, type SpatialCameraBox } from "../domain/spatial/types.ts";
-import { cameraBoxImageSize, cameraBoxView } from "../domain/spatial/camera-box.ts";
+import { SPATIAL_BOX_FACES, SPATIAL_BOX_GAP, SPATIAL_BOX_LABEL_HEIGHT, type SpatialBoxFace, type SpatialBoxView, type SpatialCameraBox } from "../domain/spatial/types.ts";
+import { cameraBoxView } from "../domain/spatial/camera-box.ts";
+import { cameraBoxSheetLayout } from "../domain/spatial/camera-box-sheet.ts";
 import en from "../../locales/en/common.json" with { type: "json" };
 
 // A bounded, depth-buffered rasterizer keeps camera references and Agent PNG
@@ -251,20 +252,21 @@ async function renderSkeletonPng(draft: SpatialDraft, source: SpatialCamera, cam
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
-export async function renderSpatialCameraBoxPng(draft: SpatialDraft, box: SpatialCameraBox, view: SpatialBoxView = "sheet", pass: SpatialRenderPass = "color"): Promise<Buffer> {
+export async function renderSpatialCameraBoxPng(draft: SpatialDraft, box: SpatialCameraBox, view: SpatialBoxView | readonly SpatialBoxFace[] = "sheet", pass: SpatialRenderPass = "color"): Promise<Buffer> {
   const renderFace = (face: typeof SPATIAL_BOX_FACES[number]) => {
     const { source, camera } = cameraBoxView(box, face);
     return renderSpatialPng(draft, source, pass, camera);
   };
-  if (view !== "sheet") return renderFace(view);
+  if (typeof view === "string" && view !== "sheet") return renderFace(view);
   const size = box.resolution, labelHeight = SPATIAL_BOX_LABEL_HEIGHT, gap = SPATIAL_BOX_GAP;
-  const { width, height } = cameraBoxImageSize(box, view);
+  const { width, height, columns, rows, tiles } = cameraBoxSheetLayout(size, typeof view === "string" ? SPATIAL_BOX_FACES : view);
   // Separate cropped limbs at tile boundaries so they cannot visually join adjacent views.
-  const dividers = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><g fill="#dce1e7"><rect x="${size}" width="${gap}" height="${height}"/><rect x="${size*2+gap}" width="${gap}" height="${height}"/><rect y="${size+labelHeight}" width="${width}" height="${gap}"/></g></svg>`);
+  const verticalDividers = Array.from({ length: columns - 1 }, (_, index) => `<rect x="${(index + 1) * size + index * gap}" width="${gap}" height="${height}"/>`).join("");
+  const horizontalDividers = Array.from({ length: rows - 1 }, (_, index) => `<rect y="${(index + 1) * (size + labelHeight) + index * gap}" width="${width}" height="${gap}"/>`).join("");
+  const dividers = Buffer.from(`<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><g fill="#dce1e7">${verticalDividers}${horizontalDividers}</g></svg>`);
   const composites: OverlayOptions[] = [{ input: dividers, left: 0, top: 0 }];
-  // Sequential rendering bounds peak memory; all six views read this same immutable revision.
-  for (const [index, face] of SPATIAL_BOX_FACES.entries()) {
-    const left = index % 3 * (size + gap), top = Math.floor(index / 3) * (size + labelHeight + gap);
+  // Sequential rendering bounds peak memory; all selected views read the same immutable revision.
+  for (const { face, left, top } of tiles) {
     const key = `cameraBox${face[0].toUpperCase()}${face.slice(1)}` as keyof typeof en.spatial;
     const label = Buffer.from(`<svg width="${size}" height="${labelHeight}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="white"/><text x="${size/2}" y="19" font-family="sans-serif" font-size="14" text-anchor="middle" fill="#283545">${en.spatial[key]}</text></svg>`);
     composites.push({ input: label, left, top }, { input: await renderFace(face), left, top: top + labelHeight });

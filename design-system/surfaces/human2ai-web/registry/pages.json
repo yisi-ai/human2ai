@@ -389,7 +389,7 @@
         "canvas-history-controls",
         "composition-workflow-view"
       ],
-      "stateBoundary": "页面应用层通过同源 API 校验 ui-layout 会话、读取 UI 草图版本，并在草图变化后以 800ms 防抖和明确 latest revision 串行自动保存，并在页面无本地脏数据时轮询外部草稿 revision；路由挂起及 UI 草图会话读取期间，页面主工作区和右侧工具区组合共享 LoadingState 呈现骨架，完成读取后才挂载可编辑 UiSketchCanvas。无 session 参数的新画布在第一次变更时创建 ui-layout 会话并替换 URL，加载失败不挂载可编辑画布，revision 冲突与服务错误保持可见。新草图显示状态 1 与添加状态入口；本地 UiSketchStateTabs 在标签 hover/focus 时显示三点菜单，支持重命名、删除确认、新建状态及长按拖动排序；所有状态都可操作，至少保留一个。页面调用 UI 草图领域操作，沿用 800ms 自动保存保存名称和顺序；新建复制来源快照并插入其后，删除活动状态选择相邻状态。页面继续持有活动状态选择和 AppShellFrame 右栏开合状态。应用右侧栏在操作工具上方组合 SessionDetails 基本信息模块；创建时间来自会话，修改时间来自最近成功保存的 UI 草图版本并回退到会话修改时间，节点数统计共享的区域与文字节点，各动效阶段不重复计数且隐藏节点仍计入。Agent 行在点击复制时根据当前浏览器 origin 生成包含 API/Web 地址与 session id 的 human2ai session connect CLI 命令及等待下一步指令的本地化消息；复制按钮组合 ActionButton，SessionDetails 负责剪贴板动作并统一显示执行中、成功与失败反馈，模块不进入画布 SideActionPanel。UiSketchCanvas 持有区域、文字正文、公共节点元数据、视觉权重、界面范围、选择与复制反馈，并根据页面传入的活动阶段读写节点几何、文字尺度和显示状态；操作工具在外部右栏与画布侧栏共用区域与文字、总备注和复制三个隐性间距分组；清空画布作为仅图标操作放在外部右栏的操作工具标题右侧，通过 Tooltip 显示名称并保留无障碍名称，点击后必须在共享 ConfirmAction 中二次确认才会移除画布元素；该动作通过受控 clear-action-host 复用 UiSketchCanvas 内部动作，不进入画布 SideActionPanel。右侧栏在操作工具下方增加与构图一致的界面范围区，复用受控 AspectRatioSelector 显示实际宽高、匹配等价比例预设，并以当前宽度和中心点应用预设比例；画布缩放与手动宽高输入双向同步。标题右侧的重置图标恢复默认界面框，最右侧锁定图标同步禁用比例选择器和 CanvasFrame 移动缩放；重置范围不再出现在操作工具。清空画布移除全部区域、文字和图片并保留界面框、总备注和动效阶段。外部右栏组内保持两列，复制标题跨列居中并使用弱化小号文字；右侧栏收起后，画布 SideActionPanel 首次显示为收起状态，展开后组内始终单列。页面把当前 i18n 实例包装为提示词翻译函数，因此复制内容跟随界面语言。单状态直接复制该状态，多状态复制菜单按保存的名称和顺序生成；动效提示词逐对输出相邻状态过渡。复制提示词、预览图与 CLI 命令的成功反馈统一，图片剪贴板不可用时仍明确提示下载。双击区域或文字后组合共享 TextMarkEditor，并与构图采用一致的模态排版；面板固定显示不可编辑的 user、agent 或 import 英文来源标签，存在 annotation 时单独显示只读节点说明，note 继续承载用户可编辑指令，import 静态文字正文保持可编辑。其他字段变更立即写回 UiSketchCanvas 并进入页面既有自动保存边界，关闭面板保留已编辑内容。面板不显示保存动作，底部左侧保留共享删除确认；组件不读取 API、路由、revision 或持久化状态。会话基本信息下组合 SessionStylePicker，以共享 useSessionStyle 读取、轮询和修改当前单一风格绑定；空会话选择风格时复用页面的会话创建机制。选择弹窗复用风格库卡片、分类筛选、设计规范及参考图预览，绑定和解除不改动画布。当前规范版本尚未被加工时显示待加工状态；复制提示词前读取最新绑定，仅追加一行风格短句。加工版本由既有草稿轮询同步并保持可编辑，用户修改继承加工元数据。 图片节点支持上传自包含 SVG、粘贴完整 SVG 代码，并在现有节点编辑器直接复制源码。页面注入 readImageFile 与既有上传回调，图片文件读取结果共用于 SVG 源码复制和原格式下载；下载支持选择本地保存位置与标准浏览器下载降级；保存继续只变更 assetId 并沿用草稿版本与撤销，SVG 仍属于当前会话。 界面范围只界定输出区域，不限制节点移动；范围外节点继续保存在草稿中。复制提示词排除完全在范围外或仅贴边的节点，部分相交保留；动效提示词保留开始或结束状态进入范围的节点。 节点拖动的临时位移由画布持有并按帧呈现，拖动期间不更新页面草稿；松手后一次提交，再进入既有 800ms 防抖保存。取消手势、切换阶段或卸载不提交临时位置。 工具点击只激活一次性节点放置，不创建草稿；CanvasPlacement 按帧呈现鼠标轮廓，松手后由领域画布按当前草稿创建一个节点并沿用现有自动保存。单击使用默认尺寸，拖动设置形状、构图文字区域或图片宽高；UI 界面文字单击后进入编辑，构图文字区域放置后保持选中并可直接调整宽高，双击进入编辑，构图焦点单击定位、动线拖动定向。放置可覆盖已有节点或超出画框，Esc 可取消；UI 切换阶段、构图切换视图及会话卸载会清除待放置状态。 草稿 layerOrder 持久化内容层级，编辑、预览和导出保持一致，保存及撤销沿用 Capture 版本机制；旧草稿保持原绘制顺序。 三类画布复用会话内 100 步操作历史和 CanvasHistoryControls；撤销/重做恢复完整草稿并进入既有自动保存，连续手势合并为一步，文本输入保留原生撤销，接收外部版本时重置历史。UI 同时恢复被编辑状态；空间排队保存操作并按已存 revision 恢复，保存响应不覆盖后续本地修改。 UI 状态栏和画布通过 CompositionWorkflowView 的 stateControls 与 children 插槽复用构图工作区布局；状态切换、添加、保存继续由本页面管理。",
+      "stateBoundary": "页面应用层通过同源 API 校验 ui-layout 会话、读取 UI 草图版本，并在草图变化后以 800ms 防抖和明确 latest revision 串行自动保存，并在页面无本地脏数据时轮询外部草稿 revision；路由挂起及 UI 草图会话读取期间，页面主工作区和右侧工具区组合共享 LoadingState 呈现骨架，完成读取后才挂载可编辑 UiSketchCanvas。无 session 参数的新画布在第一次变更时创建 ui-layout 会话并替换 URL，加载失败不挂载可编辑画布，revision 冲突与服务错误保持可见。新草图显示状态 1 与添加状态入口；本地 UiSketchStateTabs 在标签 hover/focus 时显示三点菜单，支持重命名、删除确认、新建状态及长按拖动排序；所有状态都可操作，至少保留一个。页面调用 UI 草图领域操作，沿用 800ms 自动保存保存名称和顺序；新建复制来源快照并插入其后，删除活动状态选择相邻状态。页面继续持有活动状态选择和 AppShellFrame 右栏开合状态。应用右侧栏在操作工具上方组合 SessionDetails 基本信息模块；创建时间来自会话，修改时间来自最近成功保存的 UI 草图版本并回退到会话修改时间，节点数统计共享的区域与文字节点，各动效阶段不重复计数且隐藏节点仍计入。Agent 行在点击复制时根据当前浏览器 origin 生成包含 API/Web 地址与 session id 的 human2ai session connect CLI 命令及等待下一步指令的本地化消息；复制按钮组合 ActionButton，SessionDetails 负责剪贴板动作并统一显示执行中、成功与失败反馈，模块不进入画布 SideActionPanel。UiSketchCanvas 持有区域、文字正文、公共节点元数据、视觉权重、界面范围、选择与复制反馈，并根据页面传入的活动阶段读写节点几何、文字尺度和显示状态；操作工具在外部右栏与画布侧栏共用区域与文字、总备注和复制三个隐性间距分组；清空画布作为仅图标操作放在外部右栏的操作工具标题右侧，通过 Tooltip 显示名称并保留无障碍名称，点击后必须在共享 ConfirmAction 中二次确认才会移除画布元素；该动作通过受控 clear-action-host 复用 UiSketchCanvas 内部动作，不进入画布 SideActionPanel。右侧栏在操作工具下方增加与构图一致的界面范围区，复用受控 AspectRatioSelector 显示实际宽高、匹配等价比例预设，并以当前宽度和中心点应用预设比例；画布缩放与手动宽高输入双向同步。标题右侧的重置图标恢复默认界面框，最右侧锁定图标同步禁用比例选择器和 CanvasFrame 移动缩放；重置范围不再出现在操作工具。清空画布移除全部区域、文字和图片并保留界面框、总备注和动效阶段。外部右栏组内保持两列，复制标题跨列居中并使用弱化小号文字；右侧栏收起后，画布 SideActionPanel 首次显示为收起状态，展开后组内始终单列。页面把当前 i18n 实例包装为提示词翻译函数，因此复制内容跟随界面语言。单状态直接复制该状态，多状态复制菜单按保存的名称和顺序生成；动效提示词逐对输出相邻状态过渡。复制提示词、预览图与 CLI 命令的成功反馈统一，图片剪贴板不可用时仍明确提示下载。双击区域或文字后组合共享 TextMarkEditor，并与构图采用一致的模态排版；面板固定显示不可编辑的 user、agent 或 import 英文来源标签，存在 annotation 时单独显示只读节点说明，note 继续承载用户可编辑指令，import 静态文字正文保持可编辑。其他字段变更立即写回 UiSketchCanvas 并进入页面既有自动保存边界，关闭面板保留已编辑内容。面板不显示保存动作，底部左侧保留共享删除确认；组件不读取 API、路由、revision 或持久化状态。会话基本信息下组合 SessionStylePicker，以共享 useSessionStyle 读取、轮询和修改当前单一风格绑定；空会话选择风格时复用页面的会话创建机制。选择弹窗复用风格库卡片、分类筛选、设计规范及参考图预览，绑定和解除不改动画布。当前规范版本尚未被加工时显示待加工状态；复制提示词前读取最新绑定，仅追加一行风格短句。加工版本由既有草稿轮询同步并保持可编辑，用户修改继承加工元数据。 图片节点支持上传自包含 SVG、粘贴完整 SVG 代码，并在现有节点编辑器直接复制源码。页面注入 readImageFile 与既有上传回调，图片文件读取结果共用于 SVG 源码复制和原格式下载；下载支持选择本地保存位置与标准浏览器下载降级；保存继续只变更 assetId 并沿用草稿版本与撤销，SVG 仍属于当前会话。 界面范围只界定输出区域，不限制节点移动；范围外节点继续保存在草稿中。复制提示词排除完全在范围外或仅贴边的节点，部分相交保留；动效提示词保留开始或结束状态进入范围的节点。 节点拖动的临时位移由画布持有并按帧呈现，拖动期间不更新页面草稿；松手后一次提交，再进入既有 800ms 防抖保存。取消手势、切换阶段或卸载不提交临时位置。 工具点击只激活一次性节点放置，不创建草稿；CanvasPlacement 按帧呈现鼠标轮廓，松手后由领域画布按当前草稿创建一个节点并沿用现有自动保存。单击使用默认尺寸，拖动设置形状、构图文字区域或图片宽高；UI 界面文字单击后进入编辑，构图文字区域放置后保持选中并可直接调整宽高，双击进入编辑，构图焦点单击定位、动线拖动定向。放置可覆盖已有节点或超出画框，Esc 可取消；UI 切换阶段、构图切换视图及会话卸载会清除待放置状态。 草稿 layerOrder 持久化内容层级，编辑、预览和导出保持一致，保存及撤销沿用 Capture 版本机制；旧草稿保持原绘制顺序。 三类画布复用会话内 100 步操作历史和 CanvasHistoryControls；撤销/重做恢复完整草稿并进入既有自动保存，连续手势合并为一步，文本输入保留原生撤销，接收外部版本时重置历史。UI 同时恢复被编辑状态；空间排队保存操作并按已存 revision 恢复，保存响应不覆盖后续本地修改。 UI 状态栏和画布通过 CompositionWorkflowView 的 stateControls 与 children 插槽复用构图工作区布局；状态切换、添加、保存继续由本页面管理。 UI 节点 Ctrl/Cmd+C/V 的复制快照由画布组件持有；领域函数管理副本身份、组和层级，并通过 updateUiSketchStageDraft 初始化活动状态及既有共享节点状态。一次粘贴触发一次现有草稿变更，沿用操作历史和自动保存。",
       "evidence": {
         "files": [
           "web/app/ui-sketch/page.tsx",
@@ -432,7 +432,8 @@
           "design-system/surfaces/human2ai-web/governance/canvas-node-placement.md",
           "design-system/surfaces/human2ai-web/governance/canvas-edit-history.md",
           "design-system/surfaces/human2ai-web/src/local/CanvasHistoryControls.stories.tsx",
-          "test/unit/canvas-edit-history.test.ts"
+          "test/unit/canvas-edit-history.test.ts",
+          "src/domain/ui-sketch/clipboard.ts"
         ],
         "storyId": "human2ai-ui-sketch-canvas--default"
       },
@@ -631,7 +632,7 @@
         "session-style-picker",
         "text-mark-editor"
       ],
-      "stateBoundary": "应用层加载空间会话与共享 DraftVersionStore 历史，串行提交空间操作批次并轮询外部版本；无本地脏状态才接收 Agent 修改。客户端路由切换继续提交待保存队列；修订冲突停止写入，显式重新读取后恢复。位置与旋转世界锁、标准人形关节范围由 spatial 领域统一求解并在服务端再次验证；编辑观察摄像机只属于视图暂态，多摄像机输出属于文档。源镜头 URL 可选择对应摄像机。 AppShellFrame 统一管理右栏开关；空间视图通过 panelHost 填充信息与工具、空间对象、参数三个标签；空间对象独占列表，参数单独编辑。对象树中人物下身体部位同级，手部独立分组且内部关节/骨段平铺，摄像机与角色同列；树展开、选中高亮和面板标签只属于视图状态。 头身形态通过共享空间解算连续联动脸型、颈长、身体宽厚与肩胯间距，2.5/3.5 等小数直接计算头高基准；躯干/腿部滑杆每步 2 个百分点，已存非整步值保留准确显示。 人物外形选择通过 set-proportions 切换男女性网格与解剖尺寸，保留姿势/自定义肢体，固定冲突由领域统一拒绝。 全部摄像机的范围线框与预览比例仅属于视图呈现，范围投影复用 createOutputCamera，选中镜头高亮；信息与工具中的显示摄像机开关默认开启，由 SpatialWorkspaceView 持有本地显隐状态，不触发保存或预览刷新；范围辅助线不进入文档或镜头输出，允许双击进入对应物件的元数据编辑。 手部与五指控制通过相同 SpatialOperation 流程提交，手部树分组不改变骨架领域层级；单手复原与手部快捷参数同样进入共享版本历史。 四项身体尺寸通过原有 set-proportions 提交，左右与复制肢体共享数值，预览只属于视图暂态；尺寸保存、固定校验、撤销和 PNG 继续由领域与现有存储边界负责。 参考类型仅为视图状态；应用注入按 revision/camera/pass 生成的 URL，待保存时不提供旧版本下载，派生输出不写入草稿。 光照效果为文档级 lightingEnabled，通过 set-lighting 与共享版本存储保存/撤销；缺省明亮，所有摄像机普通图和构图引用按源版本跟随，结构线与深度不受光照影响。 模型样式通过原有 put-character 保存 appearance，人体表面与程序几何共用骨架、历史、比例与固定校验，默认外观保持 quaternius。 三类画布复用会话内 100 步操作历史和 CanvasHistoryControls；撤销/重做恢复完整草稿并进入既有自动保存，连续手势合并为一步，文本输入保留原生撤销，接收外部版本时重置历史。UI 同时恢复被编辑状态；空间排队保存操作并按已存 revision 恢复，保存响应不覆盖后续本地修改。 会话风格入口通过既有 details 插槽组合，共用 useSessionStyle 和共享绑定；默认筛选 3D 风格，完整规范随连接交给消费项目建模，不修改空间草稿或显示外部建模完成状态。 顶部空间/摄像机为固定本地视图，复用 CompositionWorkflowView 的标签栏和工作区；摄像机总览只读当前草稿列表与已保存的 revision 预览，每行三个，不创建文档状态或历史操作。 Web 预览适配按场景内容与单个摄像机渲染参数保留可用的已存版本，保存期间只撤下发生变化的镜头，其他镜头 URL 保持稳定；场景内容改变才使全部镜头失效，版本存储和 PNG API 保持原契约。 物件名称/备注弹层只持有目标 ID、输入暂态和屏幕位置，备注由当前草稿驱动；复用 put 操作、保存队列及共享历史，失效对象和历史恢复关闭编辑器。空间可选 note 与 inspect 共享；渲染缓存统一排除名称及备注，参考图保持原样。",
+      "stateBoundary": "应用层加载空间会话与共享 DraftVersionStore 历史，串行提交空间操作批次并轮询外部版本；无本地脏状态才接收 Agent 修改。客户端路由切换继续提交待保存队列；修订冲突停止写入，显式重新读取后恢复。位置与旋转世界锁、标准人形关节范围由 spatial 领域统一求解并在服务端再次验证；编辑观察摄像机只属于视图暂态，多摄像机输出属于文档。源镜头 URL 可选择对应摄像机。 AppShellFrame 统一管理右栏开关；空间视图通过 panelHost 填充信息与工具、空间对象、参数三个标签；空间对象独占列表，参数单独编辑。对象树中人物下身体部位同级，手部独立分组且内部关节/骨段平铺，摄像机与角色同列；树展开、选中高亮和面板标签只属于视图状态。 头身形态通过共享空间解算连续联动脸型、颈长、身体宽厚与肩胯间距，2.5/3.5 等小数直接计算头高基准；躯干/腿部滑杆每步 2 个百分点，已存非整步值保留准确显示。 人物外形选择通过 set-proportions 切换男女性网格与解剖尺寸，保留姿势/自定义肢体，固定冲突由领域统一拒绝。 全部摄像机的范围线框与预览比例仅属于视图呈现，范围投影复用 createOutputCamera，选中镜头高亮；信息与工具中的显示摄像机开关默认开启，由 SpatialWorkspaceView 持有本地显隐状态，不触发保存或预览刷新；范围辅助线不进入文档或镜头输出，允许双击进入对应物件的元数据编辑。 手部与五指控制通过相同 SpatialOperation 流程提交，手部树分组不改变骨架领域层级；单手复原与手部快捷参数同样进入共享版本历史。 四项身体尺寸通过原有 set-proportions 提交，左右与复制肢体共享数值，预览只属于视图暂态；尺寸保存、固定校验、撤销和 PNG 继续由领域与现有存储边界负责。 参考类型仅为视图状态；应用注入按 revision/camera/pass 生成的 URL，待保存时不提供旧版本下载，派生输出不写入草稿。 光照效果为文档级 lightingEnabled，通过 set-lighting 与共享版本存储保存/撤销；缺省明亮，所有摄像机普通图和构图引用按源版本跟随，结构线与深度不受光照影响。 模型样式通过原有 put-character 保存 appearance，人体表面与程序几何共用骨架、历史、比例与固定校验，默认外观保持 quaternius。 三类画布复用会话内 100 步操作历史和 CanvasHistoryControls；撤销/重做恢复完整草稿并进入既有自动保存，连续手势合并为一步，文本输入保留原生撤销，接收外部版本时重置历史。UI 同时恢复被编辑状态；空间排队保存操作并按已存 revision 恢复，保存响应不覆盖后续本地修改。 会话风格入口通过既有 details 插槽组合，共用 useSessionStyle 和共享绑定；默认筛选 3D 风格，完整规范随连接交给消费项目建模，不修改空间草稿或显示外部建模完成状态。 顶部空间/摄像机/观察盒为固定本地视图，复用 CompositionWorkflowView 的标签栏和工作区；摄像机总览只读当前草稿列表与已保存的 revision 预览，每行三个，不创建文档状态或历史操作。 Web 预览适配按场景内容与单个摄像机渲染参数保留可用的已存版本，保存期间只撤下发生变化的镜头，其他镜头 URL 保持稳定；场景内容改变才使全部镜头失效，版本存储和 PNG API 保持原契约。 物件名称/备注弹层只持有目标 ID、输入暂态和屏幕位置，备注由当前草稿驱动；复用 put 操作、保存队列及共享历史，失效对象和历史恢复关闭编辑器。空间可选 note 与 inspect 共享；渲染缓存统一排除名称及备注，参考图保持原样。 观察盒页复用 cameraBoxSource 的同一已存 revision 单面 PNG；所选盒 ID、参考类型和六个方向按钮的激活状态为本地视图状态，选择盒复用已有对象选择和右侧参数。客户端只合成所选方向的带标签 PNG，不改六面渲染、API sheet 契约或草稿。预览、复制和下载共享当前合图 Blob，来源或选择变化时撤下旧图并丢弃过期异步结果；复制复用共享 clipboard.copied 反馈，下载复用 saveImageFile。 观察盒浏览器合图与 CLI --views 导出共用 cameraBoxSheetLayout 的尺寸、方向顺序和每行最多三张规则，Canvas 与 Sharp 保留各自绘制及标签语言；CLI 独立指定组合，不读取或更改浏览器激活状态。",
       "evidence": {
         "files": [
           "web/app/spatial/page.tsx",
@@ -657,7 +658,10 @@
           "web/lib/spatial-camera-previews.ts",
           "test/unit/spatial-camera-previews.test.ts",
           "design-system/surfaces/human2ai-web/governance/spatial-object-notes.md",
-          "test/unit/spatial-notes.test.ts"
+          "test/unit/spatial-notes.test.ts",
+          "design-system/surfaces/human2ai-web/src/local/SpatialCameraBoxView.tsx",
+          "design-system/surfaces/human2ai-web/src/local/spatialObservationImage.ts",
+          "src/domain/spatial/camera-box-sheet.ts"
         ],
         "storyId": "human2ai-spatial-workspace-view--default"
       },
@@ -730,7 +734,15 @@
           "object-note-long-content",
           "object-note-english",
           "object-double-click",
-          "object-note-history-restore"
+          "object-note-history-restore",
+          "observation-box-tab",
+          "observation-type-selection",
+          "observation-face-toggle-buttons",
+          "observation-cube-highlights",
+          "observation-no-boxes",
+          "observation-no-directions",
+          "observation-preview-pending-error",
+          "observation-copy-download"
         ]
       }
     }

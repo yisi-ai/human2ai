@@ -24,6 +24,26 @@
   pointer-events: none;
 }
 
+.human2ai-canvas-node__tooltip {
+  display: grid;
+  gap: var(--yisiui-space-2);
+  margin: 0;
+}
+
+.human2ai-canvas-node__tooltip dt {
+  font-weight: var(--yisiui-font-weight-semibold);
+}
+
+.human2ai-canvas-node__tooltip dd {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 6;
+  margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
 .human2ai-canvas-node__outline {
   fill: none;
   stroke: transparent;

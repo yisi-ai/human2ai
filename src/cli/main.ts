@@ -48,6 +48,7 @@ import { validateSpatialDraft, jointWorldTransforms, boneWorldTransforms, angles
 import spatialOperationsSchema from "../../schemas/spatial-operations.schema.json" with { type: "json" };
 import spatialSchema from "../../schemas/spatial-draft.schema.json" with { type: "json" };
 import { SPATIAL_BOX_FACES, SPATIAL_RENDER_PASSES } from "../domain/spatial/types.ts";
+import { parseSpatialBoxViews } from "../domain/spatial/camera-box-sheet.ts";
 import en from "../../locales/en/common.json" with { type: "json" };
 
 interface CommandOptions {
@@ -57,6 +58,7 @@ interface CommandOptions {
   camera?: string;
   box?: string;
   view?: string;
+  views?: string;
   pass?: string;
   changeRevision?: string;
   check?: boolean;
@@ -226,7 +228,7 @@ export async function executeCli(
   if (scope === "spatial") {
     if (command === "methods") {
       assertOnlyOptions(options, [], "spatial methods");
-      return { kind: "spatial-methods", schema: spatialSchema, operationsSchema: spatialOperationsSchema, renderPasses: SPATIAL_RENDER_PASSES, cameraBoxViews: ["sheet", ...SPATIAL_BOX_FACES], cameraBoxGuidance: en.spatial.cameraBoxGenerationGuidance, operations: ["set-lighting", "add-character", "put-character", "add-limb", "set-proportions", "move-joint", "rotate-bone", "lock-joint", "lock-bone", "set-bone-limits", "reset-pose", "pose-hand", "reset-hand", "put-object", "put-camera", "put-camera-box", "fit-camera-box", "remove"], reference: "skills/human2ai/references/spatial.md" };
+      return { kind: "spatial-methods", schema: spatialSchema, operationsSchema: spatialOperationsSchema, renderPasses: SPATIAL_RENDER_PASSES, cameraBoxViews: ["sheet", ...SPATIAL_BOX_FACES], cameraBoxViewSelection: { option: "--views", separator: ",", values: SPATIAL_BOX_FACES, minItems: 1, maxItems: SPATIAL_BOX_FACES.length, uniqueItems: true, ordered: true, requires: "--box", exclusiveWith: "--view" }, cameraBoxGuidance: en.spatial.cameraBoxGenerationGuidance, operations: ["set-lighting", "add-character", "put-character", "add-limb", "set-proportions", "move-joint", "rotate-bone", "lock-joint", "lock-bone", "set-bone-limits", "reset-pose", "pose-hand", "reset-hand", "put-object", "put-camera", "put-camera-box", "fit-camera-box", "remove"], reference: "skills/human2ai/references/spatial.md" };
     }
     const sessionId = requireOption(options, "session");
     if (command === "inspect") {
@@ -245,20 +247,24 @@ export async function executeCli(
       return result;
     }
     if (command === "render") {
-      assertOnlyOptions(options, ["session", "revision", "camera", "box", "view", "pass", "output"], "spatial render");
+      assertOnlyOptions(options, ["session", "revision", "camera", "box", "view", "views", "pass", "output"], "spatial render");
       const cameraId = options.camera, boxId = options.box;
       if (Boolean(cameraId) === Boolean(boxId)) throw new Error(en.spatial.cameraBoxTargetError);
       const view = options.view ?? "sheet";
-      if (options.view && !boxId) throw new Error(en.spatial.cameraBoxViewTargetError);
+      if ((options.view !== undefined || options.views !== undefined) && !boxId) throw new Error(en.spatial.cameraBoxViewTargetError);
+      if (options.view !== undefined && options.views !== undefined) throw new Error(en.spatial.cameraBoxViewConflict);
+      const views = options.views === undefined ? undefined : parseSpatialBoxViews(options.views);
+      if (views === null) throw new Error(en.spatial.cameraBoxViewsError);
       if (view !== "sheet" && !SPATIAL_BOX_FACES.some(face => face === view)) throw new Error(en.spatial.cameraBoxViewError);
       const revision = requireInteger(options, "revision", 1);
       const pass = options.pass ?? "color";
       if (!SPATIAL_RENDER_PASSES.some(value => value === pass)) throw new Error(en.spatial.renderPassError.replace("{{passes}}", SPATIAL_RENDER_PASSES.join(", ")));
-      const target = boxId ? `camera-boxes/${encodeURIComponent(boxId)}.png?view=${view}&` : `cameras/${encodeURIComponent(cameraId!)}.png?`;
+      const viewQuery = views ? `views=${encodeURIComponent(views.join(","))}` : `view=${view}`;
+      const target = boxId ? `camera-boxes/${encodeURIComponent(boxId)}.png?${viewQuery}&` : `cameras/${encodeURIComponent(cameraId!)}.png?`;
       const png = await requestService(effectiveDependencies, `/api/v1/sessions/${encodeURIComponent(sessionId)}/spatial/${target}revision=${revision}&pass=${pass}`, { png: true }) as Buffer;
       const outputPath = path.resolve(requireOption(options, "output"));
       await writeFile(outputPath, png);
-      return { sessionId, ...(boxId ? { boxId, view } : { cameraId }), revision, pass, outputPath };
+      return { sessionId, ...(boxId ? { boxId, ...(views ? { views } : { view }) } : { cameraId }), revision, pass, outputPath };
     }
     throw new Error("Use spatial methods, spatial inspect, spatial apply, or spatial render.");
   }
@@ -1354,6 +1360,7 @@ function parseOptions(args: string[]): CommandOptions {
     "--camera",
     "--box",
     "--view",
+    "--views",
     "--change-revision",
     "--check",
     "--creator",
@@ -1788,6 +1795,7 @@ function usage(): string {
     "  human2ai spatial apply --session <id> --revision <n> --input <operations.json> [--output <version.json>]",
     "  human2ai spatial render --session <id> --revision <n> --camera <id> [--pass color|structure|depth|skeleton] --output <camera.png>",
     "  human2ai spatial render --session <id> --revision <n> --box <id> [--view sheet|front|back|left|right|top|bottom] [--pass color|structure|depth|skeleton] --output <reference.png>",
+    "  human2ai spatial render --session <id> --revision <n> --box <id> --views <front,left,top> [--pass color|structure|depth|skeleton] --output <reference.png>",
     "  human2ai composition methods",
     "  human2ai composition save --session <id> --draft <draft.json> --expected-revision <n>",
     "  human2ai composition drafts --session <id>",

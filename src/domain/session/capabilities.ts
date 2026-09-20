@@ -26,6 +26,7 @@ const SESSION_TYPE_DEFINITIONS: Record<SessionType, SessionTypeDefinition> = {
       { id: "spatial.apply@1", mode: "derive", command: ["spatial", "apply", "--revision", "<revision>", "--input", "<operations.json>"], sessionScoped: true, sourceCaptureKind: "spatial-draft" },
       { id: "spatial.render@1", mode: "artifact", command: ["spatial", "render", "--revision", "<revision>", "--camera", "<camera-id>", "--output", "<preview.png>"], sessionScoped: true, sourceCaptureKind: "spatial-draft" },
       { id: "spatial.render-box@1", mode: "artifact", command: ["spatial", "render", "--revision", "<revision>", "--box", "<box-id>", "--view", "sheet", "--output", "<six-views.png>"], sessionScoped: true, sourceCaptureKind: "spatial-draft" },
+      { id: "spatial.render-box-views@1", mode: "artifact", command: ["spatial", "render", "--revision", "<revision>", "--box", "<box-id>", "--views", "<views>", "--output", "<observation.png>"], sessionScoped: true, sourceCaptureKind: "spatial-draft" },
     ],
   },
   "image-composition": {

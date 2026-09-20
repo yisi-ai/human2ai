@@ -69,6 +69,7 @@ export type {
   CanvasNodeResizeMode,
   CanvasNodeRotateChange,
   CanvasNodeSelectEvent,
+  CanvasNodeTooltip,
 } from "./CanvasNode";
 export { Human2AiCanvasNodeEditor } from "./Human2AiCanvasNodeEditor";
 export type {

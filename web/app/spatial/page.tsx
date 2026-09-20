@@ -138,7 +138,7 @@ function SpatialSessionPage() {
     rightPanel={sessionId ? <div ref={setPanelHost} className="spatial-panel-host" /> : undefined}>
     {!sessionId ? <BasicButton onClick={async () => { const created = await createSpatialSession(t("spatial.untitled")); router.push(`/spatial?session=${encodeURIComponent(created.id)}`); }}>{t("spatial.newSpace")}</BasicButton> : <SpatialWorkspaceView
       key={`${sessionId}/${reload}`} draft={draft} initialCameraId={params.get("camera")} labels={labels} actions={{ retry: t("actions.retry"), delete: t("actions.delete"), cancel: t("actions.cancel") }} onOperation={edit}
-      panelHost={panelHost} toolsLabel={t("canvas.tools.label")} noteLabel={t("notes.element.label")} onRequestProperties={() => setRightPanelOpen(true)}
+      panelHost={panelHost} toolsLabel={t("canvas.tools.label")} noteLabel={t("notes.element.label")} copiedLabel={t("clipboard.copied")} onRequestProperties={() => setRightPanelOpen(true)}
       loading={loading} disabled={Boolean(error) || loading} error={error ? t(error) : constrained ? t("spatial.constrained") : null}
       onRetry={error ? retry : undefined} interactionResetKey={history.restoreToken}
       historyControls={<CanvasHistoryControls {...history} labels={{ undo: t("canvasHistory.undo"), redo: t("canvasHistory.redo"), label: t("canvasHistory.label") }} />}

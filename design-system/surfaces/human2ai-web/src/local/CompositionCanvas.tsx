@@ -73,6 +73,7 @@ import {
   type CanvasNodeBounds,
   type CanvasNodeResizeChange,
   type CanvasNodeSelectEvent,
+  type CanvasNodeTooltip,
 } from "./CanvasNode";
 import { CanvasPoint } from "./CanvasPoint";
 import { CanvasPlacement, type CanvasPlacementResult, type CanvasPlacementTool } from "./CanvasPlacement";
@@ -418,23 +419,17 @@ export function CompositionCanvas({
     if (placementTool && !placementAvailable) onPlacementToolChange?.(null);
   }, [placementTool, placementAvailable]);
 
-  function itemTooltip(item: CompositionItem, displayText = ""): ReactNode {
-    const fields = [
-      [nodeEditorLabels?.nodeDescription ?? "节点说明", item.annotation],
-      [areaEditorLabels.displayText, displayText],
-      [nodeEditorLabels?.note ?? "备注", item.note],
-    ].filter(([, value]) => value.trim());
-    if (fields.length === 0) return undefined;
-    return (
-      <dl className="human2ai-composition-canvas__node-tooltip">
-        {fields.map(([label, value]) => (
-          <div key={label}>
-            <dt>{label}</dt>
-            <dd>{value}</dd>
-          </div>
-        ))}
-      </dl>
-    );
+  function itemTooltip(item: CompositionItem, displayText = ""): CanvasNodeTooltip {
+    return {
+      annotation: item.annotation,
+      displayText,
+      note: item.note,
+      labels: {
+        nodeDescription: nodeEditorLabels?.nodeDescription ?? "节点说明",
+        displayText: areaEditorLabels.displayText,
+        note: nodeEditorLabels?.note ?? "备注",
+      },
+    };
   }
 
   function placeNode(placement: CanvasPlacementResult): void {
@@ -1744,7 +1739,7 @@ function DirectionLineItem({
   onDoubleClick?: (id: string, event: ReactMouseEvent<SVGGElement>) => void;
   onDelete?: (id: string) => void;
   bounds: CompositionFrameBounds;
-  tooltip?: ReactNode;
+  tooltip?: CanvasNodeTooltip;
 }) {
   const directionLine = draft.directionLine;
   if (!directionLine) return null;
