@@ -1557,7 +1557,8 @@
       ],
       "examples": [
         "Editor-only overlay for selecting joints and bones on the character mesh; not rendered in camera output.",
-        "Show the joint and bone color legend below the visibility checkbox only while this overlay is enabled."
+        "Show the joint and bone color legend below the visibility checkbox only while this overlay is enabled.",
+        "Remember the visibility preference in the same browser across reloads and spatial sessions without changing the saved scene."
       ],
       "nonExamples": [
         "Moving a whole character or changing the output camera."
@@ -3269,7 +3270,8 @@
       ],
       "examples": [
         "Enable the checkbox to see all camera guides at once.",
-        "Disable it to hide camera guides while editing the scene."
+        "Disable it to hide camera guides while editing the scene.",
+        "Remember the visibility preference in the same browser across reloads and spatial sessions without changing the saved scene."
       ],
       "nonExamples": [
         "Selecting the Cameras gallery tab.",

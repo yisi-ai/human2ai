@@ -30,6 +30,10 @@ export type SpatialLabels = Record<keyof typeof zh.spatial, string>;
 export interface SpatialWorkspaceViewProps {
   draft: SpatialDraft;
   onOperation(operation: SpatialOperation): void;
+  showRig?: boolean;
+  onShowRigChange?(visible: boolean): void;
+  showCameras?: boolean;
+  onShowCamerasChange?(visible: boolean): void;
   labels?: SpatialLabels;
   noteLabel?: string;
   copiedLabel?: string;
@@ -49,13 +53,15 @@ export interface SpatialWorkspaceViewProps {
   actions?: { retry: string; delete: string; cancel: string };
 }
 
-export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, noteLabel = zh.notes.element.label, copiedLabel = zh.clipboard.copied, loading, disabled, error, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
+export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledShowRig, onShowRigChange, showCameras: controlledShowCameras, onShowCamerasChange, labels = zh.spatial, noteLabel = zh.notes.element.label, copiedLabel = zh.clipboard.copied, loading, disabled, error, onRetry, historyControls, interactionResetKey, initialCameraId, cameraSource, cameraBoxSource, details, panelHost, toolsLabel = zh.canvas.tools.label, onRequestProperties, actions = zh.actions }: SpatialWorkspaceViewProps) {
   const [selection, setSelection] = useState<SpatialSelection>(initialCameraId ? { cameraId: initialCameraId } : null);
   const [panelTab, setPanelTab] = useState(initialCameraId ? "parameters" : "info");
   const [workspaceView, setWorkspaceView] = useState("space");
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
-  const [showRig, setShowRig] = useState(true);
-  const [showCameras, setShowCameras] = useState(true);
+  const [localShowRig, setShowRig] = useState(true);
+  const [localShowCameras, setShowCameras] = useState(true);
+  const showRig = controlledShowRig ?? localShowRig;
+  const showCameras = controlledShowCameras ?? localShowCameras;
   const [editor, setEditor] = useState<{ id: string; name: string; x: number; y: number } | null>(null);
   const [proportionPreview, setProportionPreview] = useState<{ source: SpatialDraft; draft: SpatialDraft; characterId: string } | null>(null);
   const [proportionError, setProportionError] = useState<string | null>(null);
@@ -242,8 +248,8 @@ export function SpatialWorkspaceView({ draft, onOperation, labels = zh.spatial, 
             perform({ type: "put-object", object: { id, name: labels[kind], kind, position: [0, 0.3, 0], rotation: [0, 0, 0], size: kind === "plane" ? [2, 1, 2] : [0.6, 0.6, 0.6], color: "#b6a58c" } }); choose({ objectId: id });
           }} />)}</div>
           <Checkbox checked={draft.lightingEnabled ?? false} disabled={disabled || loading} onChange={event => perform({ type: "set-lighting", enabled: event.target.checked })}>{labels.lightingEffects}</Checkbox>
-          <Checkbox checked={showCameras} onChange={event => setShowCameras(event.target.checked)}>{labels.showCameras}</Checkbox>
-          <Checkbox checked={showRig} onChange={e=>setShowRig(e.target.checked)}>{labels.showRig}</Checkbox>
+          <Checkbox checked={showCameras} onChange={event => (onShowCamerasChange ?? setShowCameras)(event.target.checked)}>{labels.showCameras}</Checkbox>
+          <Checkbox checked={showRig} onChange={event => (onShowRigChange ?? setShowRig)(event.target.checked)}>{labels.showRig}</Checkbox>
           {showRig && <div className="spatial-rig-legend"><span><i className="spatial-joint-dot" />{labels.joints}</span><span><i className="spatial-bone-dot" />{labels.bones}</span></div>}
         </section>
       </> : panelTab === "objects" ? <>

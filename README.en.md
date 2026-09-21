@@ -1,8 +1,40 @@
-# Human2AI
+<p align="center">
+  <img src="web/app/icon.svg" alt="human2ai icon" width="96" height="96">
+</p>
+
+<h1 align="center">human2ai</h1>
 
 [简体中文](README.md) | **English**
 
-Human2AI is a local visual workspace for people and AI agents. Edit compositions, UI sketches, and 3D spaces in a desktop browser. Agents use the CLI to connect to the same sessions, read versions, make changes, and export results.
+Human2AI is a local creative workspace for people and AI agents. Edit compositions, UI sketches, and 3D spaces in a desktop browser. Agents use the CLI to connect to the same sessions, read versions, make changes, and export results.
+
+## Features
+
+### Composition
+
+Plan a layout with shapes, colors, and composition guides, add notes about the subjects and design requirements, then let an agent develop the design. This example pairs a radial layout with two focal points with the resulting folding-fan image.
+
+![A radial composition with two focal points and the resulting folding-fan design](assets/readme/composition.png)
+
+### Interface
+
+Sketch a page with color blocks, text, and notes, then let an agent refine its visual design. Keep the sketch and the result side by side on the same canvas to compare and iterate.
+
+![A UI page sketch beside the refined interface design](assets/readme/UI.png)
+
+### 3D space
+
+Place models, pose characters, and adjust cameras to create spatial references for your design. Bring camera views into a composition to help an agent understand poses, perspective, and occlusion.
+
+![Different character models posed in a 3D space](assets/readme/3d.png)
+
+Agents can also build and arrange models themselves and create complex poses for characters with weapons, extra arms, or nonhuman proportions, providing spatial references for image generation.
+
+![A 3D pose of a character carrying a sword beside the generated image](assets/readme/3d-p1.png)
+
+![A 3D pose of a character with four arms beside the generated image](assets/readme/3d-p2.png)
+
+![A 3D pose of a nonhuman character beside the generated image](assets/readme/3d-p3.png)
 
 ## Requirements
 

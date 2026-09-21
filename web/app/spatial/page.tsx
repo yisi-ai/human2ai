@@ -29,6 +29,17 @@ function SpatialSessionPage() {
   const sessionId = params.get("session");
   const [panelHost, setPanelHost] = useState<HTMLDivElement | null>(null);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
+  const [displayPreferences, setDisplayPreferences] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return {
+          showCameras: window.localStorage.getItem("human2ai.spatial.showCameras") !== "false",
+          showRig: window.localStorage.getItem("human2ai.spatial.showRig") !== "false",
+        };
+      } catch { /* Keep the defaults when browser storage is unavailable. */ }
+    }
+    return { showCameras: true, showRig: true };
+  });
   const [session, setSession] = useState<Human2AiSession | null>(null);
   const [draft, setDraft] = useState<SpatialDraft>(createSpatialDraft);
   const [revision, setRevision] = useState(0);
@@ -51,6 +62,13 @@ function SpatialSessionPage() {
   const emptyDraft = useRef(() => createSpatialDraft());
   emptyDraft.current = () => { const empty = createSpatialDraft(); empty.cameras[0].name = t("spatial.camera", { number: 1 }); return empty; };
   const labels = Object.fromEntries(Object.keys(zh.spatial).map(key => [key, t(`spatial.${key}`)])) as SpatialLabels;
+
+  const changeDisplayPreference = (key: keyof typeof displayPreferences, visible: boolean) => {
+    setDisplayPreferences(current => ({ ...current, [key]: visible }));
+    try {
+      window.localStorage.setItem(`human2ai.spatial.${key}`, String(visible));
+    } catch { /* The current view remains usable without persistent storage. */ }
+  };
 
   useEffect(() => {
     const context = { queue: new SpatialEditQueue(emptyDraft.current(), 0), busy: false, stopped: false };
@@ -138,6 +156,8 @@ function SpatialSessionPage() {
     rightPanel={sessionId ? <div ref={setPanelHost} className="spatial-panel-host" /> : undefined}>
     {!sessionId ? <BasicButton onClick={async () => { const created = await createSpatialSession(t("spatial.untitled")); router.push(`/spatial?session=${encodeURIComponent(created.id)}`); }}>{t("spatial.newSpace")}</BasicButton> : <SpatialWorkspaceView
       key={`${sessionId}/${reload}`} draft={draft} initialCameraId={params.get("camera")} labels={labels} actions={{ retry: t("actions.retry"), delete: t("actions.delete"), cancel: t("actions.cancel") }} onOperation={edit}
+      showCameras={displayPreferences.showCameras} onShowCamerasChange={visible => changeDisplayPreference("showCameras", visible)}
+      showRig={displayPreferences.showRig} onShowRigChange={visible => changeDisplayPreference("showRig", visible)}
       panelHost={panelHost} toolsLabel={t("canvas.tools.label")} noteLabel={t("notes.element.label")} copiedLabel={t("clipboard.copied")} onRequestProperties={() => setRightPanelOpen(true)}
       loading={loading} disabled={Boolean(error) || loading} error={error ? t(error) : constrained ? t("spatial.constrained") : null}
       onRetry={error ? retry : undefined} interactionResetKey={history.restoreToken}

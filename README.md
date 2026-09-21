@@ -1,8 +1,40 @@
-# Human2AI
+<p align="center">
+  <img src="web/app/icon.svg" alt="以形塑形图标" width="96" height="96">
+</p>
+
+<h1 align="center">以形塑形</h1>
 
 **简体中文** | [English](README.en.md)
 
-Human2AI 是供人和 AI Agent 协作的本地视觉工作区：用户在桌面浏览器中编辑构图、UI 草图和 3D 空间，Agent 通过 CLI 连接同一会话、读取版本、修改和导出结果。
+Human2AI 是供人和 AI Agent 协作的本地创作工作区：用户在桌面浏览器中编辑构图、UI 草图和 3D 空间，Agent 通过 CLI 连接同一会话、读取版本、修改和导出结果。
+
+## 功能预览
+
+### 构图
+
+用形状、配色和构图线表达画面布局，标注主体与设计要求，再交给 Agent 完成设计。下面展示双焦点放射构图与生成的折扇画面。
+
+![双焦点放射构图与折扇设计结果](assets/readme/composition.png)
+
+### UI 界面
+
+用色块、文字和备注搭建页面草图，再交给 Agent 细化视觉设计。草图与设计结果可以在同一画布中并排展示，便于对照和继续调整。
+
+![UI 页面草图与细化后的界面设计](assets/readme/UI.png)
+
+### 3D 空间
+
+摆放模型、调整人物姿态和摄像机视角，为画面设计建立空间参考。将取景画面引入构图，让 Agent 理解姿态、透视与遮挡关系。
+
+![3D 空间中不同人物模型的姿态参考](assets/readme/3d.png)
+
+Agent 也可以自主建模、摆放物体和调整复杂动作，将持械、多臂、异形角色等姿态设计转化为图像生成的空间参考。
+
+![持剑角色的 3D 姿态与生成图像](assets/readme/3d-p1.png)
+
+![四臂角色的 3D 姿态与生成图像](assets/readme/3d-p2.png)
+
+![异形角色的 3D 姿态与生成图像](assets/readme/3d-p3.png)
 
 ## 环境要求
 
