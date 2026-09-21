@@ -320,7 +320,7 @@ export const CameraReferenceInteractions: Story = {
     const tabs = panel.querySelector<HTMLElement>('.spatial-reference-tabs')!;
     await pause();
     for (const [pass, label] of [["color", zh.spatial.referenceColor], ["structure", zh.spatial.referenceStructure], ["depth", zh.spatial.referenceDepth], ["skeleton", zh.spatial.referenceSkeleton]]) {
-      [...tabs.querySelectorAll<HTMLElement>('.ant-segmented-item')].find(item => item.textContent === label)!.click(); await pause();
+      tabs.querySelector<HTMLInputElement>(`input[value="${pass}"]`)!.click(); await pause();
       const image = panel.querySelector<HTMLImageElement>('.spatial-preview img')!;
       const download = panel.querySelector<HTMLAnchorElement>('a[download]')!;
       if (!image.complete || !image.naturalWidth || !image.alt.endsWith(label)) throw new Error("Preview must show the selected reference");
@@ -627,7 +627,7 @@ export const SkeletonProjection: Story = {
   name: "镜头骨架投影",
   render: () => <Harness initial={cameraFixture} initialCameraId="portrait" cameraSource={referencePreview} />,
   play: async ({canvasElement}) => {
-    const tab = [...canvasElement.querySelectorAll<HTMLElement>('.spatial-reference-tabs .ant-segmented-item')].find(el=>el.textContent===zh.spatial.referenceSkeleton)!;
+    const tab = canvasElement.querySelector<HTMLInputElement>('.spatial-reference-tabs input[value="skeleton"]')!;
     tab.click();
   },
 };

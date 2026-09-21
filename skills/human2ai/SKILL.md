@@ -1,6 +1,8 @@
 ---
 name: human2ai
 description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); to model in the consumer project using a style and 3D spatial guidance; or to reuse a visual style. The consumer project's Agent owns downstream implementation.
+metadata:
+  version: "0.1.4"
 ---
 
 # Human2AI
@@ -110,9 +112,13 @@ When generating an image from a spatial camera, follow that reference's **Camera
 
 When the user asks for final 3D models or a scene in their project, read [references/spatial-modeling.md](references/spatial-modeling.md). Combine the full style specification and reference images with the Human2AI spatial session's layout, scale, pose and camera guidance. Build and review the result using the consumer project's existing tools. A style binding does not alter the guide scene or record completion of external modeling. Use the spatial authoring workflow above only when the guide scene itself needs edits.
 
-## Choose refinement or style processing
+## Choose design, planning, refinement or style processing
 
-A request for 精修, mathematical proportion, symmetry, focal guidance, or rule-based composition calls for the independent refinement workflow in [references/composition.md](references/composition.md). Do not infer a style request from these terms or bind a library style. Refinement may preserve the source without changes when the Agent finds no justified improvement. Use style processing below only when style application is part of the user’s intent.
+For requests to design or redesign composition content from focuses or planning guides, follow [Design content from composition planning](references/composition.md#design-content-from-composition-planning). Apply the same interpretation and visual checks when styling, refining or generating from an existing planned composition. With complex guides, especially radial fans, spirals or interacting plans, explicitly map their relationships to visible content before choosing shapes. Check focal placement and directional structure separately; preserving guide data or placing subjects at focuses alone does not fulfill the composition.
+
+For requests to add, inspect or adjust composition planning guides, follow [Shared composition planning](references/composition.md#shared-composition-planning). Read and edit the draft's `plans` through the CLI and save through `capture.commands.save`. Use `composition inspect` and its `planningIntersections` to locate guide crossings and read coordinates for requested placement. Editing guides alone leaves content nodes unchanged.
+
+A request for 精修 or for applying mathematical proportions, symmetry or focal relationships to canvas elements calls for the independent refinement workflow in [references/composition.md](references/composition.md). Do not infer a style request from these terms or bind a library style. Refinement may preserve the source without changes when the Agent finds no justified improvement. Use style processing below only when style application is part of the user’s intent.
 
 ## Process a canvas with its style
 
@@ -148,7 +154,7 @@ Reconnect after binding to obtain the current specification and save command. Bi
 
 For SVG icons, decorations, or outlines requested as image-node content, read [references/svg-images.md](references/svg-images.md). Both session types use their existing image nodes for SVG; the user describes the result in language and the Agent authors the source.
 
-- For `image-composition`, read [references/composition.md](references/composition.md) before drawing a reference picture, canvas processing, refinement or generation-reference work. Interpret light markers as approximately as ordinary shape regions: retain their broad lighting contribution while freely adapting width, length, continuity, edges and strength. User instructions and node notes take precedence. Approximate overall correspondence is sufficient; do not infer fixed-width stripes, strong contrast or exact coverage from the canvas.
+- For `image-composition`, read [references/composition.md](references/composition.md) before designing from focuses or planning guides, editing composition planning, drawing a reference picture, canvas processing, refinement or generation-reference work. Interpret light markers as approximately as ordinary shape regions: retain their broad lighting contribution while freely adapting width, length, continuity, edges and strength. User instructions and node notes take precedence. Approximate overall correspondence is sufficient; do not infer fixed-width stripes, strong contrast or exact coverage from the canvas.
 - For `ui-layout`, read [references/ui-layout.md](references/ui-layout.md) before modifying the layout document or implementing UI from a capture. Group multi-node controls during projection, and execute its standardization workflow before changing consumer components from canvas geometry.
 - For a future session type, use only the capture kind and operations returned by `session connect`. If no reference or operation supports the requested action, report that boundary instead of inventing a command.
 

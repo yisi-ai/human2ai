@@ -154,7 +154,13 @@
 .yisi-model-selector-mode-button[aria-checked="true"] { font-weight: var(--yisiui-font-weight-semibold); }
 
 .yisi-model-selector-reasoning { min-width: 0; }
-.yisi-model-selector-reasoning-control { position: relative; }
+.yisi-model-selector-reasoning-control {
+  position: relative;
+  cursor: default;
+  caret-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
 .yisi-model-selector .yisi-model-selector-slider {
   height: 40px;
@@ -177,6 +183,7 @@
 
 .yisi-model-selector .yisi-model-selector-slider .ant-slider-track {
   background: var(--yisiui-color-border-focus);
+  transition: width var(--yisiui-motion-normal) ease-out;
 }
 
 .yisi-model-selector .yisi-model-selector-slider .ant-slider-track::before {
@@ -192,26 +199,39 @@
   inset-block-start: 4px;
   width: 32px;
   height: 32px;
+  transition:
+    left var(--yisiui-motion-normal) ease-out,
+    right var(--yisiui-motion-normal) ease-out;
 }
 
-.yisi-model-selector .yisi-model-selector-slider .ant-slider-handle::before {
+/* Keep Ant Design's interactive states from resizing the thumb or its hit area. */
+.yisi-model-selector .yisi-model-selector-slider.ant-slider .ant-slider-handle::before,
+.yisi-model-selector .yisi-model-selector-slider.ant-slider .ant-slider-handle:is(:hover, :active, :focus)::before {
   inset: -4px;
   width: 40px;
   height: 40px;
 }
 
-.yisi-model-selector .yisi-model-selector-slider .ant-slider-handle::after {
+.yisi-model-selector .yisi-model-selector-slider.ant-slider .ant-slider-handle::after,
+.yisi-model-selector .yisi-model-selector-slider.ant-slider:hover .ant-slider-handle::after,
+.yisi-model-selector .yisi-model-selector-slider.ant-slider .ant-slider-handle:is(:hover, :active, :focus)::after {
   inset: 0;
   width: 32px;
   height: 32px;
   border-radius: 50%;
+  border: 0;
   background: var(--yisiui-color-surface-panel);
   box-shadow: var(--yisiui-shadow-card);
+  outline: none;
+  transition: none;
 }
 
-.yisi-model-selector .yisi-model-selector-slider .ant-slider-handle:focus-visible::after {
-  outline: 2px solid var(--yisiui-color-border-focus);
-  outline-offset: 3px;
+/* Identify keyboard focus through the current label without outlining the thumb. */
+.yisi-model-selector .yisi-model-selector-slider:has(.ant-slider-handle:focus-visible) [data-current="true"] {
+  color: var(--yisiui-color-text-primary);
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
 }
 
 .yisi-model-selector .yisi-model-selector-slider .ant-slider-step {
@@ -273,6 +293,11 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .yisi-model-selector .yisi-model-selector-slider .ant-slider-track,
+  .yisi-model-selector .yisi-model-selector-slider .ant-slider-handle {
+    transition: none;
+  }
+
   .yisi-model-selector-stars,
   .yisi-model-selector-stars span {
     animation: none;

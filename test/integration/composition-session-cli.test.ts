@@ -260,7 +260,10 @@ describe("composition session CLI", () => {
         y: 0.5,
         rotation: 2,
       }).draft;
-      expect(draftFingerprint(draft)).toBe("draft-b797d011");
+      expect(draftFingerprint(draft)).toBe("draft-725f95d9");
+      const legacyDraft = structuredClone(draft);
+      delete legacyDraft.plans;
+      expect(draftFingerprint(legacyDraft)).toBe("draft-b797d011");
       const draftPath = path.join(directory, "draft.json");
       const planPath = path.join(directory, "plan.json");
       const stalePlanPath = path.join(directory, "stale-plan.json");

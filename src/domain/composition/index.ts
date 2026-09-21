@@ -42,6 +42,7 @@ export {
   MINIMUM_COMPOSITION_FRAME_RATIO,
   canvasPointToFrame,
   compositionFrameSizeForRatio,
+  compositionSymmetryRotations,
   compositionWorldBounds,
   compositionWorldSize,
   frameBoundsInCanvas,
@@ -62,6 +63,7 @@ export {
   draftFingerprint,
   inspectComposition,
 } from "./analysis.ts";
+export { compositionPlanningIntersections, type CompositionPlanIntersection, type CompositionPlanIntersectionSource } from "./planning-intersections.ts";
 export { renderCompositionLightSourceSvg, renderCompositionReferenceSvg, renderCompositionSvg } from "./render.ts";
 export {
   beginCompositionRefinement,
@@ -85,6 +87,8 @@ export type * from "./workflow.ts";
 export type * from "./types.ts";
 
 export { compositionLayerOrder, reorderCompositionLayers } from "./layers.ts";
+export { COMPOSITION_PLAN_TYPES, addCompositionPlan, replaceCompositionPlan, removeCompositionPlan, moveCompositionPlans, compositionPlanGeometry, transformCompositionPlan } from "./planning.ts";
+export { compositionRadialAngles, setCompositionRadialMode, setCompositionRadialRayCount } from "./planning.ts";
 export {
   compositionStates, createCompositionState, selectCompositionState,
   renameCompositionState, reorderCompositionStates, deleteCompositionState,

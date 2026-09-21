@@ -26,6 +26,24 @@ export interface Point {
   y: number;
 }
 
+interface CompositionPlanBase {
+  id: string;
+  visible: boolean;
+}
+
+/** Planning positions are fractions of the current frame, independently of content nodes. */
+export type CompositionPlan = CompositionPlanBase & (
+  | { type: "thirds"; axes: "both" | "horizontal" | "vertical" }
+  | { type: "golden-section"; axes: "both" | "horizontal" | "vertical" }
+  | { type: "symmetry"; x: number; y: number; rotation: number }
+  | { type: "golden-spiral"; x: number; y: number; rotation: number; scale: number; mirrored: boolean }
+  | { type: "triangle"; x: number; y: number; rotation: number; width: number; height: number }
+  | ({ type: "radial"; x: number; y: number } & (
+    | { mode: "uniform"; rotation: number; rayCount: number; spread: number }
+    | { mode: "free"; angles: number[] }
+  ))
+);
+
 export interface CompositionFrameSize {
   width: number;
   height: number;
@@ -89,6 +107,7 @@ export type CompositionAreaMetadataPatch = Partial<
 >;
 
 export interface CompositionDraft {
+  plans?: CompositionPlan[];
   states?: CompositionState[];
   activeStateId?: string;
   layerOrder?: string[];
@@ -104,6 +123,7 @@ export interface CompositionDraft {
 }
 
 export interface CompositionLayout {
+  plans?: CompositionPlan[];
   frame: CompositionFrame;
   layerOrder: string[];
   focusPoints: Pick<FocusPoint, "id" | "x" | "y">[];

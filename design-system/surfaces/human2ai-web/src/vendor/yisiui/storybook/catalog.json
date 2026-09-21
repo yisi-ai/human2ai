@@ -267,6 +267,30 @@
       "source": "apps/storybook/stories/ModelSelector.stories.tsx"
     },
     {
+      "id": "modules-adaptiveaccordion--default",
+      "title": "yisiui-Modules/AdaptiveAccordion",
+      "kind": "experimental",
+      "assetKey": "yisiui/adaptive-accordion",
+      "description": "需要展示文字说明或问答，并在任意一项展开、收起或切换时保持组件总高度不变",
+      "source": "apps/storybook/stories/AdaptiveAccordion.stories.tsx"
+    },
+    {
+      "id": "modules-resizablecollapsegroup--default",
+      "title": "yisiui-Modules/ResizableCollapseGroup",
+      "kind": "experimental",
+      "assetKey": "yisiui/resizable-collapse-group",
+      "description": "需要在固定高度的竖向容器中承载多个可独立折叠的功能面板",
+      "source": "apps/storybook/stories/ResizableCollapseGroup.stories.tsx"
+    },
+    {
+      "id": "switching-dotscrollbar--default",
+      "title": "yisiui-Components/Switching/DotScrollbar",
+      "kind": "experimental",
+      "assetKey": "yisiui/dot-scrollbar",
+      "description": "需要给现有纵向滚动容器附加圆点导航，并按内容屏数表示滚动范围",
+      "source": "apps/storybook/stories/DotScrollbar.stories.tsx"
+    },
+    {
       "id": "system-architecture-status--migration-candidate",
       "title": "yisiui-System/Architecture Status",
       "kind": "supporting",

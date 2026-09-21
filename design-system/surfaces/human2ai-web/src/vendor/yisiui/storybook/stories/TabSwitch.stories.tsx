@@ -5,12 +5,14 @@ import {
   FileSearchOutlined,
   FileTextOutlined,
   FormOutlined,
+  MoreOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { Flex, Space, Typography } from "antd";
+import { useState } from "react";
 
-import { TabSwitch, type TabSwitchProps } from "@human2ai/ui/yisiui";
+import { BasicButton, TabSwitch, type TabSwitchProps } from "@human2ai/ui/yisiui";
 import { assertStoryRole, assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const meta = {
@@ -19,7 +21,8 @@ const meta = {
   component: TabSwitch,
   parameters: { layout: "padded" },
   argTypes: {
-    items: { control: "object", description: "至少两个子项；可分别配置 Icon、文字、显示模式和 disabled。" },
+    items: { control: "object", description: "至少两个子项；可分别配置 Icon、文字、显示模式、disabled 和 rightSlot。插槽操作独立于切换，其禁用状态由调用方控制。" },
+    compact: { control: "boolean", description: "紧密模式：减小高度和上下内边距。较高的插槽内容会自然撑高组件。" },
     tabBackground: { control: "text", description: "整个 tab 组的底色。" },
     selectedBackground: { control: "text", description: "所有选中项统一使用的底色。" },
     selectedTextColor: { control: "radio", options: ["black", "white"], description: "所有选中项统一使用的字体颜色。" },
@@ -50,6 +53,7 @@ export const Default: Story = {
   name: "文章工作台风格",
   args: {
     "aria-label": "文章工作台视图",
+    compact: false,
     defaultValue: "conversation",
     items: REFERENCE_ITEMS,
     tabBackground: "var(--yisiui-color-surface-page)",
@@ -77,6 +81,72 @@ const MODE_ITEMS = [
   { key: "execution", label: "执行", icon: <PlayCircleOutlined /> },
   { key: "material", label: "文章资料", icon: <FormOutlined /> },
 ] satisfies TabSwitchProps["items"];
+
+export const Compact: Story = {
+  name: "默认与紧密模式",
+  args: {
+    "aria-label": "紧密视图切换",
+    items: MODE_ITEMS,
+    compact: true,
+  },
+  render: (args) => (
+    <Flex vertical align="start" gap={16}>
+      <Typography.Text type="secondary">默认密度</Typography.Text>
+      <TabSwitch {...args} aria-label="默认视图切换" compact={false} />
+      <Typography.Text type="secondary">紧密密度</Typography.Text>
+      <TabSwitch {...args} />
+    </Flex>
+  ),
+};
+
+function RightActionsExample(args: TabSwitchProps) {
+  const [lastAction, setLastAction] = useState("尚未执行操作");
+
+  return (
+    <Flex vertical align="start" gap={16}>
+      <TabSwitch
+        {...args}
+        items={args.items.map((item) => ({
+          ...item,
+          rightSlot: (
+            <BasicButton
+              mode="icon-only"
+              icon={<MoreOutlined />}
+              iconLabel={`${item.label}的更多操作`}
+              type="text"
+              size="small"
+              style={{ width: 24, height: 24 }}
+              disabled={item.disabled}
+              onClick={() => setLastAction(`已执行「${item.label}」的操作，选中项保持不变`)}
+            />
+          ),
+        })) as TabSwitchProps["items"]}
+      />
+      <Typography.Text role="status">{lastAction}</Typography.Text>
+    </Flex>
+  );
+}
+
+export const RightActions: Story = {
+  name: "每项右侧独立操作",
+  args: {
+    "aria-label": "带右侧操作的视图切换",
+    compact: true,
+    items: [
+      ...MODE_ITEMS,
+      { key: "locked", label: "已归档", mode: "text-only", disabled: true },
+    ],
+  },
+  render: (args) => <RightActionsExample {...args} />,
+  play: ({ canvasElement }) => {
+    const action = canvasElement.querySelector<HTMLButtonElement>('[aria-label="文章资料的更多操作"]');
+    if (!action) throw new Error("Story interaction contract missing right slot action");
+    action.click();
+    assertStorySelector(canvasElement, 'input[value="execution"]:checked');
+    assertStorySelector(canvasElement, 'button[aria-label="已归档的更多操作"]:disabled');
+    assertStoryText(canvasElement, "已执行「文章资料」的操作，选中项保持不变");
+  },
+};
 
 export const DisplayModes: Story = {
   name: "三种显示模式",

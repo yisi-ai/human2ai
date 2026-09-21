@@ -1,0 +1,55 @@
+.yisi-dot-scrollbar {
+  --yisiui-dot-scrollbar-slot-height: 16px;
+  display: flex;
+  flex: 0 0 24px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: 100%;
+  min-height: 0;
+  padding: var(--yisiui-space-1) 0;
+  overflow: hidden;
+  user-select: none;
+}
+.yisi-dot-scrollbar[data-visible="false"] { visibility: hidden; pointer-events: none; }
+.yisi-dot-scrollbar-stop {
+  display: flex;
+  flex: 0 0 var(--yisiui-dot-scrollbar-slot-height);
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 24px;
+  height: var(--yisiui-dot-scrollbar-slot-height);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--yisiui-radius-sm);
+  background: transparent;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+.yisi-dot-scrollbar-stop:focus-visible { outline: 2px solid var(--yisiui-color-border-focus); outline-offset: -2px; }
+.yisi-dot-scrollbar-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--yisiui-radius-full);
+  background: var(--yisiui-dot-scrollbar-color, var(--yisiui-color-text-muted));
+  pointer-events: none;
+  transition: height var(--yisiui-motion-normal) ease, background-color var(--yisiui-motion-normal) ease;
+}
+.yisi-dot-scrollbar-stop[data-current="true"] .yisi-dot-scrollbar-dot {
+  background: var(--yisiui-dot-scrollbar-active-color, var(--yisiui-color-action-primary));
+}
+.yisi-dot-scrollbar-stop:hover:not(:disabled) .yisi-dot-scrollbar-dot,
+.yisi-dot-scrollbar-stop:focus-visible .yisi-dot-scrollbar-dot { height: 16px; }
+.yisi-dot-scrollbar-stop:disabled { cursor: not-allowed; }
+.yisi-dot-scrollbar-stop:disabled .yisi-dot-scrollbar-dot { background: var(--yisiui-color-text-disabled); }
+
+.yisi-dot-scrollbar-native-hidden { scrollbar-width: none; }
+.yisi-dot-scrollbar-native-hidden::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-dot-scrollbar-dot { transition: none; }
+}

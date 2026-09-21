@@ -1,8 +1,7 @@
 "use client";
 
-import { Segmented } from "antd";
-import type { CSSProperties, ReactNode } from "react";
-import { useMemo, useState } from "react";
+import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
+import { useId, useMemo, useRef, useState } from "react";
 
 import "../../styles/tokens.css";
 import "../../styles/tab-switch.css";
@@ -19,6 +18,8 @@ export interface TabSwitchItem {
   mode?: TabSwitchDisplayMode;
   disabled?: boolean;
   ariaLabel?: string;
+  /** Independent trailing actions. Their disabled state is owned by the caller. */
+  rightSlot?: ReactNode;
 }
 
 export type TabSwitchItems = readonly [TabSwitchItem, TabSwitchItem, ...TabSwitchItem[]];
@@ -26,6 +27,8 @@ export type TabSwitchItems = readonly [TabSwitchItem, TabSwitchItem, ...TabSwitc
 export interface TabSwitchProps {
   items: TabSwitchItems;
   "aria-label": string;
+  /** Reduce the control height and vertical padding. Defaults to false. */
+  compact?: boolean;
   /** Background of the whole segmented control. */
   tabBackground?: string;
   /** Background shared by every selected item. */
@@ -95,6 +98,7 @@ function renderItemLabel(item: TabSwitchItem): ReactNode {
 export function TabSwitch({
   items,
   "aria-label": ariaLabel,
+  compact = false,
   tabBackground,
   selectedBackground,
   selectedTextColor = "black",
@@ -110,23 +114,16 @@ export function TabSwitch({
   const itemByKey = useMemo(() => new Map(items.map((item) => [item.key, item])), [items]);
   const firstKey = items[0].key;
   const [internalValue, setInternalValue] = useState(defaultValue ?? firstKey);
+  const groupName = useId();
+  const inputRefs = useRef<Array<HTMLInputElement | null>>([]);
   const selectedKey = value ?? (itemByKey.has(internalValue) ? internalValue : firstKey);
-
-  const options = useMemo(
-    () =>
-      items.map((item) => ({
-        value: item.key,
-        label: renderItemLabel(item),
-        disabled: item.disabled,
-        className: item.key === selectedKey ? "yisi-tab-switch-active-item" : undefined,
-        title: item.mode === "icon-only" ? item.ariaLabel ?? item.label : undefined,
-      })),
-    [items, selectedKey],
-  );
+  const focusKey = !itemByKey.get(selectedKey)?.disabled
+    ? selectedKey
+    : items.find((item) => !item.disabled)?.key;
 
   function handleChange(nextKey: string): void {
     const nextItem = itemByKey.get(nextKey);
-    if (!nextItem || nextItem.disabled) {
+    if (!nextItem || nextItem.disabled || nextKey === selectedKey) {
       return;
     }
 
@@ -136,10 +133,48 @@ export function TabSwitch({
     onChange?.(nextKey, nextItem);
   }
 
+  function handleKeyDown(event: KeyboardEvent<HTMLInputElement>, index: number): void {
+    const enabledIndexes = items.flatMap((item, itemIndex) => item.disabled ? [] : [itemIndex]);
+    const current = enabledIndexes.indexOf(index);
+    const last = enabledIndexes.length - 1;
+    let next: number;
+    const isRtl = getComputedStyle(event.currentTarget).direction === "rtl";
+
+    switch (event.key) {
+      case "ArrowRight":
+      case "ArrowLeft": {
+        const forward = (event.key === "ArrowRight") !== isRtl;
+        next = (current + (forward ? 1 : last)) % enabledIndexes.length;
+        break;
+      }
+      case "ArrowDown":
+        next = (current + 1) % enabledIndexes.length;
+        break;
+      case "ArrowUp":
+        next = (current + last) % enabledIndexes.length;
+        break;
+      case "Home":
+        next = 0;
+        break;
+      case "End":
+        next = last;
+        break;
+      default:
+        return;
+    }
+
+    event.preventDefault();
+    const nextIndex = enabledIndexes[next];
+    if (nextIndex === undefined) return;
+    handleChange(items[nextIndex].key);
+    inputRefs.current[nextIndex]?.focus();
+  }
+
   return (
-    <Segmented<string>
+    <div
       {...uiAssetAttributes("tab-switch", "TabSwitch", "component")}
-      className={["yisi-tab-switch", className].filter(Boolean).join(" ")}
+      className={["yisi-tab-switch", compact ? "yisi-tab-switch-compact" : null, className].filter(Boolean).join(" ")}
+      data-density={compact ? "compact" : "default"}
       style={
         {
           ...style,
@@ -153,9 +188,44 @@ export function TabSwitch({
         } as CSSProperties
       }
       aria-label={ariaLabel}
-      value={selectedKey}
-      options={options}
-      onChange={handleChange}
-    />
+      role="radiogroup"
+      aria-orientation="horizontal"
+    >
+      {items.map((item, index) => (
+        <div
+          key={item.key}
+          className={[
+            "yisi-tab-switch-item",
+            item.key === selectedKey ? "yisi-tab-switch-active-item" : null,
+            item.disabled ? "yisi-tab-switch-disabled-item" : null,
+          ].filter(Boolean).join(" ")}
+        >
+          <label
+            className="yisi-tab-switch-label"
+            title={item.mode === "icon-only" ? item.ariaLabel ?? item.label : undefined}
+          >
+            <input
+              ref={(element) => { inputRefs.current[index] = element; }}
+              className="yisi-tab-switch-input"
+              type="radio"
+              name={groupName}
+              value={item.key}
+              checked={item.key === selectedKey}
+              disabled={item.disabled}
+              aria-label={item.ariaLabel}
+              tabIndex={!item.disabled && item.key === focusKey ? 0 : -1}
+              onChange={() => handleChange(item.key)}
+              onKeyDown={(event) => handleKeyDown(event, index)}
+            />
+            {renderItemLabel(item)}
+          </label>
+          {item.rightSlot != null ? (
+            <div className="yisi-tab-switch-right-slot" data-yisiui-slot="rightSlot">
+              {item.rightSlot}
+            </div>
+          ) : null}
+        </div>
+      ))}
+    </div>
   );
 }

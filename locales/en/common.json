@@ -256,8 +256,6 @@
       "quadrilateral": "Rectangle",
       "textRegion": "Text region"
     },
-    "showGuideGrid": "Show grid",
-    "hideGuideGrid": "Hide grid",
     "canvasZoom": "Current zoom",
     "zoomOut": "Zoom out",
     "zoomIn": "Zoom in",
@@ -302,7 +300,16 @@
       "left": "left",
       "lightSourceNumber": "Light source {{index}}",
       "lightSourceGuidance": "- Like ordinary shape regions, light markers describe approximate visual intent and spatial relationships. Pale yellow identifies lighting, not color temperature. A source is distinct from the area it illuminates: interpret its origin and contribution in the scene. Rectangles suggest band-shaped or extended illumination; circles suggest localized illumination. Retain the broad lighting placement, extension trend and contribution to subject and space, while freely adapting width, length, curvature, continuity, edges and strength to the scene. User instructions and node notes take precedence; otherwise the Agent chooses. Do not infer fixed width, straight constant-width strips, full-frame coverage, medium-strong contrast or thumbnail prominence from the reference. Consider sources individually while allowing their visible effects to split, overlap or blend. Review whether the overall lighting broadly echoes the composition rather than comparing edges, segments or widths; tighten a constraint only when the user explicitly requests it, and do not ignore the authored lighting intent entirely.",
-      "lightBandGuidance": "Light-band intent: broadly retain the extended or band-like illumination and its spatial role here. Its realization may narrow, widen, curve, break up or blend with the scene; a complete, straight, constant-width or conspicuous stripe is not required. User instructions and this node’s notes take precedence for width, length, edges and strength; otherwise the Agent interprets them freely. An approximate overall correspondence is sufficient."
+      "lightBandGuidance": "Light-band intent: broadly retain the extended or band-like illumination and its spatial role here. Its realization may narrow, widen, curve, break up or blend with the scene; a complete, straight, constant-width or conspicuous stripe is not required. User instructions and this node’s notes take precedence for width, length, edges and strength; otherwise the Agent interprets them freely. An approximate overall correspondence is sufficient.",
+      "planningGuidance": "Use the following plans as composition intent alongside the overall requirements and notes. Do not draw the guide lines, axes, spiral or triangle outline in the artwork. Positions are relative to the top-left of the image; angles run clockwise from the rightward horizontal.",
+      "planningGrid": "- {{type}}: {{axes}} divisions.",
+      "planningSymmetry": "- Symmetrical composition: axis through the image center ({{x}}%, {{y}}%), direction {{rotation}}°.",
+      "planningSpiral": "- Golden spiral: pole at ({{x}}%, {{y}}%), outer radius directed at {{rotation}}°, radius {{scale}}% of the shorter image side, {{winding}}.",
+      "planningClockwise": "expanding clockwise",
+      "planningCounterclockwise": "expanding counterclockwise",
+      "planningTriangle": "- Triangular composition: isosceles triangle with vertices at {{points}}.",
+      "planningRadial": "- Radial composition: convergence point ({{x}}%, {{y}}%), {{rayCount}} evenly spaced rays starting at {{rotation}}° and spanning {{spread}}° clockwise.",
+      "planningRadialFree": "- Free radial composition: convergence point ({{x}}%, {{y}}%), {{rayCount}} rays with independent directions: {{angles}} (clockwise from the rightward horizontal)."
     },
     "depth": {
       "label": "Depth",
@@ -352,6 +359,48 @@
     "textRegion": {
       "cornerLabel": "Text outline corner {{index}}",
       "cornerHelp": "Select a text region and hold Ctrl to drag its corners. Focus a corner and use the arrow keys for fine adjustments."
+    },
+    "planning": {
+      "title": "Composition planning",
+      "add": "Add plan",
+      "empty": "No composition plans",
+      "types": {
+        "thirds": "Rule of thirds",
+        "golden-section": "Golden section",
+        "symmetry": "Symmetrical composition",
+        "golden-spiral": "Golden spiral",
+        "triangle": "Triangular composition",
+        "radial": "Radial composition"
+      },
+      "visible": "Show plan",
+      "axes": "Grid directions",
+      "both": "Horizontal and vertical",
+      "horizontal": "Horizontal",
+      "vertical": "Vertical",
+      "x": "Horizontal (%)",
+      "y": "Vertical (%)",
+      "rotation": "Rotation (°)",
+      "scale": "Spiral size (%)",
+      "mirrored": "Mirror spiral",
+      "handle": "Plan control {{index}}",
+      "help": "Shift-click to select multiple plans and drag a selected guide to move them together. Thirds, golden-section and symmetry guides stay fixed. Select thirds and golden-section plans in the sidebar. Arrow keys nudge; Delete removes a plan.",
+      "width": "Base width (%)",
+      "height": "Triangle height (%)",
+      "triangleHelp": "Drag the apex to rotate and adjust height. Drag a base corner to resize; both sides stay symmetric.",
+      "symmetryHelp": "The center stays fixed. Drag the other dot to one of eight regular directions or four frame-corner directions. Corner directions follow the frame ratio; duplicate positions merge for a square. Arrow keys step between positions.",
+      "spiralHelp": "Click the center dot to switch clockwise/counterclockwise. Drag it to move the spiral; drag the outer dot to rotate and resize.",
+      "spiralDirection": "Switch spiral direction (clockwise/counterclockwise)",
+      "rayCount": "Ray count",
+      "spread": "Spread (°)",
+      "radialHelp": "Uniform mode uses a starting direction and spread. In Free mode, drag each ray’s dot to adjust its direction; drag the center to move the convergence point. Switching to Free preserves directions; switching back to Uniform redistributes the current rays around a full circle.",
+      "lock": "Lock composition planning",
+      "unlock": "Unlock composition planning",
+      "showAll": "Show composition guides",
+      "hideAll": "Hide composition guides",
+      "radialMode": "Radial mode",
+      "radialUniform": "Uniform",
+      "radialFree": "Free",
+      "rayHandle": "Ray {{index}} direction"
     }
   },
   "uiSketch": {

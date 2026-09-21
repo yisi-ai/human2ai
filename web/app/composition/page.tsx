@@ -4,7 +4,6 @@ import { promptTranslationKey } from "../../../locales/promptKeys";
 import {
   AimOutlined,
   CameraOutlined,
-  BorderOutlined,
   CopyOutlined,
   DeleteOutlined,
   FileTextOutlined,
@@ -12,13 +11,14 @@ import {
   LineOutlined,
   LockOutlined,
   PictureOutlined,
-  TableOutlined,
   UnlockOutlined,
 } from "@ant-design/icons";
 import {
   COMPOSITION_FRAME_ID,
   CompactDropdownSelect,
   CompositionWorkflowView,
+  CompositionPlanningPanel,
+  type CompositionPlanningLabels,
   UiSketchStateTabs,
   SessionDetails,
   CanvasHistoryControls,
@@ -180,13 +180,16 @@ function CompositionPageContent() {
   );
   const [draft, setDraft] = useState(createDraft);
   const [placementTool, setPlacementTool] = useState<CompositionPlacementTool | null>(null);
-  const [showDraftGuideGrid, setShowDraftGuideGrid] = useState(true);
+  const [showPlanning, setShowPlanning] = useState(true);
   const [frameLocked, setFrameLocked] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasViewportAction, setCanvasViewportAction] =
     useState<CompositionCanvasViewportAction>({ id: 0, type: "fit-frame" });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
+  const [planningLocked, setPlanningLocked] = useState(false);
+  const planningLabels = t("composition.planning", { returnObjects: true }) as CompositionPlanningLabels;
   const [frameRatio, setFrameRatio] = useState<AspectRatioValue>({ width: 16, height: 9 });
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
@@ -217,6 +220,7 @@ function CompositionPageContent() {
     setPlacementTool(null);
     setOverallNoteOpen(false);
     setSelectedIds([]);
+    setSelectedPlanIds([]);
     setFrameRatio(frameRatioForDraft(restored));
   }, loading || revisionConflictRef.current);
   const spatialReferences = useCompositionSpatialReferences({ draft, sessionId, ensureSession: ensureCompositionSession, updateDraft });
@@ -265,11 +269,13 @@ function CompositionPageContent() {
       const empty = createDraft();
       history.reset(empty);
       setDraft(empty);
-      setShowDraftGuideGrid(true);
+      setShowPlanning(true);
       setFrameLocked(false);
+      setPlanningLocked(false);
       setCanvasZoom(1);
       requestCanvasViewport("fit-frame");
       setSelectedIds([]);
+      setSelectedPlanIds([]);
       setFrameRatio({ width: 16, height: 9 });
       setSessionId(null);
       setSessionTitle(null);
@@ -284,8 +290,9 @@ function CompositionPageContent() {
 
     let cancelled = false;
     setLoading(true);
-    setShowDraftGuideGrid(true);
+    setShowPlanning(true);
     setFrameLocked(false);
+    setPlanningLocked(false);
     setCanvasZoom(1);
     setSessionId(null);
     setSessionTitle(null);
@@ -309,6 +316,7 @@ function CompositionPageContent() {
         setFrameRatio(frameRatioForDraft(nextDraft));
         const initialSelection = nextDraft.areas[0]?.id ?? nextDraft.focusPoints[0]?.id;
         setSelectedIds(initialSelection ? [initialSelection] : []);
+        setSelectedPlanIds([]);
         requestCanvasViewport("fit-frame");
         setDirty(false);
         setServiceError(null);
@@ -412,6 +420,7 @@ function CompositionPageContent() {
           const initialSelection = latest.draft.areas[0]?.id
             ?? latest.draft.focusPoints[0]?.id;
           setSelectedIds(initialSelection ? [initialSelection] : []);
+          setSelectedPlanIds([]);
           blockedAutoSaveVersionRef.current = null;
           setServiceError(null);
         }
@@ -474,20 +483,29 @@ function CompositionPageContent() {
   }
 
   function resetDraft(): void {
+    if (planningLocked) return;
     const empty = createDraft();
     history.record(empty);
     setPlacementTool(null);
     draftChangeVersionRef.current += 1;
     blockedAutoSaveVersionRef.current = null;
     setDraft(empty);
-    setShowDraftGuideGrid(true);
+    setShowPlanning(true);
     setFrameLocked(false);
+    setPlanningLocked(false);
     setCanvasZoom(1);
     requestCanvasViewport("fit-frame");
     setSelectedIds([]);
+    setSelectedPlanIds([]);
     setFrameRatio({ width: 16, height: 9 });
     setDirty(true);
     setServiceError(null);
+  }
+
+  function selectPlan(ids: string[]): void {
+    setSelectedPlanIds(ids);
+    setSelectedIds([]);
+    setPlacementTool(null);
   }
 
   function requestCanvasViewport(type: CanvasViewportActionType): void {
@@ -498,6 +516,7 @@ function CompositionPageContent() {
     updateDraft(action);
     setPlacementTool(null);
     setSelectedIds([]);
+    setSelectedPlanIds([]);
     setOverallNoteOpen(false);
     requestCanvasViewport("fit-frame");
   }
@@ -782,7 +801,7 @@ function CompositionPageContent() {
                           description={t("composition.clearCanvasConfirmDescription")}
                           confirmLabel={t("composition.clearCanvas")}
                           cancelLabel={t("actions.cancel")}
-                          disabled={loading || saving}
+                          disabled={loading || saving || planningLocked}
                           onConfirm={resetDraft}
                           data-composition-clear-canvas-action
                         >
@@ -801,30 +820,6 @@ function CompositionPageContent() {
             <div className={styles.sectionHeading}>
               <h2>{t("composition.frameRatio")}</h2>
               <div className={styles.sectionHeadingActions}>
-                <BasicButton
-                  mode="icon-only"
-                  size="small"
-                  icon={showDraftGuideGrid ? <TableOutlined /> : <BorderOutlined />}
-                  iconLabel={
-                    showDraftGuideGrid
-                      ? t("composition.hideGuideGrid")
-                      : t("composition.showGuideGrid")
-                  }
-                  title={
-                    showDraftGuideGrid
-                      ? t("composition.hideGuideGrid")
-                      : t("composition.showGuideGrid")
-                  }
-                  aria-pressed={showDraftGuideGrid}
-                  backgroundColor={
-                    showDraftGuideGrid ? "color.action.primaryActive" : "none"
-                  }
-                  textColor={
-                    showDraftGuideGrid ? "color.text.onPrimary" : "color.text.secondary"
-                  }
-                  disabled={!editing}
-                  onClick={() => setShowDraftGuideGrid((visible) => !visible)}
-                />
                 <BasicButton
                   mode="icon-only"
                   size="small"
@@ -868,6 +863,11 @@ function CompositionPageContent() {
               />
             </div>
           </section>
+
+          <CompositionPlanningPanel draft={draft} selectedIds={selectedPlanIds} onSelect={selectPlan}
+            showPlanning={showPlanning} onShowPlanningChange={setShowPlanning}
+            locked={planningLocked} onLockedChange={(locked) => { setPlanningLocked(locked); setSelectedPlanIds([]); }}
+            onDraftChange={updateDraft} labels={planningLabels} deleteLabel={t("actions.delete")} disabled={!editing} />
 
           <section>
             <h2>{t("composition.areaOverview")}</h2>
@@ -955,7 +955,11 @@ function CompositionPageContent() {
                     onDelete={(id) => changeState((current) => deleteCompositionState(current, id))}
                   />
               )}
-              showDraftGuideGrid={showDraftGuideGrid}
+              showPlanning={showPlanning}
+              selectedPlanIds={selectedPlanIds}
+              planningLocked={planningLocked}
+              onPlanSelectionChange={selectPlan}
+              planningLabels={planningLabels}
               frameLocked={frameLocked}
               canvasZoom={canvasZoom}
               canvasViewportAction={canvasViewportAction}
@@ -1055,7 +1059,7 @@ function CompositionPageContent() {
               onDraftChange={updateDraft}
               placementTool={placementTool}
               onPlacementToolChange={setPlacementTool}
-              onSelectionChange={setSelectedIds}
+              onSelectionChange={(ids) => { setSelectedIds(ids); setSelectedPlanIds([]); }}
               labels={{
                 draftView: t("composition.views.draft"),
                 refinedView: t("composition.views.refined"),

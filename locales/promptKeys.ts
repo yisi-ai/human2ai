@@ -11,6 +11,12 @@ const sharedPromptKeys: Record<string, string> = {
 };
 
 const compositionPromptKeys: Record<string, string> = {
+  planningHeading: "composition.planning.title",
+  planningGoldenSection: "composition.planning.types.golden-section",
+  planningThirds: "composition.planning.types.thirds",
+  planningBoth: "composition.planning.both",
+  planningHorizontal: "composition.planning.horizontal",
+  planningVertical: "composition.planning.vertical",
   shotScale: "composition.depth.prompt",
   foreground: "composition.depth.foreground",
   midground: "composition.depth.midground",

@@ -61,6 +61,7 @@ describe("composition draft v1", () => {
       directionLine: null,
       areas: [],
       images: [],
+      plans: [{ id: "plan-1", type: "thirds", axes: "both", visible: true }],
     });
 
     expect(() => createDraft({ width: 4096, height: 256 })).toThrow(/aspect ratio/i);

@@ -8,6 +8,8 @@ import {
 } from "../../design-system/surfaces/human2ai-web/src/local/compositionExport.ts";
 import {
   addArea,
+  addCompositionPlan,
+  replaceCompositionPlan,
   addCompositionImage,
   addDirectionLine,
   addFocus,
@@ -76,6 +78,23 @@ function exampleDraft(): CompositionDraft {
 }
 
 describe("composition draft export", () => {
+  it("exports all planning intent in both locales independently of visibility, without drawing guides into references", () => {
+    const original = exampleDraft();
+    let draft = original;
+    for (const type of ["golden-section", "symmetry", "golden-spiral", "triangle"] as const) {
+      draft = addCompositionPlan(draft, type).draft;
+    }
+    draft = replaceCompositionPlan(draft, { ...draft.plans![0], visible: false });
+    for (const locale of ["zh-CN", "en"] as const) {
+      const prompt = buildCompositionPrompt(draft, promptTranslator(locale));
+      expect(prompt).toContain(locale === "en" ? "Golden section" : "黄金分割");
+      expect(prompt).toContain(locale === "en" ? "Symmetrical composition" : "对称构图");
+      expect(prompt).toContain(locale === "en" ? "Golden spiral" : "黄金螺旋");
+      expect(prompt).toContain(locale === "en" ? "Triangular composition" : "三角构图");
+      expect(prompt).not.toMatch(/composition\.prompt\.planning/);
+    }
+    expect(renderCompositionSketchSvg(draft)).toBe(renderCompositionSketchSvg(original));
+  });
   it("adds exactly one optional style sentence without replacing the user's direction", () => {
     const draft = exampleDraft();
     const plain = buildCompositionPrompt(draft, promptTranslator("zh-CN"));
@@ -151,7 +170,9 @@ describe("composition draft export", () => {
     expect(prompt).toContain("Every region is a zone of visual influence, not a fixed final silhouette");
     expect(prompt).toContain("Flow:");
     expect(prompt).toContain("at an angle of approximately 325°");
-    expect(prompt).not.toMatch(
+    const planningGuidance = promptTranslator("en")("planningGuidance");
+    expect(prompt).toContain(planningGuidance);
+    expect(prompt.replace(planningGuidance, "")).not.toMatch(
       /suggested size|\bframe\b|composition sketch|reference shape|rectangle|circle|triangle|direction line/i,
     );
   });

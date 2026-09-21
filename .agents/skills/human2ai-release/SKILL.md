@@ -45,7 +45,7 @@ description: 规范 Human2AI 项目的 GitHub 提交、PR 合并、版本准备�
 
 ## 准备或发布版本
 
-涉及版本准备、npm、GitHub Release 或发布中断恢复时，读取 [references/release.md](references/release.md)。仅提交普通改动或合并普通 PR 时无需加载。
+涉及版本准备、npm、GitHub Release 或发布中断恢复时，读取 [references/release.md](references/release.md)。npm 发布前必须同时核验安装包和实际上传的元数据，避免自动附加的本机路径或未获准公开的邮箱随包发布。仅提交普通改动或合并普通 PR 时无需加载。
 
 ## 保持文档职责
 

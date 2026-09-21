@@ -574,12 +574,15 @@
         "selected-text-color",
         "unselected-text-color",
         "selected-background",
-        "tab-background"
+        "tab-background",
+        "compact",
+        "item-actions"
       ],
       "slots": [
         "icon",
         "label",
-        "item"
+        "item",
+        "rightSlot"
       ],
       "aliases": [
         "SegmentedTabs",
@@ -587,14 +590,15 @@
       ],
       "useWhen": [
         "需要在两个或多个同级视图之间切换",
-        "需要统一配置 tab 底色、选中态底色、选中态文字颜色、未选中态文字颜色，并为子项配置 Icon/文字模式或 disabled"
+        "需要统一配置 tab 底色、选中态底色、选中态文字颜色、未选中态文字颜色，并为子项配置 Icon/文字模式或 disabled",
+        "需要紧密模式，或在每项右侧放置独立于选择的按钮操作"
       ],
       "doNotUseWhen": [
         "需要由组件同时管理多个 tabpanel 的懒加载或内容缓存",
         "单一布尔开关",
         "需要路由描述和目录项说明的页面导航"
       ],
-      "differenceSummary": "复用 Ant Design Segmented 的紧凑工作台外观、键盘选择和原生 disabled 行为，同时把子项的 Icon/文字显示模式、统一的 tab 底色、统一的选中底色、选中态文字色和未选中态文字色纳入稳定 props；组件只负责选择呈现和回调，不读取路由、API 或业务状态。",
+      "differenceSummary": "采用分段选择外观和原生 radio 语义，支持默认/紧密密度、跳过禁用项的键盘选择、Icon/文字模式和统一颜色。每项 rightSlot 与选择 label 并列，插槽按钮不触发选择，操作及其禁用状态由调用方控制；组件只负责选择呈现和回调，不读取路由、API 或业务状态。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -914,7 +918,11 @@
         "top-content",
         "horizontal-content-scroll",
         "hidden-scrollbar",
-        "large-footer-actions"
+        "compact-footer-actions",
+        "optional-star-background",
+        "text-aware-decoration",
+        "dot-scrollbar",
+        "configurable-scrollbar"
       ],
       "slots": [
         "message-input",
@@ -940,7 +948,7 @@
         "需要组件管理消息历史、调用 AI、选择模型、执行附件上传请求或持久化会话",
         "需要编辑长文正文、标记文字范围或决定选区浮层的位置"
       ],
-      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作下沿对齐，快捷语言文字为 13px、按钮高 32px，上传按钮为 32px，发送按钮保持 44px，顶部容器默认关闭，topContentEnabled 开启后提供 48px 高的横向滚动区，隐藏滚动条，上下内边距 4px、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入。",
+      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作垂直居中，上下内边距均为 4px，快捷语言文字为 13px、按钮高 32px，上传和发送按钮均为 32px；发送按钮采用主色圆角背景及 24px AnimatedIcon 发送图形，顶部容器默认关闭，topContentEnabled 开启且 topContent 非空时提供 44px 高的横向滚动区，隐藏滚动条，上内边距 4px、下内边距 0、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入，空内容不占位。单行和多行模式均支持默认关闭的 starsEnabled 属性，开启后整个组件使用 theme.dark.panel 近黑灰色背景并适配浅色文字及操作状态，在输入区域及上左右留白呈现随机位置、1.5–2.8 秒淡入淡出的白色无光晕小圆点，按当前背景区域每 1800 CSS px² 约 1 个的密度动态增减数量；按实际排版避开文字和顶部内容，仅判断圆点中心，允许边缘重叠，不覆盖底部操作区，减少动效时保留静态圆点。单行和多行 textarea 上内边距为 0；顶部插槽关闭或为空时，将原有的 6px 上内边距等量移至组件输入背景区顶部，留白不随文字滚动，星星仍可覆盖该区域；顶部插槽有内容时不补留白，使输入栏与顶部内容更贴近。 单行与多行输入区默认组合 DotScrollbar，保留自动增高并在内容溢出时显示圆点导航；scrollbar 可切换 dots/native，maxScrollDots 默认 12。圆点紧凑排列，高亮只改变颜色，悬停或键盘聚焦时拉长；文字预留右侧空间，星星避开可见导航区域，顶部内容及底部操作区不参与滚动。",
       "sourceStatus": "experimental",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -953,7 +961,8 @@
         "TextMarkEditor",
         "LongformTextEditor",
         "AgentConversation composer",
-        "CompositeButton"
+        "CompositeButton",
+        "DotScrollbar"
       ]
     },
     {
@@ -1085,6 +1094,7 @@
         "content-region",
         "desktop-navigation",
         "header-title",
+        "header-extra",
         "optional-back-action",
         "controlled-state",
         "localized-labels",
@@ -1095,6 +1105,7 @@
         "sidebar-navigation",
         "sidebar",
         "header-title",
+        "header-extra",
         "back-action",
         "sidebar-collapsed-actions",
         "right-panel",
@@ -1109,14 +1120,15 @@
         "桌面应用需要全屏壳层、持久侧栏、全局标题栏和独立滚动内容区",
         "调用方需要注入导航、标题和操作，而不让壳层拥有路由或业务状态",
         "侧栏需要受控或非受控地完全收起，并在收起时显示产品注入的恢复期操作",
-        "业务需要按需注入可独立控制的右侧面板，并从标题栏右上角统一收起或展开"
+        "业务需要按需注入可独立控制的右侧面板，并从标题栏右上角统一收起或展开",
+        "需要在右侧栏开关左边注入业务切换项、按钮组或说明文字，且该内容不依赖右侧面板是否存在"
       ],
       "doNotUseWhen": [
         "已有应用壳层内部只需要页面宽度和垂直节奏",
         "需要页面内双栏编辑器、任意工作台 pane 或内容自然撑高的辅助操作面板",
         "需要移动端导航壳层或组件自行读取路由、API 和持久化状态"
       ],
-      "differenceSummary": "PageShell 只控制页面容器宽度与节奏，WorkspacePanel 只建立工作台内部 pane，SideActionPanel 是内容自然撑高的辅助操作栏；AppShellFrame 独立负责全视口桌面应用的持久/可收起左侧栏、可选且可独立收起的右侧面板、全局上下文标题栏和可滚动内容区。右侧面板只提供容器 slot 与标题栏右上角统一开关，内容和是否存在由业务决定；共享实现不读取路由、API、导航数据或业务状态。",
+      "differenceSummary": "PageShell 只控制页面容器宽度与节奏，WorkspacePanel 只建立工作台内部 pane，SideActionPanel 是内容自然撑高的辅助操作栏；AppShellFrame 独立负责全视口桌面应用的持久/可收起左侧栏、可选且可独立收起的右侧面板、全局上下文标题栏和可滚动内容区。headerExtra 在右侧栏开关左边接收业务组件，无右侧栏时仍可展示；右侧面板只提供容器 slot 与标题栏右上角统一开关，内容、交互和是否存在由业务决定；共享实现不读取路由、API、导航数据或业务状态。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "sourceProposal": "writer-harness/design-system/proposals/app-shell-frame.json",
@@ -1361,6 +1373,196 @@
       "sourceComponent": "packages/react/src/patterns/ModelSelector.tsx",
       "distribution": "source-sync",
       "release": "0.14.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "adaptive-accordion",
+      "name": "AdaptiveAccordion",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/AdaptiveAccordion.tsx",
+      "storyId": "modules-adaptiveaccordion--default",
+      "capabilities": [
+        "vertical-accordion",
+        "single-expanded-item",
+        "collapsed-by-default",
+        "stable-container-height",
+        "natural-content-height",
+        "adaptive-row-height",
+        "adaptive-title-size",
+        "uniform-leading-icon",
+        "outside-dismiss",
+        "controlled-state",
+        "keyboard-navigation",
+        "focus-restoration",
+        "responsive-measurement",
+        "dynamic-content",
+        "disabled",
+        "empty",
+        "long-content",
+        "reduced-motion"
+      ],
+      "slots": [
+        "item-title",
+        "item-content",
+        "leading-icon",
+        "empty-content"
+      ],
+      "aliases": [
+        "FAQAccordion",
+        "StableHeightAccordion",
+        "自适应折叠列表",
+        "问答列表"
+      ],
+      "useWhen": [
+        "需要展示文字说明或问答，并在任意一项展开、收起或切换时保持组件总高度不变",
+        "需要标题区域分配剩余空间，统一字号和前置图标随可用高度适配",
+        "需要内容自然展示完整高度，同时在宽度、内容和字体变化后重新计算布局"
+      ],
+      "doNotUseWhen": [
+        "需要多项同时展开，或希望内容展开时推动外部页面布局",
+        "需要虚拟化大量列表项、按展开状态才挂载内容，或承载重型编辑器",
+        "需要组件请求说明内容、拥有业务路由或持久化展开状态"
+      ],
+      "similarAssetsChecked": [
+        "Ant Design Collapse",
+        "HTML details/summary",
+        "SectionNavigationPanel",
+        "CompositeButton",
+        "AssetSkeletonTree"
+      ],
+      "differenceSummary": "Ant Design Collapse 和原生 details 提供一般的折叠交互；SectionNavigationPanel 切换分区内容，CompositeButton 提供行级动作，AssetSkeletonTree 表达层级。AdaptiveAccordion 单独提供稳定总高度契约：按最小标题字号测量全部标题与各项真实内容，预留最高单项展开状态的高度；当前内容保持自然高度，标题使用 16–24px 默认范围内可容纳的统一字号，各行均分剩余空间。内容只挂载一份，收起时隐藏、移出正常布局且 inert；默认全部收起，外部点击或 Esc 收起，方向键移动标题焦点。统一 icon 默认为加号，可替换或关闭；不读取业务数据或页面状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/adaptive-accordion.json",
+      "sourceComponent": "packages/react/src/patterns/AdaptiveAccordion.tsx",
+      "distribution": "source-sync",
+      "release": "0.15.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "resizable-collapse-group",
+      "name": "ResizableCollapseGroup",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/ResizableCollapseGroup.tsx",
+      "storyId": "modules-resizablecollapsegroup--default",
+      "capabilities": [
+        "parent-height-fill",
+        "independent-collapse",
+        "multiple-expanded-panels",
+        "pointer-resize",
+        "adjacent-panel-resize",
+        "collapsed-panel-skip",
+        "proportional-heights",
+        "minimum-content-height",
+        "independent-scroll",
+        "preserved-content-state",
+        "controlled-state",
+        "keyboard-resize",
+        "keyboard-navigation",
+        "responsive-measurement",
+        "disabled",
+        "empty",
+        "long-content",
+        "reduced-motion",
+        "dot-scrollbar",
+        "configurable-scrollbar"
+      ],
+      "slots": [
+        "item-title",
+        "item-content",
+        "empty-content"
+      ],
+      "aliases": [
+        "ResizableAccordion",
+        "CollapsiblePanelGroup",
+        "可调高度折叠组",
+        "功能面板折叠组"
+      ],
+      "useWhen": [
+        "需要在固定高度的竖向容器中承载多个可独立折叠的功能面板",
+        "需要拖动分隔线调整上下已展开项的高度，组件总高度保持父容器高度",
+        "需要保留各项内容状态、独立滚动，并由调用方控制展开项及高度比例"
+      ],
+      "doNotUseWhen": [
+        "需要根据正文自然高度预留固定空间的问答列表",
+        "需要横向分栏、浮动窗口、路由切换或组件持有业务状态",
+        "需要收起时销毁内容、自动持久化布局或请求功能页面数据"
+      ],
+      "similarAssetsChecked": [
+        "AdaptiveAccordion",
+        "SectionNavigationPanel",
+        "SideActionPanel",
+        "AppShellFrame",
+        "Ant Design Collapse",
+        "Ant Design Splitter",
+        "DotScrollbar"
+      ],
+      "differenceSummary": "AdaptiveAccordion 按自然内容预留单项展开高度，SectionNavigationPanel 切换单个分区，SideActionPanel 收起整个操作栏，AppShellFrame 负责应用壳层；Ant Design Splitter 提供一般分栏。ResizableCollapseGroup 面向固定父高度的竖向功能区，保留统一 40px 标题和左侧三角，各项独立折叠；相邻已展开项可通过指针或键盘交换内容高度，跨过收起项，保留最小高度、比例及内容状态。正文独立滚动，父容器过小时组内滚动，不读取路由、API 或持久化布局。 子项内容区默认组合 DotScrollbar，可切回原生滚动条；圆点随面板高度和内容变化更新，整组溢出时继续保留原生滚动。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/resizable-collapse-group.json",
+      "sourceComponent": "packages/react/src/patterns/ResizableCollapseGroup.tsx",
+      "distribution": "source-sync",
+      "release": "0.15.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "dot-scrollbar",
+      "name": "DotScrollbar",
+      "category": "switching",
+      "status": "experimental",
+      "source": "src/components/DotScrollbar.tsx",
+      "storyId": "switching-dotscrollbar--default",
+      "capabilities": [
+        "vertical-scroll-navigation",
+        "external-scroll-target",
+        "page-count-dots",
+        "active-position",
+        "hover-elongation",
+        "click-to-scroll",
+        "keyboard-scroll",
+        "max-dot-count",
+        "height-bounded-dots",
+        "dynamic-content",
+        "responsive-measurement",
+        "native-scrollbar-replacement",
+        "disabled",
+        "hidden-when-no-overflow",
+        "reduced-motion"
+      ],
+      "slots": [],
+      "aliases": [
+        "ScrollDots",
+        "PageScrollIndicator",
+        "圆点滚动条",
+        "分段滚动导航"
+      ],
+      "useWhen": [
+        "需要给现有纵向滚动容器附加圆点导航，并按内容屏数表示滚动范围",
+        "需要当前区域高亮、悬停拉长圆点及点击跳转，同时保留内容原有滚动方式",
+        "需要随内容和可视高度动态计算圆点数量，并限制长内容或矮容器中的圆点数量"
+      ],
+      "doNotUseWhen": [
+        "需要横向滚动条、可拖动的连续滑块或原生滚动条的完整替代",
+        "需要切换路由、分页请求、选择业务记录或让组件持有内容",
+        "无法获得实际滚动元素引用，或需要装饰页面 document 滚动"
+      ],
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "UnderlineTabSwitch",
+        "ResizableCollapseGroup",
+        "SectionNavigationPanel",
+        "Native scrollbar"
+      ],
+      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 选择视图，SectionNavigationPanel 切换功能区，ResizableCollapseGroup 管理折叠和高度。DotScrollbar 是绑定外部 HTMLElement 引用的独立纵向滚动配饰：按屏数生成圆点，受 maxDots 与可用高度约束，当前滚动区域高亮，固定点击区内悬停拉长，点击或键盘平滑跳转。组件观察内容及尺寸变化，按需隐藏并在卸载时恢复原生滚动条，保留滚轮和触摸行为；不管理正文、路由或业务数据。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/dot-scrollbar.json",
+      "sourceComponent": "packages/react/src/components/DotScrollbar.tsx",
+      "distribution": "source-sync",
+      "release": "0.15.0",
       "ownerRepository": "yisiui"
     }
   ]

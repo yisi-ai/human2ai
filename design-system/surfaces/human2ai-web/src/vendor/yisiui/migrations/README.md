@@ -1,5 +1,11 @@
 # 公共资产迁移说明
 
+独立圆点滚动条及折叠组接入见 [2026-09-20 DotScrollbar 采用说明](2026-09-20-dot-scrollbar.md)。
+
+父容器定高、独立折叠与拖动调整功能面板见 [2026-09-20 ResizableCollapseGroup 采用说明](2026-09-20-resizable-collapse-group.md)。
+
+稳定高度的说明与问答列表见 [2026-09-20 AdaptiveAccordion 采用说明](2026-09-20-adaptive-accordion.md)。
+
 开源与 npm 分发的许可范围、同步及打包步骤见 [2026-09-14 MIT 许可证接入](2026-09-14-mit-license.md)。
 
 Storybook 共享与本地分组规则见 [2026-09-13 分组归属](2026-09-13-storybook-groups.md)。

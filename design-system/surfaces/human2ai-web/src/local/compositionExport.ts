@@ -1,4 +1,6 @@
 import {
+  compositionPlanGeometry,
+  frameBoundsInCanvas,
   inspectComposition,
   renderCompositionReferenceSvg,
   validateDraft,
@@ -8,6 +10,10 @@ import {
 export type CompositionSketchCopyResult = "copied" | "downloaded";
 
 export type CompositionPromptKey =
+  | "planningHeading" | "planningGuidance" | "planningGrid" | "planningSymmetry"
+  | "planningSpiral" | "planningTriangle" | "planningRadial" | "planningRadialFree" | "planningThirds" | "planningGoldenSection"
+  | "planningBoth" | "planningHorizontal" | "planningVertical"
+  | "planningClockwise" | "planningCounterclockwise"
   | "title"
   | "outputRatio"
   | "processingSemantic"
@@ -74,6 +80,34 @@ export function buildCompositionPrompt(
 ): string {
   const draft = validateDraft(input);
   const inspection = inspectComposition(draft);
+  const plans = draft.plans ?? [];
+  const planningLines = plans.flatMap((plan) => {
+    let description: string;
+    if (plan.type === "thirds" || plan.type === "golden-section") {
+      description = translate("planningGrid", {
+        type: translate(plan.type === "thirds" ? "planningThirds" : "planningGoldenSection"),
+        axes: translate(plan.axes === "both" ? "planningBoth" : plan.axes === "horizontal" ? "planningHorizontal" : "planningVertical"),
+      });
+    } else if (plan.type === "triangle") {
+      const frame = frameBoundsInCanvas(draft.frame);
+      description = translate("planningTriangle", { points: compositionPlanGeometry(plan, draft.frame).handles
+        .map((point) => `(${percentage((point.x - frame.x) / frame.width)}%, ${percentage((point.y - frame.y) / frame.height)}%)`).join("; ") });
+    } else if (plan.type === "radial") {
+      description = plan.mode === "free" ? translate("planningRadialFree", {
+        x: percentage(plan.x), y: percentage(plan.y), rayCount: plan.angles.length,
+        angles: plan.angles.map((angle) => `${Math.round(angle * 10) / 10}°`).join(", "),
+      }) : translate("planningRadial", {
+        x: percentage(plan.x), y: percentage(plan.y), rotation: Math.round(plan.rotation * 10) / 10,
+        rayCount: plan.rayCount, spread: Math.round(plan.spread * 10) / 10,
+      });
+    } else if (plan.type === "symmetry" || plan.type === "golden-spiral") {
+      description = translate(plan.type === "symmetry" ? "planningSymmetry" : "planningSpiral", {
+        x: percentage(plan.x), y: percentage(plan.y), rotation: Math.round(plan.rotation * 10) / 10,
+        ...(plan.type === "golden-spiral" ? { scale: percentage(plan.scale), winding: translate(plan.mirrored ? "planningCounterclockwise" : "planningClockwise") } : {}),
+      });
+    } else return [];
+    return [description];
+  });
   const hasTextRegions = inspection.areas.some(
     (area) => area.semanticType === "text-region",
   );
@@ -198,6 +232,7 @@ export function buildCompositionPrompt(
       ? ["", translate("globalNoteHeading"), inspection.overallNote.trim()]
       : []),
     ...(stylePrompt?.trim() ? ["", stylePrompt.trim()] : []),
+    ...(plans.length ? ["", translate("planningHeading"), translate("planningGuidance"), ...planningLines] : []),
     ...(inspection.areas.length
       ? [
           "",

@@ -1,6 +1,6 @@
 "use client";
 
-import { PlusOutlined, SendOutlined } from "@ant-design/icons";
+import { PlusOutlined } from "@ant-design/icons";
 import { Input } from "antd";
 import type {
   ComponentRef,
@@ -9,10 +9,13 @@ import type {
   KeyboardEvent,
   ReactNode,
 } from "react";
-import { forwardRef, useCallback, useEffect, useId, useImperativeHandle, useRef } from "react";
+import { Children, forwardRef, useCallback, useEffect, useId, useImperativeHandle, useRef } from "react";
 
 import { BasicButton } from "../components/BasicButton";
+import { AnimatedIcon, type AnimatedIconHandle } from "../components/AnimatedIcon";
 import { CompositeButton } from "../components/CompositeButton";
+import { DotScrollbar } from "../components/DotScrollbar";
+import { MessageComposerStars } from "../internal/MessageComposerStars";
 import styles from "../../styles/MessageComposer.module.css";
 
 import "../../styles/tokens.css";
@@ -48,6 +51,12 @@ export interface MessageComposerProps
   submitLabel?: string;
   variant?: MessageComposerVariant;
   surface?: MessageComposerSurface;
+  /** Dark surface with decorative white dots in either variant. No user-facing toggle. */
+  starsEnabled?: boolean;
+  /** Vertical input scrolling. Defaults to dots in both variants. */
+  scrollbar?: "dots" | "native";
+  /** Maximum displayed scroll dots; available input height may reduce this further. */
+  maxScrollDots?: number;
   quickPrompts?: readonly MessageComposerQuickPrompt[];
   topContent?: ReactNode;
   topContentEnabled?: boolean;
@@ -77,6 +86,9 @@ export const MessageComposer = forwardRef<
     submitLabel = "发送消息",
     variant = "single-line",
     surface = "standalone",
+    starsEnabled = false,
+    scrollbar = "dots",
+    maxScrollDots = 12,
     quickPrompts = [],
     topContent,
     topContentEnabled = false,
@@ -98,13 +110,23 @@ export const MessageComposer = forwardRef<
   forwardedRef,
 ) {
   const inputRef = useRef<MessageTextAreaRef | null>(null);
+  const scrollTargetRef = useRef<HTMLTextAreaElement | null>(null);
+  const sendIconRef = useRef<AnimatedIconHandle>(null);
+  const inputId = useId();
   const errorId = useId();
   const submitDisabled = disabled || readOnly || loading || !value.trim();
+  const hasTopContent = topContentEnabled && Children.toArray(topContent).some((child) => child !== "");
+
+  const setInputRef = useCallback((input: MessageTextAreaRef | null) => {
+    inputRef.current = input;
+    scrollTargetRef.current = input?.resizableTextArea?.textArea ?? null;
+  }, []);
 
   const submitMessage = useCallback(
     (candidate = value) => {
       const message = candidate.trim();
       if (!message || disabled || readOnly || loading) return;
+      sendIconRef.current?.play();
       onSubmit(message);
     },
     [disabled, loading, onSubmit, readOnly, value],
@@ -157,39 +179,56 @@ export const MessageComposer = forwardRef<
       data-variant={variant}
       data-surface={surface}
       data-error={error ? "true" : "false"}
+      data-top-content={hasTopContent ? "true" : "false"}
+      data-stars={starsEnabled ? "true" : "false"}
+      data-scrollbar={scrollbar}
       onSubmit={handleFormSubmit}
     >
-      {topContentEnabled ? (
-        <div
-          className={styles.topContent}
-          data-yisiui-slot="top-content"
-          data-message-composer-top-content
-          role={topContent ? "region" : undefined}
-          aria-label={topContent ? topContentLabel : undefined}
-          tabIndex={topContent ? 0 : undefined}
-        >
-          {topContent}
+      <div className={styles.inputRegion}>
+        {hasTopContent ? (
+          <div
+            className={styles.topContent}
+            data-yisiui-slot="top-content"
+            data-message-composer-top-content
+            role="region"
+            aria-label={topContentLabel}
+            tabIndex={0}
+          >
+            {topContent}
+          </div>
+        ) : null}
+        <div className={styles.content}>
+          <Input.TextArea
+            ref={setInputRef}
+            id={inputId}
+            className={styles.input}
+            value={value}
+            placeholder={placeholder}
+            disabled={disabled}
+            readOnly={readOnly || loading}
+            autoSize={variant === "single-line"
+              ? { minRows: 1, maxRows: 3 }
+              : { minRows: 3, maxRows: 8 }}
+            variant="borderless"
+            aria-label={ariaLabel}
+            aria-describedby={error ? errorId : undefined}
+            aria-keyshortcuts="Control+Enter Meta+Enter"
+            data-message-composer-input
+            onChange={(event) => onChange(event.target.value)}
+            onKeyDown={handleKeyDown}
+          />
+          {scrollbar === "dots" ? (
+            <DotScrollbar
+              className={styles.scrollbar}
+              targetRef={scrollTargetRef}
+              ariaLabel={`${ariaLabel} · 滚动位置`}
+              maxDots={maxScrollDots}
+              disabled={disabled}
+              data-message-composer-scrollbar
+            />
+          ) : null}
         </div>
-      ) : null}
-      <div className={styles.content}>
-        <Input.TextArea
-          ref={inputRef}
-          className={styles.input}
-          value={value}
-          placeholder={placeholder}
-          disabled={disabled}
-          readOnly={readOnly || loading}
-          autoSize={variant === "single-line"
-            ? { minRows: 1, maxRows: 3 }
-            : { minRows: 3, maxRows: 8 }}
-          variant="borderless"
-          aria-label={ariaLabel}
-          aria-describedby={error ? errorId : undefined}
-          aria-keyshortcuts="Control+Enter Meta+Enter"
-          data-message-composer-input
-          onChange={(event) => onChange(event.target.value)}
-          onKeyDown={handleKeyDown}
-        />
+        {starsEnabled ? <MessageComposerStars /> : null}
       </div>
       <div className={styles.footerBar} data-message-composer-footer>
         {uploadEnabled ? (
@@ -200,7 +239,7 @@ export const MessageComposer = forwardRef<
             mode="icon-only"
             icon={<PlusOutlined aria-hidden="true" />}
             iconLabel={uploadLabel}
-            backgroundColor="color.surface.active"
+            backgroundColor={starsEnabled ? undefined : "color.surface.active"}
             disabled={disabled || readOnly || loading || !onUpload}
             onClick={onUpload}
             data-message-composer-upload
@@ -217,6 +256,7 @@ export const MessageComposer = forwardRef<
                 >
                   <CompositeButton
                     className={styles.quickPromptButton}
+                    textColor={starsEnabled ? "none" : undefined}
                     icon={prompt.icon}
                     label={prompt.label}
                     aria-label={`发送快捷消息：${prompt.label}`}
@@ -233,13 +273,16 @@ export const MessageComposer = forwardRef<
         <BasicButton
           className={styles.sendButton}
           htmlType="submit"
-          type="text"
-          size="large"
+          type="primary"
           mode="icon-only"
-          icon={<SendOutlined />}
+          icon={<AnimatedIcon ref={sendIconRef} name="send" size={24} />}
           iconLabel={submitLabel}
           loading={loading}
           disabled={submitDisabled}
+          onPointerEnter={() => {
+            if (!submitDisabled) sendIconRef.current?.play();
+          }}
+          onFocus={() => sendIconRef.current?.play()}
           data-message-composer-submit
         />
       </div>

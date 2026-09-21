@@ -16,6 +16,12 @@
   gap: var(--yisiui-space-3);
 }
 
+.exampleActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--yisiui-space-2);
+}
+
 .heading {
   margin: 0;
   color: var(--yisiui-color-text-primary);

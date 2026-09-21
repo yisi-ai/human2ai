@@ -388,7 +388,7 @@
         "focusLinks 显式关联焦点与区域并联动变换；fixedIds 必须完全保留；不会自动推断主次焦点或新增引导节点",
         "v2 在最终结果上重新验证所有所选关系；冲突返回具体关系索引和测量数据，不以最后一个操作覆盖先前关系的失败",
         "数学验证只确认关系成立；用户同意和最终画面复核由 Agent 负责，服务不引入审批状态",
-        "辅助线仅属于结果验证证据，不写入草稿或生图参考"
+        "精修生成的关系校验辅助线仅属于结果验证证据，不写入草稿或生图参考"
       ],
       "implementations": [
         {
@@ -519,7 +519,7 @@
     {
       "id": "composition.layout-states",
       "category": "composition",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "local",
       "responsibility": "管理同一构图会话中共享节点内容、独立画框和节点布局的可自定义状态",
       "invariants": [
@@ -528,7 +528,8 @@
         "状态独立保存画框尺寸与边界、节点位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
         "新增复制指定来源布局、插入其后并选中，命名排序和删除边界委托 capture.named-states；删除活动状态选择邻近状态",
         "状态和当前选择通过既有草稿版本、自动保存、外部版本同步及本地撤销恢复；指纹覆盖全部状态",
-        "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容"
+        "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容",
+        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划"
       ],
       "implementations": [
         {
@@ -568,7 +569,8 @@
       "contractTests": [
         "test/unit/composition-states.test.ts",
         "test/integration/composition-sessions.test.ts",
-        "test/unit/composition-text-outline.test.ts"
+        "test/unit/composition-text-outline.test.ts",
+        "test/unit/composition-planning.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/composition-layout-states.md",
@@ -630,6 +632,95 @@
       ],
       "exceptions": [],
       "reviewTrigger": "扩展到文字、图片、方向控制或修改光源编码与精修保留规则之前"
+    },
+    {
+      "id": "composition.planning",
+      "category": "composition",
+      "contractVersion": 8,
+      "status": "local",
+      "responsibility": "让用户和 Agent 共同编辑按构图状态保存的独立构图规划，并统一画布、CLI 预览与生成意图",
+      "invariants": [
+        "规划编辑只改变 plans，不联动移动、缩放、旋转或增删内容节点",
+        "规划以当前画框相对坐标表达，旋转和黄金螺旋增长使用物理比例；三分与黄金分割固定贴合画框；三角构图按位置、旋转、底边和高度定义，物理坐标中始终等腰",
+        "每个状态独立保存完整规划；顶层 plans 是当前状态的编辑副本，状态复制、切换和保存沿用 composition.layout-states",
+        "visible 只控制画布和查看预览；所有规划均表达生成意图，没有单独备注或采用开关，旧 enabled 与 note 在加载时移除",
+        "用户和 Agent 通过既有草稿版本、并发保护、外部同步与撤销机制编辑同一份规划；没有独立存储或路由",
+        "规划属于持久化意图，不属于内容层级或精修验证辅助线；生成参考图不包含规划线",
+        "无 plans 的旧草稿保持结构和指纹；有效规划必须纳入指纹，重复 id、未知类型或非法几何不得保存",
+        "旧三点式规划加载时保留底边并将顶点投影到中垂线；thirds 是正式规划类型，新建草稿默认包含可见的横纵三分构图，旧草稿不自动补入",
+        "对称构图固定在画框中心，吸附点为八个 45° 方向加四个随画框比例变化的四角方向；正方形合并重合点，指针、键盘和 Agent 加载共用同一组方向",
+        "放射构图的均匀模式使用画框相对汇聚点、起始方向、2–36 条射线和 1–360° 展开角度，整圈不重复末端；自由模式使用同一汇聚点和 2–36 个独立物理角度，每条射线有方向控制点，不保存展开角度或整体旋转；无 mode 的旧放射规划按均匀模式加载",
+        "多选平移复用既有规划几何变换并一次提交草稿；三分、黄金分割线和对称构图始终保持原有画框参照位置，其他规划保持相对间距，内容元素不跟随",
+        "放射构图切到自由时保留各射线方向；切回均匀时保留中心、数量和第一条射线方向并恢复 360° 均布；自由模式增量添加射线到最大角度间隙，减少数量时从末尾移除，其余角度和内容节点不变",
+        "composition inspect 从当前状态全部规划（含隐藏规划）动态派生画框内含边界的 planningIntersections，复用画布与 CLI 预览的几何；交点含画框比例坐标、可用于内容节点的画布坐标、来源规划与稳定线条名称，交点 id 仅在本次分析中有效",
+        "同一规划内部和不同规划间的孤立交点均计算，同点合并全部来源；连续重合线段不伪造唯一交点；三角形使用有限边、放射使用有向射线、黄金螺旋使用现有三圈折线",
+        "直线交点标记为 exact，涉及螺旋时标记 approximate 并提供输出像素中的曲线折线偏差上限，该上限不声称是交点位置误差；派生交点不保存、不进入草稿指纹、不联动内容节点"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/planning.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/states.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/analysis.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/render.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/composition-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/compositionExport.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/app/composition/page.tsx"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/frame.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/planning-intersections.ts"
+        }
+      ],
+      "consumers": [
+        "composition-capture",
+        "composition-cli",
+        "composition-editor"
+      ],
+      "variationPoints": [
+        "三分、黄金分割、对称构图、黄金螺旋、三角构图与放射构图各自保留几何参数和编辑方式",
+        "复用 capture.draft-versioning、capture.canvas-edit-history 和现有构图状态，不将规划解释为自动约束求解器",
+        "黄金螺旋中心圆点单击切换 mirrored；拖动保留位移和旋转缩放操作，不将拖动误作方向切换",
+        "规划未选中使用浅灰，选中使用强调色；整体锁定仅为页面本地防误操作状态，禁用人工规划编辑，不持久化或限制 Agent 保存",
+        "三分和黄金分割在画布上不拦截点击，只通过侧栏选择和编辑；总显示开关仅为界面状态，隐藏全部规划线和控件，恢复时保留单项 visible，锁定时仍可切换总显示",
+        "新增交点只沿用 composition inspect 的本地草稿与会话版本读取入口，不增加规划路由、持久化交点、元素绑定或自动布局"
+      ],
+      "contractTests": [
+        "test/unit/composition-planning.test.ts",
+        "test/unit/composition-export.test.ts",
+        "test/integration/composition-sessions.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增规划类型、元素绑定、实时约束求解或更改画框参照语义之前"
     },
     {
       "id": "composition.reference-projection",

@@ -18,6 +18,7 @@ import {
 import {
   COMPOSITION_CANVAS,
   changeCompositionFrameSize,
+  compositionSymmetryRotations,
   createCompositionFrame,
   isCompositionFrameRatioSupported,
   moveCompositionFrame,
@@ -84,11 +85,12 @@ export function createDraft(
     directionLine: null,
     areas: [],
     images: [],
+    plans: [{ id: "plan-1", type: "thirds", axes: "both", visible: true }],
   });
 }
 
 export function validateDraft(input: unknown): CompositionDraft {
-  const normalizedInput = normalizeCompositionItemMetadata(input);
+  const normalizedInput = normalizeCompositionItemMetadata(normalizeLegacyCompositionPlanning(input));
   if (!validateSchema(normalizedInput)) {
     throw new Error(formatValidationErrors(validateSchema.errors));
   }
@@ -101,6 +103,22 @@ export function validateDraft(input: unknown): CompositionDraft {
     ? createCompositionFrame(validatedInput.frame)
     : structuredClone(validatedInput.frame as CompositionFrame);
   if (legacyFrame) migrateLegacyDraftCoordinates(draft);
+  if (draft.plans && new Set(draft.plans.map((plan) => plan.id)).size !== draft.plans.length) {
+    throw new Error("Composition planning ids must be unique within a state.");
+  }
+  if (draft.plans) draft.plans = draft.plans.map((plan) => {
+    const base = { id: plan.id, visible: plan.visible };
+    if (plan.type === "triangle") return { ...base, type: plan.type, x: plan.x, y: plan.y, rotation: normalizeRotation(plan.rotation), width: plan.width, height: plan.height };
+    if (plan.type === "radial") return plan.mode === "free"
+      ? { ...base, type: plan.type, x: plan.x, y: plan.y, mode: plan.mode, angles: plan.angles.map(normalizeRotation) }
+      : { ...base, type: plan.type, x: plan.x, y: plan.y, mode: plan.mode, rotation: normalizeRotation(plan.rotation), rayCount: plan.rayCount, spread: plan.spread };
+    if (plan.type === "symmetry") return { ...base, type: plan.type, x: 0.5, y: 0.5, rotation: normalizeCompositionSymmetryRotation(plan.rotation, draft.frame) };
+    if (plan.type === "golden-spiral") {
+      const transform = { x: plan.x, y: plan.y, rotation: normalizeRotation(plan.rotation) };
+      return { ...base, type: plan.type, ...transform, scale: plan.scale, mirrored: plan.mirrored };
+    }
+    return { ...base, type: plan.type, axes: plan.axes };
+  });
   const ids = new Set<string>();
   for (const item of [
     ...draft.focusPoints,
@@ -604,6 +622,15 @@ export function changeFrame(
   const draft = validateDraft(input);
   validateFrame(frame);
   draft.frame = changeCompositionFrameSize(draft.frame, frame);
+  if (draft.plans) draft.plans = draft.plans.map((plan) => {
+    if (plan.type !== "symmetry") return plan;
+    // Corner-aligned axes follow the new ratio; the original eight directions stay fixed.
+    if (Math.abs(plan.rotation / 45 - Math.round(plan.rotation / 45)) < 1e-8) return plan;
+    const angle = plan.rotation * Math.PI / 180;
+    const rotation = Math.atan2(Math.sin(angle) * frame.height / input.frame.height,
+      Math.cos(angle) * frame.width / input.frame.width) * 180 / Math.PI;
+    return { ...plan, rotation: normalizeCompositionSymmetryRotation(rotation, draft.frame) };
+  });
   return draft;
 }
 
@@ -662,6 +689,35 @@ function validateFrame(frame: unknown): asserts frame is CompositionFrame {
     throw new Error("Draft aspect ratio must be between 1:2 and 2:1.");
   }
   if (values.bounds !== undefined) validateFrameBounds(values.bounds, ratio);
+}
+
+function normalizeLegacyCompositionPlanning(input: unknown): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) return input;
+  const source = input as Record<string, unknown>;
+  const frame = source.frame as CompositionFrame | undefined;
+  const plans = Array.isArray(source.plans) ? source.plans.map((inputPlan) => {
+    if (!inputPlan || typeof inputPlan !== "object" || Array.isArray(inputPlan)) return inputPlan;
+    const { enabled: _enabled, note: _note, ...plan } = inputPlan;
+    if (plan.type === "radial" && plan.mode === undefined) return { ...plan, mode: "uniform" };
+    if (plan?.type !== "triangle" || !Array.isArray(plan.points) || plan.points.length !== 3
+      || !plan.points.every((p: Point) => p && Number.isFinite(p.x) && Number.isFinite(p.y))
+      || !frame || !Number.isFinite(frame.width) || !Number.isFinite(frame.height) || frame.width <= 0 || frame.height <= 0) return plan;
+    const [apex, left, right] = plan.points.map((p: Point) => ({ x: p.x * frame.width, y: p.y * frame.height }));
+    const dx = right.x - left.x, dy = right.y - left.y;
+    const width = Math.hypot(dx, dy);
+    if (width === 0) return plan;
+    const mid = { x: (left.x + right.x) / 2, y: (left.y + right.y) / 2 };
+    const height = ((mid.x - apex.x) * -dy + (mid.y - apex.y) * dx) / width;
+    if (height === 0) return plan;
+    const { points: _points, ...base } = plan;
+    return { ...base, x: (mid.x + dy / width * height / 2) / frame.width,
+      y: (mid.y - dx / width * height / 2) / frame.height,
+      rotation: Math.atan2(dy, dx) * 180 / Math.PI + (height < 0 ? 180 : 0),
+      width: width / frame.width, height: Math.abs(height) / frame.height };
+  }) : undefined;
+  const states = Array.isArray(source.states) ? source.states.map((state) => state && typeof state === "object"
+    ? { ...state, layout: normalizeLegacyCompositionPlanning(state.layout) } : state) : undefined;
+  return { ...source, ...(plans ? { plans } : {}), ...(states ? { states } : {}) };
 }
 
 function normalizeCompositionItemMetadata(input: unknown): unknown {
@@ -808,6 +864,12 @@ function validateImageCrop(crop: { x: number; y: number; width: number; height: 
   if (crop.x + crop.width > 1 + 1e-9 || crop.y + crop.height > 1 + 1e-9) {
     throw new Error("Image crop must stay inside the source image.");
   }
+}
+
+export function normalizeCompositionSymmetryRotation(value: number, frame: CompositionFrameSize): number {
+  const rotation = normalizeRotation(value);
+  const distance = (angle: number) => Math.abs(((angle - rotation + 540) % 360) - 180);
+  return compositionSymmetryRotations(frame).reduce((closest, angle) => distance(angle) < distance(closest) ? angle : closest);
 }
 
 function normalizeRotation(value: number): number {

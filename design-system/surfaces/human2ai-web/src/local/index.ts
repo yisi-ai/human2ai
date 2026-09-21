@@ -1,4 +1,6 @@
 export { COMPOSITION_FRAME_ID, CompositionCanvas } from "./CompositionCanvas";
+export { CompositionPlanningPanel } from "./CompositionPlanningPanel";
+export type { CompositionPlanningLabels, CompositionPlanningPanelProps } from "./CompositionPlanningPanel";
 export { CanvasHistoryControls } from "./CanvasHistoryControls";
 export type { CanvasHistoryControlsProps } from "./CanvasHistoryControls";
 export type {
