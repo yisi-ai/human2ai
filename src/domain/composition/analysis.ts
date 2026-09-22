@@ -5,6 +5,7 @@ import {
   frameBoundsInCanvas,
 } from "./frame.ts";
 import { areaGeometry, compositionImageBounds, geometryBounds } from "./geometry.ts";
+import { compositionPlanningIntersections, type CompositionPlanIntersection } from "./planning-intersections.ts";
 import type {
   CompositionArea,
   CompositionDraft,
@@ -59,6 +60,8 @@ export interface CompositionLayoutFacts {
 }
 
 export interface CompositionInspection {
+  plans?: CompositionDraft["plans"];
+  planningIntersections: CompositionPlanIntersection[];
   version: 1;
   kind: "composition-inspection";
   sourceFingerprint: string;
@@ -184,6 +187,8 @@ export function inspectComposition(input: CompositionDraft): CompositionInspecti
   return {
     version: 1,
     kind: "composition-inspection",
+    ...(draft.plans ? { plans: structuredClone(draft.plans) } : {}),
+    planningIntersections: compositionPlanningIntersections(draft),
     sourceFingerprint: draftFingerprint(draft),
     processingSemantic: draft.processingSemantic,
     frame: structuredClone(draft.frame),
@@ -420,6 +425,7 @@ function inspectedPoint(point: Point, frame: CompositionFrame): Point {
 
 function canonicalDraftJson(draft: CompositionDraft): string {
   return JSON.stringify({
+    ...(draft.plans ? { plans: draft.plans } : {}),
     ...(draft.states ? {
       activeStateId: draft.activeStateId,
       states: draft.states.map(({ id, number, name, layout }) => ({ id, number, name, layout })),

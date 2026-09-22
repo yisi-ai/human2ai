@@ -2,7 +2,9 @@ import type { FastifyInstance } from "fastify";
 import schema from "../../../schemas/spatial-draft.schema.json" with { type: "json" };
 import type { SpatialSessionRepository } from "../../database/spatial-session-repository.ts";
 import { createSpatialDraft, SpatialConstraintError, type SpatialOperation } from "../../domain/spatial/index.ts";
-import { renderSpatialPng, renderSpatialCameraBoxPng } from "../spatial-render.ts";
+import { SpatialRenderService } from "../spatial-render-service.ts";
+import { SpatialCameraRenderKeys } from "../../domain/spatial/camera-render-key.ts";
+import { cameraBoxView } from "../../domain/spatial/camera-box.ts";
 import { SPATIAL_BOX_FACES, SPATIAL_RENDER_PASSES, type SpatialBoxView, type SpatialRenderPass } from "../../domain/spatial/types.ts";
 import { parseSpatialBoxViews } from "../../domain/spatial/camera-box-sheet.ts";
 import en from "../../../locales/en/common.json" with { type: "json" };
@@ -12,13 +14,21 @@ export function registerSpatialSessionRoutes(server: FastifyInstance, repository
   const { $schema: _dialect, ...fastifySchema } = schema;
   server.addSchema(fastifySchema);
   registerDraftVersionRoutes(server, { routePrefix: "/api/v1/sessions/:sessionId/spatial", draftSchema: { $ref: schema.$id }, repository });
-  const cache = new Map<string, Promise<Buffer>>();
+  const cache = new Map<string, Buffer>();
+  const inFlight = new Map<string, Promise<Buffer>>();
+  const renderer = new SpatialRenderService(), renderKeys = new SpatialCameraRenderKeys();
+  server.addHook("onClose", () => renderer.close());
   const cached = (key: string, render: () => Promise<Buffer>) => {
-    let pending = cache.get(key);
+    const image = cache.get(key);
+    if (image) { cache.delete(key); cache.set(key, image); return Promise.resolve(image); }
+    let pending = inFlight.get(key);
     if (!pending) {
-      pending = render(); cache.set(key, pending);
-      if (cache.size > 24) cache.delete(cache.keys().next().value!);
-      void pending.catch(() => { if (cache.get(key) === pending) cache.delete(key); });
+      pending = render().then(image => {
+        cache.set(key, image);
+        if (cache.size > 24) cache.delete(cache.keys().next().value!);
+        return image;
+      }).finally(() => { inFlight.delete(key); });
+      inFlight.set(key, pending);
     }
     return pending;
   };
@@ -47,8 +57,8 @@ export function registerSpatialSessionRoutes(server: FastifyInstance, repository
         const camera = draft.cameras.find(c => c.id === cameraId);
         if (!camera) return reply.code(404).send({ code: "SPATIAL_CAMERA_NOT_FOUND", message: "Camera not found" });
         const pass = request.query.pass ?? "color";
-        const key = JSON.stringify([sessionId, version?.revision ?? 0, cameraId, pass]);
-        const pending = cached(key, () => renderSpatialPng(draft, camera, pass));
+        const key = JSON.stringify([sessionId, cameraId, renderKeys.key(draft, camera, pass)]);
+        const pending = cached(key, () => renderer.render({ draft, camera, pass }));
         return reply.header("cache-control", request.query.revision ? "private, max-age=31536000, immutable" : "no-cache")
           .header("x-spatial-revision", version?.revision ?? 0).header("x-spatial-render-pass", pass).type("image/png").send(await pending);
       } catch (error) {
@@ -71,8 +81,12 @@ export function registerSpatialSessionRoutes(server: FastifyInstance, repository
         const box = version?.draft.cameraBoxes?.find(box => box.id === boxId);
         if (!box || !version) return reply.code(404).send({ code: "SPATIAL_CAMERA_NOT_FOUND", message: "Camera box not found" });
         const pass = request.query.pass ?? "color", view = views ?? request.query.view ?? "sheet";
-        const key = JSON.stringify([sessionId, version.revision, "camera-box", boxId, view, pass]);
-        const png = cached(key, () => renderSpatialCameraBoxPng(version.draft, box, view, pass));
+        const faces = typeof view === "string" ? view === "sheet" ? SPATIAL_BOX_FACES : [view] : view;
+        const key = JSON.stringify([sessionId, "camera-box", boxId, view, faces.map(face => {
+          const { source, camera } = cameraBoxView(box, face);
+          return renderKeys.key(version.draft, source, pass, camera);
+        })]);
+        const png = cached(key, () => renderer.render({ draft: version.draft, box, view, pass }));
         return reply.header("cache-control", request.query.revision ? "private, max-age=31536000, immutable" : "no-cache")
           .header("x-spatial-revision", version.revision).header("x-spatial-render-pass", pass).header("x-spatial-box-view", typeof view === "string" ? view : "sheet")
           .header("x-spatial-box-views", views?.join(",") ?? (view === "sheet" ? SPATIAL_BOX_FACES.join(",") : view)).type("image/png").send(await png);

@@ -1,4 +1,5 @@
 import { compositionLayerOrder } from "./layers.ts";
+import { compositionPlanGeometry } from "./planning.ts";
 import { validateDraft } from "./draft.ts";
 import {
   COMPOSITION_CANVAS,
@@ -71,6 +72,14 @@ export function renderCompositionSvg(
   }
 
   const orderedElements = [...background, ...orderedCompositionElements(draft, elements)];
+  if (draft.plans?.some((plan) => plan.visible)) {
+    orderedElements.push(`<defs><clipPath id="composition-planning-frame"><rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}"/></clipPath></defs>`);
+    for (const plan of draft.plans.filter((entry) => entry.visible)) {
+      const paths = compositionPlanGeometry(plan, draft.frame).paths.map((points) =>
+        `<polyline points="${points.map((p) => `${format(p.x)},${format(p.y)}`).join(" ")}"/>`).join("");
+      orderedElements.push(`<g data-composition-plan="${escapeAttribute(plan.id)}" clip-path="url(#composition-planning-frame)" fill="none" stroke="#B8C4D2" stroke-width="2" stroke-dasharray="8 5">${paths}</g>`);
+    }
+  }
   orderedElements.push(
     `<rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}" fill="none" stroke="#000000" stroke-width="2"/>`,
   );

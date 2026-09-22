@@ -15,6 +15,7 @@ import {
   deleteStyleReference,
   listStyles,
   styleReferenceContentUrl,
+  styleModelContentUrl,
   updateStyle,
   uploadStyleReference,
   type StyleEntry,
@@ -132,6 +133,7 @@ export default function StylesPage() {
         loading={loading}
         errorMessage={loadError}
         imageUrl={styleReferenceContentUrl}
+        modelUrl={styleModelContentUrl}
         labels={getStyleLibraryLabels(t)}
         onCreate={createStyle}
         onUpdate={saveStyle}

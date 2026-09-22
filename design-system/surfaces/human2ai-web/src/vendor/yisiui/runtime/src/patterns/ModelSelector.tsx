@@ -376,7 +376,8 @@ export function ModelSelector({
                   </div>}
                   <Slider className="yisi-model-selector-slider" min={0} max={levels.length - 1} step={1} dots
                     value={reasoningIndex} disabled={modelLocked || model.disabled}
-                    marks={Object.fromEntries(levels.map((level, index) => [index, level.label]))}
+                    marks={Object.fromEntries(levels.map((level, index) => [index,
+                      <span key={level.key} data-current={index === reasoningIndex}>{level.label}</span>]))}
                     ariaLabelForHandle={labels.reasoning}
                     ariaValueTextFormatterForHandle={(index) => levels[index]?.label ?? ""}
                     tooltip={{ formatter: (index) => levels[index ?? 0]?.label }}

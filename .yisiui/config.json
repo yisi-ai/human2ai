@@ -6,7 +6,7 @@
   "distribution": "source-sync",
   "sourceRelease": {
     "surface": "web-react",
-    "version": "0.14.0"
+    "version": "0.15.0"
   },
   "vendorRoot": "design-system/surfaces/human2ai-web/src/vendor/yisiui",
   "localRegistry": "design-system/surfaces/human2ai-web/registry/assets.json",

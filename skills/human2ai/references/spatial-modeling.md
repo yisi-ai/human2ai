@@ -35,6 +35,26 @@ draft and the user's request. An unsaved space has no saved revision to inspect;
 do not invent guidance or silently create a guide when the task is standalone
 modeling. Export additional views only when they clarify occlusion or geometry.
 
+## Save a generated style example
+
+When asked for a 3D style preview, generate a fixed model that demonstrates the
+style's forms, joints, palette and materials. Export a self-contained GLB 2.0 to
+ignored `.human2ai-data/output/`, with embedded geometry and textures, no external
+decoder dependencies, and a file size of at most 10 MB. Human2AI stores the model
+and provides a read-only orbit/zoom preview; it does not execute generator code
+or generate geometry from the description when a user opens the style.
+
+```text
+<runner> style set-model --style <id> --input .human2ai-data/output/style-example.glb --expected-revision <n>
+<runner> style remove-model --style <id> --expected-revision <n>
+```
+
+Each style has at most one model; setting another replaces it. Read the current
+revision with `style list` before writing. `style get` returns its optional
+`previewModel.url` alongside the images and specification. Review the saved model
+in the style detail view. Revisit the example when the specification changes;
+it is reference evidence, not a substitute for the user's spatial layout.
+
 ## Interpret the inputs
 
 - The user's requested content, functions, dimensions, pose constraints and

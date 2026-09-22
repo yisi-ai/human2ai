@@ -78,6 +78,10 @@ describe("agent-authored composition refinement", () => {
         "shotScale",
         "visualWeight",
         "displayText",
+        "plans",
+        "type",
+        "axes",
+        "visible",
       ]),
     );
 

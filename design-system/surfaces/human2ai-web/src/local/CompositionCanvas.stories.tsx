@@ -2,7 +2,7 @@ import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import { AimOutlined, FontSizeOutlined, LineOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
-import { ConfigProvider, Switch } from "antd";
+import { ConfigProvider } from "antd";
 import { useState } from "react";
 import { useCanvasHistory } from "../../../../../web/lib/use-canvas-history";
 
@@ -18,6 +18,7 @@ import { addCameraReference } from "../../../../../src/domain/composition/camera
 
 import {
   COMPOSITION_CANVAS,
+  addCompositionPlan,
   addArea,
   addCompositionImage,
   addDirectionLine,
@@ -43,6 +44,8 @@ import {
   assertStoryText,
 } from "../vendor/yisiui/storybook/interactionChecks";
 import { COMPOSITION_FRAME_ID, CompositionCanvas, type CompositionPlacementTool } from "./CompositionCanvas";
+import { CompositionPlanningPanel } from "./CompositionPlanningPanel";
+import { CanvasHistoryControls } from "./CanvasHistoryControls";
 
 import { placeNodeInStory, placementLayer, placementPointer, placementRender } from "./canvasPlacementStoryChecks";
 
@@ -95,7 +98,9 @@ function CompositionCanvasWorkbench() {
   const [draft, setDraft] = useState(createExampleDraft);
   const [selectedIds, setSelectedIds] = useState<string[]>(["area-1"]);
   const [frameRatio, setFrameRatio] = useState<AspectRatioValue>({ width: 16, height: 9 });
-  const [showGuideGrid, setShowGuideGrid] = useState(true);
+  const [showPlanning, setShowPlanning] = useState(true);
+  const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
+  const [planningLocked, setPlanningLocked] = useState(false);
   const metrics = visibleAreaMetrics(draft);
   const selectedItemIds = selectedIds.filter((id) => id !== COMPOSITION_FRAME_ID);
 
@@ -113,7 +118,9 @@ function CompositionCanvasWorkbench() {
             setDraft(createExampleDraft());
             setSelectedIds(["area-1"]);
             setFrameRatio({ width: 16, height: 9 });
-            setShowGuideGrid(true);
+            setShowPlanning(true);
+            setSelectedPlanIds([]);
+            setPlanningLocked(false);
           }}
         >
           清空画布
@@ -126,7 +133,9 @@ function CompositionCanvasWorkbench() {
             draft={draft}
             placementTool={placementTool}
             onPlacementToolChange={setPlacementTool}
-            showGuideGrid={showGuideGrid}
+            showPlanning={showPlanning}
+            selectedPlanIds={selectedPlanIds} planningLocked={planningLocked}
+            onPlanSelectionChange={(ids) => { setSelectedPlanIds(ids); setSelectedIds([]); }}
             selectedIds={selectedIds}
             sideActions={(
               <>
@@ -187,21 +196,16 @@ function CompositionCanvasWorkbench() {
               </>
             )}
             onDraftChange={setDraft}
-            onSelectionChange={setSelectedIds}
+            onSelectionChange={(ids) => { setSelectedIds(ids); setSelectedPlanIds([]); }}
           />
         </section>
 
         <aside className="composition-canvas-story__panel" aria-label="操作工具">
-          <section>
-            <div className="composition-canvas-story__setting">
-              <label htmlFor="composition-canvas-story-guide-grid">九宫线</label>
-              <Switch
-                id="composition-canvas-story-guide-grid"
-                checked={showGuideGrid}
-                onChange={(checked) => setShowGuideGrid(checked)}
-              />
-            </div>
-          </section>
+          <CompositionPlanningPanel draft={draft} selectedIds={selectedPlanIds} locked={planningLocked}
+            onSelect={(ids) => { setSelectedPlanIds(ids); setSelectedIds([]); }} onDraftChange={setDraft}
+            onLockedChange={(locked) => { setPlanningLocked(locked); setSelectedPlanIds([]); }}
+            showPlanning={showPlanning} onShowPlanningChange={setShowPlanning}
+            labels={zh.composition.planning} deleteLabel={zh.actions.delete} />
 
           <section>
             <h2>编辑所选</h2>
@@ -1832,18 +1836,18 @@ export const Interactive: Story = {
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/side-action-panel"]');
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/composite-button"]');
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/aspect-ratio-selector"]');
-    assertStorySelector(canvasElement, '[data-composition-guide-grid="true"]');
+    assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
     assertStoryRole(canvasElement, "group");
     assertStoryText(canvasElement, "构图画布");
 
-    const guideGridSwitch = canvasElement.querySelector<HTMLButtonElement>('[role="switch"]');
-    if (!guideGridSwitch || guideGridSwitch.getAttribute("aria-checked") !== "true") {
-      throw new Error("Story interaction contract missing enabled guide grid switch");
+    const guideGridSwitch = canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${zh.composition.planning.hideAll}"]`);
+    if (!guideGridSwitch || guideGridSwitch.getAttribute("aria-pressed") !== "true") {
+      throw new Error("Story interaction contract missing enabled planning display switch");
     }
     guideGridSwitch.click();
     await nextFrame();
-    if (canvasElement.querySelector('[data-composition-guide-grid="true"]')) {
-      throw new Error("Story interaction contract did not hide the guide grid");
+    if (canvasElement.querySelector('[data-plan-type="thirds"]')) {
+      throw new Error("Story interaction contract did not hide composition guides");
     }
 
     const triangle = canvasElement.querySelector<SVGGElement>(
@@ -2004,6 +2008,85 @@ export const NarrowToolbar: Story = {
     assertStoryText(canvasElement, "动势线");
     assertStoryText(canvasElement, "1/3");
     assertStoryText(canvasElement, "1/1");
+  },
+};
+
+function CompositionPlanningWorkbench() {
+  const [draft, setDraft] = useState(() => addCompositionPlan(createExampleDraft(), "golden-spiral").draft);
+  const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>(["plan-2"]);
+  const [planningLocked, setPlanningLocked] = useState(false);
+  const [showPlanning, setShowPlanning] = useState(true);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const history = useCanvasHistory(draft, ({ draft: restored }) => setDraft(restored));
+  const update = (next: CompositionDraft) => { history.record(next); setDraft(next); };
+  return <main className="composition-canvas-story" data-canvas-editor>
+    <div className="composition-canvas-story__workspace">
+      <section className="composition-canvas-story__stage">
+        <CanvasHistoryControls {...history} labels={zh.canvasHistory} />
+        <CompositionCanvas draft={draft} onDraftChange={update} interactionResetKey={history.restoreToken}
+          style={{ height: 600 }} viewportAction={{ id: 1, type: "fit-frame" }}
+          selectedIds={selectedIds} onSelectionChange={(ids) => { setSelectedIds(ids); setSelectedPlanIds([]); }}
+          selectedPlanIds={selectedPlanIds} planningLocked={planningLocked} onPlanSelectionChange={(id) => { setSelectedPlanIds(id); setSelectedIds([]); }}
+          showPlanning={showPlanning} planningLabels={zh.composition.planning} />
+      </section>
+      <aside className="composition-canvas-story__panel">
+        <CompositionPlanningPanel draft={draft} selectedIds={selectedPlanIds} locked={planningLocked}
+          showPlanning={showPlanning} onShowPlanningChange={setShowPlanning}
+          onLockedChange={(locked) => { setPlanningLocked(locked); setSelectedPlanIds([]); }}
+          onSelect={(id) => { setSelectedPlanIds(id); setSelectedIds([]); }} onDraftChange={update}
+          labels={zh.composition.planning} deleteLabel={zh.actions.delete} />
+      </aside>
+    </div>
+    <output data-planning-draft hidden>{JSON.stringify(draft)}</output>
+  </main>;
+}
+
+export const Planning: Story = {
+  name: "独立构图规划",
+  args: { draft: createExampleDraft() },
+  render: () => <CompositionPlanningWorkbench />,
+  play: async ({ canvasElement }) => {
+    const read = () => JSON.parse(canvasElement.querySelector("[data-planning-draft]")!.textContent!) as CompositionDraft;
+    await nextFrame();
+    if (canvasElement.querySelector("[data-composition-scene]")!.getBoundingClientRect().height < 400) throw new Error("Planning needs a visible editing viewport");
+    const original = read();
+    const handle = canvasElement.querySelector<SVGGElement>('[data-plan-handle="0"]')!;
+    handle.focus();
+    handle.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    handle.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", bubbles: true }));
+    await nextFrame();
+    const moved = read();
+    if (JSON.stringify(original.plans) === JSON.stringify(moved.plans)) throw new Error("Planning handle must move the plan");
+    if (JSON.stringify(original.areas) !== JSON.stringify(moved.areas)) throw new Error("Planning must not move content");
+    canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${zh.canvasHistory.undo}"]`)!.click();
+    await nextFrame();
+    if (JSON.stringify(read().plans) !== JSON.stringify(original.plans)) throw new Error("Undo must restore planning");
+    canvasElement.querySelector<HTMLButtonElement>(`[data-plan-row="plan-2"] button[aria-label="${zh.composition.planning.visible}"]`)!.click();
+    await nextFrame();
+    if (canvasElement.querySelector('[data-plan-type="golden-spiral"]')) throw new Error("Hidden planning must leave the canvas");
+    if (read().plans!.length !== original.plans!.length) throw new Error("Hiding must preserve planning");
+    canvasElement.querySelector<HTMLButtonElement>(`[data-plan-row="plan-2"] button[aria-label="${zh.composition.planning.visible}"]`)!.click();
+    await nextFrame();
+    canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${zh.composition.planning.add}"]`)!.click();
+    await nextFrame();
+    const menuItems = [...document.querySelectorAll<HTMLElement>('[role="menuitem"]')];
+    if (menuItems.length !== 6) throw new Error("Planning offers six guides including thirds");
+    menuItems.find((item) => item.textContent?.includes(zh.composition.planning.types.triangle))!.click();
+    await nextFrame();
+    setInputValue(requiredInput(canvasElement, zh.composition.planning.rotation), "37");
+    await nextFrame();
+    for (const index of [0, 1, 2]) {
+      const control = canvasElement.querySelector<SVGGElement>(`[data-plan-handle="${index}"]`)!;
+      control.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", shiftKey: true, bubbles: true }));
+      control.dispatchEvent(new KeyboardEvent("keyup", { key: "ArrowRight", bubbles: true }));
+      await nextFrame();
+      const line = canvasElement.querySelector<SVGPolylineElement>('[data-plan-type="triangle"] polyline')!;
+      const [apex, left, right] = [0, 1, 2].map((i) => line.points.getItem(i));
+      if (Math.abs(Math.hypot(apex.x - left.x, apex.y - left.y) - Math.hypot(apex.x - right.x, apex.y - right.y)) > 0.001) {
+        throw new Error("Triangle planning controls must preserve equal legs after rotation");
+      }
+    }
+    if (JSON.stringify(original.areas) !== JSON.stringify(read().areas)) throw new Error("Triangle planning must preserve content");
   },
 };
 

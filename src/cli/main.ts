@@ -407,6 +407,9 @@ async function executeStyleCommand(
         }
         return { url: new URL(value.url, configuredServiceUrl(dependencies)).toString() };
       }),
+      ...(payload.previewModel === undefined ? {} : {
+        previewModel: { url: new URL(styleModelUrl(payload.previewModel), configuredServiceUrl(dependencies)).toString() },
+      }),
       description: payload.description,
     };
   }
@@ -452,6 +455,22 @@ async function executeStyleCommand(
         },
       },
     );
+  }
+
+  if (command === "set-model") {
+    assertOnlyOptions(options, ["style", "input", "expectedRevision"], "style set-model");
+    const styleId = requireOption(options, "style");
+    const filename = path.resolve(requireOption(options, "input"));
+    return requestImageService(dependencies,
+      `/api/v1/styles/${encodeURIComponent(styleId)}/model?filename=${encodeURIComponent(path.basename(filename))}&expectedRevision=${requireInteger(options, "expectedRevision", 1)}`,
+      await readFile(filename));
+  }
+
+  if (command === "remove-model") {
+    assertOnlyOptions(options, ["style", "expectedRevision"], "style remove-model");
+    return requestService(dependencies, `/api/v1/styles/${encodeURIComponent(requireOption(options, "style"))}/model`, {
+      method: "DELETE", body: { expectedRevision: requireInteger(options, "expectedRevision", 1) },
+    });
   }
 
   if (command === "add-reference") {
@@ -825,6 +844,9 @@ async function connectSession(
       current: currentStyle ? {
         id: currentStyle.id, name: currentStyle.name, revision: currentStyle.revision,
         promptSummary: currentStyle.promptSummary, description: currentStyle.description,
+        ...(currentStyle.previewModel ? { previewModel: {
+          url: new URL(`/api/v1/styles/${encodeURIComponent(currentStyle.id)}/models/${encodeURIComponent(currentStyle.previewModel.id)}/content`, configuredServiceUrl(dependencies)).toString(),
+        } } : {}),
         referenceImages: currentStyle.referenceImages.map((reference) => ({
           url: new URL(`/api/v1/styles/${encodeURIComponent(currentStyle!.id)}/references/${encodeURIComponent(reference.id)}/content`, configuredServiceUrl(dependencies)).toString(),
         })),
@@ -1824,6 +1846,8 @@ function styleUsage(): string {
     "  human2ai style get --style <id>",
     "  human2ai style create --name <name> --category <visual|ui|spatial> --description <text> [--summary <sentence>]",
     "  human2ai style update --style <id> --expected-revision <n> [--name <name>] [--category <visual|ui|spatial>] [--description <text>] [--summary <sentence>]",
+    "  human2ai style set-model --style <id> --input <generated.glb> --expected-revision <n>",
+    "  human2ai style remove-model --style <id> --expected-revision <n>",
     "  human2ai style add-reference --style <id> --input <image> --expected-revision <n>",
     "  human2ai style remove-reference --style <id> --reference <id> --expected-revision <n>",
     "  human2ai style delete --style <id> --expected-revision <n>",
@@ -1971,4 +1995,10 @@ export function isMainModule(entryPath = process.argv[1]): boolean {
   } catch {
     return false;
   }
+}
+
+function styleModelUrl(value: unknown): string {
+  const model = requireRecord(value, "style model");
+  if (typeof model.url !== "string") throw invalidServiceResponse("style model URL is invalid");
+  return model.url;
 }

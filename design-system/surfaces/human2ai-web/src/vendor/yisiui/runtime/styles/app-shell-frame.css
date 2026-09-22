@@ -1,4 +1,6 @@
 .yisi-app-shell-frame {
+  --yisi-app-shell-header-padding-y: var(--yisiui-space-3);
+  --yisi-app-shell-header-title-line-height: calc(var(--yisiui-font-size-lg) * var(--yisiui-font-line-height-normal));
   box-sizing: border-box;
   display: grid;
   grid-template-columns: var(
@@ -55,7 +57,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--yisiui-space-4);
-  padding: var(--yisiui-space-5) var(--yisiui-space-4) var(--yisiui-space-4);
+  padding: var(--yisi-app-shell-header-padding-y) var(--yisiui-space-4) var(--yisiui-space-4);
 }
 
 .yisi-app-shell-sidebar-heading {
@@ -73,7 +75,7 @@
   color: var(--yisiui-color-text-primary);
   font-size: var(--yisiui-font-size-lg);
   font-weight: var(--yisiui-font-weight-semibold);
-  line-height: var(--yisiui-font-line-height-normal);
+  line-height: var(--yisi-app-shell-header-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -97,7 +99,7 @@
   display: grid;
   grid-column: 2;
   grid-template-rows:
-    calc(var(--yisiui-component-button-height) + var(--yisiui-space-6))
+    calc(var(--yisiui-component-button-height) + 2 * var(--yisi-app-shell-header-padding-y))
     minmax(0, 1fr);
   min-width: 0;
   height: 100%;
@@ -111,7 +113,7 @@
   min-width: 0;
   align-items: center;
   gap: var(--yisiui-space-3);
-  padding: 0 var(--yisiui-space-5);
+  padding: var(--yisi-app-shell-header-padding-y) var(--yisiui-space-5);
 }
 
 .yisi-app-shell-content-leading,
@@ -124,7 +126,23 @@
 }
 
 .yisi-app-shell-content-trailing {
-  margin-left: auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  margin-inline-start: auto;
+}
+
+.yisi-app-shell-header-extra {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  white-space: nowrap;
+}
+
+.yisi-app-shell-header-extra > * {
+  flex-shrink: 0;
 }
 
 .yisi-app-shell-content-title {
@@ -133,7 +151,7 @@
   color: var(--yisiui-color-text-primary);
   font-size: var(--yisiui-font-size-md);
   font-weight: var(--yisiui-font-weight-semibold);
-  line-height: var(--yisiui-font-line-height-normal);
+  line-height: var(--yisi-app-shell-header-title-line-height);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

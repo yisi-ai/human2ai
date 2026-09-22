@@ -4,6 +4,10 @@ import type { StyleLibraryLabels } from "./StyleLibraryView";
 export const image = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1200' height='800'%3E%3Crect width='1200' height='800' fill='%23e7e2da'/%3E%3Ccircle cx='410' cy='400' r='190' fill='%23272b30'/%3E%3Crect x='650' y='180' width='330' height='440' rx='28' fill='%23faf8f3'/%3E%3C/svg%3E";
 
 export const labels: StyleLibraryLabels = {
+  model: {
+    label: "模型示例", loading: "正在加载模型", failed: "模型无法预览", reset: "重置模型视角",
+    controls: "拖动旋转，滚轮缩放；聚焦后用方向键旋转，+ / − 缩放，Home 重置。", retry: "重试",
+  },
   newStyle: "新建风格",
   editStyle: "编辑风格",
   name: "名称",
@@ -30,7 +34,7 @@ export const labels: StyleLibraryLabels = {
   spatialDescriptionPlaceholder: "说明形体、比例、材质、配色、光照和镜头等建模规则",
   searchPlaceholder: "搜索风格",
   deleteTitle: "确认删除这个风格？",
-  deleteDescription: "该风格及其全部参考图将被永久删除。",
+  deleteDescription: "该风格及其全部参考图和模型将被永久删除。",
   empty: "还没有风格",
   noMatches: "没有匹配的风格",
   loading: "正在加载风格",

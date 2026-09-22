@@ -37,7 +37,10 @@
     "./yisiui/section-navigation-panel": "./src/vendor/yisiui/runtime/src/patterns/SectionNavigationPanel.tsx",
     "./yisiui/decorative-title": "./src/vendor/yisiui/runtime/src/components/DecorativeTitle.tsx",
     "./yisiui/animated-icon": "./src/vendor/yisiui/runtime/src/components/AnimatedIcon.tsx",
-    "./yisiui/model-selector": "./src/vendor/yisiui/runtime/src/patterns/ModelSelector.tsx"
+    "./yisiui/model-selector": "./src/vendor/yisiui/runtime/src/patterns/ModelSelector.tsx",
+    "./yisiui/adaptive-accordion": "./src/vendor/yisiui/runtime/src/patterns/AdaptiveAccordion.tsx",
+    "./yisiui/resizable-collapse-group": "./src/vendor/yisiui/runtime/src/patterns/ResizableCollapseGroup.tsx",
+    "./yisiui/dot-scrollbar": "./src/vendor/yisiui/runtime/src/components/DotScrollbar.tsx"
   },
   "devDependencies": {
     "storybook": "10.6.0",

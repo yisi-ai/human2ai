@@ -61,6 +61,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Default: Story = {
   name: "竖向模式、型号与推理选择",
+  parameters: { docs: { description: { story: "切换推理档位时，轨道填充和圆点同步平滑过渡；圆点在悬停、按下和聚焦时保持 32px，不显示描边。键盘聚焦以当前档位文字的下划线提示。" } } },
   play: ({ canvasElement }) => {
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/model-selector"]');
     assertStoryRole(canvasElement, "radiogroup");
@@ -94,6 +95,7 @@ export const Horizontal: Story = {
 export const HighestReasoning: Story = {
   name: "最高推理强度与星点闪烁",
   args: { value: { ...initialValue, reasoningKey: "high" } },
+  parameters: { docs: { description: { story: "可从最高档切换至其他档位查看过渡，再切回最高档并点击组件空白区域：滑块和星点区域不显示文本插入光标。" } } },
   play: ({ canvasElement }) => {
     assertStorySelector(canvasElement, '.yisi-model-selector-stars[aria-hidden="true"]');
     assertStorySelector(canvasElement, '[role="slider"][aria-valuetext="高"]');

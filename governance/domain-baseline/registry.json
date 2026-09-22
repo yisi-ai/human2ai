@@ -388,7 +388,7 @@
         "focusLinks 显式关联焦点与区域并联动变换；fixedIds 必须完全保留；不会自动推断主次焦点或新增引导节点",
         "v2 在最终结果上重新验证所有所选关系；冲突返回具体关系索引和测量数据，不以最后一个操作覆盖先前关系的失败",
         "数学验证只确认关系成立；用户同意和最终画面复核由 Agent 负责，服务不引入审批状态",
-        "辅助线仅属于结果验证证据，不写入草稿或生图参考"
+        "精修生成的关系校验辅助线仅属于结果验证证据，不写入草稿或生图参考"
       ],
       "implementations": [
         {
@@ -519,7 +519,7 @@
     {
       "id": "composition.layout-states",
       "category": "composition",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "local",
       "responsibility": "管理同一构图会话中共享节点内容、独立画框和节点布局的可自定义状态",
       "invariants": [
@@ -528,7 +528,8 @@
         "状态独立保存画框尺寸与边界、节点位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
         "新增复制指定来源布局、插入其后并选中，命名排序和删除边界委托 capture.named-states；删除活动状态选择邻近状态",
         "状态和当前选择通过既有草稿版本、自动保存、外部版本同步及本地撤销恢复；指纹覆盖全部状态",
-        "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容"
+        "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容",
+        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划"
       ],
       "implementations": [
         {
@@ -568,7 +569,8 @@
       "contractTests": [
         "test/unit/composition-states.test.ts",
         "test/integration/composition-sessions.test.ts",
-        "test/unit/composition-text-outline.test.ts"
+        "test/unit/composition-text-outline.test.ts",
+        "test/unit/composition-planning.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/composition-layout-states.md",
@@ -630,6 +632,95 @@
       ],
       "exceptions": [],
       "reviewTrigger": "扩展到文字、图片、方向控制或修改光源编码与精修保留规则之前"
+    },
+    {
+      "id": "composition.planning",
+      "category": "composition",
+      "contractVersion": 8,
+      "status": "local",
+      "responsibility": "让用户和 Agent 共同编辑按构图状态保存的独立构图规划，并统一画布、CLI 预览与生成意图",
+      "invariants": [
+        "规划编辑只改变 plans，不联动移动、缩放、旋转或增删内容节点",
+        "规划以当前画框相对坐标表达，旋转和黄金螺旋增长使用物理比例；三分与黄金分割固定贴合画框；三角构图按位置、旋转、底边和高度定义，物理坐标中始终等腰",
+        "每个状态独立保存完整规划；顶层 plans 是当前状态的编辑副本，状态复制、切换和保存沿用 composition.layout-states",
+        "visible 只控制画布和查看预览；所有规划均表达生成意图，没有单独备注或采用开关，旧 enabled 与 note 在加载时移除",
+        "用户和 Agent 通过既有草稿版本、并发保护、外部同步与撤销机制编辑同一份规划；没有独立存储或路由",
+        "规划属于持久化意图，不属于内容层级或精修验证辅助线；生成参考图不包含规划线",
+        "无 plans 的旧草稿保持结构和指纹；有效规划必须纳入指纹，重复 id、未知类型或非法几何不得保存",
+        "旧三点式规划加载时保留底边并将顶点投影到中垂线；thirds 是正式规划类型，新建草稿默认包含可见的横纵三分构图，旧草稿不自动补入",
+        "对称构图固定在画框中心，吸附点为八个 45° 方向加四个随画框比例变化的四角方向；正方形合并重合点，指针、键盘和 Agent 加载共用同一组方向",
+        "放射构图的均匀模式使用画框相对汇聚点、起始方向、2–36 条射线和 1–360° 展开角度，整圈不重复末端；自由模式使用同一汇聚点和 2–36 个独立物理角度，每条射线有方向控制点，不保存展开角度或整体旋转；无 mode 的旧放射规划按均匀模式加载",
+        "多选平移复用既有规划几何变换并一次提交草稿；三分、黄金分割线和对称构图始终保持原有画框参照位置，其他规划保持相对间距，内容元素不跟随",
+        "放射构图切到自由时保留各射线方向；切回均匀时保留中心、数量和第一条射线方向并恢复 360° 均布；自由模式增量添加射线到最大角度间隙，减少数量时从末尾移除，其余角度和内容节点不变",
+        "composition inspect 从当前状态全部规划（含隐藏规划）动态派生画框内含边界的 planningIntersections，复用画布与 CLI 预览的几何；交点含画框比例坐标、可用于内容节点的画布坐标、来源规划与稳定线条名称，交点 id 仅在本次分析中有效",
+        "同一规划内部和不同规划间的孤立交点均计算，同点合并全部来源；连续重合线段不伪造唯一交点；三角形使用有限边、放射使用有向射线、黄金螺旋使用现有三圈折线",
+        "直线交点标记为 exact，涉及螺旋时标记 approximate 并提供输出像素中的曲线折线偏差上限，该上限不声称是交点位置误差；派生交点不保存、不进入草稿指纹、不联动内容节点"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/planning.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/states.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/analysis.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/render.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/composition-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/compositionExport.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/app/composition/page.tsx"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/frame.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/planning-intersections.ts"
+        }
+      ],
+      "consumers": [
+        "composition-capture",
+        "composition-cli",
+        "composition-editor"
+      ],
+      "variationPoints": [
+        "三分、黄金分割、对称构图、黄金螺旋、三角构图与放射构图各自保留几何参数和编辑方式",
+        "复用 capture.draft-versioning、capture.canvas-edit-history 和现有构图状态，不将规划解释为自动约束求解器",
+        "黄金螺旋中心圆点单击切换 mirrored；拖动保留位移和旋转缩放操作，不将拖动误作方向切换",
+        "规划未选中使用浅灰，选中使用强调色；整体锁定仅为页面本地防误操作状态，禁用人工规划编辑，不持久化或限制 Agent 保存",
+        "三分和黄金分割在画布上不拦截点击，只通过侧栏选择和编辑；总显示开关仅为界面状态，隐藏全部规划线和控件，恢复时保留单项 visible，锁定时仍可切换总显示",
+        "新增交点只沿用 composition inspect 的本地草稿与会话版本读取入口，不增加规划路由、持久化交点、元素绑定或自动布局"
+      ],
+      "contractTests": [
+        "test/unit/composition-planning.test.ts",
+        "test/unit/composition-export.test.ts",
+        "test/integration/composition-sessions.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增规划类型、元素绑定、实时约束求解或更改画框参照语义之前"
     },
     {
       "id": "composition.reference-projection",
@@ -787,7 +878,7 @@
       "id": "spatial.scene-authoring",
       "category": "spatial",
       "status": "local",
-      "contractVersion": 26,
+      "contractVersion": 29,
       "responsibility": "管理多人可扩展骨架、世界位置与旋转固定、关节范围、多摄像机、六面观察盒、对象备注和确定性镜头输出",
       "invariants": [
         "用户与 Agent 共用关节位置、骨段旋转和约束；骨段以上游关节为轴心，标准拓扑与骨长不可通过姿势编辑改写，三轴上下界只能显式配置且包含默认姿势",
@@ -802,15 +893,17 @@
         "bodyType 选择 male/female；未记录时使用男性底模；add-character 与 set-proportions 共用创建/切换规则，切换保留姿势、比例、自定义肢体与锁定，固定冲突原子拒绝，撤销由共享历史完整恢复",
         "标准手部含稳定手掌、五个固定指根连接和每指三段可旋转骨骼；拇指掌骨与两节指骨区分，末节默认仅蓝色局部 Z 轴弯曲（左 -90–0°、右 0–90°），近节保留 X 弯曲并增加 Z ±45°，掌骨不变；pose-hand 的拇指末节改用左右对应 Z 弯曲。缺省 thumbLimitsVersion 的当前人物只修正原默认范围并标记为 2，保留已有旋转/固定与显式自定义范围，末节已有 X 姿势仅保留到复原所需的范围，历史数据库不重写。手指采用解剖局部弯曲/张开轴和独立正负角度范围，指尖可作 IK 位置目标且解算不得回退牵动手臂；pose-hand 以同一骨段角度提供五指弯曲、张开和拇指内收，固定冲突原子拒绝；reset-hand 仅复原所选手掌及其后代并解除这些部位的固定，保留手臂和其他手，版本存储负责撤销；复制手或手臂包含五指，源模型原始五指蒙皮与低头身厚度共用编辑/PNG 变形。当前 v2 Quaternius 缺失手指时补全默认五指、将掌心放回掌内，保留身体姿势与原手尖的位置固定，不新增旧格式或旧外形渲染。",
         "整个人物的 neckLength 0.6–1.4、palmSize 0.7–1.3、fingerLength 0.6–1.4、footSize 0.7–1.4 叠加于头身形态，缺省为 1；手脚左右及复制肢体共用数值。显式脖子长度只沿当前颈部方向移动头部，保留躯干、肩膀和头部尺寸，height 仍为基础身高，不反向补偿躯干；手掌改变指根与手指粗细、指长独立控制；脚的宽长按参数缩放、厚度按变化量的一半联动，脚踝按解剖脚底高度温和升降，膝盖与身体不动，默认脚底在蒙皮过渡误差内保持原高度。用户、Agent、解算和编辑/PNG 蒙皮共用计算，修改保留骨段角度与固定，固定冲突原子拒绝；后续比例修改和姿势复原保留这些参数，撤销使用共享版本存储。",
-        "每个镜头按同一版本、画幅和透视派生 color / structure / depth PNG；编辑模型和默认普通图显示较深肤色的弯曲内侧指节短弧线，省略每指最靠近手掌的指根线，非拇指保留近端/远端指间关节线，拇指仅保留指间关节线，其朝向由末节蓝色局部 Z 轴及左右镜像弯曲方向确定，四指仍采用 X 轴向掌侧弯曲对应的短弧线；结构线复用同一表面几何；指节线贴合现有蒙皮并受全场景遮挡，不拦截部位选择，不显示隐藏骨架或网格分块接缝。深度为全图可见人物及物体统一线性相机深度，近白远暗、背景黑，不按对象分别归一化；切换和导出不写入草稿，缓存包含 session/revision/camera/pass。",
+        "每个镜头按同一版本、画幅和透视派生 color / structure / depth PNG；编辑模型和默认普通图显示较深肤色的弯曲内侧指节短弧线，省略每指最靠近手掌的指根线，非拇指保留近端/远端指间关节线，拇指仅保留指间关节线，其朝向由末节蓝色局部 Z 轴及左右镜像弯曲方向确定，四指仍采用 X 轴向掌侧弯曲对应的短弧线；结构线复用同一表面几何；指节线贴合现有蒙皮并受全场景遮挡，不拦截部位选择，不显示隐藏骨架或网格分块接缝。深度为全图可见人物及物体统一线性相机深度，近白远暗、背景黑，不按对象分别归一化；切换和导出不写入草稿，缓存区分会话、镜头和输出类型，以保守画面依赖跨版本复用，版本 URL 保持不可变。",
         "空间级 lightingEnabled 缺省为 false；set-lighting 由用户与 Agent 共用，保存和撤销复用 DraftVersionStore。关闭时均匀照亮表面、关闭方向主光和投影，开启时恢复原环境填充、主光及全空间投影，两种模式保留同一接触明暗与指节线。编辑视口、所有镜头普通 PNG 和构图引用跟随对应版本设置，结构线/深度及人物姿势不变，不重写缺省字段的历史草稿。编辑辅助几何不参与投影或接触采样；WebGL 与 CPU 共用光照参数、保留各自抗锯齿/阴影滤波。拖动复用接触明暗并实时更新已启用的投影，结束重新计算，选择不改变接触明暗；镜头 URL 包含渲染版本。",
-        "cameraBoxes 是可选的独立空间对象，最多 24 个，与普通摄像机、人物和物体共用唯一 ID；put-camera-box / fit-camera-box / remove 与 UI、Agent 共用校验及版本存储，不改变人物姿势或普通镜头。等边观察盒边长 0.05–1000 米，三维位置与 XYZ 旋转可编辑，单图分辨率 128–1024 整数。六个正交镜头从盒面朝内取景，使用相同边长、分辨率和完整六面裁切；方向随盒子旋转，顶面图上方为局部 −Z，底面图上方为局部 +Z。取景基于实际蒙皮后网格，支持全部空间对象或全部手部，保留盒子旋转；空范围不移动观察盒。导出 sheet 为固定前/后/左、右/顶/底 3×2 带方向标签合图，或指定单张，使用同一不可变版本，不保存派生镜头；普通图透明，结构和深度共用裁切，六张深度统一使用盒子边长的线性范围。缓存区分会话/版本/观察盒/方向/渲染类型，编辑辅助盒框不进入参考图。主镜头仍决定最终构图，六视图只辅助判断遮挡及大致姿势，提示词不要求多宫格、复制人物或还原指节/身体标记。",
+        "cameraBoxes 是可选的独立空间对象，最多 24 个，与普通摄像机、人物和物体共用唯一 ID；put-camera-box / fit-camera-box / remove 与 UI、Agent 共用校验及版本存储，不改变人物姿势或普通镜头。等边观察盒边长 0.05–1000 米，三维位置与 XYZ 旋转可编辑，单图分辨率 128–1024 整数。六个正交镜头从盒面朝内取景，使用相同边长、分辨率和完整六面裁切；方向随盒子旋转，顶面图上方为局部 −Z，底面图上方为局部 +Z。取景基于实际蒙皮后网格，支持全部空间对象或全部手部，保留盒子旋转；空范围不移动观察盒。导出 sheet 为固定前/后/左、右/顶/底 3×2 带方向标签合图，或指定单张，使用同一不可变版本，不保存派生镜头；普通图透明，结构和深度共用裁切，六张深度统一使用盒子边长的线性范围。缓存区分会话/观察盒/方向/渲染类型及保守画面依赖，版本 URL 保持不可变，编辑辅助盒框不进入参考图。主镜头仍决定最终构图，六视图只辅助判断遮挡及大致姿势，提示词不要求多宫格、复制人物或还原指节/身体标记。",
         "骨架投影 skeleton 为独立只读 PNG 类型，复用 jointWorldTransforms、正式镜头或观察盒摄像机及六面裁切，投影人物骨段、关节点和头部轮廓，包含手指及自定义肢体；解剖左侧蓝色、右侧橙色、中轴中性色，浅色不透明背景，不受肤色、物体和光照影响。骨架透过模型表面显示，不能代表表面遮挡或深度；摄像机后方及视锥外关节点不产生可见标记，穿过观察盒的骨段保留裁切部分。普通摄像机与观察盒的 UI、HTTP、CLI 共用渲染类型、画幅和版本缓存，切换与下载不写入草稿。",
         "geometric 外观由实际关节世界坐标驱动：圆球关节、圆柱骨段、刚性长方体手掌/脚和仅有双眼的椭球头；头顶与脚尖末端标记由实体包容，手指末端保留圆球。手指与复制肢体共用当前轴、比例和固定约束；手掌形体不随手指弯曲变形，脚底高度与温和脚踝抬升一致。关节球选择位置，骨段及手掌/脚/头选择旋转，几何体参与统一光照、深度、结构线和观察盒取景；编辑器不重复叠加辅助骨架。add-character 可指定 appearance，缺省仍为 quaternius；put-character 只切换 appearance 时必须保留全部姿势、骨架、锁定、比例和自定义肢体；set-proportions 与复原保留外观，保存和撤销复用共享 DraftVersionStore。",
         "几何人偶五指按解剖身份固定配色：拇指橙、食指蓝、中指绿、无名指紫、小指粉；左右手及复制手同名手指一致，关节球为对应颜色的浅色，人物显示颜色不覆盖此识别配色。编辑器选中几何手指时仅提亮原色系，普通镜头和观察盒使用未选中的统一模型材质；骨架投影、结构线与深度保持各自语义。更新镜头及观察盒渲染 URL 版本以刷新已保存姿势的浏览器缓存，不写入新草稿版本。",
         "几何人偶关节球与骨段共用有明度对比的材质：五指关节保留对应色系并提亮，身体关节依据人物颜色选择深浅对比。普通镜头与观察盒 color PNG 在可见几何部位边界叠加随输出尺寸调整的细线，近侧表面拥有描线；隐藏部位、三角面接缝与画幅裁切边缘不产生描线，透明轮廓保持原样。描线不应用于人体模型或场景物体，不修改 structure/depth/skeleton、姿势、光照设置和草稿；编辑视口复用材质，参考图描线仅由 PNG 渲染器派生。",
         "人物、基础物体、摄像机和观察盒支持可选 note 字符串，缺省为空语义，旧 v2 草稿不补写；复用对应 put 操作保存，保留稳定 ID、几何及其他元数据，文档指纹和共享历史包含备注，inspect 返回完整备注。名称和备注不参与实体渲染、接触明暗或 Web 镜头预览失效判断；统一的 spatialEntityRenderKey 排除实体顶层名称与备注，并复用 canonicalJson 消除接口序列化或历史恢复的字段顺序差异，修改文字保留模型实例及已保存预览，PNG 不包含备注。",
-        "观察盒组合导出通过 CLI --views 和 HTTP views 指定 1–6 个不重复的 front/back/left/right/top/bottom，逗号分隔并去除方向两侧空白，保留传入顺序；拒绝空列表、重复、sheet 或未知方向，与单项 view 互斥且只能用于观察盒。沿用同一不可变场景版本、原六面裁切与四种渲染类型；按所选数量每行最多三张，保留单图分辨率、28 px 方向标签与 12 px 间隔，单项组合仍有标签。既有单面无标签输出和默认固定六面 sheet 保持不变；缓存区分组合及其顺序，响应 x-spatial-box-views 和 CLI views 反映实际顺序。session connect 暴露 spatial.render-box-views@1，spatial methods 暴露 cameraBoxViewSelection。合图尺寸与排布由 cameraBoxSheetLayout 统一，浏览器 Canvas 与服务端 Sharp 仅负责各自绘制；网页标签按界面语言，CLI 标签保持英文局部方向。导出不保存新版本，不改变人物、观察盒或浏览器激活状态。"
+        "观察盒组合导出通过 CLI --views 和 HTTP views 指定 1–6 个不重复的 front/back/left/right/top/bottom，逗号分隔并去除方向两侧空白，保留传入顺序；拒绝空列表、重复、sheet 或未知方向，与单项 view 互斥且只能用于观察盒。沿用同一不可变场景版本、原六面裁切与四种渲染类型；按所选数量每行最多三张，保留单图分辨率、28 px 方向标签与 12 px 间隔，单项组合仍有标签。既有单面无标签输出和默认固定六面 sheet 保持不变；缓存区分组合及其顺序，响应 x-spatial-box-views 和 CLI views 反映实际顺序。session connect 暴露 spatial.render-box-views@1，spatial methods 暴露 cameraBoxViewSelection。合图尺寸与排布由 cameraBoxSheetLayout 统一，浏览器 Canvas 与服务端 Sharp 仅负责各自绘制；网页标签按界面语言，CLI 标签保持英文局部方向。导出不保存新版本，不改变人物、观察盒或浏览器激活状态。",
+        "空间交互按一次已验证草稿开始，连续预览复用 applySpatialOperations 且仅处理受影响实体，提交仍完整校验；位置/旋转固定、角度限制、撤销和保存语义不变。编辑缓存保留平移/旋转模型；同拓扑人体模型直接写入原顶点/法线缓冲并复用静止形态和指节线交点，与新建模型共用变形算法；底模或骨架拓扑改变时重建。编辑器按人物将关节球和骨段分别批量绘制，每个实例保留稳定部位 ID、命中检测与高亮，导出仍排除辅助图形；移除时释放实例缓冲。实体渲染指纹以轻量快照检查嵌套原地修改，镜头共用实体局部包围盒及场景边界快照，保守覆盖 Float32 世界坐标舍入。手部滑杆按动画帧实时预览五指弯曲、张开和拇指内收，复用领域约束及模型缓冲，松手或键盘调整结束后提交一次；体型滑杆只暂存控件数值，操作结束后提交一次；数字参数在回车或失焦时提交，Escape 取消，未变更或空值不提交。体型与数字参数的中间值不进入视口草稿或模型计算；所有参数的中间值不进入撤销或保存队列；确认仍复用领域校验，固定冲突保留原模型和数值。画布直接拖动与手部实时预览复用交互期间接触明暗，结束由单个浏览器 Worker 重算，只应用匹配当前场景的结果，过期任务合并且卸载后丢弃。",
+        "普通摄像机和观察盒 PNG 按实际镜头参数、输出类型及保守画面依赖复用跨版本缓存；关闭投影时排除视锥外且不影响可见实体接触明暗的物体，移入/移出及接触邻近物体改变会失效。开启投影的普通图保留全场景依赖（含阴影取景范围），骨架投影保留人物依赖。响应版本仍是请求版本，历史输出不可变；后端单个 Worker 串行生成 PNG 并复用有界模型/接触缓存，不阻塞 HTTP 事件循环。"
       ],
       "implementations": [
         {
@@ -884,6 +977,30 @@
         {
           "role": "current",
           "path": "design-system/surfaces/human2ai-web/src/local/spatialObservationImage.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/preview.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/scene-update.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/spatial/camera-render-key.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/spatial-render-service.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/spatial-render-worker.ts"
+        },
+        {
+          "role": "current",
+          "path": "design-system/surfaces/human2ai-web/src/local/spatial-shading.worker.ts"
         }
       ],
       "consumers": [
@@ -916,7 +1033,12 @@
         "test/integration/spatial-geometric-model.test.ts",
         "test/unit/spatial-scene-cache.test.ts",
         "test/unit/spatial-camera-previews.test.ts",
-        "test/unit/spatial-notes.test.ts"
+        "test/unit/spatial-notes.test.ts",
+        "test/unit/spatial-preview.test.ts",
+        "test/unit/spatial-model-update.test.ts",
+        "test/unit/spatial-render-keys.test.ts",
+        "test/unit/spatial-render-service.test.ts",
+        "test/integration/spatial-preview-cache.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/src/local/SpatialWorkspaceView.stories.tsx",
@@ -933,20 +1055,23 @@
     {
       "id": "style.library",
       "category": "style",
-      "contractVersion": 3,
+      "contractVersion": 4,
       "status": "local",
-      "responsibility": "管理画面、UI 和 3D 建模风格的完整设计规范、可选参考图、简短提示词特征句和创建来源",
+      "responsibility": "管理画面、UI 和 3D 建模风格的完整设计规范、可选参考图、程序生成的模型示例、简短提示词特征句和创建来源",
       "invariants": [
         "风格分类只能为 visual、ui 或 spatial；分类用于查找，不限制会话绑定",
         "浏览器创建入口固定创建 user 条目，Agent CLI 创建入口固定创建 agent 条目",
         "creatorType 在条目创建后不可修改，后续由另一方参与也不改变创建方",
         "参考图允许为空或包含多张 PNG、JPEG、WebP 图片；description 是唯一完整且非空的设计规范，promptSummary 是独立的非空单行特征短句（最多 240 字符）",
-        "Agent 获取单个风格的使用上下文时只返回参考图和说明，不返回名称、分类、创建方或其他管理信息",
-        "删除风格会删除条目、全部参考图记录和对应图片文件，不提供归档状态",
+        "Agent 获取单个风格的使用上下文时只返回参考图、可选模型 URL 和说明，不返回名称、分类、创建方或其他管理信息",
+        "删除风格会删除条目、全部参考图、模型记录和对应文件，不提供归档状态",
         "旧条目未保存 promptSummary 时兼容使用说明首句；更新内容须检查风格 revision",
         "完整设计规范用于 Agent 的设计决策，浏览器复制提示词只追加一行短句且不调用模型",
         "删除条目会原子解除所有会话绑定并推进会话 revision，保留画布历史",
-        "新增分类的数据库迁移完整保留旧风格、参考图、会话绑定及历史，不推进会话 revision"
+        "新增分类的数据库迁移完整保留旧风格、参考图、会话绑定及历史，不推进会话 revision",
+        "每个风格最多保存一个程序生成的模型示例；使用不超过 10 MB 的自包含 GLB 2.0，几何与纹理内嵌且不依赖外部解码器；不接收或执行生成脚本",
+        "设置、替换、移除模型检查风格 revision；模型拥有独立内容 ID，替换清理旧文件，并发冲突清理失败写入；模型预览不修改会话草稿",
+        "没有模型的旧风格保持原有响应形状；模型表迁移不改变旧参考图、绑定或版本"
       ],
       "implementations": [
         {
@@ -970,6 +1095,10 @@
           "role": "adapter",
           "path": "web/lib/human2ai-api.ts",
           "consumer": "style-library-page"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/style/model-input.ts"
         }
       ],
       "consumers": [
@@ -978,13 +1107,15 @@
       ],
       "variationPoints": [
         "浏览器和 Agent 使用不同创建入口来确定不可变的 creatorType",
-        "管理列表包含条目元数据，Agent 的单条风格上下文只包含参考图和说明"
+        "管理列表包含条目元数据，Agent 的单条风格上下文只包含参考图和说明",
+        "图片验证复用 asset.image-validation；模型验证保留在风格领域，因为 GLB 容器、嵌入资源和替换生命周期不同于图片"
       ],
       "contractTests": [
         "test/integration/style-library.test.ts",
         "test/unit/style-cli.test.ts",
         "test/unit/web-api.test.ts",
-        "test/unit/style-library-migration.test.ts"
+        "test/unit/style-library-migration.test.ts",
+        "test/integration/style-model.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "新增分类、归档、规范结构、短句生成策略或变更风格/会话删除语义之前"
@@ -992,13 +1123,13 @@
     {
       "id": "style.session-binding",
       "category": "style",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "shared",
       "responsibility": "让用户和 Agent 共享构图、UI 和 3D 空间会话的单一风格绑定及当前设计规范",
       "invariants": [
         "每个会话可绑定一个存在的全局风格或无风格；分类不限制绑定",
         "绑定、变更和解除须检查会话 revision；相同绑定不推进版本",
-        "绑定本身不修改画布，读取返回当前完整规范、短句、参考图和最新风格 revision",
+        "绑定本身不修改画布，读取返回当前完整规范、短句、参考图、可选模型示例和最新风格 revision",
         "用户和 Agent 使用同一绑定操作；连接命令返回当前上下文与含并发参数的加工保存命令",
         "删除风格解除会话绑定并推进会话 revision；画布历史及加工元数据保留"
       ],

@@ -50,6 +50,13 @@ export function frameBoundsInCanvas(frame: CompositionFrame): CompositionFrameBo
   };
 }
 
+export function compositionSymmetryRotations(frame: CompositionFrameSize): number[] {
+  const corner = Math.atan2(frame.height, frame.width) * 180 / Math.PI;
+  return [...Array.from({ length: 8 }, (_, index) => index * 45), corner, 180 - corner, 180 + corner, 360 - corner]
+    .sort((a, b) => a - b)
+    .filter((angle, index, angles) => index === 0 || Math.abs(angle - angles[index - 1]) > 1e-8);
+}
+
 export function compositionWorldSize(
   frame: CompositionFrame,
   minimumSize: CompositionFrameSize = COMPOSITION_CANVAS,

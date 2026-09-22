@@ -1,8 +1,40 @@
-# Human2AI
+<p align="center">
+  <img src="web/app/icon.svg" alt="以形塑形图标" width="96" height="96">
+</p>
+
+<h1 align="center">以形塑形</h1>
 
 **简体中文** | [English](README.en.md)
 
-Human2AI 是供人和 AI Agent 协作的本地视觉工作区：用户在桌面浏览器中编辑构图、UI 草图和 3D 空间，Agent 通过 CLI 连接同一会话、读取版本、修改和导出结果。
+Human2AI 是供人和 AI Agent 协作的本地创作工作区：用户在桌面浏览器中编辑构图、UI 草图和 3D 空间，Agent 通过 CLI 连接同一会话、读取版本、修改和导出结果。
+
+## 功能预览
+
+### 构图
+
+用形状、配色和构图线表达画面布局，标注主体与设计要求，再交给 Agent 完成设计。下面展示双焦点放射构图与生成的折扇画面。
+
+![双焦点放射构图与折扇设计结果](assets/readme/composition.png)
+
+### UI 界面
+
+用色块、文字和备注搭建页面草图，再交给 Agent 细化视觉设计。草图与设计结果可以在同一画布中并排展示，便于对照和继续调整。
+
+![UI 页面草图与细化后的界面设计](assets/readme/UI.png)
+
+### 3D 空间
+
+摆放模型、调整人物姿态和摄像机视角，为画面设计建立空间参考。将取景画面引入构图，让 Agent 理解姿态、透视与遮挡关系。
+
+![3D 空间中不同人物模型的姿态参考](assets/readme/3d.png)
+
+Agent 也可以自主建模、摆放物体和调整复杂动作，将持械、多臂、异形角色等姿态设计转化为图像生成的空间参考。
+
+![持剑角色的 3D 姿态与生成图像](assets/readme/3d-p1.png)
+
+![四臂角色的 3D 姿态与生成图像](assets/readme/3d-p2.png)
+
+![异形角色的 3D 姿态与生成图像](assets/readme/3d-p3.png)
 
 ## 环境要求
 
@@ -102,7 +134,7 @@ npx --no-install human2ai session open --session <session-id>
 
 `session connect` 返回浏览器地址、最新 Capture 版本和当前会话支持的命令。`capture get` 读取指定版本，`capture save` 保存新版本，`capture undo` 追加恢复版本。不同项目通过项目 ID 和会话 ID 组织在同一本地服务中。
 
-构图、UI 和 3D 空间会话可使用 `/styles/` 中的风格库，支持画面、UI 和 3D 分类。消费项目的 Agent 可读取完整风格规范，结合 3D 空间的布局、尺度、姿态和相机指导，在消费项目中完成建模；绑定风格不会修改空间草稿。Agent 可通过 `style list|get|create|update|add-reference|remove-reference|delete` 操作同一风格库。完整命令和协作方式见 [Human2AI Skill](skills/human2ai/SKILL.md)。
+构图、UI 和 3D 空间会话可使用 `/styles/` 中的风格库，支持画面、UI 和 3D 分类。消费项目的 Agent 可读取完整风格规范，结合 3D 空间的布局、尺度、姿态和相机指导，在消费项目中完成建模；绑定风格不会修改空间草稿。Agent 可通过 `style list|get|create|update|add-reference|remove-reference|set-model|remove-model|delete` 操作同一风格库。完整命令和协作方式见 [Human2AI Skill](skills/human2ai/SKILL.md)。 3D 风格还可保存一个由程序生成的固定 GLB 模型示例，在详情中旋转、缩放或切换参考图。Agent 使用 `style set-model --style <id> --input .human2ai-data/output/example.glb --expected-revision <n>` 保存模型（自包含 GLB，最大 10 MB）；`style remove-model` 使用相同风格和版本参数移除模型。
 
 ## 数据与产物
 
@@ -199,7 +231,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.3.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
+在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.4.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
 
 ## 许可证
 

@@ -1,0 +1,40 @@
+.human2ai-style-model-preview {
+  position: relative;
+  min-height: 0;
+  flex: 1;
+  overflow: hidden;
+  background: var(--yisiui-color-surface-soft);
+}
+
+.human2ai-style-model-preview__canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.human2ai-style-model-preview__canvas:focus-visible {
+  outline: 2px solid var(--yisiui-color-border-focus);
+  outline-offset: -2px;
+}
+
+.human2ai-style-model-preview__canvas canvas {
+  display: block;
+}
+
+.human2ai-style-model-preview__status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--yisiui-space-2);
+  color: var(--yisiui-color-text-muted);
+  background: var(--yisiui-color-surface-soft);
+}
+
+.human2ai-style-model-preview__tools {
+  position: absolute;
+  right: var(--yisiui-space-2);
+  bottom: var(--yisiui-space-2);
+  display: flex;
+  gap: var(--yisiui-space-1);
+}

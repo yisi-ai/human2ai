@@ -93,12 +93,19 @@ import {
 } from "./InfiniteCanvasViewport";
 
 import "./CompositionCanvas.css";
+import zh from "../../../../../locales/zh-CN/common.json";
+import { CompositionPlanningOverlay } from "./CompositionPlanningOverlay";
+import type { CompositionPlanningLabels } from "./CompositionPlanningPanel";
 
 export interface CompositionCanvasProps {
+  selectedPlanIds?: readonly string[];
+  planningLocked?: boolean;
+  onPlanSelectionChange?: (ids: string[]) => void;
+  planningLabels?: CompositionPlanningLabels;
   interactionResetKey?: number;
   draft: CompositionDraft;
   appearance?: "editor" | "reference";
-  showGuideGrid?: boolean;
+  showPlanning?: boolean;
   frameLocked?: boolean;
   zoom?: number;
   viewportAction?: CompositionCanvasViewportAction;
@@ -256,10 +263,14 @@ const CLIPBOARD_PASTE_OFFSET = 24;
 export const COMPOSITION_FRAME_ID = "composition-frame";
 
 export function CompositionCanvas({
+  selectedPlanIds,
+  planningLocked = false,
+  onPlanSelectionChange,
+  planningLabels = zh.composition.planning,
   interactionResetKey,
   draft,
   appearance = "editor",
-  showGuideGrid = false,
+  showPlanning = true,
   frameLocked = false,
   zoom,
   viewportAction,
@@ -971,6 +982,7 @@ export function CompositionCanvas({
                   return;
                 }
                 onSelectionChange([]);
+                onPlanSelectionChange?.([]);
                 closeItemEditor();
               }
             : undefined
@@ -1322,37 +1334,10 @@ export function CompositionCanvas({
           />
         ) : null}
 
-        {appearance !== "reference" && showGuideGrid ? (
-          <g
-            className="human2ai-composition-canvas__guide-grid"
-            data-composition-guide-grid="true"
-            aria-hidden="true"
-          >
-            <line
-              x1={frame.x + frame.width / 3}
-              y1={frame.y}
-              x2={frame.x + frame.width / 3}
-              y2={frame.y + frame.height}
-            />
-            <line
-              x1={frame.x + (frame.width * 2) / 3}
-              y1={frame.y}
-              x2={frame.x + (frame.width * 2) / 3}
-              y2={frame.y + frame.height}
-            />
-            <line
-              x1={frame.x}
-              y1={frame.y + frame.height / 3}
-              x2={frame.x + frame.width}
-              y2={frame.y + frame.height / 3}
-            />
-            <line
-              x1={frame.x}
-              y1={frame.y + (frame.height * 2) / 3}
-              x2={frame.x + frame.width}
-              y2={frame.y + (frame.height * 2) / 3}
-            />
-          </g>
+        {appearance !== "reference" && showPlanning ? (
+          <CompositionPlanningOverlay key={`${draft.activeStateId ?? "default"}:${interactionResetKey ?? 0}:${planningLocked}`}
+            draft={draft} selectedIds={selectedPlanIds} locked={planningLocked} onSelect={onPlanSelectionChange}
+            onDraftChange={placementTool ? undefined : onDraftChange} screenScale={screenScale} labels={planningLabels} />
         ) : null}
 
         {appearance !== "reference" &&

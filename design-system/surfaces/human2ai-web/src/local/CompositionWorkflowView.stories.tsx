@@ -67,7 +67,7 @@ function WorkflowHarness({
         refinement={workflow.refinement}
         activeView={activeView}
         onViewChange={setActiveView}
-        showDraftGuideGrid
+        showPlanning
         canvasZoom={canvasZoom}
         canvasViewportAction={{ id: 1, type: "fit-frame" }}
         onCanvasZoomChange={setCanvasZoom}
@@ -204,16 +204,14 @@ export const Ready: Story = {
     ) {
       throw new Error("Composition side action width was not forwarded to the canvas");
     }
-    assertStorySelector(canvasElement, '[data-composition-guide-grid="true"]');
+    assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
 
     findRadio(canvasElement, "精修").click();
     await nextFrame();
     assertStorySelector(canvasElement, '[data-active-view="refined"]');
     assertStorySelector(canvasElement, '[data-canvas-frame="composition-frame"]');
     assertStoryText(canvasElement, "Agent 判断");
-    if (canvasElement.querySelector('[data-composition-guide-grid="true"]')) {
-      throw new Error("Agent refinement view must not render the guide grid");
-    }
+    assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
 
     findRadio(canvasElement, "预览").click();
     await nextFrame();
@@ -223,14 +221,14 @@ export const Ready: Story = {
     if (canvasElement.querySelector('[data-canvas-frame="composition-frame"]')) {
       throw new Error("Generation reference view must not render the composition frame");
     }
-    if (canvasElement.querySelector('[data-composition-guide-grid="true"]')) {
-      throw new Error("Generation reference view must not render the guide grid");
+    if (canvasElement.querySelector('[data-plan-type="thirds"]')) {
+      throw new Error("Generation reference view must not render composition guides");
     }
     assertReadOnlyPreview(canvasElement);
 
     findRadio(canvasElement, "构图").click();
     await nextFrame();
-    assertStorySelector(canvasElement, '[data-composition-guide-grid="true"]');
+    assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
     const area = canvasElement.querySelector<SVGGElement>(
       '[data-composition-item="area-1"]',
     );

@@ -911,7 +911,7 @@
         "controlled-state",
         "read-only-reference-rendering",
         "reference-node-interactions-disabled",
-        "frame-scoped-rule-of-thirds-guide",
+        "frame-bound-thirds-planning",
         "generation-reference-frame-cropping",
         "reference-frame-boundary-sizing",
         "reference-container-fit",
@@ -935,14 +935,26 @@
         "direction-control-keyboard-nudging",
         "ctrl-text-region-corner-dragging",
         "convex-text-region-outlines",
-        "outline-fitted-text-marks"
+        "outline-fitted-text-marks",
+        "independent-composition-planning-overlay",
+        "planning-pointer-and-keyboard-controls",
+        "planning-hidden-locked-states",
+        "isosceles-triangle-planning-controls",
+        "fixed-center-frame-corner-symmetry",
+        "spiral-winding-toggle-control",
+        "radial-composition-planning",
+        "planning-multi-selection-translation",
+        "planning-editor-lock",
+        "planning-overlay-visibility",
+        "passive-thirds-and-golden-section-guides",
+        "uniform-and-free-radial-planning"
       ],
       "slots": [
         "draft",
         "selection",
         "selection-change",
         "item-double-click",
-        "guide-grid-visibility",
+        "planning-overlay-visibility",
         "frame-lock",
         "zoom",
         "zoom-change",
@@ -964,7 +976,11 @@
         "placement-tool-change",
         "layer-labels",
         "interactionResetKey",
-        "direction-control-labels"
+        "direction-control-labels",
+        "selected-plan-id",
+        "plan-selection-change",
+        "planning-labels",
+        "planning-lock"
       ],
       "aliases": [
         "CompositionDraftCanvas"
@@ -976,7 +992,7 @@
         "需要组件直接读取 API、保存会话或管理业务历史",
         "需要通用图片裁剪或自由绘图画布"
       ],
-      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片复用 CanvasNode 的 tooltip 插槽，悬停或聚焦时按节点说明、显示文字、备注分段显示；显示文字仅适用于文字区域，空字符串及纯空白整段隐藏，全部为空时无提示。标题复用既有中英文编辑字段语义，内容保留换行且按纯文本呈现，每段最多六行，完整内容沿用双击编辑器；不增加常驻画布文案。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形、文字区域或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字区域放置后保持选中并可直接调整宽高，双击打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。 文字区域支持按住 Ctrl 独立拖动四个角点，聚焦后可用方向键微调；只允许凸四边形且交叉或退化时保留最近有效轮廓。普通移动、缩放、旋转和复制保留四点轮廓，参考图和文字占位线同步呈现；角点控件在内容层上方且尺寸不随缩放变化。 节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，移除构图私有提示排版和 CSS，由 CanvasNode 与 CanvasElements.css 统一控制两种画布的展示。",
+      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片复用 CanvasNode 的 tooltip 插槽，悬停或聚焦时按节点说明、显示文字、备注分段显示；显示文字仅适用于文字区域，空字符串及纯空白整段隐藏，全部为空时无提示。标题复用既有中英文编辑字段语义，内容保留换行且按纯文本呈现，每段最多六行，完整内容沿用双击编辑器；不增加常驻画布文案。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形、文字区域或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字区域放置后保持选中并可直接调整宽高，双击打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。 文字区域支持按住 Ctrl 独立拖动四个角点，聚焦后可用方向键微调；只允许凸四边形且交叉或退化时保留最近有效轮廓。普通移动、缩放、旋转和复制保留四点轮廓，参考图和文字占位线同步呈现；角点控件在内容层上方且尺寸不随缩放变化。 节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，移除构图私有提示排版和 CSS，由 CanvasNode 与 CanvasElements.css 统一控制两种画布的展示。 构图规划通过独立覆盖层呈现，复用 CanvasNode 的选择和键盘边界；对称构图、螺旋和三角支持指针与方向键操作，显示与编辑锁定分开，规划改变不联动内容。 三角规划以中心、旋转、底边宽度和高度表达；顶点调整朝向和高度，底角对称缩放，指针、键盘与数值操作始终保持物理等腰。 对称构图锁定画框中心，外端控制点吸附到原有八个方向与随画框比例变化的四角方向，正方形时合并重复点，面板不提供自由坐标或任意角度。黄金螺旋中心点单击或 Enter/空格切换旋向，拖动不触发切换；方向键逐档切换对称方向。操作说明复用面板问号提示。 放射构图复用规划层和参数控件；均匀模式用起始方向、射线数量和展开角度控制扇形或环形，自由模式每条射线有独立方向控制点，隐藏整体旋转和展开角度。两种模式共用汇聚点和射线数量；切到自由保留方向，切回均匀恢复整圈均布；指针和方向键均沿用单条射线的角度变换，数据同步到 CLI、预览和提示词。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1195,7 +1211,7 @@
       "capabilities": [
         "composition-view-switching",
         "centered-view-toolbar",
-        "draft-only-guide-grid",
+        "composition-planning-overlay",
         "draft-controlled-multiple-selection-forwarding",
         "draft-frame-lock-forwarding",
         "draft-item-double-click-forwarding",
@@ -1229,7 +1245,8 @@
         "retained-composition-result",
         "cancel-editor-interactions-after-history-restore",
         "custom-layout-state-toolbar",
-        "shared-composition-and-ui-canvas-layout"
+        "shared-composition-and-ui-canvas-layout",
+        "planning-overlay-visibility"
       ],
       "slots": [
         "draft",
@@ -1238,7 +1255,7 @@
         "active-view",
         "draft-selection",
         "draft-selection-change",
-        "draft-guide-grid-visibility",
+        "planning-overlay-visibility",
         "draft-frame-lock",
         "draft-item-double-click",
         "canvas-zoom",
@@ -1259,7 +1276,10 @@
         "interactionResetKey",
         "stateControls",
         "children",
-        "data-active-stage"
+        "data-active-stage",
+        "selected-plan-id",
+        "plan-selection-change",
+        "planning-labels"
       ],
       "aliases": [
         "CompositionRefinementWorkbench"
@@ -1274,7 +1294,7 @@
         "需要组件自行选择构图美学算法或生成加工方案",
         "需要组件直接调用 Agent、API 或持久化会话"
       ],
-      "differenceSummary": "项目本地受控工作流视图，组合 CompositionCanvas 与居中的 TabSwitch，并把业务提供的 selectedIds 多选状态、画布底纹、视图控制、画框锁定、节点编辑器本地化标签、SideActionPanel 首次收起状态及可选双击通知继续传给下层；用户草稿同时沿用 CompositionCanvas 的节点键盘删除与多选复制粘贴规则。工作流状态只控制加工图是否可用。预览始终可切换，有有效加工结果时展示加工图，否则直接展示当前草图；两种情况下都只输出画框内内容，并关闭节点选择、聚焦、拖动、缩放、旋转、双击编辑、删除和复制粘贴。预览阶段隐藏自身溢出，画框边界在全部可用空间内等比自适应，不显示下方提示、缩放或滚动条。用户草图中的 Human2AI 节点信息编辑由 CompositionCanvas 组合公共编辑器并通过 onDraftChange 返回业务层，WorkflowView 不持有编辑内容、弹层位置、历史、剪贴板或保存。Agent 加工图只读显示画框；视图不拥有 Agent 决策和服务状态。 v2 精修展示目标、判断依据、不确定性、保留关系与取舍，以及每条所选关系的目标、原图、精修和偏差。画布仅显示构图内容，不渲染数学规则辅助线或其开关。零操作保留结果可以正常查看。 产品构图页面通过 stateControls 替换固定视图栏；复用 UiSketchStateTabs，状态归页面领域模型管理。切换布局仅重建画布交互，保留状态栏键盘焦点。 构图和 UI 界面共用内部的状态栏与画布区布局；UI 调用方通过 children 插入 UiSketchCanvas 及历史控件，stateControls 包含 UiSketchStateTabs。内容插槽不要求构图草稿，也不执行精修结果判断；UI 状态和保存仍由 UI 页面持有。",
+      "differenceSummary": "项目本地受控工作流视图，组合 CompositionCanvas 与居中的 TabSwitch，并把业务提供的 selectedIds 多选状态、画布底纹、视图控制、画框锁定、节点编辑器本地化标签、SideActionPanel 首次收起状态及可选双击通知继续传给下层；用户草稿同时沿用 CompositionCanvas 的节点键盘删除与多选复制粘贴规则。工作流状态只控制加工图是否可用。预览始终可切换，有有效加工结果时展示加工图，否则直接展示当前草图；两种情况下都只输出画框内内容，并关闭节点选择、聚焦、拖动、缩放、旋转、双击编辑、删除和复制粘贴。预览阶段隐藏自身溢出，画框边界在全部可用空间内等比自适应，不显示下方提示、缩放或滚动条。用户草图中的 Human2AI 节点信息编辑由 CompositionCanvas 组合公共编辑器并通过 onDraftChange 返回业务层，WorkflowView 不持有编辑内容、弹层位置、历史、剪贴板或保存。Agent 加工图只读显示画框；视图不拥有 Agent 决策和服务状态。 v2 精修展示目标、判断依据、不确定性、保留关系与取舍，以及每条所选关系的目标、原图、精修和偏差。画布仅显示构图内容，不渲染数学规则辅助线或其开关。零操作保留结果可以正常查看。 产品构图页面通过 stateControls 替换固定视图栏；复用 UiSketchStateTabs，状态归页面领域模型管理。切换布局仅重建画布交互，保留状态栏键盘焦点。 构图和 UI 界面共用内部的状态栏与画布区布局；UI 调用方通过 children 插入 UiSketchCanvas 及历史控件，stateControls 包含 UiSketchStateTabs。内容插槽不要求构图草稿，也不执行精修结果判断；UI 状态和保存仍由 UI 页面持有。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1434,7 +1454,9 @@
         "narrow-viewport",
         "session-style-selection",
         "concise-prompt-summary-editing",
-        "complete-style-specification"
+        "complete-style-specification",
+        "optional-generated-model-preview",
+        "reference-media-switch"
       ],
       "slots": [
         "styles",
@@ -1443,7 +1465,8 @@
         "description",
         "action-feedback",
         "selection",
-        "initial-category"
+        "initial-category",
+        "model-url"
       ],
       "aliases": [
         "StyleCollection",
@@ -1456,7 +1479,7 @@
         "需要文章、音乐、来源资料、说明文档、自动提示词、归档状态或多级风格目录",
         "需要组件直接调用 API、变更创建来源或持久化图片"
       ],
-      "differenceSummary": "项目本地受控页面视图，组合共享实验态 ImageTitleCard、TabSwitch、BasicButton、LoadingState、Modal 与 ConfirmAction。列表只提供画面/UI/3D 和 User/Agent 两组扁平筛选；列表项用 ImageTitleCard 展示最多三张完整参考图与单行标题，分类和创建来源仅在详情面板标题栏右上角以小号弱化文字显示；本地原生按钮提供整项点击与键盘焦点，空图保留媒体区域，详情仍展示全部参考图。预览正文严格左右分栏，左侧只显示零到多张参考图，右侧只显示一段总说明；创建与编辑弹窗支持本地选图和粘贴图片。创建来源由应用层提供并保持不可编辑，删除为永久删除且必须确认。组件不拥有 API、Agent 调用、文件存储、归档、提示词或资料树。 支持只选择风格的受控入口，复用现有图片标题卡片和预览；设计规范供 Agent 加工，风格短句供提示词导出。",
+      "differenceSummary": "项目本地受控页面视图，组合共享实验态 ImageTitleCard、TabSwitch、BasicButton、LoadingState、Modal 与 ConfirmAction。列表只提供画面/UI/3D 和 User/Agent 两组扁平筛选；列表项用 ImageTitleCard 展示最多三张完整参考图与单行标题，分类和创建来源仅在详情面板标题栏右上角以小号弱化文字显示；本地原生按钮提供整项点击与键盘焦点，空图保留媒体区域，详情仍展示全部参考图。预览正文严格左右分栏，左侧显示零到多张参考图，并可切换查看可选程序生成的只读模型示例，右侧只显示一段总说明；创建与编辑弹窗支持本地选图和粘贴图片。创建来源由应用层提供并保持不可编辑，删除为永久删除且必须确认。组件不拥有 API、Agent 调用、文件存储、归档、提示词或资料树。 支持只选择风格的受控入口，复用现有图片标题卡片和预览；设计规范供 Agent 加工，风格短句供提示词导出。 模型通过懒加载 StyleModelPreview 显示；仅有模型时列表显示模型标识。沿用原有左右预览方向，不变更视觉基线。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1468,7 +1491,8 @@
         "StatusCard",
         "AssetSkeletonTree",
         "TextMarkEditor",
-        "Ant Design Modal"
+        "Ant Design Modal",
+        "SpatialViewport"
       ]
     },
     {
@@ -1739,7 +1763,11 @@
         "interactionResetKey",
         "historyControls",
         "noteLabel",
-        "copiedLabel"
+        "copiedLabel",
+        "showCameras",
+        "onShowCamerasChange",
+        "showRig",
+        "onShowRigChange"
       ],
       "aliases": [],
       "useWhen": [
@@ -1749,7 +1777,7 @@
         "二维构图或 UI 草图",
         "需要组件自行读取 API 或持久化"
       ],
-      "differenceSummary": "AppShellFrame 右栏通过 panelHost 接纳信息与工具、空间对象、参数三个 TabSwitch 标签。AssetSkeletonTree 独占对象标签，统一列出角色、关节、骨段、物体和摄像机，角色下身体部位同级、手部独立分组，关节与骨段使用不同颜色图标；角色与摄像机分别添加。树选择留在列表，画布选择和新建打开参数，切换标签保留选中与展开状态。参数按选择显示世界位置或局部旋转/六个角度边界，位置与旋转分开固定；角色支持复原姿势、比例和Quaternius 男女性底模。API、历史和冲突由应用层负责。Story 覆盖空、加载、错误、禁用、四臂、双头、长名称、英文、桌面最小尺寸，以及标签隔离/固定/复原/键盘交互。 头身比例与身高并排，躯干/腿部用真实占比分界滑杆调整，各限 30%–70%；使用 Ant Design Slider 的键盘与 ARIA 语义，拖动只预览，结束提交一次，固定冲突提示，比例可单独复原。 比例滑杆每步 2 个百分点；头身比例联动身体宽厚和肩胯间距，网格与关节控制一致。 人物参数复用现有 Select 选择男性/女性，低头身在 2/3/4/7 参考形态之间连续过渡，协调脸型、颈长、肩胯、躯干及四肢，并独立平衡头部和躯干的侧面厚度；小数头身输入使用 0.5 步进并允许一位小数；切换共用比例操作与固定冲突提示。 镜头预览按设置的输出宽高比居中显示，适应右栏宽度并限制最大高度；支持横向、纵向、正方形及多镜头切换。 手部作为人物下独立容器，内部平铺手腕、掌心、手掌骨段和五指关节/骨段；指尖可选，固定指根连接不作为旋转骨段展示。整手参数提供五指弯曲、张开、拇指内收和单手复原；滑杆预览与提交沿用领域约束，使用原有受控参数与存储边界。 整个人物参数增加颈长、手掌大小、手指长度和脚部大小，左右共用、限制上下界，沿用滑杆预览/松手提交及百分比输入。 镜头预览复用 TabSwitch 切换普通图、结构线及全空间深度，BasicButton 下载当前版本的 PNG，包含加载、错误、重试与禁用；切换不发出空间操作。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 六面观察盒作为同级空间对象，通过独立按钮添加，支持移动、旋转、边长、分辨率以及按实际网格框住全部对象/手部；参数复用现有取景类型、Select、PNG 下载与加载/失败状态，导出六宫格或单面，场景保存由应用层负责。 摄像机与观察盒预览增加骨架投影，四种参考以两列显示，沿用同一画幅、下载与只读状态；骨架展示关节点、骨段及手指，左右配色区分，允许透过模型表面查看。 人物参数复用 Select 增加模型样式，在人体模型与几何人偶间切换；通过原有 put-character 仅保存外观，保留姿势、比例、固定和自定义肢体。几何关节可直接选择位置、骨段选择旋转，选中沿用高亮；镜头与观察盒复用同一模型输出。 通过 historyControls 插槽在画布左下角接入共享操作级撤销与重做，替代按上一保存版本恢复的按钮。 复用 CompositionWorkflowView 的顶部布局，通过固定空间/摄像机 TabSwitch 切换编辑器和三列摄像机总览；切换保留编辑器实例与轨道视角，预览复用注入的当前 revision 普通图，待保存与逐项失败状态不显示旧图，名称和列表随草稿更新。 画布不展示保存或错误文字；空间标签左侧的错误图标通过 Tooltip 展示原因并保留失败重试。 点击摄像机总览卡片复用已有选择逻辑展开右侧参数，名称、投影参数和选中态同步；保持总览视图，选择不写入文档，失败重试独立。 摄像机总览和参数区隐藏滚动条，仍可内部滚动；外层布局不产生额外滚动轨道。 信息与工具复用 Checkbox 提供默认开启的显示摄像机开关，统一控制编辑画布内全部镜头辅助线，独立于骨架显隐；只修改本地视图，不保存或刷新镜头预览。 双击打开物件附近的紧凑 Modal，复用 TextMarkEditorField/TextMarkEditorTextArea 编辑名称与备注，自动保存、外部或 Escape 关闭；右侧参数同样提供备注，列表图标按需显示完整多行备注。位置随桌面边缘约束，复用原有 put 操作及历史，不拥有新 API；备注编辑不重建几何或刷新预览。 根据用户确认的 UI 草图增加观察盒标签：Select 选择已有观察盒，复用 TabSwitch 切换四种图像类型，六个 BasicButton 以 aria-pressed 表达激活状态，激活高亮、未激活浅灰；上排前/左/顶、下排后/右/底，下排向右错开半个按钮；前后、左右、顶底分成三组，组间留白，不展示悬停提示，并与半透明立方体面高亮同步。下方显示当前开启方向的 PNG 合图，复用已有不可变单面来源，合图尺寸与方向排布共用领域 cameraBoxSheetLayout，CLI --views 组合导出沿用同一规则；复制写入图片剪贴板，下载复用 saveImageFile，两者与所见预览使用同一 Blob。空观察盒、全关、待保存、加载、失败重试与导出失败均有明确状态；方向激活状态与类型不保存，切换标签保留方向选择。此页由 SpatialCameraBoxView 和 spatialObservationImage 内部组合，不新增通用 UI 资产。用户要求自行查看，本次不运行测试或构建。",
+      "differenceSummary": "AppShellFrame 右栏通过 panelHost 接纳信息与工具、空间对象、参数三个 TabSwitch 标签。AssetSkeletonTree 独占对象标签，统一列出角色、关节、骨段、物体和摄像机，角色下身体部位同级、手部独立分组，关节与骨段使用不同颜色图标；角色与摄像机分别添加。树选择留在列表，画布选择和新建打开参数，切换标签保留选中与展开状态。参数按选择显示世界位置或局部旋转/六个角度边界，位置与旋转分开固定；角色支持复原姿势、比例和Quaternius 男女性底模。API、历史和冲突由应用层负责。Story 覆盖空、加载、错误、禁用、四臂、双头、长名称、英文、桌面最小尺寸，以及标签隔离/固定/复原/键盘交互。 头身比例与身高并排，躯干/腿部用真实占比分界滑杆调整，各限 30%–70%；使用 Ant Design Slider 的键盘与 ARIA 语义，拖动只更新控件数值，结束提交一次，固定冲突提示，比例可单独复原。 比例滑杆每步 2 个百分点；头身比例联动身体宽厚和肩胯间距，网格与关节控制一致。 人物参数复用现有 Select 选择男性/女性，低头身在 2/3/4/7 参考形态之间连续过渡，协调脸型、颈长、肩胯、躯干及四肢，并独立平衡头部和躯干的侧面厚度；小数头身输入使用 0.5 步进并允许一位小数；切换共用比例操作与固定冲突提示。 镜头预览按设置的输出宽高比居中显示，适应右栏宽度并限制最大高度；支持横向、纵向、正方形及多镜头切换。 手部作为人物下独立容器，内部平铺手腕、掌心、手掌骨段和五指关节/骨段；指尖可选，固定指根连接不作为旋转骨段展示。整手参数提供五指弯曲、张开、拇指内收和单手复原；滑杆实时预览并校验领域约束，仅在操作结束后提交，使用原有受控参数与存储边界。 整个人物参数增加颈长、手掌大小、手指长度和脚部大小，左右共用、限制上下界，沿用滑杆松手提交及百分比输入确认后提交。 镜头预览复用 TabSwitch 切换普通图、结构线及全空间深度，BasicButton 下载当前版本的 PNG，包含加载、错误、重试与禁用；切换不发出空间操作。 空间级光照效果缺省关闭，明亮显示保留接触明暗与指节线；开启方向光和投影。信息与工具复用 Checkbox，通过受控操作保存，编辑视口和镜头普通图共用设置。 左右锁骨与髋骨连接段由领域固定局部旋转，选中保持高亮但不显示旋转工具，参数只读；已有姿势保留。 六面观察盒作为同级空间对象，通过独立按钮添加，支持移动、旋转、边长、分辨率以及按实际网格框住全部对象/手部；参数复用现有取景类型、Select、PNG 下载与加载/失败状态，导出六宫格或单面，场景保存由应用层负责。 摄像机与观察盒预览增加骨架投影，四种参考以两列显示，沿用同一画幅、下载与只读状态；骨架展示关节点、骨段及手指，左右配色区分，允许透过模型表面查看。 人物参数复用 Select 增加模型样式，在人体模型与几何人偶间切换；通过原有 put-character 仅保存外观，保留姿势、比例、固定和自定义肢体。几何关节可直接选择位置、骨段选择旋转，选中沿用高亮；镜头与观察盒复用同一模型输出。 通过 historyControls 插槽在画布左下角接入共享操作级撤销与重做，替代按上一保存版本恢复的按钮。 复用 CompositionWorkflowView 的顶部布局，通过固定空间/摄像机 TabSwitch 切换编辑器和三列摄像机总览；切换保留编辑器实例与轨道视角，预览复用注入的当前 revision 普通图，待保存与逐项失败状态不显示旧图，名称和列表随草稿更新。 画布不展示保存或错误文字；空间标签左侧的错误图标通过 Tooltip 展示原因并保留失败重试。 点击摄像机总览卡片复用已有选择逻辑展开右侧参数，名称、投影参数和选中态同步；保持总览视图，选择不写入文档，失败重试独立。 摄像机总览和参数区隐藏滚动条，仍可内部滚动；外层布局不产生额外滚动轨道。 信息与工具复用 Checkbox 控制摄像机辅助线和关节骨段显隐，默认开启且彼此独立。通过受控属性交由页面在同一浏览器持久化，刷新及切换空间后保留；组件未受控时保留本地状态，不写入场景或刷新镜头预览。 双击打开物件附近的紧凑 Modal，复用 TextMarkEditorField/TextMarkEditorTextArea 编辑名称与备注，自动保存、外部或 Escape 关闭；右侧参数同样提供备注，列表图标按需显示完整多行备注。位置随桌面边缘约束，复用原有 put 操作及历史，不拥有新 API；备注编辑不重建几何或刷新预览。 根据用户确认的 UI 草图增加观察盒标签：Select 选择已有观察盒，复用 TabSwitch 切换四种图像类型，六个 BasicButton 以 aria-pressed 表达激活状态，激活高亮、未激活浅灰；上排前/左/顶、下排后/右/底，下排向右错开半个按钮；前后、左右、顶底分成三组，组间留白，不展示悬停提示，并与半透明立方体面高亮同步。下方显示当前开启方向的 PNG 合图，复用已有不可变单面来源，合图尺寸与方向排布共用领域 cameraBoxSheetLayout，CLI --views 组合导出沿用同一规则；复制写入图片剪贴板，下载复用 saveImageFile，两者与所见预览使用同一 Blob。空观察盒、全关、待保存、加载、失败重试与导出失败均有明确状态；方向激活状态与类型不保存，切换标签保留方向选择。此页由 SpatialCameraBoxView 和 spatialObservationImage 内部组合，不新增通用 UI 资产。用户要求自行查看，本次不运行测试或构建。 空间性能优化沿用既有视觉与交互组件：画布连续拖动每帧处理最新输入，复用领域约束与模型缓冲；浏览器 Worker 异步更新接触明暗，过期结果不覆盖新场景。摄像机预览按镜头与输出类型的保守依赖保留跨版本图片，总览按可见范围加载。 模型变化复用原模型与指节线缓冲，空间对象树按已提交草稿及语言缓存，滑杆暂态不重复构造完整对象树。 手部滑杆按动画帧实时更新手指模型，松手或键盘调整结束后提交一次；体型滑杆拖动只更新控件和数字显示，结束后更新模型；数字参数复用 InputNumber 解析和边界规范化，仅回车或失焦时提交一次，Escape 取消，空值与未变更值不提交。确认失败、切换对象或历史恢复清理输入暂态；体型及数字输入的中间值不进入视口草稿；手部实时预览只更新视口，所有参数的中间值不进入撤销、保存和镜头预览更新。 骨骼辅助图形按人物批量绘制，实例仍分别支持命中选择、部位高亮和变换工具。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1811,6 +1839,108 @@
         "CompositeButton",
         "InfiniteCanvasViewport",
         "SpatialWorkspaceView"
+      ]
+    },
+    {
+      "id": "composition-planning-panel",
+      "name": "CompositionPlanningPanel",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CompositionPlanningPanel.tsx",
+      "storyId": "human2ai-composition-canvas--planning",
+      "capabilities": [
+        "composition-plan-add-select-delete",
+        "planning-parameter-editing",
+        "planning-visibility",
+        "controlled-draft-editing",
+        "isosceles-triangle-planning-controls",
+        "fixed-center-frame-corner-symmetry",
+        "spiral-winding-toggle-control",
+        "radial-composition-planning",
+        "planning-multi-selection-translation",
+        "planning-editor-lock",
+        "planning-overlay-visibility",
+        "passive-thirds-and-golden-section-guides",
+        "uniform-and-free-radial-planning"
+      ],
+      "slots": [
+        "draft",
+        "selection",
+        "select",
+        "draft-change",
+        "labels",
+        "delete-label",
+        "disabled",
+        "planning-lock",
+        "planning-overlay-visibility"
+      ],
+      "aliases": [
+        "CompositionPlanningInspector"
+      ],
+      "useWhen": [
+        "为构图当前状态编辑独立规划参数并与画布选择同步"
+      ],
+      "doNotUseWhen": [
+        "通用图形属性编辑",
+        "自动移动画面元素或执行精修",
+        "读取 API 或自行管理保存和撤销"
+      ],
+      "differenceSummary": "复用已采用的 YisiUI BasicButton 以及 Ant Design Dropdown、InputNumber、Select、Switch；保留构图专属的类型、坐标与显示语义。空状态、多个规划、隐藏、锁定、多选和禁用均受控；数字和文字控件使用原生键盘边界，删除可经既有历史撤销。现有 TextMarkEditor 是模态文字上下文编辑器，CanvasNodeEditor 负责内容元数据，都不承载规划列表。新增组件保持 candidate，沿用现有侧栏视觉方向，Story 提供交互与回归证据。 三角规划以中心、旋转、底边宽度和高度表达；顶点调整朝向和高度，底角对称缩放，指针、键盘与数值操作始终保持物理等腰。 对称构图锁定画框中心，外端控制点吸附到原有八个方向与随画框比例变化的四角方向，正方形时合并重复点，面板不提供自由坐标或任意角度。黄金螺旋中心点单击或 Enter/空格切换旋向，拖动不触发切换；方向键逐档切换对称方向。操作说明复用面板问号提示。 放射构图复用规划层和参数控件；均匀模式用起始方向、射线数量和展开角度控制扇形或环形，自由模式每条射线有独立方向控制点，隐藏整体旋转和展开角度。两种模式共用汇聚点和射线数量；切到自由保留方向，切回均匀恢复整圈均布；指针和方向键均沿用单条射线的角度变换，数据同步到 CLI、预览和提示词。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "BasicButton",
+        "TextMarkEditor",
+        "Human2AiCanvasNodeEditor",
+        "CanvasNode",
+        "CompositionCanvas",
+        "Ant Design InputNumber",
+        "Ant Design Select",
+        "Ant Design Switch"
+      ]
+    },
+    {
+      "id": "style-model-preview",
+      "name": "StyleModelPreview",
+      "category": "canvas",
+      "status": "candidate",
+      "source": "src/local/StyleModelPreview.tsx",
+      "storyId": "human2ai-style-library-view--model-example",
+      "capabilities": [
+        "read-only-generated-model",
+        "orbit-and-zoom",
+        "fit-model",
+        "keyboard-view-controls",
+        "loading",
+        "error",
+        "retry",
+        "desktop-layout"
+      ],
+      "slots": [
+        "url",
+        "labels"
+      ],
+      "aliases": [
+        "GeneratedStyleExample"
+      ],
+      "useWhen": [
+        "只读查看风格条目中程序生成的固定 GLB 模型示例"
+      ],
+      "doNotUseWhen": [
+        "编辑空间草稿、姿态或模型",
+        "执行任意生成代码或解析风格文本",
+        "组件自行管理产品 API、持久化或风格选择"
+      ],
+      "differenceSummary": "复用既有 Three.js 依赖及共享 BasicButton、Tooltip；SpatialViewport 拥有空间草稿操作、关节和相机编辑，不适合只读 GLB。模型只在打开详情后加载并按需渲染，使用固定环境光展示原模型材质。拖动旋转、滚轮缩放；焦点区域支持方向键旋转、加减缩放与 Home 重置。关闭或切换释放渲染资源，加载和 WebGL 失败可重试；图片视图保持可访问。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "SpatialViewport",
+        "ImageTitleCard",
+        "BasicButton",
+        "TabSwitch",
+        "LoadingState",
+        "Ant Design Tooltip"
       ]
     }
   ]

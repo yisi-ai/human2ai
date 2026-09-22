@@ -5,6 +5,7 @@ import type { CompositionDraft, CompositionLayout, CompositionState } from "./ty
 
 function captureLayout(draft: CompositionDraft): CompositionLayout {
   return {
+    ...(draft.plans ? { plans: structuredClone(draft.plans) } : {}),
     frame: { width: draft.frame.width, height: draft.frame.height, bounds: {
       x: draft.frame.bounds.x, y: draft.frame.bounds.y,
       width: draft.frame.bounds.width, height: draft.frame.bounds.height,
@@ -18,11 +19,13 @@ function captureLayout(draft: CompositionDraft): CompositionLayout {
 }
 
 function applyLayout(draft: CompositionDraft, layout: CompositionLayout): CompositionDraft {
+  const { plans: _plans, ...contentDraft } = draft;
   const points = new Map(layout.focusPoints.map((node) => [node.id, node]));
   const areas = new Map(layout.areas.map((node) => [node.id, node]));
   const images = new Map(layout.images.map((node) => [node.id, node]));
   return {
-    ...draft,
+    ...contentDraft,
+    ...(layout.plans ? { plans: structuredClone(layout.plans) } : {}),
     frame: structuredClone(layout.frame),
     layerOrder: [...layout.layerOrder],
     focusPoints: draft.focusPoints.map((node) => ({ ...node, ...points.get(node.id) })),

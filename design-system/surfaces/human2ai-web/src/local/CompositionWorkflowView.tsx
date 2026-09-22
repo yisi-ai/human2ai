@@ -70,6 +70,10 @@ export interface CompositionWorkflowLabels {
 }
 
 interface CompositionWorkflowCanvasProps {
+  selectedPlanIds?: readonly string[];
+  planningLocked?: boolean;
+  onPlanSelectionChange?: (ids: string[]) => void;
+  planningLabels?: import("./CompositionPlanningPanel").CompositionPlanningLabels;
   stateControls?: ReactNode;
   interactionResetKey?: number;
   draft: CompositionDraft;
@@ -83,7 +87,7 @@ interface CompositionWorkflowCanvasProps {
   onPlacementToolChange?: (tool: CompositionPlacementTool | null) => void;
   onSelectionChange?: (ids: string[]) => void;
   onItemDoubleClick?: (id: string) => void;
-  showDraftGuideGrid?: boolean;
+  showPlanning?: boolean;
   frameLocked?: boolean;
   canvasZoom?: number;
   canvasViewportAction?: CompositionCanvasViewportAction;
@@ -202,6 +206,10 @@ function CompositionWorkflowLayout({
 function CompositionWorkflowCanvasView({
   stateControls,
   interactionResetKey,
+  selectedPlanIds,
+  planningLocked = false,
+  onPlanSelectionChange,
+  planningLabels,
   draft,
   status,
   refinement = null,
@@ -213,7 +221,7 @@ function CompositionWorkflowCanvasView({
   onPlacementToolChange,
   onSelectionChange,
   onItemDoubleClick,
-  showDraftGuideGrid = false,
+  showPlanning = true,
   frameLocked = false,
   canvasZoom,
   canvasViewportAction,
@@ -279,8 +287,12 @@ function CompositionWorkflowCanvasView({
           <CompositionCanvas
             key={draft.activeStateId}
             interactionResetKey={interactionResetKey}
+            selectedPlanIds={selectedPlanIds}
+            planningLocked={planningLocked}
+            onPlanSelectionChange={onPlanSelectionChange}
+            planningLabels={planningLabels}
             draft={draft}
-            showGuideGrid={showDraftGuideGrid}
+            showPlanning={showPlanning}
             frameLocked={frameLocked}
             zoom={canvasZoom}
             viewportAction={canvasViewportAction}
@@ -315,6 +327,7 @@ function CompositionWorkflowCanvasView({
           <>
             <CompositionCanvas
               draft={refinement.refinedDraft}
+              showPlanning={showPlanning}
               zoom={canvasZoom}
               viewportAction={canvasViewportAction}
               backgroundPattern={canvasBackgroundPattern}

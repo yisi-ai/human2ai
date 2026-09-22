@@ -6,8 +6,9 @@ import {
 } from "@ant-design/icons";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import { Button, Space, Typography } from "antd";
+import { useState } from "react";
 
-import { AppShellFrame, CompositeButton } from "@human2ai/ui/yisiui";
+import { AppShellFrame, CompositeButton, TabSwitch } from "@human2ai/ui/yisiui";
 import { assertStorySelector, assertStoryText } from "../interactionChecks";
 
 const labels = {
@@ -24,7 +25,14 @@ const meta = {
   id: "layouts-appshellframe",
   title: "yisiui-Layouts/AppShellFrame",
   component: AppShellFrame,
-  parameters: { layout: "fullscreen" },
+  parameters: {
+    layout: "fullscreen",
+    docs: {
+      description: {
+        component: "左侧标题与中间标题使用一致的顶部留白和行高。左右侧栏开关复用 AnimatedIcon 的镜像侧栏图标，悬停或键盘聚焦时播放一次，点击展开或收起。headerExtra 可在右侧栏开关左边插入切换项、按钮组或说明文字，未提供右侧栏时也可使用。",
+      },
+    },
+  },
   args: {
     sidebar: null,
     children: null,
@@ -41,6 +49,7 @@ const meta = {
     sidebarTitle: { control: false },
     sidebarNavigation: { control: false },
     title: { control: false },
+    headerExtra: { control: false, description: "标题栏右侧内容插槽，位于右侧栏开关左边；接收任意 ReactNode，内容和交互由消费项目持有。" },
     backAction: { control: false },
     sidebarCollapsedActions: { control: false },
     rightPanel: { control: false },
@@ -56,43 +65,80 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
+function HeaderReviewActions() {
+  const [annotations, setAnnotations] = useState(true);
+  const [comparison, setComparison] = useState(false);
+
+  return (
+    <Space.Compact size="small" role="group" aria-label="审阅工具">
+      <Button
+        type={annotations ? "primary" : "default"}
+        aria-pressed={annotations}
+        onClick={() => setAnnotations((visible) => !visible)}
+      >
+        批注
+      </Button>
+      <Button
+        type={comparison ? "primary" : "default"}
+        aria-pressed={comparison}
+        onClick={() => setComparison((visible) => !visible)}
+      >
+        对照
+      </Button>
+    </Space.Compact>
+  );
+}
+
 export const Default: Story = {
-  name: "应用壳层",
+  name: "双侧栏与顶部对齐",
   render: (args) => (
     <AppShellFrame
       {...args}
       labels={labels}
-      sidebarTitle="Research Desk"
+      sidebarTitle="工作台"
       sidebarNavigation={(
         <>
-          <CompositeButton icon={<FileTextOutlined />} label="Documents" />
-          <CompositeButton icon={<DatabaseOutlined />} label="Library" />
-          <CompositeButton icon={<SettingOutlined />} label="Settings" />
+          <CompositeButton icon={<FileTextOutlined />} label="文档" />
+          <CompositeButton icon={<DatabaseOutlined />} label="资料库" />
+          <CompositeButton icon={<SettingOutlined />} label="设置" />
         </>
       )}
       sidebar={(
         <div style={{ padding: 20 }}>
-          <Typography.Text>Recent work and navigation are injected by the product.</Typography.Text>
+          <Typography.Text type="secondary">左侧栏可独立收起，工作区会随之展开。</Typography.Text>
         </div>
       )}
-      title="Design system migration notes"
+      title="项目概览"
+      headerExtra={(
+        <TabSwitch
+          aria-label="工作区视图"
+          compact
+          items={[
+            { key: "overview", label: "概览", mode: "text-only" },
+            { key: "document", label: "正文", mode: "text-only" },
+          ]}
+        />
+      )}
       backAction={{ label: "Back to documents", onClick: () => undefined }}
       sidebarCollapsedActions={(
         <Button type="text" icon={<FileAddOutlined />} aria-label="Create document" />
       )}
       rightPanel={(
         <div style={{ padding: 24 }}>
-          <Typography.Title level={3}>Document details</Typography.Title>
+          <Typography.Text strong>文档详情</Typography.Text>
           <Typography.Paragraph>
-            Product-owned metadata, tools or secondary context can be placed in this container.
+            在这里查看文档信息和辅助工具。右上角的侧栏按钮可展开或收起此区域。
           </Typography.Paragraph>
         </div>
       )}
     >
       <article style={{ maxWidth: 760, padding: 32 }}>
-        <Typography.Title level={2}>Full-viewport application structure</Typography.Title>
+        <Typography.Title level={4}>双侧栏工作区</Typography.Title>
         <Typography.Paragraph>
-          The shell owns sidebar, header and scrolling boundaries while navigation data and product actions remain injected.
+          左上角“工作台”与顶部“项目概览”的留白高度一致。将鼠标移到左右侧栏开关上，或用 Tab 聚焦按钮，即可查看图标动效。
+        </Typography.Paragraph>
+        <Typography.Paragraph>
+          标题栏右侧的“概览 / 正文”演示消费项目注入的视图切换，位于右侧栏开关左边。
         </Typography.Paragraph>
       </article>
     </AppShellFrame>
@@ -101,7 +147,7 @@ export const Default: Story = {
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/app-shell-frame"][data-sidebar-state="open"]');
     assertStorySelector(canvasElement, '[aria-label="Workspace navigation"]');
     assertStorySelector(canvasElement, '[aria-label="Document details"]');
-    assertStoryText(canvasElement, "Design system migration notes");
+    assertStoryText(canvasElement, "项目概览");
 
     const collapseRightPanel = canvasElement.querySelector<HTMLButtonElement>(
       '[aria-label="Collapse document details"]',
@@ -151,6 +197,7 @@ export const LongContent: Story = {
       sidebarTitle="A very long workspace title that must remain inside the sidebar heading"
       sidebar={<div style={{ padding: 20 }}>Scrollable product content stays inside the sidebar slot.</div>}
       title="A deliberately long global context title that truncates without pushing header actions outside the viewport"
+      headerExtra={<Typography.Text type="secondary">共 24 项内容</Typography.Text>}
     >
       <div style={{ padding: 32 }}>
         <Space orientation="vertical" size={16}>
@@ -185,8 +232,10 @@ export const RightPanelInitiallyClosed: Story = {
     <AppShellFrame
       {...args}
       labels={labels}
-      sidebar={<div style={{ padding: 20 }}>Workspace navigation</div>}
-      title="Review workspace"
+      sidebarTitle="工作台"
+      sidebar={<div style={{ padding: 20 }}>项目导航</div>}
+      title="审阅工作区"
+      headerExtra={<HeaderReviewActions />}
       defaultRightPanelOpen={false}
       rightPanel={(
         <div style={{ padding: 24 }}>
@@ -194,7 +243,7 @@ export const RightPanelInitiallyClosed: Story = {
         </div>
       )}
     >
-      <div style={{ padding: 32 }}>The product decides whether the optional right panel exists.</div>
+      <div style={{ padding: 32 }}>右侧栏默认收起，点击标题栏右上角的侧栏图标即可展开。</div>
     </AppShellFrame>
   ),
   play: async ({ canvasElement }) => {

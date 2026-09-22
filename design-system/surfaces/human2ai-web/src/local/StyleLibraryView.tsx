@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BuildOutlined,
   CloseOutlined,
   DeleteOutlined,
   EditOutlined,
@@ -10,6 +11,8 @@ import {
 } from "@ant-design/icons";
 import { Input, Modal } from "antd";
 import {
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useRef,
@@ -31,7 +34,11 @@ import { TabSwitch } from "../vendor/yisiui/runtime/src/components/TabSwitch";
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 import { ConfirmAction } from "../vendor/yisiui/runtime/src/patterns/ConfirmAction";
 
+import type { StyleModelPreviewLabels } from "./StyleModelPreview";
+
 import "./StyleLibraryView.css";
+
+const StyleModelPreview = lazy(() => import("./StyleModelPreview"));
 
 type CategoryFilter = "all" | StyleCategory;
 type CreatorFilter = "all" | "user" | "agent";
@@ -46,6 +53,7 @@ export interface StyleLibraryDraft {
 }
 
 export interface StyleLibraryLabels {
+  model: StyleModelPreviewLabels;
   newStyle: string;
   editStyle: string;
   name: string;
@@ -93,6 +101,7 @@ export interface StyleLibraryViewProps {
   loading?: boolean;
   errorMessage?: string | null;
   imageUrl: (styleId: string, referenceId: string) => string;
+  modelUrl?: (styleId: string, modelId: string) => string;
   onCreate?: (draft: StyleLibraryDraft) => Promise<StyleEntry>;
   onUpdate?: (style: StyleEntry, draft: StyleLibraryDraft) => Promise<StyleEntry>;
   onDelete?: (style: StyleEntry) => Promise<void>;
@@ -115,6 +124,7 @@ export function StyleLibraryView({
   loading = false,
   errorMessage,
   imageUrl,
+  modelUrl,
   onCreate,
   onUpdate,
   onDelete,
@@ -126,6 +136,7 @@ export function StyleLibraryView({
   const [creatorFilter, setCreatorFilter] = useState<CreatorFilter>("all");
   const [query, setQuery] = useState("");
   const [selectedStyleId, setSelectedStyleId] = useState<string | null>(null);
+  const [referenceKind, setReferenceKind] = useState<"model" | "image">("model");
   const [activeReferenceId, setActiveReferenceId] = useState<string | null>(null);
   const [editorStyleId, setEditorStyleId] = useState<string | "new" | null>(null);
   const [name, setName] = useState("");
@@ -368,13 +379,13 @@ export function StyleLibraryView({
             return (
               <div className="human2ai-style-library__card" key={style.id}>
                 <ImageTitleCard
-                  images={style.referenceImages.slice(0, 3).map((reference) => (
+                  images={style.referenceImages.length ? style.referenceImages.slice(0, 3).map((reference) => (
                     <img
                       key={reference.id}
                       src={imageUrl(style.id, reference.id)}
                       alt=""
                     />
-                  ))}
+                  )) : style.previewModel ? [<div key="model" className="human2ai-style-library__model-cover"><BuildOutlined aria-hidden="true" /><span>{labels.model.label}</span></div>] : []}
                   title={style.name}
                 />
                 <button
@@ -382,6 +393,7 @@ export function StyleLibraryView({
                   type="button"
                   aria-label={labels.openStyle(style.name)}
                   onClick={() => {
+                    setReferenceKind("model");
                     setSelectedStyleId(style.id);
                     setActiveReferenceId(cover?.id ?? null);
                     setActionError(null);
@@ -467,8 +479,24 @@ export function StyleLibraryView({
         {selectedStyle ? (
           <div className="human2ai-style-library__preview">
             <section aria-labelledby="style-preview-references">
-              <h2 id="style-preview-references">{labels.references}</h2>
-              {activeReference ? (
+              {selectedStyle.previewModel && modelUrl ? (
+                <div className="human2ai-style-library__reference-switch" id="style-preview-references">
+                  <TabSwitch
+                    aria-label={labels.references}
+                    value={referenceKind}
+                    items={[
+                      { key: "model", label: labels.model.label, mode: "text-only" },
+                      { key: "image", label: labels.references, mode: "text-only" },
+                    ]}
+                    onChange={(value) => setReferenceKind(value as "model" | "image")}
+                  />
+                </div>
+              ) : <h2 id="style-preview-references">{labels.references}</h2>}
+              {selectedStyle.previewModel && modelUrl && referenceKind === "model" ? (
+                <Suspense fallback={<div role="status">{labels.model.loading}</div>}>
+                  <StyleModelPreview key={selectedStyle.previewModel.id} url={modelUrl(selectedStyle.id, selectedStyle.previewModel.id)} labels={labels.model} />
+                </Suspense>
+              ) : activeReference ? (
                 <>
                   <div className="human2ai-style-library__active-reference">
                     <img
