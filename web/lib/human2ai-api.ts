@@ -294,6 +294,10 @@ export function styleReferenceContentUrl(
     : new URL(pathname, globalThis.location.origin).toString();
 }
 
+export function styleModelContentUrl(styleId: string, modelId: string): string {
+  return `/api/v1/styles/${encodeURIComponent(styleId)}/models/${encodeURIComponent(modelId)}/content`;
+}
+
 export function getSessionStyle(
   sessionId: string,
   fetcher: typeof fetch = globalThis.fetch,

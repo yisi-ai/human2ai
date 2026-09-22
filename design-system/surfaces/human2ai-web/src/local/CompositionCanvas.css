@@ -57,17 +57,6 @@
   outline: none;
 }
 
-.human2ai-composition-canvas__guide-grid {
-  pointer-events: none;
-  stroke: var(--yisiui-color-border-hover);
-  stroke-width: 1;
-  stroke-dasharray: 8 8;
-}
-
-.human2ai-composition-canvas__guide-grid line {
-  vector-effect: non-scaling-stroke;
-}
-
 .human2ai-composition-canvas__item[role="button"] {
   cursor: grab;
   outline: none;

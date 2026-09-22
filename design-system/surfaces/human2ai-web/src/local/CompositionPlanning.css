@@ -1,0 +1,27 @@
+.human2ai-composition-planning { min-width: 0; color: var(--yisiui-color-text-primary); }
+.human2ai-composition-planning__heading,
+.human2ai-composition-planning__row,
+.human2ai-composition-planning__toggle { display: flex; align-items: center; gap: var(--yisiui-space-2); }
+.human2ai-composition-planning__heading h2 { flex: 1; margin: 0; font-size: var(--yisiui-font-size-sm); }
+.human2ai-composition-planning__list { max-height: 200px; overflow-y: auto; margin-top: var(--yisiui-space-2); }
+.human2ai-composition-planning__select { flex: 1; min-width: 0; justify-content: flex-start; overflow: hidden; }
+.human2ai-composition-planning__select[aria-pressed="true"] { color: var(--yisiui-color-text-primary); background: var(--yisiui-color-surface-hover); font-weight: var(--yisiui-font-weight-semibold); }
+.human2ai-composition-planning__empty,
+.human2ai-composition-planning__help { color: var(--yisiui-color-text-secondary); font-size: var(--yisiui-font-size-xs); }
+.human2ai-composition-planning__help { margin: 0; }
+.human2ai-composition-planning__properties { display: grid; gap: var(--yisiui-space-3); margin-top: var(--yisiui-space-3); }
+.human2ai-composition-planning__toggle { justify-content: space-between; font-size: var(--yisiui-font-size-xs); }
+.human2ai-composition-planning__field { display: grid; min-width: 0; gap: var(--yisiui-space-1); font-size: var(--yisiui-font-size-xs); }
+.human2ai-composition-planning__field .ant-input-number { width: 100%; }
+.human2ai-composition-planning__coordinates { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--yisiui-space-2); }
+.human2ai-composition-plans { color: var(--yisiui-color-action-primary); }
+.human2ai-composition-plan__line { fill: none; stroke: var(--yisiui-color-text-disabled); stroke-width: 1.25; stroke-dasharray: 7 5; vector-effect: non-scaling-stroke; pointer-events: none; }
+.human2ai-composition-plan[data-selected="true"] .human2ai-composition-plan__line { stroke: currentColor; stroke-width: 2; }
+.human2ai-composition-plan__hit { fill: none; stroke: transparent; stroke-width: 12; vector-effect: non-scaling-stroke; pointer-events: stroke; cursor: move; }
+.human2ai-composition-plan__handle { fill: var(--yisiui-color-surface-panel); stroke: currentColor; stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.human2ai-composition-plan__handle-hit { fill: transparent; cursor: move; }
+.human2ai-composition-plan[data-plan-type="symmetry"] .human2ai-composition-plan__hit { cursor: pointer; }
+.human2ai-composition-plan__snap { fill: var(--yisiui-color-surface-panel); stroke: currentColor; stroke-width: 1; vector-effect: non-scaling-stroke; opacity: 0.6; }
+.human2ai-composition-plan__fixed { fill: currentColor; }
+.human2ai-composition-plans [data-plan-action="toggle-winding"] .human2ai-composition-plan__handle-hit { cursor: pointer; }
+.human2ai-composition-plans [data-plan-handle]:focus-visible .human2ai-composition-plan__handle { stroke-width: 3; }

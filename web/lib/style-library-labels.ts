@@ -3,6 +3,14 @@ import type { TFunction } from "i18next";
 
 export function getStyleLibraryLabels(t: TFunction): StyleLibraryLabels {
   return {
+    model: {
+      label: t("styleLibrary.model.label"),
+      loading: t("styleLibrary.model.loading"),
+      failed: t("styleLibrary.model.failed"),
+      reset: t("styleLibrary.model.reset"),
+      controls: t("styleLibrary.model.controls"),
+      retry: t("actions.retry"),
+    },
     newStyle: t("styleLibrary.newStyle"),
     editStyle: t("styleLibrary.editStyle"),
     name: t("styleLibrary.name"),

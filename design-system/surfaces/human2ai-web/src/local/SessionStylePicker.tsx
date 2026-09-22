@@ -27,6 +27,7 @@ export interface SessionStylePickerProps {
   labels: SessionStylePickerLabels;
   libraryLabels: StyleLibraryLabels;
   imageUrl: (styleId: string, referenceId: string) => string;
+  modelUrl?: (styleId: string, modelId: string) => string;
   onBind: (styleId: string | null) => Promise<void>;
   onRetry: () => void;
   loading?: boolean;
@@ -37,7 +38,7 @@ export interface SessionStylePickerProps {
 }
 
 export function SessionStylePicker({
-  styles, currentStyle, category, labels, libraryLabels, imageUrl,
+  styles, currentStyle, category, labels, libraryLabels, imageUrl, modelUrl,
   onBind, onRetry, loading = false, saving = false, disabled = false, error, pending = false,
 }: SessionStylePickerProps) {
   const [open, setOpen] = useState(false);
@@ -90,6 +91,7 @@ export function SessionStylePicker({
           loading={loading}
           errorMessage={error}
           imageUrl={imageUrl}
+          modelUrl={modelUrl}
           initialCategory={category}
           onRetry={onRetry}
           selection={{

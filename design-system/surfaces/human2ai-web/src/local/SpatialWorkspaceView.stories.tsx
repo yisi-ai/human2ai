@@ -170,9 +170,13 @@ export const BodyShapeInteractions: Story = {
       slider.dispatchEvent(new KeyboardEvent('keyup',{ key:'ArrowRight', keyCode:39, which:39, bubbles:true })); await wait();
       if (Math.abs(proportionChanges.at(-1)!.characters[0][key]! - limits.min - .02) > 1e-8) throw new Error("Shape slider step must be two percentage points");
       const input = panel.querySelector<HTMLInputElement>(`input[aria-label="${zh.spatial[key]}"]`)!;
+      const beforeTyping = proportionChanges.length;
+      input.focus();
       Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value')!.set!.call(input,'100');
-      input.dispatchEvent(new Event('input',{ bubbles:true })); await wait(); input.blur(); await wait();
-      if (proportionChanges.at(-1)?.characters[0][key] !== 1) throw new Error("Numeric input must restore the profile default");
+      input.dispatchEvent(new Event('input',{ bubbles:true })); await wait();
+      if (proportionChanges.length !== beforeTyping) throw new Error("Typing a body dimension must not edit the model");
+      input.blur(); await wait();
+      if (proportionChanges.length !== beforeTyping + 1 || proportionChanges.at(-1)?.characters[0][key] !== 1) throw new Error("Blur must restore the profile default exactly once");
     }
     const actor = proportionChanges.at(-1)!.characters[0];
     if (actor.height !== 1.8 || actor.headRatio !== 7 || actor.torsoRatio !== DEFAULT_TORSO_RATIO) throw new Error("Shape edits must retain authored proportions");
@@ -320,7 +324,7 @@ export const CameraReferenceInteractions: Story = {
     const tabs = panel.querySelector<HTMLElement>('.spatial-reference-tabs')!;
     await pause();
     for (const [pass, label] of [["color", zh.spatial.referenceColor], ["structure", zh.spatial.referenceStructure], ["depth", zh.spatial.referenceDepth], ["skeleton", zh.spatial.referenceSkeleton]]) {
-      [...tabs.querySelectorAll<HTMLElement>('.ant-segmented-item')].find(item => item.textContent === label)!.click(); await pause();
+      tabs.querySelector<HTMLInputElement>(`input[value="${pass}"]`)!.click(); await pause();
       const image = panel.querySelector<HTMLImageElement>('.spatial-preview img')!;
       const download = panel.querySelector<HTMLAnchorElement>('a[download]')!;
       if (!image.complete || !image.naturalWidth || !image.alt.endsWith(label)) throw new Error("Preview must show the selected reference");
@@ -351,8 +355,10 @@ export const CameraPreviewInteractions: Story = {
     check(900, 1600);
     if (!panel.querySelector(`[aria-label="${zh.spatial.span}"]`)) throw new Error("切换预览摄像机应同步选中对应正交摄像机");
     const width = panel.querySelector<HTMLInputElement>(`[aria-label="${zh.spatial.outputWidth}"]`)!;
+    width.focus();
     Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(width, '1600');
-    width.dispatchEvent(new Event('input', { bubbles: true })); await pause(); check(1600, 1600);
+    width.dispatchEvent(new Event('input', { bubbles: true })); await pause(); check(900, 1600);
+    width.blur(); await pause(); check(1600, 1600);
     const viewport = canvasElement.querySelector<HTMLElement>('.spatial-viewport')!;
     viewport.focus(); viewport.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await pause();
     if (panel.querySelector(`[aria-label="${zh.spatial.outputWidth}"]`)) throw new Error("Escape 应清除摄像机选择");
@@ -369,22 +375,45 @@ export const FractionalProportionsInteractions: Story = {
     panel.querySelectorAll<HTMLInputElement>('input[type="radio"]')[1].click(); await wait();
     [...panel.querySelectorAll<HTMLElement>('.ant-tree-node-content-wrapper')].find(el => el.textContent?.trim() === zh.spatial.character)!.click(); await wait();
     panel.querySelectorAll<HTMLInputElement>('input[type="radio"]')[2].click(); await wait();
-    const head = panel.querySelector<HTMLInputElement>(`[aria-label="${zh.spatial.proportions}"]`)!;
-    const height = panel.querySelector<HTMLInputElement>(`[aria-label="${zh.spatial.height}"]`)!;
-    const enter = async (value: string) => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(head, value);
-      head.dispatchEvent(new Event('input', { bubbles: true })); await wait();
+    const input = (label = zh.spatial.proportions) => panel.querySelector<HTMLInputElement>(`input[aria-label="${label}"]`)!;
+    const type = async (value: string, label = zh.spatial.proportions) => {
+      const field = input(label), count = proportionChanges.length;
+      field.focus();
+      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(field, value);
+      field.dispatchEvent(new Event('input', { bubbles: true })); await wait();
+      if (proportionChanges.length !== count) throw new Error("Typing intermediate values must not submit an operation");
+    };
+    const confirm = async (label = zh.spatial.proportions) => {
+      const field = input(label), count = proportionChanges.length;
+      field.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, bubbles: true })); await wait();
+      field.blur(); await wait();
+      if (proportionChanges.length !== count + 1) throw new Error("Enter followed by blur must submit exactly once");
     };
     const check = (value: number) => {
       const actor = proportionChanges.at(-1)!.characters[0];
-      if (actor.headRatio !== value || Number(head.value) !== value || actor.height !== 1.8 || actor.torsoRatio !== DEFAULT_TORSO_RATIO) throw new Error("小数头身必须准确保存，保持身高与躯干腿部比例");
+      if (actor.headRatio !== value || Number(input().value) !== value || actor.height !== 1.8 || actor.torsoRatio !== DEFAULT_TORSO_RATIO) throw new Error("小数头身必须准确保存，保持身高与躯干腿部比例");
     };
     proportionChanges.length = 0;
-    await enter('2.5'); check(2.5);
-    head.focus(); head.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', keyCode: 38, which: 38, bubbles: true })); await wait(); check(3);
-    await enter('3.5'); check(3.5);
-    await enter('2.7'); head.blur(); await wait(); check(2.7);
-    if (Math.abs(head.getBoundingClientRect().y - height.getBoundingClientRect().y) > 1) throw new Error("头身与身高仍应并排显示");
+    await type('2'); await type('2.5'); await confirm(); check(2.5);
+    const beforeStep = proportionChanges.length;
+    input().focus(); input().dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', keyCode: 38, which: 38, bubbles: true })); await wait();
+    if (proportionChanges.length !== beforeStep || Number(input().value) !== 3) throw new Error("Number stepping must wait for confirmation");
+    await confirm(); check(3);
+    await type('3.5'); await confirm(); check(3.5);
+    await type('2.7'); input().blur(); await wait(); check(2.7);
+    await type('99'); await confirm(); check(12);
+    const beforeCancel = proportionChanges.length;
+    await type('4');
+    input().dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true })); await wait();
+    if (proportionChanges.length !== beforeCancel || Number(input().value) !== 12) throw new Error("Escape must restore the saved number without clearing selection");
+    for (const value of ['', 'invalid', '12']) {
+      await type(value); input().blur(); await wait();
+      if (proportionChanges.length !== beforeCancel || Number(input().value) !== 12) throw new Error("Empty, invalid and unchanged inputs must not submit");
+    }
+    const positionX = `${zh.spatial.position} ${zh.spatial.x}`;
+    await type('-1', positionX); await type('-1.25', positionX); await confirm(positionX);
+    if (proportionChanges.at(-1)!.characters[0].position[0] !== -1.25) throw new Error("Vector fields must commit the final coordinate");
+    if (Math.abs(input().getBoundingClientRect().y - input(zh.spatial.height).getBoundingClientRect().y) > 1) throw new Error("头身与身高仍应并排显示");
   },
 };
 export const BodyTypeInteractions: Story = {
@@ -466,6 +495,12 @@ export const ProportionsInteractions: Story = {
     slider().focus(); key("keydown", 36); await wait(); key("keyup", 36); await wait();
     if (!panel.textContent?.includes(zh.spatial.proportionsLocked) || proportionChanges.length !== count) throw new Error("固定冲突必须提示并阻止保存");
     if (!proportionChanges.at(-1)!.characters[0].joints.find(j => j.id === 'pelvis')!.lockPosition) throw new Error("比例编辑不能自动解锁");
+    const heightInput = panel.querySelector<HTMLInputElement>(`[aria-label="${zh.spatial.height}"]`)!;
+    heightInput.focus();
+    Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')!.set!.call(heightInput, '2');
+    heightInput.dispatchEvent(new Event('input', { bubbles: true })); await wait();
+    heightInput.blur(); await wait();
+    if (proportionChanges.length !== count || Number(panel.querySelector<HTMLInputElement>(`[aria-label="${zh.spatial.height}"]`)!.value) !== 1.8) throw new Error("Rejected numeric edits must restore the saved value");
   },
 };
 export const LockInteractions: Story = {
@@ -563,7 +598,9 @@ export const HandInteractions: Story = {
     const tab = async (index: number) => { panel.querySelectorAll<HTMLInputElement>('input[type="radio"]')[index].click(); await pause(); };
     const node = (title: string) => [...panel.querySelectorAll<HTMLElement>('.ant-tree-node-content-wrapper')].find(el => el.textContent?.trim() === title)!;
     const choose = async (title: string) => { node(title).click(); await pause(); };
-    await tab(1); await choose(zh.spatial.character); await new Promise(resolve => setTimeout(resolve,350));
+    await tab(1); await choose(zh.spatial.character);
+    // Tree ignores expansion clicks while its parent expansion is animating.
+    for (let attempt = 0; attempt < 20 && panel.querySelector('.ant-tree-treenode-motion'); attempt++) await pause();
     const handNode = node(zh.spatial.handLeft);
     if (!handNode || node(zh.spatial.fingerTip.replace('{{finger}}',zh.spatial.fingerIndex))) throw new Error('手部应单独分组并默认收起');
     handNode.closest('.ant-tree-treenode')!.querySelector<HTMLElement>('.ant-tree-switcher')!.click(); await new Promise(resolve => setTimeout(resolve,350));
@@ -576,8 +613,21 @@ export const HandInteractions: Story = {
     const label = zh.spatial.fingerCurl.replace('{{finger}}',zh.spatial.fingerIndex);
     const slider = () => panel.querySelector<HTMLElement>(`[role="slider"][aria-label="${label}"]`)!;
     handChanges.length = 0;
-    slider().focus(); slider().dispatchEvent(new KeyboardEvent('keydown',{keyCode:35,which:35,bubbles:true})); await pause();
+    const savedValue = slider().getAttribute('aria-valuenow');
+    await pause();
+    const gl = canvasElement.querySelector<HTMLCanvasElement>('.spatial-viewport canvas')!.getContext('webgl2')!;
+    const upload = gl.bufferSubData;
+    let previewUploads = 0;
+    gl.bufferSubData = new Proxy(upload, { apply: (target, receiver, args) => { previewUploads++; return Reflect.apply(target, receiver, args); } });
+    try {
+      slider().focus(); slider().dispatchEvent(new KeyboardEvent('keydown',{keyCode:35,which:35,bubbles:true}));
+      for (let attempt = 0; attempt < 20 && !previewUploads; attempt++) await pause();
+      if (!previewUploads) throw new Error('手指拖动期间必须更新模型几何，不能只更新滑块数值');
+    } finally { gl.bufferSubData = upload; }
     if (slider().getAttribute('aria-valuenow') !== '100' || handChanges.length) throw new Error('手指滑杆操作中应仅预览');
+    slider().blur(); await pause();
+    if (slider().getAttribute('aria-valuenow') !== savedValue || handChanges.length) throw new Error('取消手部预览应恢复已保存数值，不提交操作');
+    slider().focus(); slider().dispatchEvent(new KeyboardEvent('keydown',{keyCode:35,which:35,bubbles:true})); await pause();
     slider().dispatchEvent(new KeyboardEvent('keyup',{keyCode:35,which:35,bubbles:true})); await pause();
     if (handChanges.length !== 1 || handChanges[0].characters[0].bones.find(b => b.id === 'left-index-2')!.rotation[0] !== 95) throw new Error('结束后应仅提交一次并联动中末节');
     const button = [...panel.querySelectorAll<HTMLButtonElement>('button')].find(b => b.textContent?.trim() === zh.spatial.resetHand)!;
@@ -627,7 +677,7 @@ export const SkeletonProjection: Story = {
   name: "镜头骨架投影",
   render: () => <Harness initial={cameraFixture} initialCameraId="portrait" cameraSource={referencePreview} />,
   play: async ({canvasElement}) => {
-    const tab = [...canvasElement.querySelectorAll<HTMLElement>('.spatial-reference-tabs .ant-segmented-item')].find(el=>el.textContent===zh.spatial.referenceSkeleton)!;
+    const tab = canvasElement.querySelector<HTMLInputElement>('.spatial-reference-tabs input[value="skeleton"]')!;
     tab.click();
   },
 };

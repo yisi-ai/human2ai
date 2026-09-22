@@ -10,6 +10,7 @@
     { "if": { "required": ["activeStateId"] }, "then": { "required": ["states"] } }
   ],
   "properties": {
+    "plans": { "type": "array", "items": { "$ref": "#/$defs/compositionPlan" } },
     "activeStateId": { "type": "string", "minLength": 1 },
     "states": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/state" } },
     "layerOrder": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
@@ -152,6 +153,461 @@
     }
   },
   "$defs": {
+    "compositionPlan": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "visible",
+        "type"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^plan-[a-zA-Z0-9-]+$"
+        },
+        "visible": {
+          "type": "boolean"
+        },
+        "axes": {
+          "enum": [
+            "both",
+            "horizontal",
+            "vertical"
+          ]
+        },
+        "x": {
+          "type": "number"
+        },
+        "y": {
+          "type": "number"
+        },
+        "rotation": {
+          "type": "number"
+        },
+        "scale": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "mirrored": {
+          "type": "boolean"
+        },
+        "type": {
+          "enum": [
+            "thirds",
+            "golden-section",
+            "symmetry",
+            "golden-spiral",
+            "triangle",
+            "radial"
+          ]
+        },
+        "width": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "height": {
+          "type": "number",
+          "exclusiveMinimum": 0
+        },
+        "rayCount": {
+          "type": "integer",
+          "minimum": 2,
+          "maximum": 36
+        },
+        "spread": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 360
+        },
+        "mode": {
+          "enum": [
+            "uniform",
+            "free"
+          ]
+        },
+        "angles": {
+          "type": "array",
+          "minItems": 2,
+          "maxItems": 36,
+          "items": {
+            "type": "number"
+          }
+        }
+      },
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "thirds",
+                "golden-section"
+              ]
+            }
+          },
+          "required": [
+            "axes"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "x"
+                ]
+              },
+              {
+                "required": [
+                  "y"
+                ]
+              },
+              {
+                "required": [
+                  "rotation"
+                ]
+              },
+              {
+                "required": [
+                  "scale"
+                ]
+              },
+              {
+                "required": [
+                  "mirrored"
+                ]
+              },
+              {
+                "required": [
+                  "width"
+                ]
+              },
+              {
+                "required": [
+                  "height"
+                ]
+              },
+              {
+                "required": [
+                  "rayCount"
+                ]
+              },
+              {
+                "required": [
+                  "spread"
+                ]
+              },
+              {
+                "required": [
+                  "mode"
+                ]
+              },
+              {
+                "required": [
+                  "angles"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "symmetry"
+              ]
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "rotation"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "axes"
+                ]
+              },
+              {
+                "required": [
+                  "scale"
+                ]
+              },
+              {
+                "required": [
+                  "mirrored"
+                ]
+              },
+              {
+                "required": [
+                  "width"
+                ]
+              },
+              {
+                "required": [
+                  "height"
+                ]
+              },
+              {
+                "required": [
+                  "rayCount"
+                ]
+              },
+              {
+                "required": [
+                  "spread"
+                ]
+              },
+              {
+                "required": [
+                  "mode"
+                ]
+              },
+              {
+                "required": [
+                  "angles"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "golden-spiral"
+              ]
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "rotation",
+            "scale",
+            "mirrored"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "axes"
+                ]
+              },
+              {
+                "required": [
+                  "width"
+                ]
+              },
+              {
+                "required": [
+                  "height"
+                ]
+              },
+              {
+                "required": [
+                  "rayCount"
+                ]
+              },
+              {
+                "required": [
+                  "spread"
+                ]
+              },
+              {
+                "required": [
+                  "mode"
+                ]
+              },
+              {
+                "required": [
+                  "angles"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "triangle"
+              ]
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "rotation",
+            "width",
+            "height"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "axes"
+                ]
+              },
+              {
+                "required": [
+                  "scale"
+                ]
+              },
+              {
+                "required": [
+                  "mirrored"
+                ]
+              },
+              {
+                "required": [
+                  "rayCount"
+                ]
+              },
+              {
+                "required": [
+                  "spread"
+                ]
+              },
+              {
+                "required": [
+                  "mode"
+                ]
+              },
+              {
+                "required": [
+                  "angles"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "radial"
+              ]
+            },
+            "mode": {
+              "enum": [
+                "uniform"
+              ]
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "rotation",
+            "rayCount",
+            "spread"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "axes"
+                ]
+              },
+              {
+                "required": [
+                  "scale"
+                ]
+              },
+              {
+                "required": [
+                  "mirrored"
+                ]
+              },
+              {
+                "required": [
+                  "width"
+                ]
+              },
+              {
+                "required": [
+                  "height"
+                ]
+              },
+              {
+                "required": [
+                  "angles"
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": {
+              "enum": [
+                "radial"
+              ]
+            },
+            "mode": {
+              "enum": [
+                "free"
+              ]
+            }
+          },
+          "required": [
+            "x",
+            "y",
+            "mode",
+            "angles"
+          ],
+          "not": {
+            "anyOf": [
+              {
+                "required": [
+                  "axes"
+                ]
+              },
+              {
+                "required": [
+                  "rotation"
+                ]
+              },
+              {
+                "required": [
+                  "scale"
+                ]
+              },
+              {
+                "required": [
+                  "mirrored"
+                ]
+              },
+              {
+                "required": [
+                  "width"
+                ]
+              },
+              {
+                "required": [
+                  "height"
+                ]
+              },
+              {
+                "required": [
+                  "rayCount"
+                ]
+              },
+              {
+                "required": [
+                  "spread"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
     "state": {
       "type": "object", "additionalProperties": false,
       "required": ["id", "number", "layout"],
@@ -163,6 +619,7 @@
           "type": "object", "additionalProperties": false,
           "required": ["frame", "layerOrder", "focusPoints", "directionLine", "areas", "images"],
           "properties": {
+        "plans": { "type": "array", "items": { "$ref": "#/$defs/compositionPlan" } },
             "frame": { "allOf": [{ "$ref": "#/properties/frame" }, { "type": "object", "required": ["bounds"] }] },
             "layerOrder": { "$ref": "#/properties/layerOrder" },
             "focusPoints": { "type": "array", "maxItems": 3, "items": { "$ref": "#/$defs/layoutPoint" } },

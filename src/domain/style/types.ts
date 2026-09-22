@@ -26,9 +26,17 @@ export interface StyleEntry {
   description: string;
   promptSummary: string;
   referenceImages: StyleReferenceImage[];
+  previewModel?: StylePreviewModel;
   revision: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface StylePreviewModel {
+  id: string;
+  originalFilename: string;
+  byteSize: number;
+  createdAt: string;
 }
 
 export interface SessionStyleState {

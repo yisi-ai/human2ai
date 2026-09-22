@@ -1,5 +1,5 @@
 import sharp, { type OverlayOptions } from "sharp";
-import { Color, LineBasicMaterial, LineSegments, Matrix3, Matrix4, Mesh, MeshLambertMaterial, Vector3, Vector4 } from "three";
+import { Color, Group, LineBasicMaterial, LineSegments, Matrix3, Matrix4, Mesh, MeshLambertMaterial, Vector3, Vector4 } from "three";
 import { createOutputCamera, createSpatialScene, disposeSpatialScene } from "../domain/spatial/scene.ts";
 import { fingerPart } from "../domain/spatial/hands.ts";
 import { jointWorldTransforms } from "../domain/spatial/kinematics.ts";
@@ -9,13 +9,43 @@ import { SPATIAL_BOX_FACES, SPATIAL_BOX_GAP, SPATIAL_BOX_LABEL_HEIGHT, type Spat
 import { cameraBoxView } from "../domain/spatial/camera-box.ts";
 import { cameraBoxSheetLayout } from "../domain/spatial/camera-box-sheet.ts";
 import en from "../../locales/en/common.json" with { type: "json" };
+import { spatialEntityRenderKey } from "../domain/spatial/render-inputs.ts";
+
+/** Worker-owned geometry/contact cache, shared across cameras and box faces. */
+export class SpatialRenderContext {
+  private scenes = new Map<string, { scene: Group; colored: boolean; shadows?: ReturnType<typeof spatialShadowSampler> }>();
+
+  get(draft: SpatialDraft, pass: SpatialRenderPass) {
+    const key = JSON.stringify([draft.characters.map(spatialEntityRenderKey), draft.objects.map(spatialEntityRenderKey), pass !== "depth", Boolean(draft.lightingEnabled)]);
+    let prepared = this.scenes.get(key);
+    if (!prepared) {
+      prepared = { scene: createSpatialScene(draft, { handCreases: pass !== "depth" }), colored: false };
+      this.scenes.set(key, prepared);
+      if (this.scenes.size > 2) {
+        const oldest = this.scenes.keys().next().value!;
+        disposeSpatialScene(this.scenes.get(oldest)!.scene); this.scenes.delete(oldest);
+      }
+    }
+    if (pass === "color" && !prepared.colored) {
+      applySpatialContactShading(prepared.scene, draft);
+      if (draft.lightingEnabled) prepared.shadows = spatialShadowSampler(prepared.scene);
+      prepared.colored = true;
+    }
+    return prepared;
+  }
+
+  dispose(): void {
+    this.scenes.forEach(value => disposeSpatialScene(value.scene)); this.scenes.clear();
+  }
+}
 
 // A bounded, depth-buffered rasterizer keeps camera references and Agent PNG
 // exports available in the Node service without requiring a browser or GPU.
-export async function renderSpatialPng(draft: SpatialDraft, source: SpatialCamera, pass: SpatialRenderPass = "color", outputCamera?: ReturnType<typeof createOutputCamera>): Promise<Buffer> {
+export async function renderSpatialPng(draft: SpatialDraft, source: SpatialCamera, pass: SpatialRenderPass = "color", outputCamera?: ReturnType<typeof createOutputCamera>, context?: SpatialRenderContext): Promise<Buffer> {
   const camera = outputCamera ?? createOutputCamera(source);
   if (pass === "skeleton") return renderSkeletonPng(draft, source, camera);
-  const scene = createSpatialScene(draft, { handCreases: pass !== "depth" });
+  const prepared = context?.get(draft, pass);
+  const scene = prepared?.scene ?? createSpatialScene(draft, { handCreases: pass !== "depth" });
   const transform = new Matrix4().multiplyMatrices(camera.projectionMatrix, camera.matrixWorldInverse);
   const width = source.width, height = source.height;
   const lighting = getSpatialLighting(draft);
@@ -51,8 +81,8 @@ export async function renderSpatialPng(draft: SpatialDraft, source: SpatialCamer
   }
   const light = new Vector3(...lighting.direction).normalize();
   try {
-    if (pass === "color") applySpatialContactShading(scene,draft);
-    const shadows = directShare ? spatialShadowSampler(scene) : null;
+    if (pass === "color" && !prepared) applySpatialContactShading(scene,draft);
+    const shadows = directShare ? prepared?.shadows ?? spatialShadowSampler(scene) : null;
     scene.traverse(object => {
       if (!(object instanceof Mesh)) return;
       const geometry = object.geometry, positions = geometry.getAttribute("position"), indices = geometry.index;
@@ -113,7 +143,7 @@ export async function renderSpatialPng(draft: SpatialDraft, source: SpatialCamer
         }
       });
     }
-  } finally { disposeSpatialScene(scene); }
+  } finally { if (!prepared) disposeSpatialScene(scene); }
   return sharp(pixels, { raw: { width, height, channels: 4 } }).png().toBuffer();
 
   function rasterize(triangle: RenderVertex[], color: Color, owner: number, shadowSlope?: [number,number]) {
@@ -252,10 +282,10 @@ async function renderSkeletonPng(draft: SpatialDraft, source: SpatialCamera, cam
   return sharp(Buffer.from(svg)).png().toBuffer();
 }
 
-export async function renderSpatialCameraBoxPng(draft: SpatialDraft, box: SpatialCameraBox, view: SpatialBoxView | readonly SpatialBoxFace[] = "sheet", pass: SpatialRenderPass = "color"): Promise<Buffer> {
+export async function renderSpatialCameraBoxPng(draft: SpatialDraft, box: SpatialCameraBox, view: SpatialBoxView | readonly SpatialBoxFace[] = "sheet", pass: SpatialRenderPass = "color", context?: SpatialRenderContext): Promise<Buffer> {
   const renderFace = (face: typeof SPATIAL_BOX_FACES[number]) => {
     const { source, camera } = cameraBoxView(box, face);
-    return renderSpatialPng(draft, source, pass, camera);
+    return renderSpatialPng(draft, source, pass, camera, context);
   };
   if (typeof view === "string" && view !== "sheet") return renderFace(view);
   const size = box.resolution, labelHeight = SPATIAL_BOX_LABEL_HEIGHT, gap = SPATIAL_BOX_GAP;

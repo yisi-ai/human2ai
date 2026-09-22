@@ -1,4 +1,4 @@
-import { copyFileSync, mkdtempSync, readdirSync, rmSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, it } from "vitest";
@@ -16,18 +16,25 @@ it("upgrades style categories while preserving references, session bindings and 
   }
   const database = openDatabase(":memory:", directory);
   try {
-    const styles = new StyleLibraryRepository(database, join(directory, "artifacts"));
     const sessions = new ProjectSessionRepository(database);
     const spatial = new SpatialSessionRepository(database);
-    const style = styles.createStyle({ name: "Quiet", category: "visual", creatorType: "user", description: "Matte surfaces.", promptSummary: "Soft matte forms." });
-    const otherStyle = styles.createStyle({ name: "UI", category: "ui", creatorType: "agent", description: "Quiet controls." });
-    const reference = await styles.addReferenceImage(style.id, {
-      expectedRevision: 1, filename: "reference.png",
-      data: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"),
-    });
+    const style = { id: "old-visual" };
+    const otherStyle = { id: "old-ui" };
+    const timestamp = "2026-09-01T00:00:00.000Z";
+    database.prepare(`INSERT INTO style_entries (id, name, category, creator_type, description, prompt_summary, revision, created_at, updated_at)
+      VALUES (?, ?, ?, 'user', 'Matte surfaces.', 'Soft matte forms.', ?, ?, ?)`)
+      .run(style.id, "Quiet", "visual", 2, timestamp, timestamp);
+    database.prepare(`INSERT INTO style_entries (id, name, category, creator_type, description, revision, created_at, updated_at)
+      VALUES (?, 'UI', 'ui', 'agent', 'Quiet controls.', 1, ?, ?)`)
+      .run(otherStyle.id, timestamp, timestamp);
+    mkdirSync(join(directory, "artifacts", "styles", style.id), { recursive: true });
+    writeFileSync(join(directory, "artifacts", "styles", style.id, "reference.png"), Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=", "base64"));
+    database.prepare(`INSERT INTO style_reference_images (id, style_id, relative_path, original_filename, mime_type, byte_size, width, height, position, created_at)
+      VALUES ('old-reference', ?, ?, 'reference.png', 'image/png', 68, 1, 1, 0, ?)`)
+      .run(style.id, `styles/${style.id}/reference.png`, timestamp);
     for (const sessionType of ["image-composition", "ui-layout", "spatial"] as const) {
       const session = sessions.createSession({ sessionType, title: sessionType });
-      styles.bindSessionStyle(session.id, { styleId: style.id, expectedRevision: 1 });
+      database.prepare("UPDATE sessions SET style_id = ?, revision = revision + 1 WHERE id = ?").run(style.id, session.id);
       if (sessionType === "spatial") spatial.createDraftVersion(session.id, { expectedLatestRevision: 0, draft: createSpatialDraft() });
     }
     sessions.createSession({ sessionType: "spatial", title: "Unbound" });
@@ -36,16 +43,18 @@ it("upgrades style categories while preserving references, session bindings and 
 
     expect(applyMigrations(database, resolve("migrations"))).toContain("0009_spatial_styles.sql");
     expect(tables.map(table => database.prepare(`SELECT * FROM ${table} ORDER BY id`).all())).toEqual(before);
-    expect(styles.getStyle(style.id)).toEqual(reference);
-    expect(styles.getStyle(otherStyle.id)).toEqual(otherStyle);
-    expect(styles.getReferenceImage(style.id, reference.referenceImages[0].id).reference).toEqual(reference.referenceImages[0]);
+    const styles = new StyleLibraryRepository(database, join(directory, "artifacts"));
+    expect(styles.getStyle(style.id)).toMatchObject({ id: style.id, revision: 2, referenceImages: [{ id: "old-reference" }] });
+    expect(styles.getStyle(style.id).previewModel).toBeUndefined();
+    expect(styles.getStyle(otherStyle.id)).toMatchObject({ id: otherStyle.id, revision: 1 });
+    expect(styles.getReferenceImage(style.id, "old-reference").reference.id).toBe("old-reference");
     expect(database.pragma("foreign_key_check")).toEqual([]);
     expect(database.pragma("foreign_keys", { simple: true })).toBe(1);
     expect(applyMigrations(database, resolve("migrations"))).toEqual([]);
 
     expect(styles.createStyle({ name: "3D", category: "spatial", creatorType: "agent", description: "Low-poly geometry." })).toMatchObject({ category: "spatial" });
     expect(() => database.prepare("UPDATE style_entries SET category = 'unsupported' WHERE id = ?").run(style.id)).toThrow();
-    await styles.deleteStyle(style.id, { expectedRevision: reference.revision });
+    await styles.deleteStyle(style.id, { expectedRevision: 2 });
     expect(database.prepare("SELECT * FROM style_reference_images").all()).toEqual([]);
     expect(database.prepare("SELECT * FROM sessions WHERE style_id IS NOT NULL").all()).toEqual([]);
     expect(database.prepare("SELECT * FROM spatial_draft_versions").all()).toHaveLength(1);

@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { AmbientLight, AxesHelper, BoxGeometry, Color, EdgesGeometry, LineSegments, CameraHelper, DirectionalLight, GridHelper, Group, Mesh, MeshLambertMaterial, Object3D, PCFShadowMap, PerspectiveCamera, Raycaster, Scene, Vector2, WebGLRenderer, LineBasicMaterial } from "three";
+import { AmbientLight, AxesHelper, BoxGeometry, Color, EdgesGeometry, LineSegments, CameraHelper, DirectionalLight, GridHelper, Group, InstancedMesh, Mesh, MeshLambertMaterial, Object3D, PCFShadowMap, PerspectiveCamera, Raycaster, Scene, Vector2, WebGLRenderer, LineBasicMaterial } from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { TransformControls } from "three/addons/controls/TransformControls.js";
-import { angles, boneAngles, fingerBasis, handJointIds, fingerPart, boneWorldTransforms, applySpatialOperations, jointWorldTransforms, quaternion, vector, isRigidBodyConnector, type SpatialDraft, type SpatialOperation, type Vec3 } from "../../../../../src/domain/spatial";
+import { angles, boneAngles, fingerBasis, handJointIds, fingerPart, boneWorldTransforms, jointWorldTransforms, quaternion, vector, isRigidBodyConnector, type SpatialDraft, type SpatialOperation, type Vec3 } from "../../../../../src/domain/spatial";
+import { createSpatialPreview } from "../../../../../src/domain/spatial/preview";
 import { createOutputCamera, disposeSpatialScene } from "../../../../../src/domain/spatial/scene";
 import { SpatialSceneCache } from "../../../../../src/domain/spatial/scene-cache";
 import { fitSpatialLight, getSpatialLighting } from "../../../../../src/domain/spatial/lighting";
@@ -25,6 +26,7 @@ export interface SpatialViewportProps {
   disabled?: boolean;
   showRig?: boolean;
   showCameras?: boolean;
+  interacting?: boolean;
 }
 
 export function SpatialViewport(props: SpatialViewportProps) {
@@ -55,21 +57,35 @@ export function SpatialViewport(props: SpatialViewportProps) {
     const anchor = new Object3D(); scene.add(anchor);
     const transform = new TransformControls(camera, renderer.domElement);
     transform.setSpace("world"); transform.setSize(0.75); scene.add(transform.getHelper());
-    const contentCache = new SpatialSceneCache(), content = contentCache.scene;
+    let shadingWorker: Worker | undefined;
+    let rejectShading: ((reason: unknown) => void) | undefined;
+    const contentCache = new SpatialSceneCache({
+      shade: draft => new Promise((resolve, reject) => {
+        shadingWorker ??= new Worker(new URL("./spatial-shading.worker.ts", import.meta.url));
+        rejectShading = reject;
+        shadingWorker.onmessage = event => { rejectShading = undefined; resolve(event.data.colors); };
+        shadingWorker.onerror = event => {
+          shadingWorker?.terminate(); shadingWorker = undefined; rejectShading = undefined; reject(event);
+        };
+        shadingWorker.postMessage(draft);
+      }),
+      onShaded: () => { renderer.shadowMap.needsUpdate = true; draw(); },
+    }), content = contentCache.scene;
     scene.add(content);
-    const baseColors = new WeakMap<Mesh, Color>();
     let lightingEnabled: boolean | undefined;
     const boxGuides = new Group(); scene.add(boxGuides);
     const cameraGuides = new Group(); scene.add(cameraGuides);
     let dragging = false;
     let base: SpatialDraft | null = null;
+    let previewOperation: ReturnType<typeof createSpatialPreview> | null = null;
+    let guidesKey: string | undefined;
     let frame = 0;
     let drawFrame = 0;
     const draw = () => {
       if (!drawFrame) drawFrame = requestAnimationFrame(() => { drawFrame = 0; renderer.render(scene, camera); });
     };
     const rebuild = (draft: SpatialDraft) => {
-      const surfacesChanged = contentCache.update(draft, { showRig: current.current.showRig, dragging });
+      const surfacesChanged = contentCache.update(draft, { showRig: current.current.showRig, dragging: dragging || current.current.interacting });
       const lightChanged = lightingEnabled !== Boolean(draft.lightingEnabled);
       lightingEnabled = Boolean(draft.lightingEnabled);
       const lighting = getSpatialLighting(draft);
@@ -81,43 +97,53 @@ export function SpatialViewport(props: SpatialViewportProps) {
       }
       const selection = current.current.selection;
       const highlight = getComputedStyle(element).getPropertyValue("--yisiui-color-action-primary").trim() || "#467bd3";
-      disposeSpatialScene(cameraGuides); cameraGuides.clear();
-      for (const source of current.current.showCameras === false ? [] : draft.cameras) {
-        const selected = selection && "cameraId" in selection && selection.cameraId === source.id;
-        const outputCamera = createOutputCamera(source);
-        // Show the useful framing at the look-at target, rather than the distant clipping plane.
-        outputCamera.far = Math.max(outputCamera.near * 2, outputCamera.position.distanceTo(vector(source.target)));
-        outputCamera.updateProjectionMatrix();
-        const cameraGuide = new CameraHelper(outputCamera);
-        const material = cameraGuide.material as LineBasicMaterial;
-        material.vertexColors = false; material.color.set(selected ? highlight : "#9cbbd3");
-        material.transparent = true; material.opacity = selected ? .95 : .45;
-        material.depthTest = false; cameraGuide.renderOrder = 1;
-        cameraGuide.userData.cameraId = source.id;
-        cameraGuides.add(cameraGuide);
-      }
-      disposeSpatialScene(boxGuides); boxGuides.clear();
-      for (const box of draft.cameraBoxes ?? []) {
-        const selected = selection && "cameraBoxId" in selection && selection.cameraBoxId === box.id;
-        const geometry = new BoxGeometry(box.size,box.size,box.size);
-        const outline = new LineSegments(new EdgesGeometry(geometry), new LineBasicMaterial({ color: selected ? "#467bd3" : "#9cbbd3", transparent: true, opacity: selected ? .95 : .45, depthTest: false }));
-        geometry.dispose(); outline.position.copy(vector(box.position)); outline.quaternion.copy(quaternion(box.rotation));
-        outline.userData.cameraBoxId = box.id; outline.renderOrder = 1; boxGuides.add(outline);
-        if (selected) { const axes = new AxesHelper(box.size * .25); axes.position.copy(outline.position); axes.quaternion.copy(outline.quaternion); boxGuides.add(axes); }
+      const nextGuidesKey = JSON.stringify([draft.cameras, draft.cameraBoxes, current.current.showCameras, selection && ("cameraId" in selection || "cameraBoxId" in selection) ? selection : null, highlight]);
+      if (guidesKey !== nextGuidesKey) {
+        guidesKey = nextGuidesKey;
+        disposeSpatialScene(cameraGuides); cameraGuides.clear();
+        for (const source of current.current.showCameras === false ? [] : draft.cameras) {
+          const selected = selection && "cameraId" in selection && selection.cameraId === source.id;
+          const outputCamera = createOutputCamera(source);
+          // Show the useful framing at the look-at target, rather than the distant clipping plane.
+          outputCamera.far = Math.max(outputCamera.near * 2, outputCamera.position.distanceTo(vector(source.target)));
+          outputCamera.updateProjectionMatrix();
+          const cameraGuide = new CameraHelper(outputCamera);
+          const material = cameraGuide.material as LineBasicMaterial;
+          material.vertexColors = false; material.color.set(selected ? highlight : "#9cbbd3");
+          material.transparent = true; material.opacity = selected ? .95 : .45;
+          material.depthTest = false; cameraGuide.renderOrder = 1;
+          cameraGuide.userData.cameraId = source.id;
+          cameraGuides.add(cameraGuide);
+        }
+        disposeSpatialScene(boxGuides); boxGuides.clear();
+        for (const box of draft.cameraBoxes ?? []) {
+          const selected = selection && "cameraBoxId" in selection && selection.cameraBoxId === box.id;
+          const geometry = new BoxGeometry(box.size,box.size,box.size);
+          const outline = new LineSegments(new EdgesGeometry(geometry), new LineBasicMaterial({ color: selected ? "#467bd3" : "#9cbbd3", transparent: true, opacity: selected ? .95 : .45, depthTest: false }));
+          geometry.dispose(); outline.position.copy(vector(box.position)); outline.quaternion.copy(quaternion(box.rotation));
+          outline.userData.cameraBoxId = box.id; outline.renderOrder = 1; boxGuides.add(outline);
+          if (selected) { const axes = new AxesHelper(box.size * .25); axes.position.copy(outline.position); axes.quaternion.copy(outline.quaternion); boxGuides.add(axes); }
+        }
       }
       const handActor = selection && "characterId" in selection && selection.handBoneId ? draft.characters.find(c => c.id === selection.characterId) : undefined;
       const hand = handActor?.bones.find(b => b.id === (selection && "characterId" in selection ? selection.handBoneId : undefined));
       const handIds = handActor && hand ? handJointIds(handActor,hand) : undefined;
+      const isSelected = (data: Record<string,string>) => selection && ("characterId" in selection
+        ? data.characterId === selection.characterId && (handIds ? handIds.has(data.jointId) || data.jointId === hand!.startJointId || handIds.has(handActor!.bones.find(b => b.id === data.boneId)?.endJointId ?? "") : selection.jointId ? data.jointId === selection.jointId : selection.boneId ? data.boneId === selection.boneId : true)
+        : "objectId" in selection && data.objectId === selection.objectId);
       content.traverse(mesh => {
         if (!(mesh instanceof Mesh) || !(mesh.material instanceof MeshLambertMaterial)) return;
-        const baseColor = baseColors.get(mesh);
+        if (mesh instanceof InstancedMesh && mesh.userData.rig) {
+          const color = new Color(), baseColor = mesh.userData.rig === "joint" ? "#e6a65c" : "#728aa1";
+          mesh.userData.instances.forEach((data: Record<string,string>, i: number) => mesh.setColorAt(i, color.set(isSelected(data) ? highlight : baseColor)));
+          if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
+          return;
+        }
+        const baseColor = contentCache.baseColors.get(mesh);
         if (baseColor) mesh.material.color.copy(baseColor);
-        else baseColors.set(mesh, mesh.material.color.clone());
         if (!selection) return;
         const data = mesh.userData;
-        const selected = "characterId" in selection
-          ? data.characterId === selection.characterId && (handIds ? handIds.has(data.jointId) || data.jointId === hand!.startJointId || handIds.has(handActor!.bones.find(b => b.id === data.boneId)?.endJointId ?? "") : selection.jointId ? data.jointId === selection.jointId : selection.boneId ? data.boneId === selection.boneId : true)
-          : "objectId" in selection && data.objectId === selection.objectId;
+        const selected = isSelected(data);
         if (selected) {
           const coloredFinger = fingerPart(data.modelPart ?? "") && draft.characters.find(c=>c.id===data.characterId)?.appearance === "geometric";
           if (coloredFinger) mesh.material.color.lerp(new Color("#ffffff"),.3);
@@ -178,14 +204,14 @@ export function SpatialViewport(props: SpatialViewportProps) {
       const object = source.objects.find(o => o.id === selection.objectId);
       return object ? { type: "put-object", object: { ...object, position, rotation } } : null;
     };
-    transform.addEventListener("mouseDown", () => { dragging = true; base = current.current.draft; orbit.enabled = false; });
+    transform.addEventListener("mouseDown", () => { dragging = true; base = current.current.draft; previewOperation = createSpatialPreview(base); orbit.enabled = false; });
     transform.addEventListener("objectChange", () => {
       if (!dragging || frame) return;
       frame = requestAnimationFrame(() => {
         frame = 0;
         const op = operation();
-        if (!op || !base) return;
-        try { rebuild(applySpatialOperations(base, [op]).draft); } catch { rebuild(base); }
+        if (!op || !base || !previewOperation) return;
+        try { rebuild(previewOperation(op).draft); } catch { rebuild(base); }
       });
     });
     transform.addEventListener("mouseUp", () => {
@@ -194,13 +220,13 @@ export function SpatialViewport(props: SpatialViewportProps) {
       dragging = false; orbit.enabled = true;
       if (frame) { cancelAnimationFrame(frame); frame = 0; }
       if (op) current.current.onOperation(op);
-      base = null;
+      base = null; previewOperation = null;
       rebuild(current.current.draft); select();
     });
     transform.addEventListener("change", draw);
     const cancel = () => {
       if (dragging) transform.reset();
-      dragging = false; base = null; orbit.enabled = true;
+      dragging = false; base = null; previewOperation = null; orbit.enabled = true;
       if (frame) { cancelAnimationFrame(frame); frame = 0; }
       rebuild(current.current.draft); select();
     };
@@ -244,7 +270,7 @@ export function SpatialViewport(props: SpatialViewportProps) {
         return data.cameraId ? { cameraId: data.cameraId } : { cameraBoxId: data.cameraBoxId };
       }
       if (hit) {
-        const data = hit.object.userData;
+        const data = hit.object instanceof InstancedMesh && hit.instanceId !== undefined ? hit.object.userData.instances[hit.instanceId] : hit.object.userData;
         return data.characterId ? (wholeObject ? { characterId: data.characterId } : { characterId: data.characterId, jointId: data.jointId, boneId: data.boneId }) : data.objectId ? { objectId: data.objectId } : null;
       }
       return null;
@@ -280,12 +306,13 @@ export function SpatialViewport(props: SpatialViewportProps) {
       resize.disconnect(); orbit.dispose(); transform.dispose();
       grid.geometry.dispose(); for (const material of Array.isArray(grid.material) ? grid.material : [grid.material]) material.dispose();
       contentCache.dispose();
+      shadingWorker?.terminate(); rejectShading?.(new DOMException("", "AbortError"));
       disposeSpatialScene(cameraGuides); disposeSpatialScene(boxGuides);
       light.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };
   }, []);
-  useEffect(() => { runtime.current?.rebuild(props.draft); runtime.current?.select(); }, [props.draft, props.selection, props.mode, props.disabled, props.showRig, props.showCameras]);
+  useEffect(() => { runtime.current?.rebuild(props.draft); runtime.current?.select(); }, [props.draft, props.selection, props.mode, props.disabled, props.showRig, props.showCameras, props.interacting]);
 
   useEffect(() => { if (props.interactionResetKey !== undefined) runtime.current?.cancel(); }, [props.interactionResetKey]);
 

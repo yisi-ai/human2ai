@@ -33,7 +33,7 @@ function SystemOverview() {
         </p>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 16, margin: "36px 0 0" }}>
           {[
-            ["Shared assets", "25"],
+            ["Shared assets", "28"],
             ["Surface", "web-react"],
             ["System status", "migration candidate"],
           ].map(([term, value]) => (

@@ -1,5 +1,5 @@
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import type { StyleEntry } from "../../../../../src/domain/style";
 import {
@@ -10,6 +10,8 @@ import {
   StyleLibraryView,
   type StyleLibraryDraft,
 } from "./StyleLibraryView";
+
+import { createBrickModelFixture } from "./styleModelFixture";
 
 import { image, labels, fixtureStyles } from "./styleLibraryFixtures";
 
@@ -189,7 +191,7 @@ export const DestructiveDelete: Story = {
     findButton(canvasElement.ownerDocument.body, "删除").click();
     await nextFrame();
     assertStoryText(canvasElement.ownerDocument.body, "确认删除这个风格？");
-    assertStoryText(canvasElement.ownerDocument.body, "该风格及其全部参考图将被永久删除。");
+    assertStoryText(canvasElement.ownerDocument.body, "该风格及其全部参考图和模型将被永久删除。");
   },
 };
 
@@ -221,3 +223,56 @@ function findButton(root: ParentNode, label: string): HTMLButtonElement {
 async function nextFrame(): Promise<void> {
   await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
 }
+
+function ModelHarness({ failed = false, images = true }: { failed?: boolean; images?: boolean }) {
+  const [url, setUrl] = useState<string>();
+  useEffect(() => {
+    let cancelled = false;
+    let objectUrl: string;
+    void (failed ? Promise.resolve(new ArrayBuffer(4)) : createBrickModelFixture()).then((data) => {
+      if (cancelled) return;
+      objectUrl = URL.createObjectURL(new Blob([data], { type: "model/gltf-binary" }));
+      setUrl(objectUrl);
+    });
+    return () => { cancelled = true; if (objectUrl) URL.revokeObjectURL(objectUrl); };
+  }, [failed]);
+  const style: StyleEntry = {
+    ...fixtureStyles[2], id: "brick-example", name: "积木微缩",
+    description: "以统一模数的砖块、薄板和圆柱件构建微缩模型。保留清晰拼缝与适量凸点，使用带轻微圆角和柔和高光的硬质塑料材质。奶油白墙体、陶土色屋顶和蓝绿色门窗，整体轮廓简洁，呈现桌面收藏模型质感。",
+    promptSummary: "模块化积木、清晰拼缝与凸点，圆角塑料，克制配色。",
+    referenceImages: images ? fixtureStyles[0].referenceImages : [],
+    previewModel: { id: "brick-model", originalFilename: "brick-example.glb", byteSize: 1, createdAt: fixtureStyles[2].createdAt },
+  };
+  return url ? <StyleLibraryView styles={[style]} labels={labels} imageUrl={() => image} modelUrl={() => url} /> : <div role="status">{labels.model.loading}</div>;
+}
+
+export const ModelExample: Story = {
+  name: "程序生成的积木模型",
+  render: () => <ModelHarness images={false} />,
+  play: async ({ canvasElement }) => {
+    for (let attempt = 0; attempt < 300 && !canvasElement.querySelector("button"); attempt++) await nextFrame();
+    findButton(canvasElement, "打开“积木微缩”").click();
+    for (let attempt = 0; attempt < 300; attempt++) {
+      await nextFrame();
+      if (canvasElement.ownerDocument.querySelector('.human2ai-style-model-preview[data-state="ready"]')) return;
+    }
+    throw new Error("Generated model did not render");
+  },
+};
+
+export const ModelFailure: Story = {
+  name: "模型失败时仍可查看参考图",
+  render: () => <ModelHarness failed />,
+  play: async ({ canvasElement }) => {
+    for (let attempt = 0; attempt < 300 && !canvasElement.querySelector("button"); attempt++) await nextFrame();
+    findButton(canvasElement, "打开“积木微缩”").click();
+    for (let attempt = 0; attempt < 300; attempt++) {
+      await nextFrame();
+      if (canvasElement.ownerDocument.querySelector('.human2ai-style-model-preview[data-state="error"]')) {
+        assertStoryText(canvasElement.ownerDocument.body, labels.model.failed);
+        return;
+      }
+    }
+    throw new Error("Model failure did not surface");
+  },
+};

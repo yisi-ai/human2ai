@@ -9,10 +9,12 @@ import {
   type StyleCategory,
   type StyleCreatorType,
   type StyleEntry,
+  type StylePreviewModel,
   type StyleReferenceImage,
   type SessionStyleState,
 } from "../domain/style/index.ts";
 import { defaultStylePromptSummary, MAX_STYLE_PROMPT_SUMMARY_LENGTH } from "../domain/style/prompt-summary.ts";
+import { validStyleModel } from "../domain/style/model-input.ts";
 import { inspectImageInput, MAX_IMAGE_ASSET_BYTES } from "./image-input.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 import { ProjectSessionRepository, RevisionConflictError } from "./project-session-repository.ts";
@@ -27,6 +29,15 @@ interface StyleEntryRow {
   revision: number;
   created_at: string;
   updated_at: string;
+}
+
+interface StylePreviewModelRow {
+  style_id: string;
+  id: string;
+  relative_path: string;
+  original_filename: string;
+  byte_size: number;
+  created_at: string;
 }
 
 interface StyleReferenceImageRow {
@@ -293,13 +304,67 @@ export class StyleLibraryRepository {
     return { reference: mapReference(row), filePath };
   }
 
+  async setPreviewModel(styleId: string, input: { expectedRevision: number; filename: string; data: Buffer }): Promise<StyleEntry> {
+    const style = this.getStyle(styleId);
+    assertRevision(input.expectedRevision, style.revision);
+    if (!validStyleModel(input.data)) throw new InvalidStyleReferenceError("Use a self-contained GLB 2.0 model up to 10 MB, with embedded geometry and textures and no external decoder dependencies.");
+    const previous = this.previewModelRow(styleId);
+    const id = randomUUID();
+    const relativePath = join("styles", styleId, `${id}.glb`);
+    const filePath = this.filePath(relativePath);
+    const now = new Date().toISOString();
+    await mkdir(dirname(filePath), { recursive: true, mode: 0o700 });
+    await writeFile(filePath, input.data, { flag: "wx", mode: 0o600 });
+    try {
+      this.database.transaction(() => {
+        this.incrementRevision(styleId, input.expectedRevision, now);
+        this.database.prepare(`INSERT INTO style_preview_models (style_id, id, relative_path, original_filename, byte_size, created_at)
+          VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(style_id) DO UPDATE SET
+          id = excluded.id, relative_path = excluded.relative_path, original_filename = excluded.original_filename,
+          byte_size = excluded.byte_size, created_at = excluded.created_at
+        `).run(styleId, id, relativePath, safeFilename(input.filename), input.data.length, now);
+      })();
+    } catch (error) {
+      await unlink(filePath).catch(() => undefined);
+      throw error;
+    }
+    if (previous) await unlink(this.filePath(previous.relative_path)).catch(() => undefined);
+    return this.getStyle(styleId);
+  }
+
+  async deletePreviewModel(styleId: string, input: { expectedRevision: number }): Promise<StyleEntry> {
+    const style = this.getStyle(styleId);
+    assertRevision(input.expectedRevision, style.revision);
+    const previous = this.previewModelRow(styleId);
+    if (!previous) return style;
+    this.database.transaction(() => {
+      this.incrementRevision(styleId, input.expectedRevision, new Date().toISOString());
+      this.database.prepare("DELETE FROM style_preview_models WHERE style_id = ?").run(styleId);
+    })();
+    await unlink(this.filePath(previous.relative_path)).catch(() => undefined);
+    return this.getStyle(styleId);
+  }
+
+  getPreviewModel(styleId: string, modelId: string): { model: StylePreviewModel; filePath: string } {
+    this.getStyle(styleId);
+    const row = this.previewModelRow(styleId);
+    if (!row || row.id !== modelId || !existsSync(this.filePath(row.relative_path))) throw new StyleReferenceNotFoundError(styleId, modelId);
+    return { model: mapPreviewModel(row), filePath: this.filePath(row.relative_path) };
+  }
+
+  private previewModelRow(styleId: string): StylePreviewModelRow | undefined {
+    return this.database.prepare<[string], StylePreviewModelRow>("SELECT * FROM style_preview_models WHERE style_id = ?").get(styleId);
+  }
+
   private mapStyle(row: StyleEntryRow): StyleEntry {
     const references = this.database.prepare<[string], StyleReferenceImageRow>(
       `${REFERENCE_SELECT}
        WHERE style_id = ?
        ORDER BY position, id`,
     ).all(row.id);
+    const model = this.previewModelRow(row.id);
     return {
+      ...(model ? { previewModel: mapPreviewModel(model) } : {}),
       id: row.id,
       name: row.name,
       category: row.category,
@@ -425,4 +490,8 @@ function mapReference(row: StyleReferenceImageRow): StyleReferenceImage {
     position: row.position,
     createdAt: row.created_at,
   };
+}
+
+function mapPreviewModel(row: StylePreviewModelRow): StylePreviewModel {
+  return { id: row.id, originalFilename: row.original_filename, byteSize: row.byte_size, createdAt: row.created_at };
 }

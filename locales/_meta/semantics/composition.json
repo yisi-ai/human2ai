@@ -633,27 +633,6 @@
         "Select the editable Composition tab in an open session."
       ]
     },
-    "composition.guide-grid": {
-      "meaning": "An editor-only rule-of-thirds grid over the composition frame.",
-      "scope": "Composition frame controls and authored/refined canvas guide display.",
-      "referent": "Two horizontal and two vertical lines dividing the frame into thirds.",
-      "precedence": "Presentation aid, not persisted content geometry, UI layout grid, or a line to draw in the exported reference.",
-      "canonicalKey": "composition.showGuideGrid",
-      "searchTerms": [
-        "九宫线",
-        "开启九宫线",
-        "关闭九宫线",
-        "Show grid",
-        "Hide grid",
-        "rule of thirds"
-      ],
-      "examples": [
-        "Show frame thirds to help place a focal point."
-      ],
-      "nonExamples": [
-        "Add grid lines to the final generated artwork."
-      ]
-    },
     "composition.node-editor": {
       "meaning": "The editor for metadata of a selected composition node.",
       "scope": "Composition node-editor title and selected-kind label.",
@@ -1070,6 +1049,895 @@
       "nonExamples": [
         "Edit literal display text.",
         "Warp an image or modify an ordinary shape."
+      ]
+    },
+    "composition.planning-title": {
+      "meaning": "A persistent, independently editable composition structure shared by people and Agents, scoped to the active layout state.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "A persistent, independently editable composition structure shared by people and Agents, scoped to the active layout state.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.title",
+      "searchTerms": [
+        "构图规划",
+        "Composition planning",
+        "title"
+      ],
+      "examples": [
+        "A persistent, independently editable composition structure shared by people and Agents, scoped to the active layout state."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-add": {
+      "meaning": "Add another composition planning guide without changing any content node.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Add another composition planning guide without changing any content node.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.add",
+      "searchTerms": [
+        "添加规划",
+        "Add plan",
+        "add"
+      ],
+      "examples": [
+        "Add another composition planning guide without changing any content node."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-empty": {
+      "meaning": "Empty state for a layout with no saved composition plans.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Empty state for a layout with no saved composition plans.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.empty",
+      "searchTerms": [
+        "暂无构图规划",
+        "No composition plans",
+        "empty"
+      ],
+      "examples": [
+        "Empty state for a layout with no saved composition plans."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-golden-section": {
+      "meaning": "Frame-relative horizontal or vertical divisions at the golden sections.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Frame-relative horizontal or vertical divisions at the golden sections.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.golden-section",
+      "searchTerms": [
+        "黄金分割",
+        "Golden section",
+        "types.golden-section"
+      ],
+      "examples": [
+        "Frame-relative horizontal or vertical divisions at the golden sections."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-symmetry": {
+      "meaning": "Symmetry through the frame center, snapping to eight 45-degree directions plus four frame-corner directions that follow the aspect ratio; coincident positions are merged for a square frame.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Symmetry through the frame center, snapping to eight 45-degree directions plus four frame-corner directions that follow the aspect ratio; coincident positions are merged for a square frame.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.symmetry",
+      "searchTerms": [
+        "对称构图",
+        "Symmetrical composition",
+        "types.symmetry"
+      ],
+      "examples": [
+        "Symmetry through the frame center, snapping to eight 45-degree directions plus four frame-corner directions that follow the aspect ratio; coincident positions are merged for a square frame."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-golden-spiral": {
+      "meaning": "A logarithmic spiral whose physical radius grows by the golden ratio per quarter turn, expressing a compositional flow toward its pole.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "A logarithmic spiral whose physical radius grows by the golden ratio per quarter turn, expressing a compositional flow toward its pole.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.golden-spiral",
+      "searchTerms": [
+        "黄金螺旋",
+        "Golden spiral",
+        "types.golden-spiral"
+      ],
+      "examples": [
+        "A logarithmic spiral whose physical radius grows by the golden ratio per quarter turn, expressing a compositional flow toward its pole."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-triangle": {
+      "meaning": "An isosceles planning triangle with adjustable center, rotation, base width and height; its two legs always have equal physical length.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "An isosceles planning triangle with adjustable center, rotation, base width and height; its two legs always have equal physical length.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.triangle",
+      "searchTerms": [
+        "三角构图",
+        "Triangular composition",
+        "types.triangle"
+      ],
+      "examples": [
+        "An isosceles planning triangle with adjustable center, rotation, base width and height; its two legs always have equal physical length."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-visible": {
+      "meaning": "Whether a planning guide is displayed in the editor and inspection preview; hiding it does not remove its composition intent.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Whether a planning guide is displayed in the editor and inspection preview; hiding it does not remove its composition intent.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.visible",
+      "searchTerms": [
+        "显示规划",
+        "Show plan",
+        "visible"
+      ],
+      "examples": [
+        "Whether a planning guide is displayed in the editor and inspection preview; hiding it does not remove its composition intent."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-axes": {
+      "meaning": "Which horizontal or vertical divisions a thirds or golden-section plan contains.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Which horizontal or vertical divisions a thirds or golden-section plan contains.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.axes",
+      "searchTerms": [
+        "分割方向",
+        "Grid directions",
+        "axes"
+      ],
+      "examples": [
+        "Which horizontal or vertical divisions a thirds or golden-section plan contains."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-both": {
+      "meaning": "Both horizontal and vertical planning-grid divisions.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Both horizontal and vertical planning-grid divisions.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.both",
+      "searchTerms": [
+        "横纵",
+        "Horizontal and vertical",
+        "both"
+      ],
+      "examples": [
+        "Both horizontal and vertical planning-grid divisions."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-horizontal": {
+      "meaning": "Horizontal planning-grid divisions across the frame.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Horizontal planning-grid divisions across the frame.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.horizontal",
+      "searchTerms": [
+        "水平",
+        "Horizontal",
+        "horizontal"
+      ],
+      "examples": [
+        "Horizontal planning-grid divisions across the frame."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-vertical": {
+      "meaning": "Vertical planning-grid divisions down the frame.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Vertical planning-grid divisions down the frame.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.vertical",
+      "searchTerms": [
+        "垂直",
+        "Vertical",
+        "vertical"
+      ],
+      "examples": [
+        "Vertical planning-grid divisions down the frame."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-x": {
+      "meaning": "The frame-relative horizontal coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the left edge.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The frame-relative horizontal coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the left edge.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.x",
+      "searchTerms": [
+        "横向位置（%）",
+        "Horizontal position (%)",
+        "x",
+        "Horizontal (%)",
+        "compact coordinate label"
+      ],
+      "examples": [
+        "The frame-relative horizontal coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the left edge."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-y": {
+      "meaning": "The frame-relative vertical coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the top edge.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The frame-relative vertical coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the top edge.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.y",
+      "searchTerms": [
+        "纵向位置（%）",
+        "Vertical position (%)",
+        "y",
+        "Vertical (%)",
+        "compact coordinate label"
+      ],
+      "examples": [
+        "The frame-relative vertical coordinate of a planning spiral pole, radial convergence point or triangle center, measured from the top edge."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-rotation": {
+      "meaning": "Clockwise planning rotation in physical geometry; zero points right for a spiral radius or the first uniform radial ray and keeps the triangle apex upward. Free radial composition stores independent ray angles instead.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Clockwise planning rotation in physical geometry; zero points right for a spiral radius or the first uniform radial ray and keeps the triangle apex upward. Free radial composition stores independent ray angles instead.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.rotation",
+      "searchTerms": [
+        "旋转角度（°）",
+        "Rotation (°)",
+        "rotation"
+      ],
+      "examples": [
+        "Clockwise planning rotation in physical geometry; zero points right for a spiral radius or the first uniform radial ray and keeps the triangle apex upward. Free radial composition stores independent ray angles instead."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-scale": {
+      "meaning": "The outer spiral radius as a percentage of the shorter physical frame side; resizing preserves golden growth.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The outer spiral radius as a percentage of the shorter physical frame side; resizing preserves golden growth.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.scale",
+      "searchTerms": [
+        "螺旋尺寸（%）",
+        "Spiral size (%)",
+        "scale"
+      ],
+      "examples": [
+        "The outer spiral radius as a percentage of the shorter physical frame side; resizing preserves golden growth."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-mirrored": {
+      "meaning": "Reflect the spiral winding across its outer-radius axis, preserving its pole and scale.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Reflect the spiral winding across its outer-radius axis, preserving its pole and scale.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.mirrored",
+      "searchTerms": [
+        "镜像螺旋",
+        "Mirror spiral",
+        "mirrored"
+      ],
+      "examples": [
+        "Reflect the spiral winding across its outer-radius axis, preserving its pole and scale."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-handle": {
+      "meaning": "Accessible name of a numbered planning transform handle, independently editable by pointer or arrow keys.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Accessible name of a numbered planning transform handle, independently editable by pointer or arrow keys.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.handle",
+      "searchTerms": [
+        "规划控制点 {{index}}",
+        "Plan control {{index}}",
+        "handle"
+      ],
+      "examples": [
+        "Accessible name of a numbered planning transform handle, independently editable by pointer or arrow keys."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-help": {
+      "meaning": "Explain multi-selection and movement of movable plans, fixed thirds/golden-section/symmetry guides, sidebar-only selection of thirds and golden-section plans, keyboard editing and the local editor lock.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Explain multi-selection and movement of movable plans, fixed thirds/golden-section/symmetry guides, sidebar-only selection of thirds and golden-section plans, keyboard editing and the local editor lock.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.help",
+      "searchTerms": [
+        "构图规划",
+        "三分构图",
+        "侧栏选择",
+        "fixed guides",
+        "planning help"
+      ],
+      "examples": [
+        "Explain multi-selection and movement of movable plans, fixed thirds/golden-section/symmetry guides, sidebar-only selection of thirds and golden-section plans, keyboard editing and the local editor lock."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-guidance": {
+      "meaning": "Instructions for interpreting saved planning as spatial intent, not literal artwork.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Instructions for interpreting saved planning as spatial intent, not literal artwork.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningGuidance",
+      "searchTerms": [
+        "以下构图规划表达布局意图，结合整体要求与备注使用；辅助线、轴线、螺旋和三角轮廓本身不应画进成品。位置相对于画面左上角，角度从向右的水平方向顺时针计量。",
+        "Use the following plans as composition intent alongside the overall requirements and notes. Do not draw the guide lines, axes, spiral or triangle outline in the artwork. Positions are relative to the top-left of the image; angles run clockwise from the rightward horizontal.",
+        "planningGuidance"
+      ],
+      "examples": [
+        "Instructions for interpreting saved planning as spatial intent, not literal artwork."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-grid": {
+      "meaning": "Export a selected planning grid and its directions.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export a selected planning grid and its directions.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningGrid",
+      "searchTerms": [
+        "- {{type}}：{{axes}}分割线。",
+        "- {{type}}: {{axes}} divisions.",
+        "planningGrid"
+      ],
+      "examples": [
+        "Export a selected planning grid and its directions."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-symmetry": {
+      "meaning": "Export a fixed-center symmetry plan snapped to a cardinal, 45-degree diagonal, or frame-corner direction.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export a fixed-center symmetry plan snapped to a cardinal, 45-degree diagonal, or frame-corner direction.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningSymmetry",
+      "searchTerms": [
+        "- 对称构图：对称轴经过画面中心（{{x}}%，{{y}}%），方向 {{rotation}}°。",
+        "- Symmetrical composition: axis through the image center ({{x}}%, {{y}}%), direction {{rotation}}°.",
+        "planningSymmetry"
+      ],
+      "examples": [
+        "Export a fixed-center symmetry plan snapped to a cardinal, 45-degree diagonal, or frame-corner direction."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-spiral": {
+      "meaning": "Export the logarithmic planning spiral pole, physical scale, orientation and winding.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export the logarithmic planning spiral pole, physical scale, orientation and winding.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningSpiral",
+      "searchTerms": [
+        "- 黄金螺旋：收束位置（{{x}}%，{{y}}%），外端方向 {{rotation}}°，外半径为画面短边的 {{scale}}%，{{winding}}。",
+        "- Golden spiral: pole at ({{x}}%, {{y}}%), outer radius directed at {{rotation}}°, radius {{scale}}% of the shorter image side, {{winding}}.",
+        "planningSpiral"
+      ],
+      "examples": [
+        "Export the logarithmic planning spiral pole, physical scale, orientation and winding."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-clockwise": {
+      "meaning": "Clockwise outward winding of a non-mirrored planning spiral.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Clockwise outward winding of a non-mirrored planning spiral.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningClockwise",
+      "searchTerms": [
+        "向外顺时针展开",
+        "expanding clockwise",
+        "planningClockwise"
+      ],
+      "examples": [
+        "Clockwise outward winding of a non-mirrored planning spiral."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-counterclockwise": {
+      "meaning": "Counterclockwise outward winding of a mirrored planning spiral.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Counterclockwise outward winding of a mirrored planning spiral.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningCounterclockwise",
+      "searchTerms": [
+        "向外逆时针展开",
+        "expanding counterclockwise",
+        "planningCounterclockwise"
+      ],
+      "examples": [
+        "Counterclockwise outward winding of a mirrored planning spiral."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-triangle": {
+      "meaning": "Export the three derived frame-relative vertices of an isosceles composition triangle.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export the three derived frame-relative vertices of an isosceles composition triangle.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningTriangle",
+      "searchTerms": [
+        "- 三角构图：顶点为 {{points}}。",
+        "- Triangular composition: vertices at {{points}}.",
+        "planningTriangle"
+      ],
+      "examples": [
+        "Export the three derived frame-relative vertices of an isosceles composition triangle."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-width": {
+      "meaning": "The unrotated base width of an isosceles planning triangle as a percentage of the frame width.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The unrotated base width of an isosceles planning triangle as a percentage of the frame width.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.width",
+      "searchTerms": [
+        "底边宽度（%）",
+        "Base width (%)",
+        "width"
+      ],
+      "examples": [
+        "The unrotated base width of an isosceles planning triangle as a percentage of the frame width."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-height": {
+      "meaning": "The perpendicular apex-to-base height of an isosceles planning triangle as a percentage of the frame height.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The perpendicular apex-to-base height of an isosceles planning triangle as a percentage of the frame height.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.height",
+      "searchTerms": [
+        "三角高度（%）",
+        "Triangle height (%)",
+        "height"
+      ],
+      "examples": [
+        "The perpendicular apex-to-base height of an isosceles planning triangle as a percentage of the frame height."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-triangle-help": {
+      "meaning": "Explain constrained triangle editing: move the apex to rotate and change height; move a base corner to resize symmetrically, preserving equal legs.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Explain constrained triangle editing: move the apex to rotate and change height; move a base corner to resize symmetrically, preserving equal legs.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.triangleHelp",
+      "searchTerms": [
+        "拖动顶点调整朝向和高度；拖动底角调整底边与高度，两侧始终对称。",
+        "Drag the apex to rotate and adjust height. Drag a base corner to resize; both sides stay symmetric.",
+        "triangleHelp"
+      ],
+      "examples": [
+        "Explain constrained triangle editing: move the apex to rotate and change height; move a base corner to resize symmetrically, preserving equal legs."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-symmetry-help": {
+      "meaning": "Explain the fixed center, eight regular snap positions and four aspect-ratio-dependent corner directions, with square-frame duplicates merged and keyboard stepping between positions.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Explain the fixed center, eight regular snap positions and four aspect-ratio-dependent corner directions, with square-frame duplicates merged and keyboard stepping between positions.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.symmetryHelp",
+      "searchTerms": [
+        "对称构图",
+        "四角方向",
+        "十二个点位",
+        "square frame",
+        "corner directions",
+        "symmetryHelp"
+      ],
+      "examples": [
+        "Explain the fixed center, eight regular snap positions and four aspect-ratio-dependent corner directions, with square-frame duplicates merged and keyboard stepping between positions."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-spiral-help": {
+      "meaning": "Explain clicking the spiral pole to reverse winding, while dragging still adjusts position, angle and scale.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Explain clicking the spiral pole to reverse winding, while dragging still adjusts position, angle and scale.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.spiralHelp",
+      "searchTerms": [
+        "点击中心圆点切换顺／逆时针；拖动中心移动螺旋，拖动外端圆点调整角度和大小。",
+        "Click the center dot to switch clockwise/counterclockwise. Drag it to move the spiral; drag the outer dot to rotate and resize.",
+        "spiralHelp"
+      ],
+      "examples": [
+        "Explain clicking the spiral pole to reverse winding, while dragging still adjusts position, angle and scale."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-spiral-direction": {
+      "meaning": "Accessible action on the spiral pole to switch between clockwise and counterclockwise winding, without changing its position, rotation or size.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Accessible action on the spiral pole to switch between clockwise and counterclockwise winding, without changing its position, rotation or size.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.spiralDirection",
+      "searchTerms": [
+        "切换螺旋方向（顺时针／逆时针）",
+        "Switch spiral direction (clockwise/counterclockwise)",
+        "spiralDirection"
+      ],
+      "examples": [
+        "Accessible action on the spiral pole to switch between clockwise and counterclockwise winding, without changing its position, rotation or size."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-radial": {
+      "meaning": "Rays sharing one movable frame-relative convergence point, with uniform spacing or independently editable physical angles, expressing radial composition without moving content.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Rays sharing one movable frame-relative convergence point, with uniform spacing or independently editable physical angles, expressing radial composition without moving content.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.radial",
+      "searchTerms": [
+        "放射构图",
+        "Radial composition",
+        "composition.planning.types.radial"
+      ],
+      "examples": [
+        "Rays sharing one movable frame-relative convergence point, with uniform spacing or independently editable physical angles, expressing radial composition without moving content."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-ray-count": {
+      "meaning": "The integer number of guide rays in a radial composition, from 2 to 36.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The integer number of guide rays in a radial composition, from 2 to 36.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.rayCount",
+      "searchTerms": [
+        "射线数量",
+        "Ray count",
+        "composition.planning.rayCount"
+      ],
+      "examples": [
+        "The integer number of guide rays in a radial composition, from 2 to 36."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-spread": {
+      "meaning": "The clockwise angular span in degrees for uniform radial composition only, from 1 to 360. A full circle has no duplicate terminal ray.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "The clockwise angular span in degrees for uniform radial composition only, from 1 to 360. A full circle has no duplicate terminal ray.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.spread",
+      "searchTerms": [
+        "展开角度（°）",
+        "Spread (°)",
+        "composition.planning.spread"
+      ],
+      "examples": [
+        "The clockwise angular span in degrees for uniform radial composition only, from 1 to 360. A full circle has no duplicate terminal ray."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-radial-help": {
+      "meaning": "Explain uniform and free radial modes, their handles, and switching: free preserves current directions; uniform retains center, count and first direction while returning to a full circle.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Explain uniform and free radial modes, their handles, and switching: free preserves current directions; uniform retains center, count and first direction while returning to a full circle.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.radialHelp",
+      "searchTerms": [
+        "均匀",
+        "自由",
+        "射线控制点",
+        "radial mode",
+        "independent ray angles"
+      ],
+      "examples": [
+        "Explain uniform and free radial modes, their handles, and switching: free preserves current directions; uniform retains center, count and first direction while returning to a full circle."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-radial": {
+      "meaning": "Export the convergence point, number of evenly spaced rays, clockwise starting direction and angular span of radial composition as layout intent.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export the convergence point, number of evenly spaced rays, clockwise starting direction and angular span of radial composition as layout intent.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningRadial",
+      "searchTerms": [
+        "- 放射构图：汇聚点（{{x}}%，{{y}}%），{{rayCount}} 条等角间隔射线，从 {{rotation}}° 起顺时针展开 {{spread}}°。",
+        "- Radial composition: convergence point ({{x}}%, {{y}}%), {{rayCount}} evenly spaced rays starting at {{rotation}}° and spanning {{spread}}° clockwise.",
+        "composition.prompt.planningRadial"
+      ],
+      "examples": [
+        "Export the convergence point, number of evenly spaced rays, clockwise starting direction and angular span of radial composition as layout intent."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-lock": {
+      "meaning": "Lock manual edits to saved composition plans, including add, geometry, per-plan visibility and delete; the editor-only global display toggle and Agent edits remain available.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Lock manual edits to saved composition plans, including add, geometry, per-plan visibility and delete; the editor-only global display toggle and Agent edits remain available.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.lock",
+      "searchTerms": [
+        "锁定构图规划",
+        "Lock composition planning",
+        "lock"
+      ],
+      "examples": [
+        "Lock manual edits to saved composition plans, including add, geometry, per-plan visibility and delete; the editor-only global display toggle and Agent edits remain available."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-unlock": {
+      "meaning": "Unlock manual composition planning controls in the current editor.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Unlock manual composition planning controls in the current editor.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.unlock",
+      "searchTerms": [
+        "解锁构图规划",
+        "Unlock composition planning",
+        "unlock"
+      ],
+      "examples": [
+        "Unlock manual composition planning controls in the current editor."
+      ],
+      "nonExamples": [
+        "Automatic rearrangement of content when a guide is edited.",
+        "Relation verification evidence from a completed refinement."
+      ]
+    },
+    "composition.planning-types-thirds": {
+      "meaning": "A persisted composition plan dividing the frame into equal thirds horizontally, vertically or both; new drafts start with this plan visible.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Frame-bound rule-of-thirds lines, selectable only from the planning sidebar.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.types.thirds",
+      "searchTerms": [
+        "三分构图",
+        "九宫线",
+        "Rule of thirds",
+        "thirds"
+      ],
+      "examples": [
+        "Start a new composition session with horizontal and vertical thirds."
+      ],
+      "nonExamples": [
+        "A separate editor-only grid switch beside the frame ratio.",
+        "An automatic constraint that moves content."
+      ]
+    },
+    "composition.planning-display": {
+      "meaning": "An editor-only master switch that shows or hides all composition planning lines and controls without changing saved per-plan visibility or composition intent.",
+      "scope": "The icon beside the composition planning heading and the authored or refined composition canvas.",
+      "referent": "The visibility of the entire planning overlay in the current editor.",
+      "precedence": "The master switch hides even individually visible plans; turning it on restores individual visibility. It remains usable while planning edits are locked and does not restrict Agent edits.",
+      "canonicalKey": "composition.planning.showAll",
+      "searchTerms": [
+        "显示构图线",
+        "隐藏构图线",
+        "Show composition guides",
+        "Hide composition guides",
+        "master visibility"
+      ],
+      "examples": [
+        "Hide every guide temporarily while arranging content, then restore previous guide visibility."
+      ],
+      "nonExamples": [
+        "Delete plans or exclude them from the generated prompt.",
+        "Change one plan’s saved visible setting."
+      ]
+    },
+    "composition.planning-radial-mode": {
+      "meaning": "Select how directions of radial planning rays are controlled: uniformly spaced or independently adjusted.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Select how directions of radial planning rays are controlled: uniformly spaced or independently adjusted.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.radialMode",
+      "searchTerms": [
+        "放射模式",
+        "Radial mode",
+        "uniform",
+        "free"
+      ],
+      "examples": [
+        "Select how directions of radial planning rays are controlled: uniformly spaced or independently adjusted."
+      ],
+      "nonExamples": [
+        "Moving content elements when a composition guide changes.",
+        "The geometric primitive of a content region."
+      ]
+    },
+    "composition.planning-radial-uniform": {
+      "meaning": "Radial mode with evenly spaced rays controlled by starting rotation, ray count and angular spread.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Radial mode with evenly spaced rays controlled by starting rotation, ray count and angular spread.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.radialUniform",
+      "searchTerms": [
+        "均匀",
+        "Uniform",
+        "radial mode"
+      ],
+      "examples": [
+        "Radial mode with evenly spaced rays controlled by starting rotation, ray count and angular spread."
+      ],
+      "nonExamples": [
+        "Moving content elements when a composition guide changes.",
+        "The geometric primitive of a content region."
+      ]
+    },
+    "composition.planning-radial-free": {
+      "meaning": "Radial mode with an independent direction handle for each ray and no overall rotation or spread parameter.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Radial mode with an independent direction handle for each ray and no overall rotation or spread parameter.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.radialFree",
+      "searchTerms": [
+        "自由",
+        "Free",
+        "radial mode"
+      ],
+      "examples": [
+        "Radial mode with an independent direction handle for each ray and no overall rotation or spread parameter."
+      ],
+      "nonExamples": [
+        "Moving content elements when a composition guide changes.",
+        "The geometric primitive of a content region."
+      ]
+    },
+    "composition.planning-ray-handle": {
+      "meaning": "Accessible name of the numbered control for changing one free radial ray angle without changing the other rays.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Accessible name of the numbered control for changing one free radial ray angle without changing the other rays.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.planning.rayHandle",
+      "searchTerms": [
+        "射线方向",
+        "Ray direction",
+        "ray handle"
+      ],
+      "examples": [
+        "Accessible name of the numbered control for changing one free radial ray angle without changing the other rays."
+      ],
+      "nonExamples": [
+        "Moving content elements when a composition guide changes.",
+        "The geometric primitive of a content region."
+      ]
+    },
+    "composition.planning-radial-free-prompt": {
+      "meaning": "Export a free radial composition as a convergence point and a list of independent clockwise ray angles from the rightward horizontal.",
+      "scope": "Composition planning editor, canvas controls and human/Agent handoff.",
+      "referent": "Export a free radial composition as a convergence point and a list of independent clockwise ray angles from the rightward horizontal.",
+      "precedence": "Planning belongs to the active layout state. Editing it never moves content. All plans express composition intent regardless of visibility. The editor lock prevents manual plan edits without restricting Agent updates. Global user requirements take precedence.",
+      "canonicalKey": "composition.prompt.planningRadialFree",
+      "searchTerms": [
+        "自由放射构图",
+        "Free radial composition",
+        "ray angles"
+      ],
+      "examples": [
+        "Export a free radial composition as a convergence point and a list of independent clockwise ray angles from the rightward horizontal."
+      ],
+      "nonExamples": [
+        "Moving content elements when a composition guide changes.",
+        "The geometric primitive of a content region."
       ]
     }
   },
@@ -1703,22 +2571,6 @@
       "tone": "neutral",
       "reusePolicy": "contextual"
     },
-    "composition.showGuideGrid": {
-      "conceptId": "composition.guide-grid",
-      "variant": "show-action",
-      "role": "tooltip and accessible name for enabling the guide overlay",
-      "grammar": "imperative verb phrase",
-      "tone": "neutral",
-      "reusePolicy": "canonical"
-    },
-    "composition.hideGuideGrid": {
-      "conceptId": "composition.guide-grid",
-      "variant": "hide-action",
-      "role": "tooltip and accessible name for disabling the guide overlay",
-      "grammar": "imperative verb phrase",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
     "canvasNodeEditor.title": {
       "conceptId": "composition.node-editor",
       "variant": "editor-title",
@@ -1958,6 +2810,382 @@
       "grammar": "instructional sentence",
       "tone": "concise and neutral",
       "reusePolicy": "contextual"
+    },
+    "composition.planning.title": {
+      "conceptId": "composition.planning-title",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.add": {
+      "conceptId": "composition.planning-add",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.empty": {
+      "conceptId": "composition.planning-empty",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.golden-section": {
+      "conceptId": "composition.planning-types-golden-section",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.symmetry": {
+      "conceptId": "composition.planning-types-symmetry",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.golden-spiral": {
+      "conceptId": "composition.planning-types-golden-spiral",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.triangle": {
+      "conceptId": "composition.planning-types-triangle",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.visible": {
+      "conceptId": "composition.planning-visible",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.axes": {
+      "conceptId": "composition.planning-axes",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.both": {
+      "conceptId": "composition.planning-both",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.horizontal": {
+      "conceptId": "composition.planning-horizontal",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.vertical": {
+      "conceptId": "composition.planning-vertical",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.x": {
+      "conceptId": "composition.planning-x",
+      "variant": "default",
+      "role": "compact frame-relative coordinate field label with percentage unit",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.y": {
+      "conceptId": "composition.planning-y",
+      "variant": "default",
+      "role": "compact frame-relative coordinate field label with percentage unit",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.rotation": {
+      "conceptId": "composition.planning-rotation",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.scale": {
+      "conceptId": "composition.planning-scale",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.mirrored": {
+      "conceptId": "composition.planning-mirrored",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.handle": {
+      "conceptId": "composition.planning-handle",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.help": {
+      "conceptId": "composition.planning-help",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningGuidance": {
+      "conceptId": "composition.planning-guidance",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningGrid": {
+      "conceptId": "composition.planning-grid",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningSymmetry": {
+      "conceptId": "composition.planning-symmetry",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningSpiral": {
+      "conceptId": "composition.planning-spiral",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningClockwise": {
+      "conceptId": "composition.planning-clockwise",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningCounterclockwise": {
+      "conceptId": "composition.planning-counterclockwise",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningTriangle": {
+      "conceptId": "composition.planning-triangle",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.width": {
+      "conceptId": "composition.planning-width",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.height": {
+      "conceptId": "composition.planning-height",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.triangleHelp": {
+      "conceptId": "composition.planning-triangle-help",
+      "variant": "default",
+      "role": "help text",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.symmetryHelp": {
+      "conceptId": "composition.planning-symmetry-help",
+      "variant": "default",
+      "role": "help text",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.spiralHelp": {
+      "conceptId": "composition.planning-spiral-help",
+      "variant": "default",
+      "role": "help text",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.spiralDirection": {
+      "conceptId": "composition.planning-spiral-direction",
+      "variant": "default",
+      "role": "button aria-label",
+      "grammar": "imperative",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.radial": {
+      "conceptId": "composition.planning-types-radial",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.rayCount": {
+      "conceptId": "composition.planning-ray-count",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.spread": {
+      "conceptId": "composition.planning-spread",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.radialHelp": {
+      "conceptId": "composition.planning-radial-help",
+      "variant": "default",
+      "role": "help text",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningRadial": {
+      "conceptId": "composition.planning-radial",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.lock": {
+      "conceptId": "composition.planning-lock",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.unlock": {
+      "conceptId": "composition.planning-unlock",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.types.thirds": {
+      "conceptId": "composition.planning-types-thirds",
+      "variant": "default",
+      "role": "planning control or label",
+      "grammar": "label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.showAll": {
+      "conceptId": "composition.planning-display",
+      "variant": "show-action",
+      "role": "tooltip and accessible name for the planning overlay display switch",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.hideAll": {
+      "conceptId": "composition.planning-display",
+      "variant": "hide-action",
+      "role": "tooltip and accessible name for the planning overlay display switch",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.planning.radialMode": {
+      "conceptId": "composition.planning-radial-mode",
+      "variant": "default",
+      "role": "planning control label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.radialUniform": {
+      "conceptId": "composition.planning-radial-uniform",
+      "variant": "default",
+      "role": "planning control label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.radialFree": {
+      "conceptId": "composition.planning-radial-free",
+      "variant": "default",
+      "role": "planning control label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.planning.rayHandle": {
+      "conceptId": "composition.planning-ray-handle",
+      "variant": "default",
+      "role": "accessible ray direction control label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.prompt.planningRadialFree": {
+      "conceptId": "composition.planning-radial-free-prompt",
+      "variant": "default",
+      "role": "prompt instruction",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
     }
   }
 }

@@ -8,6 +8,8 @@ import { openDatabase, type DatabaseConnection } from "../../src/database/migrat
 import { ProjectSessionRepository } from "../../src/database/project-session-repository.js";
 import {
   addArea,
+  addCompositionPlan,
+  replaceCompositionPlan,
   addFocus,
   addTextRegion,
   createDraft,
@@ -37,6 +39,32 @@ describe("composition session API", () => {
   afterEach(async () => {
     await server?.close();
     database?.close();
+  });
+
+  it("round-trips human and Agent planning edits through existing revisions, conflicts and undo", async () => {
+    ({ database, server } = createTestServer());
+    const sessionId = await createSession(server, "image-composition", "Planning");
+    let first = addCompositionPlan(createRefinableDraft(), "triangle").draft;
+    for (const type of ["golden-section", "symmetry", "golden-spiral"] as const) {
+      first = addCompositionPlan(first, type).draft;
+    }
+    first = createCompositionState(first, "state-1", "second");
+    const url = `/api/v1/sessions/${sessionId}/composition/drafts`;
+    const saved = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 0, draft: first } });
+    expect(saved.statusCode, saved.body).toBe(201);
+    const second = replaceCompositionPlan(first, { ...first.plans![0], visible: false });
+    const updated = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 1, draft: second } });
+    expect(updated.statusCode, updated.body).toBe(201);
+    expect(updated.json().draft.plans).toEqual(second.plans);
+    expect(updated.json().draft.areas).toEqual(first.areas);
+    const stale = await server.inject({ method: "POST", url, payload: { expectedLatestRevision: 1, draft: first } });
+    expect(stale.statusCode).toBe(409);
+    const restored = await server.inject({ method: "POST", url: `${url}/undo`, payload: { changeRevision: 2, expectedLatestRevision: 2 } });
+    expect(restored.statusCode, restored.body).toBe(201);
+    expect(restored.json().draft.plans).toEqual(first.plans);
+    const loaded = await server.inject({ method: "GET", url });
+    expect(loaded.statusCode).toBe(200);
+    expect(loaded.body).toContain('"triangle"');
   });
 
   it("saves shared nodes and independent named layouts, and restores them through draft undo", async () => {

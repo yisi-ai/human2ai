@@ -95,6 +95,15 @@ const referenceImageSchema = {
   },
 } as const;
 
+const previewModelSchema = {
+  type: "object", additionalProperties: false,
+  required: ["id", "originalFilename", "byteSize", "createdAt"],
+  properties: {
+    id: { type: "string" }, originalFilename: { type: "string" },
+    byteSize: { type: "integer", minimum: 1 }, createdAt: { type: "string" },
+  },
+} as const;
+
 const styleSchema = {
   type: "object",
   additionalProperties: false,
@@ -118,6 +127,7 @@ const styleSchema = {
     description: { type: "string" },
     promptSummary: { type: "string" },
     referenceImages: { type: "array", items: referenceImageSchema },
+    previewModel: previewModelSchema,
     revision: { type: "integer", minimum: 1 },
     createdAt: { type: "string" },
     updatedAt: { type: "string" },
@@ -235,6 +245,10 @@ export function registerStyleLibraryRoutes(
                   properties: { url: { type: "string" } },
                 },
               },
+              previewModel: {
+                type: "object", additionalProperties: false, required: ["url"],
+                properties: { url: { type: "string" } },
+              },
               description: { type: "string" },
             },
           },
@@ -245,6 +259,7 @@ export function registerStyleLibraryRoutes(
     async (request, reply) => execute(reply, 200, () => {
       const style = repository.getStyle(request.params.styleId);
       return {
+        ...(style.previewModel ? { previewModel: { url: styleModelContentPath(style.id, style.previewModel.id) } } : {}),
         referenceImages: style.referenceImages.map((reference) => ({
           url: styleReferenceContentPath(style.id, reference.id),
         })),
@@ -301,6 +316,38 @@ export function registerStyleLibraryRoutes(
     async (request, reply) => execute(reply, 204, () => (
       repository.deleteStyle(request.params.styleId, request.body)
     )),
+  );
+
+  server.post<{ Params: StyleParams; Querystring: UploadReferenceQuery; Body: Buffer }>(
+    "/api/v1/styles/:styleId/model",
+    { schema: {
+      params: styleParamsSchema,
+      querystring: {
+        type: "object", additionalProperties: false, required: ["filename", "expectedRevision"],
+        properties: { filename: { type: "string", minLength: 1, maxLength: 255 }, expectedRevision: { type: "integer", minimum: 1 } },
+      },
+      response: { 200: styleSchema, 400: errorSchema, 404: errorSchema, 409: errorSchema },
+    } },
+    async (request, reply) => execute(reply, 200, () => repository.setPreviewModel(request.params.styleId, {
+      ...request.query, data: request.body,
+    })),
+  );
+  server.delete<{ Params: StyleParams; Body: RevisionBody }>(
+    "/api/v1/styles/:styleId/model",
+    { schema: { params: styleParamsSchema, body: revisionBodySchema, response: { 200: styleSchema, 404: errorSchema, 409: errorSchema } } },
+    async (request, reply) => execute(reply, 200, () => repository.deletePreviewModel(request.params.styleId, request.body)),
+  );
+  server.get<{ Params: ReferenceParams }>(
+    "/api/v1/styles/:styleId/models/:referenceId/content",
+    { schema: { params: referenceParamsSchema, response: { 404: errorSchema } } },
+    async (request, reply) => {
+      try {
+        const { model, filePath } = repository.getPreviewModel(request.params.styleId, request.params.referenceId);
+        return reply.header("cache-control", "private, max-age=31536000, immutable")
+          .header("content-length", model.byteSize).header("x-content-type-options", "nosniff")
+          .type("model/gltf-binary").send(createReadStream(filePath));
+      } catch (error) { return sendStyleError(reply, error); }
+    },
   );
 
   server.post<{
@@ -452,4 +499,8 @@ function sendStyleError(reply: FastifyReply, error: unknown): FastifyReply {
 
 function styleReferenceContentPath(styleId: string, referenceId: string): string {
   return `/api/v1/styles/${encodeURIComponent(styleId)}/references/${encodeURIComponent(referenceId)}/content`;
+}
+
+function styleModelContentPath(styleId: string, modelId: string): string {
+  return `/api/v1/styles/${encodeURIComponent(styleId)}/models/${encodeURIComponent(modelId)}/content`;
 }

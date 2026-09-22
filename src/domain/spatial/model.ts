@@ -1,11 +1,11 @@
-import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3 } from "three";
+import { BufferGeometry, Color, DoubleSide, Float32BufferAttribute, Group, LineBasicMaterial, LineSegments, Matrix4, Mesh, MeshLambertMaterial, Quaternion, Vector3 } from "three";
 import maleAsset from "./assets/quaternius-superhero.json" with { type: "json" };
 import femaleAsset from "./assets/quaternius-superhero-female.json" with { type: "json" };
 import { jointWorldTransforms, proportionedJointOffset, quaternion, vector } from "./kinematics.ts";
 import { footHeightScale, partWidth, spatialReferenceBlend, spatialShape } from "./proportions.ts";
 import { createMorphTargets } from "./morph.ts";
 import { fingerPart, fingerRestMatrix, owningHand } from "./hands.ts";
-import { createFingerCreases } from "./reference-lines.ts";
+import { fingerCreaseSegments, updateFingerCreases, type FingerCreaseSegment } from "./reference-lines.ts";
 import { createGeometricCharacterModel } from "./geometric-model.ts";
 import type { SpatialBone, SpatialCharacter, Vec3 } from "./types.ts";
 
@@ -15,16 +15,40 @@ const sources = Object.fromEntries(Object.entries({ male: maleAsset, female: fem
     const start = new Vector3(...part.start as Vec3), direction = new Vector3(...part.end as Vec3).sub(start);
     return { length: direction.length(), inverse: new Matrix4().compose(start, new Quaternion().setFromUnitVectors(up, direction.normalize()), new Vector3(1,1,1)).invert() };
   });
-  return [bodyType, { asset, targets: createMorphTargets(asset), sourceFrames, sourceBodyHeight: asset.height - sourceFrames[asset.parts.findIndex(p => p.id === "head")].length }];
+  const modules = asset.modules.map(module => {
+    const vertices = [...new Set(module.indices)], remap = new Map(vertices.map((v,i) => [v,i]));
+    return { ...module, vertices, indices: module.indices.map(v => remap.get(v)!), normalKeys: vertices.map(v => asset.positions.slice(v*3,v*3+3).join(",")) };
+  });
+  return [bodyType, { asset, modules, targets: createMorphTargets(asset), sourceFrames, sourceBodyHeight: asset.height - sourceFrames[asset.parts.findIndex(p => p.id === "head")].length }];
 }));
+
+type ModelPart = { mesh: Mesh<BufferGeometry, MeshLambertMaterial>; rest: Float64Array; posed: Float64Array; creases?: LineSegments; segments: FingerCreaseSegment[] };
+type ModelState = { key: string; handCreases: boolean; headRatio?: number; parts: ModelPart[] };
+const models = new WeakMap<Group, ModelState>();
+const modelKey = (actor: SpatialCharacter) => JSON.stringify([actor.id, actor.appearance, actor.bodyType ?? "male", actor.bones.map(b => [b.id,b.modelPart])]);
+
+/** The editor and exports share deformation; only allocation differs. */
+export function updateCharacterModel(group: Group, actor: SpatialCharacter): boolean {
+  const state = models.get(group);
+  if (!state || actor.appearance === "geometric" || state.key !== modelKey(actor)) return false;
+  deformCharacterModel(actor, group, state);
+  return true;
+}
 
 // CPU skinning is intentional: the browser and deterministic PNG rasterizer
 // consume the very same deformed triangles, including cloned body modules.
 export function createCharacterModel(actor: SpatialCharacter, options: { handCreases?: boolean } = {}): Group {
   if (actor.appearance === "geometric") return createGeometricCharacterModel(actor);
-  const handCreases = options.handCreases ?? true;
-  const { asset, targets, sourceFrames, sourceBodyHeight } = sources[actor.bodyType ?? "male"];
-  const group = new Group(), world = jointWorldTransforms(actor);
+  const group = new Group(), state: ModelState = { key: modelKey(actor), handCreases: options.handCreases ?? true, parts: [] };
+  models.set(group, state);
+  deformCharacterModel(actor, group, state);
+  return group;
+}
+
+function deformCharacterModel(actor: SpatialCharacter, group: Group, state: ModelState): void {
+  const handCreases = state.handCreases, morphChanged = state.headRatio !== actor.headRatio;
+  const { asset, modules, targets, sourceFrames, sourceBodyHeight } = sources[actor.bodyType ?? "male"];
+  const world = jointWorldTransforms(actor);
   const ratio = actor.height / asset.height;
   const shape = spatialShape(actor.headRatio);
   const [lower, upper, blend] = spatialReferenceBlend(actor.headRatio);
@@ -97,54 +121,77 @@ export function createCharacterModel(actor: SpatialCharacter, options: { handCre
     matrices.set(key,matrix); return matrix;
   };
   const regular = new Map(actor.bones.filter(b=>b.id===b.modelPart).map(b=>[b.modelPart,b]));
-  const renderModule = (module: typeof asset.modules[number], bone?: SpatialBone) => {
+  let regularTransforms: Matrix4[] | undefined;
+  let partIndex = 0;
+  const children: Array<Mesh | LineSegments> = [];
+  const renderModule = (module: typeof modules[number], bone?: SpatialBone) => {
     const prefix = bone && bone.id.endsWith(bone.modelPart) ? bone.id.slice(0,-bone.modelPart.length) : "";
     const cloned = Boolean(bone && bone.id !== bone.modelPart);
-    const transforms = asset.parts.map((part,index) => {
+    const transforms = !cloned && regularTransforms ? regularTransforms : asset.parts.map((part,index) => {
       const corresponding = cloned ? actor.bones.find(b=>b.id === `${prefix}${part.id}`) : regular.get(part.id);
       // Weights crossing a cloned attachment use that module's frame. This
       // keeps the new limb attached without pulling on the original torso.
       return corresponding ? transform(corresponding,index) : cloned && bone ? transform(bone,module.part) : transform(undefined,index);
     });
-    const vertices = [...new Set(module.indices)], remap = new Map(vertices.map((v,i)=>[v,i]));
-    const positions: number[] = [], rest: number[] = [], value = new Vector3(), weighted = new Vector3(), original = new Vector3();
-    for (const vertex of vertices) {
-      original.set(...[0,1,2].map(axis => {
-        const index = vertex * 3 + axis;
-        return targets[lower][index] + (targets[upper][index] - targets[lower][index]) * blend;
-      }) as Vec3); value.set(0,0,0);
-      if (handCreases) rest.push(...original.toArray());
+    if (!cloned) regularTransforms = transforms;
+    const { vertices } = module;
+    let retained = state.parts[partIndex++];
+    if (!retained) {
+      const geometry = new BufferGeometry().setAttribute("position", new Float32BufferAttribute(vertices.length * 3, 3));
+      geometry.setIndex(module.indices);
+      const mesh = new Mesh(geometry, new MeshLambertMaterial({ side: DoubleSide }));
+      mesh.userData = { characterId: actor.id, ...(bone ? { boneId: bone.id } : {}), modelPart: asset.parts[module.part].id };
+      retained = { mesh, rest: new Float64Array(vertices.length * 3), posed: new Float64Array(vertices.length * 3), segments: [] };
+      state.parts.push(retained);
+    }
+    const { mesh, rest, posed: positions } = retained, geometry = mesh.geometry;
+    const value = new Vector3(), weighted = new Vector3(), original = new Vector3();
+    for (let i = 0; i < vertices.length; i++) {
+      const vertex = vertices[i];
+      const offset = vertex * 3, low = targets[lower], high = targets[upper];
+      if (morphChanged) {
+        rest[i*3] = low[offset] + (high[offset] - low[offset]) * blend;
+        rest[i*3+1] = low[offset+1] + (high[offset+1] - low[offset+1]) * blend;
+        rest[i*3+2] = low[offset+2] + (high[offset+2] - low[offset+2]) * blend;
+      }
+      original.fromArray(rest, i*3);
+      value.set(0,0,0);
       let total = 0;
       for (let k=0;k<4;k++) {
         const weight = asset.weights[vertex*4+k]; if (!weight) continue;
         weighted.copy(original).applyMatrix4(transforms[asset.influences[vertex*4+k]]);
         value.addScaledVector(weighted,weight); total += weight;
       }
-      positions.push(...value.divideScalar(total).toArray());
+      value.divideScalar(total); positions[i*3] = value.x; positions[i*3+1] = value.y; positions[i*3+2] = value.z;
     }
-    const geometry = new BufferGeometry(); geometry.setAttribute("position",new Float32BufferAttribute(positions,3));
-    geometry.setIndex(module.indices.map(v=>remap.get(v)!)); geometry.computeVertexNormals();
-    if (module.material === "body" && shape.softness > 0) surfaces.push({ geometry, keys: vertices.map(v => `${prefix}/${asset.positions.slice(v*3,v*3+3).join(",")}`) });
+    const position = geometry.getAttribute("position");
+    position.array.set(positions); position.needsUpdate = true;
+    geometry.boundingBox = null; geometry.boundingSphere = null; geometry.computeVertexNormals();
+    if (module.material === "body" && shape.softness > 0) surfaces.push({ geometry, keys: module.normalKeys.map(key => `${prefix}/${key}`) });
     const color = new Color(module.material === "brows" ? "#514235" : module.material === "eyes" ? "#e7ded1" : actor.color);
     const simpleFace = (lower < 2 ? 1 - blend : 0) + (upper < 2 ? blend : 0);
     if (module.material === "brows") color.lerp(new Color(actor.color),simpleFace * .9);
     if (module.material === "eyes") color.lerp(new Color("#514235"),simpleFace);
-    const mesh = new Mesh(geometry,new MeshLambertMaterial({ color,side:DoubleSide }));
-    mesh.userData = { characterId:actor.id, ...(bone ? { boneId:bone.id } : {}), modelPart:asset.parts[module.part].id };
-    group.add(mesh);
+    mesh.material.color.copy(color);
+    children.push(mesh);
     if (handCreases) {
-      const creases = createFingerCreases(actor, asset.parts[module.part].id, rest, positions, module.indices.map(v => remap.get(v)!));
+      if (morphChanged) retained.segments = fingerCreaseSegments(actor, asset.parts[module.part].id, rest, module.indices);
+      const creases = updateFingerCreases(actor, retained.segments, positions, retained.creases);
+      if (!creases && retained.creases) {
+        retained.creases.geometry.dispose(); (retained.creases.material as LineBasicMaterial).dispose();
+        retained.creases = undefined; mesh.material.polygonOffset = false;
+      }
       if (creases) {
         // Bias only the skin's depth to avoid coplanar flicker; creases retain
         // their exact surface positions and remain hidden by other geometry.
         mesh.material.polygonOffset = true;
         mesh.material.polygonOffsetFactor = 1;
         mesh.material.polygonOffsetUnits = 1;
-        creases.userData = { ...mesh.userData, reference: "finger-crease" }; group.add(creases);
+        creases.userData = { ...mesh.userData, reference: "finger-crease" }; children.push(creases); retained.creases = creases;
       }
     }
   };
-  for (const module of asset.modules) {
+  for (const module of modules) {
     const part = asset.parts[module.part].id;
     if (part === "pelvis") renderModule(module);
     else for (const bone of actor.bones.filter(b=>b.modelPart===part)) renderModule(module,bone);
@@ -171,5 +218,8 @@ export function createCharacterModel(actor: SpatialCharacter, options: { handCre
     const attribute = geometry.getAttribute("normal");
     keys.forEach((key,i) => { a.fromBufferAttribute(attribute,i).lerp(normals.get(key)!,shape.softness).normalize(); attribute.setXYZ(i,a.x,a.y,a.z); });
   }
-  return group;
+  if (group.children.length !== children.length || children.some((child, i) => group.children[i] !== child)) {
+    group.clear(); if (children.length) group.add(...children);
+  }
+  state.headRatio = actor.headRatio;
 }

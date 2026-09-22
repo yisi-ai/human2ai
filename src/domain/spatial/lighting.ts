@@ -1,4 +1,4 @@
-import { Box3, DirectionalLight, DoubleSide, Float32BufferAttribute, Group, Matrix3, Matrix4, Mesh, MeshLambertMaterial, Ray, Vector3 } from "three";
+import { Box3, BufferAttribute, DirectionalLight, DoubleSide, Group, Matrix3, Matrix4, Mesh, MeshLambertMaterial, Ray, Vector3 } from "three";
 import type { SpatialDraft } from "./types.ts";
 
 // Linear diffuse contributions. Three's Lambert lights use intensity / PI.
@@ -50,7 +50,7 @@ function occlusionTree(triangles: SurfaceTriangle[]): OcclusionNode {
 export function applySpatialContactShading(scene: Group, draft: SpatialDraft, cached?: Float32Array[]): Float32Array[] {
   const meshes = spatialSurfaces(scene), triangles: SurfaceTriangle[] = [];
   const apply = (mesh: Mesh, colors: Float32Array) => {
-    mesh.geometry.setAttribute("color",new Float32BufferAttribute(colors,3));
+    if (mesh.geometry.getAttribute("color")?.array !== colors) mesh.geometry.setAttribute("color",new BufferAttribute(colors,3));
     const material = mesh.material as MeshLambertMaterial;
     material.vertexColors = true; material.shadowSide = DoubleSide;
     mesh.castShadow = true; mesh.receiveShadow = true;

@@ -1,8 +1,40 @@
-# Human2AI
+<p align="center">
+  <img src="web/app/icon.svg" alt="human2ai icon" width="96" height="96">
+</p>
+
+<h1 align="center">human2ai</h1>
 
 [简体中文](README.md) | **English**
 
-Human2AI is a local visual workspace for people and AI agents. Edit compositions, UI sketches, and 3D spaces in a desktop browser. Agents use the CLI to connect to the same sessions, read versions, make changes, and export results.
+Human2AI is a local creative workspace for people and AI agents. Edit compositions, UI sketches, and 3D spaces in a desktop browser. Agents use the CLI to connect to the same sessions, read versions, make changes, and export results.
+
+## Features
+
+### Composition
+
+Plan a layout with shapes, colors, and composition guides, add notes about the subjects and design requirements, then let an agent develop the design. This example pairs a radial layout with two focal points with the resulting folding-fan image.
+
+![A radial composition with two focal points and the resulting folding-fan design](assets/readme/composition.png)
+
+### Interface
+
+Sketch a page with color blocks, text, and notes, then let an agent refine its visual design. Keep the sketch and the result side by side on the same canvas to compare and iterate.
+
+![A UI page sketch beside the refined interface design](assets/readme/UI.png)
+
+### 3D space
+
+Place models, pose characters, and adjust cameras to create spatial references for your design. Bring camera views into a composition to help an agent understand poses, perspective, and occlusion.
+
+![Different character models posed in a 3D space](assets/readme/3d.png)
+
+Agents can also build and arrange models themselves and create complex poses for characters with weapons, extra arms, or nonhuman proportions, providing spatial references for image generation.
+
+![A 3D pose of a character carrying a sword beside the generated image](assets/readme/3d-p1.png)
+
+![A 3D pose of a character with four arms beside the generated image](assets/readme/3d-p2.png)
+
+![A 3D pose of a nonhuman character beside the generated image](assets/readme/3d-p3.png)
 
 ## Requirements
 
@@ -102,7 +134,7 @@ npx --no-install human2ai session open --session <session-id>
 
 `session connect` returns the browser URL, the latest Capture version, and the commands supported by the current session. `capture get` reads a specific version, `capture save` saves a new version, and `capture undo` appends a restored version. Project IDs and session IDs organize work from different projects within the same local service.
 
-Composition, UI, and 3D space sessions can use the style library at `/styles/`, with Visual, UI, and 3D categories. A consumer project’s Agent can combine the full style specification with spatial layout, scale, pose, and camera guidance to build models in that project. Binding a style does not modify the guide scene. Agents can work with the same library through `style list|get|create|update|add-reference|remove-reference|delete`. See the [Human2AI skill](skills/human2ai/SKILL.md) for the full command reference and collaboration workflow.
+Composition, UI, and 3D space sessions can use the style library at `/styles/`, with Visual, UI, and 3D categories. A consumer project’s Agent can combine the full style specification with spatial layout, scale, pose, and camera guidance to build models in that project. Binding a style does not modify the guide scene. Agents can work with the same library through `style list|get|create|update|add-reference|remove-reference|set-model|remove-model|delete`. See the [Human2AI skill](skills/human2ai/SKILL.md) for the full command reference and collaboration workflow. A style can also store one program-generated GLB example, with rotation, zoom and reference-image switching in its detail view. Agents save it using `style set-model --style <id> --input .human2ai-data/output/example.glb --expected-revision <n>` (self-contained GLB, up to 10 MB); `style remove-model` accepts the same style and revision arguments to remove it.
 
 ## Data and generated files
 
@@ -191,7 +223,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-In that separate project, run `npm install --save-dev /absolute/path/to/human2ai-0.1.3.tgz`, then follow the integration and startup steps above. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
+In that separate project, run `npm install --save-dev /absolute/path/to/human2ai-0.1.4.tgz`, then follow the integration and startup steps above. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
 
 ## License
 

@@ -14,6 +14,7 @@ import { SpatialSessionRepository } from "../../src/database/spatial-session-rep
 import { createDraft } from "../../src/domain/composition/index.ts";
 import { createUiSketchDraft } from "../../src/domain/ui-sketch/index.ts";
 import { createSpatialDraft } from "../../src/domain/spatial/index.ts";
+import { styleModelGlb } from "../helpers/style-model.ts";
 import { buildServer } from "../../src/server/app.ts";
 
 describe.each([
@@ -102,7 +103,10 @@ describe.each([
   });
 
   it("lets an Agent select, bind, discover the specification and save an editable styled capture", async () => {
-    const { session, style } = await setup();
+    const { session, style, styles } = await setup();
+    const modeled = harness.type === "spatial" ? await styles.setPreviewModel(style.id, {
+      expectedRevision: 1, filename: "example.glb", data: styleModelGlb(),
+    }) : style;
     const dependencies: CliDependencies = {
       fetch: async (input, init) => {
         const url = new URL(input instanceof Request ? input.url : input.toString());
@@ -119,11 +123,14 @@ describe.each([
     await executeCli(["session", "bind-style", "--session", session.id, "--style", style.id, "--expected-revision", "1"], dependencies);
     const connection = await executeCli(["session", "connect", "--session", session.id], dependencies) as { style: { commands: { save: string[] } } };
     expect(connection).toMatchObject({ style: { current: { id: style.id, description: style.description, promptSummary: style.promptSummary, referenceImages: [] } } });
+    if (modeled.previewModel) expect(connection).toMatchObject({ style: { current: {
+      previewModel: { url: `http://127.0.0.1:4180/api/v1/styles/${style.id}/models/${modeled.previewModel.id}/content` },
+    } } });
     const inputPath = join(directory, "styled.json");
     await writeFile(inputPath, JSON.stringify(harness.draft()));
     const command = connection.style.commands.save.map((arg) => arg === "<document.json>" ? inputPath : arg);
     const saved = await executeCli(command, dependencies);
-    expect(saved).toMatchObject({ revision: 1, document: harness.draft(), styleProcessing: { styleId: style.id, styleRevision: 1, sourceRevision: 0, resultRevision: 1 } });
+    expect(saved).toMatchObject({ revision: 1, document: harness.draft(), styleProcessing: { styleId: style.id, styleRevision: modeled.revision, sourceRevision: 0, resultRevision: 1 } });
     await expect(executeCli(command, dependencies)).rejects.toMatchObject({ code: "DRAFT_REVISION_CONFLICT" });
     const browser = await server.inject({ method: "GET", url: `/api/v1/sessions/${session.id}/${harness.path}/drafts/1` });
     expect(browser.json()).toMatchObject({ draft: harness.draft(), styleProcessing: { resultRevision: 1 } });

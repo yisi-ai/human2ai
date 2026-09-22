@@ -80,6 +80,26 @@ describe("style CLI", () => {
     });
   });
 
+  it("saves generated models and returns an absolute model URL to Agents", async () => {
+    const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-model-cli-"));
+    const input = path.join(directory, "example.glb");
+    await writeFile(input, Buffer.from([1, 2, 3]));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ revision: 2 }))
+      .mockResolvedValueOnce(Response.json({ description: "Plastic bricks.", referenceImages: [], previewModel: { url: "/api/v1/styles/style-1/models/model-1/content" } }))
+      .mockResolvedValueOnce(Response.json({ revision: 3 })) as typeof fetch;
+    try {
+      await executeCli(["style", "set-model", "--style", "style-1", "--input", input, "--expected-revision", "1"], { fetch: fetchMock });
+      expect(String(vi.mocked(fetchMock).mock.calls[0][0])).toContain("/api/v1/styles/style-1/model?filename=example.glb&expectedRevision=1");
+      expect(vi.mocked(fetchMock).mock.calls[0][1]).toMatchObject({ method: "POST", body: Buffer.from([1, 2, 3]) });
+      expect(await executeCli(["style", "get", "--style", "style-1"], { fetch: fetchMock })).toMatchObject({
+        previewModel: { url: "http://127.0.0.1:4180/api/v1/styles/style-1/models/model-1/content" },
+      });
+      await executeCli(["style", "remove-model", "--style", "style-1", "--expected-revision", "2"], { fetch: fetchMock });
+      expect(vi.mocked(fetchMock).mock.calls[2][1]).toMatchObject({ method: "DELETE", body: JSON.stringify({ expectedRevision: 2 }) });
+    } finally { await rm(directory, { recursive: true, force: true }); }
+  });
+
   it("uploads a local reference image and permanently deletes a style", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-style-cli-"));
     const imagePath = path.join(directory, "参考.png");

@@ -153,9 +153,9 @@
       "nonExamples": ["Ask an Agent to collect styles from the internet."]
     },
     "style.delete": {
-      "meaning": "Permanently remove one style entry together with all of its reference images, without archiving it.",
+      "meaning": "Permanently remove one style entry together with all of its reference images and optional generated model, without archiving it.",
       "scope": "The destructive confirmation opened from a style preview.",
-      "referent": "The currently previewed style entry and its stored reference images.",
+      "referent": "The currently previewed style entry and its stored reference images and model.",
       "precedence": "Permanent terminal action; distinct from removing only one reference image.",
       "canonicalKey": "styleLibrary.deleteTitle",
       "searchTerms": ["删除风格", "永久删除", "Delete style", "permanently delete"],
@@ -251,6 +251,26 @@
       "searchTerms": ["3D", "spatial style", "建模风格", "三维风格"],
       "examples": ["A low-poly toy-city style with matte materials and simplified proportions."],
       "nonExamples": ["A character pose.", "A downloadable GLB model.", "Switching a pose guide to geometric appearance."]
+    },
+    "style.preview-model": {
+      "meaning": "A fixed program-generated 3D example demonstrating a style’s forms and materials, viewed without editing the model.",
+      "scope": "Style library detail preview and session style selection.",
+      "referent": "An optional self-contained model saved with the style, independent of spatial session drafts.",
+      "precedence": "Visual evidence alongside images; the full specification and explicit user intent govern use.",
+      "canonicalKey": "styleLibrary.model.label",
+      "searchTerms": [
+        "模型示例",
+        "模型预览",
+        "model example",
+        "generated style model"
+      ],
+      "examples": [
+        "Rotate a brick-built miniature to inspect its joints and plastic material."
+      ],
+      "nonExamples": [
+        "An editable spatial session.",
+        "Automatically interpreting arbitrary style text at view time."
+      ]
     }
   },
   "keys": {
@@ -297,6 +317,11 @@
     "sessionStyle.pending": {"conceptId":"style.session-pending","variant":"default","role":"status","grammar":"sentence","tone":"concise","reusePolicy":"canonical"},
     "sessionStyle.conflict": {"conceptId":"style.session-conflict","variant":"default","role":"error","grammar":"sentence","tone":"concise","reusePolicy":"canonical"},
     "styleLibrary.category.spatial": {"conceptId":"style.category-spatial","variant":"default","role":"category option and preview marker","grammar":"noun","tone":"concise","reusePolicy":"canonical"},
-    "styleLibrary.description.spatialPlaceholder": {"conceptId":"style.description","variant":"spatial-input-placeholder","role":"placeholder for the full 3D modeling specification","grammar":"imperative sentence","tone":"direct","reusePolicy":"contextual"}
+    "styleLibrary.description.spatialPlaceholder": {"conceptId":"style.description","variant":"spatial-input-placeholder","role":"placeholder for the full 3D modeling specification","grammar":"imperative sentence","tone":"direct","reusePolicy":"contextual"},
+    "styleLibrary.model.label": {"conceptId":"style.preview-model","variant":"label","role":"model preview tab and accessible viewer name","grammar":"noun phrase","tone":"concise","reusePolicy":"canonical"},
+    "styleLibrary.model.loading": {"conceptId":"style.preview-model","variant":"loading","role":"model loading status","grammar":"sentence","tone":"concise","reusePolicy":"contextual"},
+    "styleLibrary.model.failed": {"conceptId":"style.preview-model","variant":"error","role":"model loading or WebGL failure","grammar":"sentence","tone":"concise","reusePolicy":"contextual"},
+    "styleLibrary.model.reset": {"conceptId":"style.preview-model","variant":"reset","role":"restore the model viewing camera","grammar":"imperative verb phrase","tone":"concise","reusePolicy":"contextual"},
+    "styleLibrary.model.controls": {"conceptId":"style.preview-model","variant":"help","role":"on-demand pointer and keyboard viewing instructions","grammar":"sentence","tone":"concise","reusePolicy":"contextual"}
   }
 }

@@ -4,7 +4,7 @@ import { SessionStylePicker } from "@human2ai/ui";
 import { useTranslation } from "react-i18next";
 
 import type { StyleProcessing } from "../../src/domain/session";
-import { styleReferenceContentUrl, type StyleCategory } from "../lib/human2ai-api";
+import { styleModelContentUrl, styleReferenceContentUrl, type StyleCategory } from "../lib/human2ai-api";
 import { getStyleLibraryLabels } from "../lib/style-library-labels";
 import type { useSessionStyle } from "../lib/use-session-style";
 
@@ -26,6 +26,7 @@ export function SessionStyleControl({ controller, category, processing, disabled
       select: t("sessionStyle.select"), pending: t("sessionStyle.pending") }}
     libraryLabels={getStyleLibraryLabels(t)}
     imageUrl={styleReferenceContentUrl}
+    modelUrl={styleModelContentUrl}
     onBind={controller.bind}
     onRetry={controller.refresh}
     loading={controller.loading}

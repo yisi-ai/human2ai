@@ -5,7 +5,7 @@
 ## 首次准备
 
 - 根据 `package.json` 的环境要求选择 Node.js 和 npm；当前为 Node.js 22+、npm 11。检查 GitHub CLI 登录状态和目标仓库权限。
-- `npm whoami` 验证发布身份，`npm owner ls <package-name>` 检查现有包维护者。首次创建包确认名称可用；认证与账号设置在用户环境或服务端完成，不保存到仓库。
+- `npm whoami` 验证发布身份，`npm owner ls <package-name>` 检查现有包维护者。核对 npm 公开的发布者、维护者邮箱，沿用用户已允许公开的项目身份；GitHub 邮箱隐私设置不控制 npm 身份。首次创建包确认名称可用；认证与账号设置在用户环境或服务端完成，不保存到仓库。
 - 检查 main 的 PR 和必需检查规则。建议要求现有三个验证工作流成功。规则缺失时报告差异；只有配置规则属于本次授权时才修改 GitHub 设置。
 - Fork 发布独立版本使用自己的包名或 scope，调整仓库元数据及相关安装指令。作者署名不决定 npm 发布身份。
 
@@ -42,14 +42,30 @@
 6. 在独立消费项目安装该 `.tgz`，按产品 README 验证 Skill 接入、`integration doctor`、服务启动、`service status`、`session list` 和桌面浏览器页面。启动与后续 CLI 检查使用相同的测试服务地址；通过 `HUMAN2AI_PORT`、`HUMAN2AI_DATABASE_PATH`、`HUMAN2AI_ARTIFACTS_PATH` 隔离端口和运行数据。涉及数据迁移时使用旧版数据的备份副本验证升级。
 7. 发布前确认源码无待提交改动，包内容仍与已验证的安装包一致；安装包变化后重新验证。授权不足时在此提供具体发布结果供用户确认。
 
+## 上传前的元数据检查
+
+发布本地 `.tgz` 时，npm 使用的 pacote 会在读取包后附加 `_from`、`_resolved` 等来源字段。本机绝对路径可能随这些字段公开；改用相对路径仍可能被解析为绝对路径。Git 历史和安装包内容扫描不能替代这一步。
+
+1. 将已验证的安装包复制到不含个人用户名和工作区路径的临时目录。Linux 可使用下面的命令；其他环境选择同样不含个人信息的真实路径，不通过指向个人目录的符号链接上传。原始安装包和核验记录仍保存在忽略的 `.human2ai-data/output/`。
+
+   ```bash
+   publish_stage_dir="$(mktemp -d /tmp/human2ai-publish.XXXXXX)"
+   publish_tarball="$publish_stage_dir/<package-tarball.tgz>"
+   cp -- "<tested-tarball-path>" "$publish_tarball"
+   ```
+
+2. 计算上传副本的 SHA-512 integrity，与已测试包比对，必须完全一致；复制过程中不得重新打包。
+3. 使用当前 npm 所使用的 pacote，针对最终的 `publish_tarball` 运行 `pacote.manifest()`，检查完整返回值，包括 `_from`、`_resolved`、可能存在的 `_where` 和包内身份字段。结合 npm 账号的公开邮箱，确认没有个人目录、未获准公开的邮箱或凭据。遇到 npm 版本变化时，核对其发布实现是否还附加其他字段；仅查看 `npm pack` 或 `npm publish --dry-run` 的文件清单不算完成检查。
+4. 只有上传副本的 integrity 和实际元数据检查均通过后，才进入发布步骤。无法确认或发现问题时先修正上传来源并重新检查；记录保存到忽略目录，不把原始私密信息写进源码或公开发布说明。
+
 ## 执行已授权的发布
 
 以下占位符必须替换成核对过的实际值，命令在固定的发布源码目录执行。
 
-发布同一个已验证的 `.tgz`。稳定版使用 `latest`，预发布版（如 `0.2.0-beta.1`）使用 `next`，不得让预发布版覆盖稳定入口：
+完成上一节检查后，发布字节完全一致的临时上传副本。稳定版使用 `latest`，预发布版（如 `0.2.0-beta.1`）使用 `next`，不得让预发布版覆盖稳定入口：
 
 ```bash
-npm publish <tested-tarball-path> --access public --tag <latest-or-next>
+npm publish "$publish_tarball" --access public --tag <latest-or-next>
 ```
 
 检查 npm 的精确版本和 dist-tag，将 `dist.integrity` 与已记录的本地安装包 integrity 比对：
@@ -59,13 +75,15 @@ npm view <package-name>@<version> version dist.integrity
 npm view <package-name> dist-tags --json
 ```
 
+读取公开 registry 的原始版本 JSON，再次检查来源路径、发布者和维护者邮箱。下载线上 tarball 并计算 integrity，与已测试包比对；不能只凭 CLI 成功提示或包内扫描认定发布和隐私核验完成。npm 返回 HTTP 202 或提示正在处理时，等待精确版本与 dist-tag 可读取后再验证，不重复发布。
+
 在独立消费项目从 npm 安装此精确版本并复查启动。npm 成功且验证一致后，将 PR 中审阅过的版本说明保存到 `.human2ai-data/output/releases/<version>.md`，为相同 SHA 创建 GitHub Release 并附上已验证安装包：
 
 ```bash
 gh release create v<version> <tested-tarball-path> --repo <owner/repository> --target <commit-sha> --title v<version> --notes-file .human2ai-data/output/releases/<version>.md
 ```
 
-稳定版补充 `--latest`；预发布版补充 `--prerelease --latest=false`。标签已存在时先核对 SHA，禁止移动标签。完成后报告版本、渠道、提交 SHA、验证结果、npm 页面与 GitHub Release 链接。
+稳定版补充 `--latest`；预发布版补充 `--prerelease --latest=false`。标签已存在时先核对 SHA，禁止移动标签。完成后清理本次临时上传副本，保留原始已测试包和核验记录，报告版本、渠道、提交 SHA、验证结果、npm 页面与 GitHub Release 链接。
 
 ## 中断恢复
 
@@ -80,4 +98,5 @@ gh release create v<version> <tested-tarball-path> --repo <owner/repository> --t
 
 - [npm version](https://docs.npmjs.com/cli/v11/commands/npm-version/)
 - [npm publish](https://docs.npmjs.com/cli/v11/commands/npm-publish/)
+- [pacote manifest 的来源元数据](https://github.com/npm/pacote#manifests)
 - [GitHub Release 创建](https://cli.github.com/manual/gh_release_create)
