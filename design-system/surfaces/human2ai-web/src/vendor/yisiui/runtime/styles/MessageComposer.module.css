@@ -40,7 +40,8 @@
   --yisiui-color-border-default: color-mix(in srgb, var(--yisiui-theme-dark-text) 16%, var(--yisiui-theme-dark-panel));
   --yisiui-color-border-subtle: var(--yisiui-color-border-default);
   --yisiui-color-border-disabled: var(--yisiui-color-border-default);
-  --yisiui-color-border-focus: var(--yisiui-color-brand-primary-hover);
+  --yisiui-color-border-focus: var(--yisiui-theme-dark-interactive);
+  --yisiui-dot-scrollbar-active-color: var(--yisiui-theme-dark-interactive);
   --yisiui-color-feedback-error: color-mix(in srgb, var(--yisiui-color-status-danger) 65%, var(--yisiui-theme-dark-text));
   --yisiui-color-feedback-error-bg: color-mix(in srgb, var(--yisiui-color-status-danger) 14%, var(--yisiui-theme-dark-panel));
   --yisiui-color-border-error: var(--yisiui-color-feedback-error);
@@ -129,6 +130,11 @@
   box-shadow: none;
 }
 
+.root:has(textarea:focus-visible) {
+  outline: 2px solid var(--yisiui-color-border-focus);
+  outline-offset: 2px;
+}
+
 .root[data-scrollbar="dots"] .input:global(.ant-input) {
   padding-inline-end: 24px;
 }
@@ -152,7 +158,7 @@
 
 .root[data-stars="true"] .input:global(.ant-input)::selection {
   background: var(--yisiui-color-brand-primary);
-  color: var(--yisiui-color-text-inverse);
+  color: var(--yisiui-color-text-on-primary);
 }
 
 .footerBar {

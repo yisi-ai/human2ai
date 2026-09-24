@@ -21,6 +21,7 @@ export * from "./components/AnimatedNumber";
 export * from "./components/BorderScan";
 export * from "./components/TextShine";
 export * from "./components/TabSwitch";
+export * from "./components/ExpandingSwitch";
 export * from "./components/UnderlineTabSwitch";
 export * from "./components/DotScrollbar";
 export * from "./components/StatusBadge";

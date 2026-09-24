@@ -18,7 +18,9 @@ export interface DotScrollbarProps extends Omit<HTMLAttributes<HTMLDivElement>, 
   hideNativeScrollbar?: boolean;
   behavior?: "auto" | "smooth";
   disabled?: boolean;
+  /** Outline color of non-current, hollow dots. */
   dotColor?: string;
+  /** Outline and fill color of the solid dot marking the current region. */
   activeColor?: string;
   /** Receives a one-based segment index and the displayed dot count. */
   getDotLabel?: (index: number, count: number) => string;

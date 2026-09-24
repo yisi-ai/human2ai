@@ -2,15 +2,44 @@
   "$schema": "../semantic-shard.schema.json",
   "domain": "integrations",
   "concepts": {
-    "integrations.visual-workspace-description": {
-      "meaning": "A short capability description for connecting an Agent to the local visual workspace to create and edit compositions, UI sketches, and 3D spaces.",
-      "scope": "WorkBuddy connector listing, bundled Skill discovery metadata, and standalone Skill marketplace listing.",
-      "referent": "Human2AI's existing browser workspace and CLI collaboration capabilities.",
-      "precedence": "Describes the product's capabilities; does not promise hosted storage, image generation, or automatic implementation of a finished application.",
-      "canonicalKey": "integrations.workbuddy.description",
-      "searchTerms": ["连接器", "本地视觉工作区", "connector", "local visual workspace"],
-      "examples": ["Explain which visual artifacts the installed connector lets an Agent edit."],
-      "nonExamples": ["Name an individual session.", "Advertise a hosted image-generation service."]
+    "integrations.skill-installation": {
+      "meaning": "Install only the Human2AI skill in the current project for the user's chosen Agent; the Human2AI application is already installed.",
+      "scope": "Home page command switch below the product introduction and above creation cards. A short installation title sits to the left of Agent and CLI tabs; Agent instructions are selected initially.",
+      "referent": "The human2ai skill in yisi-ai/human2ai, installed using the generic skills CLI with project scope and no agent-specific flag.",
+      "precedence": "This installs a skill only, not the Human2AI application or a session connection. It does not restrict the user to Codex or choose a global installation.",
+      "canonicalKey": "home.skillInstallation.title",
+      "searchTerms": [
+        "专用 Skill",
+        "安装指引",
+        "Agent 指令",
+        "CLI 命令",
+        "skill installation"
+      ],
+      "examples": [
+        "Ask the current Agent to install the human2ai skill for this project.",
+        "Run npx skills add yisi-ai/human2ai --skill human2ai from the target project."
+      ],
+      "nonExamples": [
+        "Connect to a saved composition session.",
+        "Start editing a canvas."
+      ]
+    },
+    "integrations.installation-copy": {
+      "meaning": "Copy the currently displayed skill installation instructions or commands to the clipboard.",
+      "scope": "Home page skill installation guidance only.",
+      "referent": "The selected Agent instruction or CLI command block.",
+      "precedence": "Not a session connection command or an image-generation prompt; success reuses clipboard.copied.",
+      "canonicalKey": "home.skillInstallation.copy",
+      "searchTerms": [
+        "复制安装内容",
+        "copy installation instructions"
+      ],
+      "examples": [
+        "Copy the visible CLI commands."
+      ],
+      "nonExamples": [
+        "Run the installation automatically."
+      ]
     },
     "integrations.composition-example": {
       "meaning": "An example user request to recover the composition of a supplied reference image as an editable canvas.",
@@ -44,13 +73,62 @@
     }
   },
   "keys": {
-    "integrations.workbuddy.description": {
-      "conceptId": "integrations.visual-workspace-description",
-      "variant": "marketplace-description",
-      "role": "connector capability description and bundled or standalone Skill discovery summary",
-      "grammar": "complete sentence describing available actions",
-      "tone": "direct and factual",
+    "home.skillInstallation.title": {
+      "conceptId": "integrations.skill-installation",
+      "variant": "section-title",
+      "role": "short heading beside the method tabs and accessible name for the installation command section",
+      "grammar": "imperative phrase",
+      "tone": "neutral",
       "reusePolicy": "canonical"
+    },
+    "home.skillInstallation.agentTab": {
+      "conceptId": "integrations.skill-installation",
+      "variant": "agent-method",
+      "role": "Agent installation method switch label",
+      "duplicateReason": "Agent here names the installation method; sessionDetails.agent names a session connection field and canvas metadata uses it for node provenance.",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "home.skillInstallation.cliTab": {
+      "conceptId": "integrations.skill-installation",
+      "variant": "cli-method",
+      "role": "terminal installation method switch label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "home.skillInstallation.agentPrompt": {
+      "conceptId": "integrations.skill-installation",
+      "variant": "agent-instruction",
+      "role": "copyable installation request for an external Agent",
+      "grammar": "imperative sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "home.skillInstallation.copy": {
+      "conceptId": "integrations.installation-copy",
+      "variant": "copy-action",
+      "role": "accessible name and hover title for the icon-only button beside the visible installation content",
+      "grammar": "verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "home.skillInstallation.copying": {
+      "conceptId": "integrations.installation-copy",
+      "variant": "copy-pending",
+      "role": "pending clipboard action feedback",
+      "grammar": "state phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "home.skillInstallation.copyFailed": {
+      "conceptId": "integrations.installation-copy",
+      "variant": "copy-failure",
+      "role": "clipboard failure feedback with manual-copy fallback",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
     },
     "integrations.workbuddy.examples.composition": {
       "conceptId": "integrations.composition-example",

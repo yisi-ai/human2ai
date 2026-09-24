@@ -2,16 +2,16 @@
   "schemaVersion": 1,
   "surface": "web-react",
   "sourceFiles": {
-    "design-system/foundations/tokens/core.tokens.json": "4bbd1e8377f7b514eea1fb506cd123fc6128aa63ca3b2305dfb5d7e8b6005100",
-    "design-system/foundations/tokens/semantic.tokens.json": "7d1c46f4ef02b9c2f18ef9b66a016968f932c9946fca5bb8c7a2f9d8090e981a",
-    "design-system/foundations/tokens/themes.tokens.json": "c6aaa30899ee7b54bc1b3480b1c386aeffc08d1eb64433d7ee39da2f78c5c314",
+    "design-system/foundations/tokens/core.tokens.json": "2ec05c568b0f511098e0dbcc6165a9444cda4554a596305c8b16c652e37a0f2b",
+    "design-system/foundations/tokens/semantic.tokens.json": "55c0e831391c8aa715a85c8d33cc3f4ec89916e026eedd35163a2435463f46c3",
+    "design-system/foundations/tokens/themes.tokens.json": "375c91361ce714332e8ccb3d5f5d4daedef86a6bfd56b711bf5eb8d2db8d00cf",
     "design-system/surfaces/web-react/tokens/source/surface.tokens.json": "627fa1fa05a72fc6b5aaef334e2b8ace03e65bac3efdb60713259ee48213516c",
-    "design-system/surfaces/web-react/tokens/source/component.tokens.json": "9eaea433cb6d727caab5a3f8c6dea1a53ffbc208260b54bf8c65d822185302c3"
+    "design-system/surfaces/web-react/tokens/source/component.tokens.json": "6eaf5543eb63005c1efe54c4e92f1e849c6d2b68b9f3818fbf87d8ff8828a222"
   },
-  "sourceHash": "e907876065a198dc1620dc40d0f5c5cd78d6a473ddc909019f2949826ba2e2ba",
+  "sourceHash": "df16fe40c1accb2e60c5af6d915d9e84f979cd6dd7dc934eaffa8f30f3fe2f13",
   "generatedFiles": {
-    "packages/react/src/tokens/tokens.ts": "9bc3687f7e54a9f427051415be5a2bb8ac90b483cc962c2bcbe97af6e680e835",
-    "packages/react/src/tokens/antdTheme.ts": "d248a434e0d3acf9944b96ad45272b90e01aad04f625e3abf4f398e84686c944",
-    "packages/react/styles/tokens.css": "80e47637c39b336aef5aaaee2e4870c6be7f684fadb7c290904d0085b0d76154"
+    "packages/react/src/tokens/tokens.ts": "7475d7e1619997091f88087c60fb10c57265bfe912606bd24b1707607e18fa94",
+    "packages/react/src/tokens/antdTheme.ts": "5ae660b30c893bb2d96c3bc849b258d282b1ab82c162bf096a505a8b785428b4",
+    "packages/react/styles/tokens.css": "f90e257783b447732f71cb5d6eda282366a55df5d7c3ba6e2cfdd446e65a1e57"
   }
 }

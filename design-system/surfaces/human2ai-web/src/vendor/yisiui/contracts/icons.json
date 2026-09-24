@@ -10,7 +10,7 @@
     "strokeLinejoin": "round",
     "fill": "none",
     "color": "currentColor",
-    "solidDetails": "currentColor on upload head and base, refresh arrows, copy fold and bell accents",
+    "solidDetails": "currentColor on upload head and base, refresh arrows, copy fold and bell accents, directional arrow heads",
     "construction": "parametric paired cubic corners: zero boundary curvature and C2 midpoint joins; symmetric trim budgets; stroke-aware generous inner corners; shared computed junctions for send; circular-arc approximation for bell dome",
     "pathSource": "packages/react/src/icons/geometry.ts",
     "precisionDecimals": 6,
@@ -26,7 +26,9 @@
     "reducedMotion": "static-default",
     "layerTiming": "secondary layers share primary duration, with per-layer keyframe timing and a final static hold",
     "connectedGeometry": "shared rigid transform; connected parts must not animate independently",
-    "loading": "explicit loop; linear full-turn rotation without static hold; default remains static"
+    "loading": "explicit loop; linear full-turn rotation without static hold; default remains static",
+    "directionArrows": "shared up-arrow shape rotated around center; connected head and shaft advance along the indicated direction while three tail air streaks spread and fade; return to default with hidden air and a final static hold",
+    "feedback": "semantic decorative layers share the primary cycle; hidden at rest, completion, stop and reduced motion; never emit completion; loading trail rotates with its parent and pulses independently"
   },
   "accessibility": {
     "decorative": "aria-hidden",
@@ -59,5 +61,23 @@
     ],
     "innerRoundness": "inspect both sides of the stroke; curvature continuity alone is insufficient"
   },
-  "catalogSize": 12
+  "catalogSize": 16,
+  "feedback": {
+    "plus": "outward corner sparks",
+    "upload": "tray ripple",
+    "send": "diagonal wake fades while the plane remains visible throughout a short forward movement and return",
+    "refresh": "inner rotating arc trails",
+    "copy": "fading page echo",
+    "star": "surrounding sparkles",
+    "bell": "paired sound waves",
+    "close": "circular ring bursts outward from the center and fades",
+    "reset": "inward reset ring",
+    "sidebar-left": "horizontal panel wake",
+    "sidebar-right": "mirrored panel wake",
+    "loading": "rotating breathing inner trail",
+    "arrow-up": "tail air streaks",
+    "arrow-down": "tail air streaks",
+    "arrow-left": "tail air streaks",
+    "arrow-right": "tail air streaks"
+  }
 }

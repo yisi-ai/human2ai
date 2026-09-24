@@ -35,8 +35,21 @@ export default function Home() {
   }
 
   return (
-    <Human2AiShell title={t("app.title")}>
+    <Human2AiShell title={null}>
       <HomeView
+        productName={t("app.title")}
+        repositoryLabel={t("app.repositoryLink", { productName: t("app.title") })}
+        description={t("home.description")}
+        skillInstallation={{
+          title: t("home.skillInstallation.title"),
+          agentTab: t("home.skillInstallation.agentTab"),
+          cliTab: t("home.skillInstallation.cliTab"),
+          agentPrompt: t("home.skillInstallation.agentPrompt"),
+          copy: t("home.skillInstallation.copy"),
+          copying: t("home.skillInstallation.copying"),
+          copied: t("clipboard.copied"),
+          copyFailed: t("home.skillInstallation.copyFailed"),
+        }}
         labels={{
           composition: t("home.createComposition"),
           "ui-sketch": t("home.createUiSketch"),

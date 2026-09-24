@@ -812,7 +812,8 @@
         "metadata-slots",
         "change-state",
         "selection",
-        "drag-reorder"
+        "drag-reorder",
+        "configurable-status"
       ],
       "slots": [
         "node-title",
@@ -825,17 +826,16 @@
         "SkeletonTree"
       ],
       "useWhen": [
-        "需要查看或编辑资产骨架层级",
-        "需要在文章列表和长篇资产列表中展示层级节点",
-        "需要在文章工作台中展示可选择的逻辑骨架节点目录",
-        "需要通过受控回调接入后续骨架拖拽编辑"
+        "需要查看或编辑通用资源的层级结构",
+        "需要按节点配置状态标签、图标、颜色和自定义附加内容",
+        "需要通过受控回调接入层级节点选择与拖拽排序"
       ],
       "doNotUseWhen": [
         "需要把 API、路由、持久化或业务状态机放入树组件",
         "需要在树节点内直接承载完整编辑表单",
         "普通扁平资源列表"
       ],
-      "differenceSummary": "共享层级树 Pattern，提取当前资产骨架树的容器/内容节点、顺序号、状态、稿件、待办、锁定和变更标记，并统一组合 StatusBadge 呈现顺序数字、变更标记、状态纯图标和错误计数；组件内置变动节点底色及无障碍状态文本，内容节点的顺序数字使用 Ant Design Tree 原生 switcher 空间中的固定列，与上级容器展开小三角按层级对齐并在标题前真实占位，避免绝对定位覆盖标题；容器节点支持右对齐的轻量说明文字；采用设计基础紧凑字号、单行定长截断、无行背景/边框和容器点击展开，编辑模式内置锁定、删除和禁用节点不可拖动、调用方可按业务忙碌状态收紧节点拖拽；默认规则支持内容节点进入容器末尾或跨容器换位、在锁定内容节点后插入及可见落点提示，并根据新位置重算且跳过删除节点的顺序号；查看模式隐藏新增/删除标记，场景可过滤已删除节点；不读取 API、不决定路由，也不负责保存。",
+      "differenceSummary": "共享层级树 Pattern，表达容器/内容节点、顺序号、锁定和变更标记。节点 status 由调用方提供 label、icon、tone，不内置业务状态；有图标时以带可访问标签的纯图标呈现，否则显示文字，适用于容器与内容节点。附加标记通过 trailing 插槽组合，序号颜色通过 contentOrderTone 配置。保留固定序号列、单行截断、容器说明、内部滚动、选择与拖拽落点反馈；编辑模式禁止拖动锁定、删除和禁用节点，可通过 canDragNode 与 allowDrop 收紧规则；按层级重算内容顺序并跳过删除节点。组件不读取 API、不决定路由、不负责保存或解释产品状态。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -948,7 +948,7 @@
         "需要组件管理消息历史、调用 AI、选择模型、执行附件上传请求或持久化会话",
         "需要编辑长文正文、标记文字范围或决定选区浮层的位置"
       ],
-      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作垂直居中，上下内边距均为 4px，快捷语言文字为 13px、按钮高 32px，上传和发送按钮均为 32px；发送按钮采用主色圆角背景及 24px AnimatedIcon 发送图形，顶部容器默认关闭，topContentEnabled 开启且 topContent 非空时提供 44px 高的横向滚动区，隐藏滚动条，上内边距 4px、下内边距 0、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入，空内容不占位。单行和多行模式均支持默认关闭的 starsEnabled 属性，开启后整个组件使用 theme.dark.panel 近黑灰色背景并适配浅色文字及操作状态，在输入区域及上左右留白呈现随机位置、1.5–2.8 秒淡入淡出的白色无光晕小圆点，按当前背景区域每 1800 CSS px² 约 1 个的密度动态增减数量；按实际排版避开文字和顶部内容，仅判断圆点中心，允许边缘重叠，不覆盖底部操作区，减少动效时保留静态圆点。单行和多行 textarea 上内边距为 0；顶部插槽关闭或为空时，将原有的 6px 上内边距等量移至组件输入背景区顶部，留白不随文字滚动，星星仍可覆盖该区域；顶部插槽有内容时不补留白，使输入栏与顶部内容更贴近。 单行与多行输入区默认组合 DotScrollbar，保留自动增高并在内容溢出时显示圆点导航；scrollbar 可切换 dots/native，maxScrollDots 默认 12。圆点紧凑排列，高亮只改变颜色，悬停或键盘聚焦时拉长；文字预留右侧空间，星星避开可见导航区域，顶部内容及底部操作区不参与滚动。",
+      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作垂直居中，上下内边距均为 4px，快捷语言文字为 13px、按钮高 32px，上传和发送按钮均为 32px；发送按钮采用主色圆角背景及 24px AnimatedIcon 发送图形，顶部容器默认关闭，topContentEnabled 开启且 topContent 非空时提供 44px 高的横向滚动区，隐藏滚动条，上内边距 4px、下内边距 0、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入，空内容不占位。单行和多行模式均支持默认关闭的 starsEnabled 属性，开启后整个组件使用 theme.dark.panel 近黑灰色背景并适配浅色文字及操作状态，在输入区域及上左右留白呈现随机位置、1.5–2.8 秒淡入淡出的白色无光晕小圆点，按当前背景区域每 1800 CSS px² 约 1 个的密度动态增减数量；按实际排版避开文字和顶部内容，仅判断圆点中心，允许边缘重叠，不覆盖底部操作区，减少动效时保留静态圆点。单行和多行 textarea 上内边距为 0；顶部插槽关闭或为空时，将原有的 6px 上内边距等量移至组件输入背景区顶部，留白不随文字滚动，星星仍可覆盖该区域；顶部插槽有内容时不补留白，使输入栏与顶部内容更贴近。 单行与多行输入区默认组合 DotScrollbar，保留自动增高并在内容溢出时显示圆点导航；scrollbar 可切换 dots/native，maxScrollDots 默认 12。圆点紧凑排列，当前区域实心、其余区域空心且外径相同，悬停或键盘聚焦时拉长；文字预留右侧空间，星星避开可见导航区域，顶部内容及底部操作区不参与滚动。",
       "sourceStatus": "experimental",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -1277,7 +1277,8 @@
         "current-color",
         "reduced-motion",
         "accessible-label",
-        "layered-motion"
+        "layered-motion",
+        "semantic-motion-feedback"
       ],
       "slots": [],
       "aliases": [
@@ -1300,7 +1301,7 @@
         "TextShine",
         "Ant Design icons"
       ],
-      "differenceSummary": "已有按钮和标题提供 icon slot，TextShine 只负责文字扫光；AnimatedIcon 统一提供 12 个原创 SVG 图形，以成对三次贝塞尔参数化平滑转角，保留圆润轮廓、适量实心细节与保持连接的整体动效，支持默认姿态、单次播放结束复位、显式循环、重播与停止、可访问标签和减少动效回退，不管理产品动作或业务状态。",
+      "differenceSummary": "已有按钮和标题提供 icon slot，TextShine 只负责文字扫光；AnimatedIcon 统一提供 16 个原创 SVG 图形，以成对三次贝塞尔参数化平滑转角，保留圆润轮廓、适量实心细节与保持连接的整体动效，支持默认姿态、单次播放结束复位、显式循环、重播与停止、可访问标签和减少动效回退，不管理产品动作或业务状态。 各图形具有与含义对应的短暂辅助反馈，如气流、波纹、纸页余影与声波；辅助层和主体共用周期，静态、停止与减少动效时隐藏，不表达业务完成。",
       "sourceStatus": "candidate",
       "sourceRepository": "yisiui",
       "sourceProposal": "design-system/proposals/animated-icon.json",
@@ -1511,7 +1512,7 @@
     {
       "id": "dot-scrollbar",
       "name": "DotScrollbar",
-      "category": "switching",
+      "category": "scrolling",
       "status": "experimental",
       "source": "src/components/DotScrollbar.tsx",
       "storyId": "switching-dotscrollbar--default",
@@ -1541,7 +1542,7 @@
       ],
       "useWhen": [
         "需要给现有纵向滚动容器附加圆点导航，并按内容屏数表示滚动范围",
-        "需要当前区域高亮、悬停拉长圆点及点击跳转，同时保留内容原有滚动方式",
+        "需要通过当前实心、其余空心的圆点表示区域，支持悬停拉长与点击跳转，同时保留内容原有滚动方式",
         "需要随内容和可视高度动态计算圆点数量，并限制长内容或矮容器中的圆点数量"
       ],
       "doNotUseWhen": [
@@ -1556,13 +1557,72 @@
         "SectionNavigationPanel",
         "Native scrollbar"
       ],
-      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 选择视图，SectionNavigationPanel 切换功能区，ResizableCollapseGroup 管理折叠和高度。DotScrollbar 是绑定外部 HTMLElement 引用的独立纵向滚动配饰：按屏数生成圆点，受 maxDots 与可用高度约束，当前滚动区域高亮，固定点击区内悬停拉长，点击或键盘平滑跳转。组件观察内容及尺寸变化，按需隐藏并在卸载时恢复原生滚动条，保留滚轮和触摸行为；不管理正文、路由或业务数据。",
+      "differenceSummary": "TabSwitch 与 UnderlineTabSwitch 选择视图，SectionNavigationPanel 切换功能区，ResizableCollapseGroup 管理折叠和高度。DotScrollbar 是绑定外部 HTMLElement 引用的独立纵向滚动配饰：按屏数生成圆点，受 maxDots 与可用高度约束，当前滚动区域用实心圆点表示，其余为空心，外径相同，固定点击区内悬停拉长，点击或键盘平滑跳转。组件观察内容及尺寸变化，按需隐藏并在卸载时恢复原生滚动条，保留滚轮和触摸行为；不管理正文、路由或业务数据。",
       "sourceStatus": "candidate",
       "sourceRepository": "yisiui",
       "sourceProposal": "design-system/proposals/dot-scrollbar.json",
       "sourceComponent": "packages/react/src/components/DotScrollbar.tsx",
       "distribution": "source-sync",
       "release": "0.15.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "expanding-switch",
+      "name": "ExpandingSwitch",
+      "category": "switching",
+      "status": "experimental",
+      "source": "src/components/ExpandingSwitch.tsx",
+      "storyId": "switching-expandingswitch--default",
+      "capabilities": [
+        "single-selection",
+        "hover-preview",
+        "persistent-selection",
+        "animated-expansion",
+        "longest-label-width",
+        "stable-total-width",
+        "collapsed-icon",
+        "configurable-duotone",
+        "fixed-eight-color-cycle",
+        "controlled-selection",
+        "keyboard-selection",
+        "responsive-measurement",
+        "bounded-horizontal-scroll",
+        "disabled",
+        "empty",
+        "long-content",
+        "reduced-motion"
+      ],
+      "slots": [
+        "icon",
+        "label"
+      ],
+      "aliases": [
+        "ColorSwitch",
+        "ExpandingSegmentedControl",
+        "方格展开切换器",
+        "彩色选择器"
+      ],
+      "useWhen": [
+        "需要横向彩色方格在悬停时展开文字、移出后恢复选中项，并保持切换前后总宽度不变",
+        "需要可配置的选中深色／未选中浅色，或固定循环的纸感八色，收起项可显示图标"
+      ],
+      "doNotUseWhen": [
+        "需要多选、开关语义或让组件拥有路由与内容面板",
+        "需要始终显示全部文字、自由配置多色顺序或为每项分别指定颜色"
+      ],
+      "similarAssetsChecked": [
+        "TabSwitch",
+        "UnderlineTabSwitch",
+        "DotScrollbar",
+        "AspectRatioSelector"
+      ],
+      "differenceSummary": "TabSwitch 提供常规分段单选，UnderlineTabSwitch 提供全宽等分文字切换，DotScrollbar 控制滚动，AspectRatioSelector 表达画幅。ExpandingSwitch 独立负责收起方格与展开长条：hover 只预览、click 才提交，移出恢复选中项；实际测量最长文字统一展开宽度；支持配置深浅双色和固定顺序循环的现有纸感八色，图标仅在收起时显示。使用 radio 语义、键盘选择与非颜色选中标记，不持有业务状态。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/expanding-switch.json",
+      "sourceComponent": "packages/react/src/components/ExpandingSwitch.tsx",
+      "distribution": "source-sync",
+      "release": "0.16.0",
       "ownerRepository": "yisiui"
     }
   ]
