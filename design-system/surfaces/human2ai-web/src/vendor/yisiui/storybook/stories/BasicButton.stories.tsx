@@ -51,8 +51,7 @@ export const Default: Story = {
     mode: "with-icon",
     children: "新建文章",
     icon: <PlusOutlined />,
-    backgroundColor: "color.brand.primary",
-    textColor: "color.brand.onPrimary",
+    type: "primary",
     size: "middle",
     iconLabel: "新建文章",
   } satisfies BasicButtonProps,
@@ -70,8 +69,7 @@ export const Modes: Story = {
       <BasicButton
         mode="with-icon"
         icon={<PlusOutlined />}
-        backgroundColor="color.brand.primary"
-        textColor="color.brand.onPrimary"
+        type="primary"
       >
         带 Icon
       </BasicButton>
@@ -114,13 +112,13 @@ export const Sizes: Story = {
   name: "三种大小",
   render: () => (
     <Space align="center" wrap>
-      <BasicButton size="small" backgroundColor="color.brand.primary" textColor="color.brand.onPrimary">
+      <BasicButton size="small" type="primary">
         小
       </BasicButton>
-      <BasicButton size="middle" backgroundColor="color.brand.primary" textColor="color.brand.onPrimary">
+      <BasicButton size="middle" type="primary">
         中
       </BasicButton>
-      <BasicButton size="large" backgroundColor="color.brand.primary" textColor="color.brand.onPrimary">
+      <BasicButton size="large" type="primary">
         大
       </BasicButton>
     </Space>

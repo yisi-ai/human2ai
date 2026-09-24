@@ -1,4 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
+import { LayoutOutlined, PictureOutlined } from "@ant-design/icons";
+import { ExpandingSwitch } from "@human2ai/ui/yisiui/expanding-switch";
+import zh from "../../../../../locales/zh-CN/common.json";
+import en from "../../../../../locales/en/common.json";
 
 import {
   assertStorySelector,
@@ -44,16 +48,30 @@ const agentCommand = [
 
 let copiedContent = "";
 
+function modeItem(labels: typeof zh.composition.mode) {
+  return {
+    label: labels.label,
+    value: (
+      <ExpandingSwitch
+        aria-label={labels.label}
+        defaultValue="scene-composition"
+        colors={{ mode: "multicolor" }}
+        items={[
+          { key: "scene-composition", label: labels.scene, icon: <PictureOutlined aria-hidden="true" /> },
+          { key: "editorial-layout", label: labels.editorial, icon: <LayoutOutlined aria-hidden="true" /> },
+        ]}
+      />
+    ),
+  };
+}
+
 const meta = {
   id: "human2ai-session-details",
   title: "human2ai/SessionDetails",
   component: SessionDetails,
   parameters: { layout: "centered" },
   args: {
-    primaryItem: {
-      label: "构图模式",
-      value: <span>版式编排</span>,
-    },
+    primaryItem: modeItem(zh.composition.mode),
     createdAt: "2026-08-26T09:30:00.000Z",
     updatedAt: "2026-08-26T10:45:00.000Z",
     nodeCount: 12,
@@ -97,6 +115,14 @@ export const Default: Story = {
     assertStoryText(canvasElement, "基本信息");
     assertStoryText(canvasElement, "节点数");
     assertStoryText(canvasElement, "12");
+    assertStorySelector(canvasElement, '[role="radio"][data-palette="natural"][aria-checked="true"]');
+    const editorial = canvasElement.querySelector<HTMLButtonElement>('[role="radio"][data-palette="sage"]');
+    if (!editorial) throw new Error("Editorial mode must use its own palette color");
+    editorial.click();
+    await nextFrame();
+    if (editorial.getAttribute("aria-checked") !== "true") {
+      throw new Error("Mode selection must switch to Editorial");
+    }
     findButton(canvasElement, "复制命令").click();
     await nextFrame();
     if (copiedContent !== agentCommand) {
@@ -143,6 +169,7 @@ export const English: Story = {
   args: {
     locale: "en",
     labels: enLabels,
+    primaryItem: modeItem(en.composition.mode),
   },
   play: ({ canvasElement }) => {
     assertStoryText(canvasElement, "Session details");

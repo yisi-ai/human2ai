@@ -822,7 +822,7 @@
     },
     "app.product-name": {
       "meaning": "The localized product identity shown by the application.",
-      "scope": "Browser document title, home-page heading, shared shell product name, and connector or Skill marketplace product identity. The application sidebar brand also links to the home page.",
+      "scope": "Browser document title, home-page introduction heading, shared shell product name, and connector or Skill marketplace product identity. The home-page content shows the name beside the brand icon and omits the duplicate shell header title; the application sidebar brand links to the home page.",
       "referent": "The Human2AI product, named 以形塑形 in Chinese and human2ai in English.",
       "precedence": "The product name is distinct from individual feature names, session titles and implementation readiness messages.",
       "canonicalKey": "app.title",
@@ -1141,6 +1141,51 @@
       ],
       "nonExamples": [
         "Delete all interface nodes."
+      ]
+    },
+    "integrations.visual-workspace-description": {
+      "meaning": "A short description of Human2AI as a shared local visual workspace where people and AI create and edit compositions, UI sketches, and 3D spaces.",
+      "scope": "Home-page product introduction, WorkBuddy connector listing, bundled Skill discovery metadata, and standalone Skill marketplace listing.",
+      "referent": "Human2AI's existing browser workspace and CLI collaboration capabilities.",
+      "precedence": "Describes the product's capabilities; does not promise hosted storage, image generation, or automatic implementation of a finished application.",
+      "canonicalKey": "integrations.workbuddy.description",
+      "searchTerms": [
+        "连接器",
+        "本地视觉工作区",
+        "connector",
+        "local visual workspace",
+        "首页介绍",
+        "产品能力",
+        "home introduction",
+        "product capabilities"
+      ],
+      "examples": [
+        "Explain which visual artifacts the installed connector lets an Agent edit.",
+        "Introduce the three visual creation modes and collaboration with AI on the home page."
+      ],
+      "nonExamples": [
+        "Name an individual session.",
+        "Advertise a hosted image-generation service."
+      ]
+    },
+    "app.source-repository": {
+      "meaning": "Identify the product's public GitHub address using the localized product name; following the link opens the source repository in a new browser tab.",
+      "scope": "The global workspace sidebar footer beside the interface language selector and the homepage repository link beside the product name.",
+      "referent": "The public yisi-ai/human2ai GitHub repository.",
+      "precedence": "External product source navigation, distinct from local user projects and the home-page brand link.",
+      "canonicalKey": "app.repositoryLink",
+      "searchTerms": [
+        "GitHub",
+        "开源仓库",
+        "source repository",
+        "open source"
+      ],
+      "examples": [
+        "Follow the GitHub icon to inspect the product source code."
+      ],
+      "nonExamples": [
+        "Open a local project or session.",
+        "Change the interface language."
       ]
     }
   },
@@ -2192,6 +2237,30 @@
       "variant": "default",
       "role": "accessible label of a canvas layout state toolbar",
       "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "integrations.workbuddy.description": {
+      "conceptId": "integrations.visual-workspace-description",
+      "variant": "marketplace-description",
+      "role": "connector capability description and bundled or standalone Skill discovery summary",
+      "grammar": "complete sentence describing available actions",
+      "tone": "direct and factual",
+      "reusePolicy": "canonical"
+    },
+    "home.description": {
+      "conceptId": "integrations.visual-workspace-description",
+      "variant": "home-introduction",
+      "role": "brief product capability summary below the product name on the home page",
+      "grammar": "complete sentence describing available actions and their purpose",
+      "tone": "direct and inviting",
+      "reusePolicy": "contextual"
+    },
+    "app.repositoryLink": {
+      "conceptId": "app.source-repository",
+      "variant": "repository-link",
+      "role": "accessible name and hover title of the external repository link, shown as an icon only",
+      "grammar": "possessive noun phrase interpolating the localized productName",
       "tone": "neutral",
       "reusePolicy": "canonical"
     }

@@ -129,7 +129,7 @@ describe("composition CLI", () => {
   it("exposes an unselected mode and refuses to refine until the user chooses", async () => {
     const directory = await mkdtemp(path.join(os.tmpdir(), "human2ai-composition-mode-"));
     try {
-      const draft = createDraft();
+      const draft = { ...createDraft(), processingSemantic: null };
       const draftPath = path.join(directory, "draft.json");
       const planPath = path.join(directory, "plan.json");
       await writeFile(draftPath, JSON.stringify(draft), "utf8");

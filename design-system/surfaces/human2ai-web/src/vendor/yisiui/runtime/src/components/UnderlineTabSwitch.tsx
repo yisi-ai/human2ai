@@ -92,7 +92,7 @@ function getBoundaryEnabledIndex(items: UnderlineTabSwitchItems, direction: "fir
 export function UnderlineTabSwitch({
   items,
   "aria-label": ariaLabel,
-  activeColor = "var(--yisiui-color-brand-primary)",
+  activeColor = "var(--yisiui-color-action-link)",
   value,
   defaultValue,
   onChange,

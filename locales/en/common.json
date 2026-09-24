@@ -6,7 +6,8 @@
     "sendToBack": "Send to back"
   },
   "app": {
-    "title": "human2ai"
+    "title": "human2ai",
+    "repositoryLink": "{{productName}}'s GitHub URL"
   },
   "integrations": {
     "workbuddy": {
@@ -19,9 +20,19 @@
     }
   },
   "home": {
+    "description": "Explore ideas through compositions, UI sketches and 3D spaces, and refine your designs with AI.",
     "createComposition": "Create composition",
     "createUiSketch": "Create interface",
-    "createSpatial": "Create 3D space"
+    "createSpatial": "Create 3D space",
+    "skillInstallation": {
+      "title": "Install skill",
+      "agentTab": "Agent",
+      "cliTab": "CLI",
+      "agentPrompt": "Install the Human2AI skill in this project: run npx skills add yisi-ai/human2ai --skill human2ai, select project scope and your agent type, then confirm the skill is discoverable and report its installation path.",
+      "copy": "Copy content",
+      "copying": "Copying content",
+      "copyFailed": "Copy failed. Select and copy the text manually."
+    }
   },
   "navigation": {
     "composition": "Composition"

@@ -97,6 +97,7 @@ export function Human2AiShell({
           currentSessionId={currentSessionId}
           loading={loading}
           errorMessage={loadError}
+          repositoryLink={{ href: "https://github.com/yisi-ai/human2ai", label: t("app.repositoryLink", { productName: t("app.title") }) }}
           languageSelector={{
             "aria-label": t("language.selectorLabel"),
             onChange: (nextLocale) => {

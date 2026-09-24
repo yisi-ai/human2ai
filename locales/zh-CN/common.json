@@ -6,7 +6,8 @@
     "sendToBack": "置于底层"
   },
   "app": {
-    "title": "以形塑形"
+    "title": "以形塑形",
+    "repositoryLink": "{{productName}} 的 GitHub 地址"
   },
   "integrations": {
     "workbuddy": {
@@ -19,9 +20,19 @@
     }
   },
   "home": {
+    "description": "用构图、UI 草图和 3D 空间表达想法，与 AI 一起完善设计。",
     "createComposition": "创建构图",
     "createUiSketch": "创建UI界面",
-    "createSpatial": "创建3D空间"
+    "createSpatial": "创建3D空间",
+    "skillInstallation": {
+      "title": "安装skill",
+      "agentTab": "Agent",
+      "cliTab": "CLI",
+      "agentPrompt": "请把 Human2AI Skill 安装到当前项目：运行 npx skills add yisi-ai/human2ai --skill human2ai，选择项目级安装和你对应的 Agent 类型。完成后确认 Skill 已可被发现，并告知安装路径。",
+      "copy": "复制内容",
+      "copying": "正在复制内容",
+      "copyFailed": "复制失败，请手动选择并复制。"
+    }
   },
   "navigation": {
     "composition": "构图"

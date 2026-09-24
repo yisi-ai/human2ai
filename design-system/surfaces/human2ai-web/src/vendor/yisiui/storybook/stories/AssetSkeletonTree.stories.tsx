@@ -1,3 +1,4 @@
+import { CheckCircleOutlined, ClockCircleOutlined, SyncOutlined, WarningOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import type { TreeProps } from "antd";
 import { useState, type ReactNode } from "react";
@@ -8,8 +9,11 @@ import {
   assetSkeletonTreeCanDrop,
   assetSkeletonTreeRelativeDropPosition,
   type AssetSkeletonTreeNode,
+  type AssetSkeletonTreeStatus,
 } from "@human2ai/ui/yisiui";
 import { assertStoryRole, assertStorySelector, assertStoryText } from "../interactionChecks";
+
+import styles from "./AssetSkeletonTree.stories.module.css";
 
 const meta = {
   id: "modules-assetskeletontree",
@@ -21,205 +25,215 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 function TreeStoryFrame({ children }: { children: ReactNode }) {
-  return <div className="yisi-asset-skeleton-tree-story-frame">{children}</div>;
+  return <div className={styles.frame}>{children}</div>;
 }
 
-const articleListNodes: AssetSkeletonTreeNode[] = [
+// These statuses are example data owned by this caller, not a tree workflow.
+const exampleStatuses = {
+  idle: { label: "未开始", icon: <ClockCircleOutlined /> },
+  available: { label: "可用", tone: "info" },
+  processing: { label: "处理中", icon: <SyncOutlined />, tone: "processing" },
+  attention: { label: "需检查", icon: <WarningOutlined />, tone: "warning" },
+  complete: { label: "已就绪", icon: <CheckCircleOutlined />, tone: "success" },
+  inactive: { label: "已停用" },
+} satisfies Record<string, AssetSkeletonTreeStatus>;
+
+const resourceNodes: AssetSkeletonTreeNode[] = [
   {
-    key: "account:story-lab",
+    key: "group:visual",
     parentKey: null,
     order: 0,
     nodeKind: "container",
-    title: "故事实验室",
-    description: "抖音",
+    title: "视觉资源",
+    description: "共享目录",
   },
   {
-    key: "article:city-walk",
-    parentKey: "account:story-lab",
+    key: "resource:layout",
+    parentKey: "group:visual",
     order: 0,
     nodeKind: "content",
-    title: "城市散步：从一条旧街开始的观察笔记",
-    trailing: <StatusBadge label="3 版" tone="info" mode="text-only" />,
+    title: "响应式布局与多种屏幕尺寸的适配资源",
+    trailing: <StatusBadge label="SVG" tone="info" mode="text-only" />,
   },
   {
-    key: "article:quiet-reading",
-    parentKey: "account:story-lab",
+    key: "resource:icons",
+    parentKey: "group:visual",
     order: 1,
     nodeKind: "content",
-    title: "安静阅读的下午",
-    trailing: <StatusBadge label="1 版" mode="text-only" />,
+    title: "图标集合",
+    trailing: <StatusBadge label="JSON" mode="text-only" />,
   },
   {
-    key: "article:material-notes",
-    parentKey: "account:story-lab",
+    key: "resource:colors",
+    parentKey: "group:visual",
     order: 2,
     nodeKind: "content",
-    title: "把资料整理成可写的线索",
-    trailing: <StatusBadge label="0 版" mode="text-only" />,
+    title: "颜色配置",
+    trailing: <StatusBadge label="CSS" mode="text-only" />,
   },
   {
-    key: "account:field-notes",
+    key: "group:files",
     parentKey: null,
     order: 1,
     nodeKind: "container",
-    title: "田野笔记",
+    title: "参考文件",
   },
   {
-    key: "article:night-market",
-    parentKey: "account:field-notes",
+    key: "resource:guide",
+    parentKey: "group:files",
     order: 0,
     nodeKind: "content",
-    title: "夜市里的人情观察",
-    trailing: <StatusBadge label="2 版" tone="info" mode="text-only" />,
+    title: "使用说明",
+    trailing: <StatusBadge label="PDF" tone="info" mode="text-only" />,
   },
   {
-    key: "article:small-objects",
-    parentKey: "account:field-notes",
+    key: "resource:template",
+    parentKey: "group:files",
     order: 1,
     nodeKind: "content",
-    title: "身边小物的来处",
-    trailing: <StatusBadge label="1 版" mode="text-only" />,
+    title: "基础模板",
+    trailing: <StatusBadge label="JSON" mode="text-only" />,
   },
 ];
 
-const longformSkeletonNodes: AssetSkeletonTreeNode[] = [
+const hierarchyNodes: AssetSkeletonTreeNode[] = [
   {
-    key: "part:opening",
+    key: "group:base",
     parentKey: null,
     order: 0,
     nodeKind: "container",
-    title: "第一部 进入雾中",
-    status: "ready",
+    title: "基础配置",
+    status: exampleStatuses.available,
   },
   {
-    key: "unit:arrival",
-    parentKey: "part:opening",
+    key: "item:spacing",
+    parentKey: "group:base",
     order: 0,
     nodeKind: "content",
-    title: "抵达河岸",
-    status: "completed",
-    hasDraft: true,
+    title: "间距设置",
+    status: exampleStatuses.complete,
+    contentOrderTone: "success",
   },
   {
-    key: "unit:lamp",
-    parentKey: "part:opening",
+    key: "item:palette",
+    parentKey: "group:base",
     order: 1,
     nodeKind: "content",
-    title: "桥头的灯",
-    status: "drafted",
-    hasDraft: true,
-    openTodoCount: 2,
+    title: "颜色设置",
+    status: exampleStatuses.processing,
+    contentOrderTone: "success",
+    trailing: <StatusBadge label="2" tone="danger" mode="text-only" tooltip="2 项待检查" />,
   },
   {
-    key: "part:middle",
+    key: "group:components",
     parentKey: null,
     order: 1,
     nodeKind: "container",
-    title: "第二部 旧地图",
-    status: "planned",
+    title: "界面元素",
+    status: exampleStatuses.idle,
   },
   {
-    key: "unit:archive",
-    parentKey: "part:middle",
+    key: "item:button",
+    parentKey: "group:components",
     order: 0,
     nodeKind: "content",
-    title: "档案室里的空白页",
-    status: "review_needed",
+    title: "按钮样式",
+    status: exampleStatuses.attention,
     locked: true,
-    lockedReason: "等待连续性复查",
+    lockedReason: "此节点已锁定，暂不可移动",
   },
   {
-    key: "unit:bridge",
-    parentKey: "part:middle",
+    key: "item:input",
+    parentKey: "group:components",
     order: 1,
     nodeKind: "content",
-    title: "没有被记录的桥",
-    status: "planned",
-    openTodoCount: 1,
+    title: "输入控件",
+    status: exampleStatuses.idle,
+    trailing: <StatusBadge label="1" tone="danger" mode="text-only" tooltip="1 项待检查" />,
   },
   {
-    key: "unit:folded-map",
-    parentKey: "part:middle",
+    key: "item:panel",
+    parentKey: "group:components",
     order: 2,
     nodeKind: "content",
-    title: "被折叠的地图与方向",
-    status: "drafted",
-    hasDraft: true,
+    title: "面板布局",
+    status: exampleStatuses.processing,
+    contentOrderTone: "success",
   },
   {
-    key: "unit:missing-train",
-    parentKey: "part:middle",
+    key: "item:menu",
+    parentKey: "group:components",
     order: 3,
     nodeKind: "content",
-    title: "没有抵达的末班车",
-    status: "ready",
+    title: "菜单导航",
+    status: exampleStatuses.available,
     isNew: true,
   },
   {
-    key: "unit:deleted-note",
-    parentKey: "part:middle",
+    key: "item:legacy",
+    parentKey: "group:components",
     order: 4,
     nodeKind: "content",
-    title: "已经删去的旧注释",
-    status: "archived",
+    title: "旧版控件",
+    status: exampleStatuses.inactive,
     isDeleted: true,
   },
   {
-    key: "part:closing",
+    key: "group:extensions",
     parentKey: null,
     order: 2,
     nodeKind: "container",
-    title: "第三部 回到岸上",
-    status: "planned",
+    title: "扩展功能",
+    status: exampleStatuses.idle,
     isNew: true,
   },
   {
-    key: "unit:shore",
-    parentKey: "part:closing",
+    key: "item:search",
+    parentKey: "group:extensions",
     order: 0,
     nodeKind: "content",
-    title: "岸边的回声",
-    status: "planned",
+    title: "搜索配置",
+    status: exampleStatuses.idle,
   },
   {
-    key: "unit:rain",
-    parentKey: "part:closing",
+    key: "item:filter",
+    parentKey: "group:extensions",
     order: 1,
     nodeKind: "content",
-    title: "雨水留下的痕迹",
-    status: "ready",
+    title: "筛选配置",
+    status: exampleStatuses.available,
   },
   {
-    key: "unit:signal",
-    parentKey: "part:closing",
+    key: "item:export",
+    parentKey: "group:extensions",
     order: 2,
     nodeKind: "content",
-    title: "远处传来的信号",
-    status: "drafted",
-    hasDraft: true,
+    title: "导出设置",
+    status: exampleStatuses.processing,
+    contentOrderTone: "success",
     isNew: true,
   },
   {
-    key: "unit:deleted-book",
-    parentKey: "part:closing",
+    key: "item:old-template",
+    parentKey: "group:extensions",
     order: 3,
     nodeKind: "content",
-    title: "被删除的书页",
-    status: "archived",
+    title: "旧版模板",
+    status: exampleStatuses.inactive,
     isDeleted: true,
   },
   {
-    key: "unit:afterglow",
-    parentKey: "part:closing",
+    key: "item:preview",
+    parentKey: "group:extensions",
     order: 4,
     nodeKind: "content",
-    title: "天亮之前的余光",
-    status: "completed",
-    hasDraft: true,
+    title: "预览配置",
+    status: exampleStatuses.complete,
+    contentOrderTone: "success",
   },
 ];
 
-const longformSkeletonViewNodes = longformSkeletonNodes.filter((node) => !node.isDeleted);
+const hierarchyViewNodes = hierarchyNodes.filter((node) => !node.isDeleted);
 
 function normalizeOrder(nodes: AssetSkeletonTreeNode[]): AssetSkeletonTreeNode[] {
   const grouped = new Map<string | null, AssetSkeletonTreeNode[]>();
@@ -310,12 +324,12 @@ function moveNode(nodes: AssetSkeletonTreeNode[], info: Parameters<NonNullable<T
 
 function EditorFixture() {
   const [nodes, setNodes] = useState<AssetSkeletonTreeNode[]>(() =>
-    longformSkeletonNodes.map((node) => ({
+    hierarchyNodes.map((node) => ({
       ...node,
-      isChanged: node.key === "unit:folded-map",
+      isChanged: node.key === "item:panel",
     })),
   );
-  const [selectedKeys, setSelectedKeys] = useState<string[]>(["unit:lamp"]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>(["item:palette"]);
 
   const handleDrop: TreeProps["onDrop"] = (info) => {
     setNodes((current) => moveNode(current, info));
@@ -336,47 +350,48 @@ function EditorFixture() {
   );
 }
 
+// Preserve the existing export keys so saved Story URLs continue to work.
 export const ArticleList: Story = {
-  name: "文章列表",
+  name: "资源列表",
   render: () => (
     <TreeStoryFrame>
       <AssetSkeletonTree
         mode="view"
-        nodes={articleListNodes}
+        nodes={resourceNodes}
         maxTitleLength={12}
         showContentOrder={false}
         showStatus={false}
         defaultExpandAll
-        selectedKeys={["article:city-walk"]}
+        selectedKeys={["resource:layout"]}
       />
     </TreeStoryFrame>
   ),
   play: ({ canvasElement }) => {
     assertStoryRole(canvasElement, "tree");
-    assertStoryText(canvasElement, "城市散步：从一条旧街");
-    assertStoryText(canvasElement, "抖音");
+    assertStoryText(canvasElement, "响应式布局与多种屏幕");
+    assertStoryText(canvasElement, "共享目录");
     assertStorySelector(canvasElement, ".yisi-asset-skeleton-tree-description");
   },
 };
 
 export const LongformSkeletonList: Story = {
-  name: "长篇骨架列表",
+  name: "层级状态",
   render: () => (
     <TreeStoryFrame>
       <AssetSkeletonTree
         mode="view"
-        nodes={longformSkeletonViewNodes}
-        currentKey="unit:lamp"
+        nodes={hierarchyViewNodes}
+        currentKey="item:palette"
         maxTitleLength={18}
         showCurrent={false}
         defaultExpandAll
-        selectedKeys={["unit:lamp"]}
+        selectedKeys={["item:palette"]}
       />
     </TreeStoryFrame>
   ),
   play: ({ canvasElement }) => {
     assertStoryRole(canvasElement, "tree");
-    assertStoryText(canvasElement, "桥头的灯");
+    assertStoryText(canvasElement, "颜色设置");
     assertStorySelector(
       canvasElement,
       '.yisi-asset-skeleton-tree-content-order [data-yisiui-asset="yisiui/status-badge"]',
@@ -394,7 +409,7 @@ export const LongformSkeletonList: Story = {
 };
 
 export const SkeletonEditor: Story = {
-  name: "骨架编辑",
+  name: "层级编辑",
   render: () => <EditorFixture />,
   play: ({ canvasElement }) => {
     assertStoryRole(canvasElement, "tree");

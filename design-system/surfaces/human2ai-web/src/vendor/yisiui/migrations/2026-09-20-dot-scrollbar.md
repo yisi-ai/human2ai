@@ -1,8 +1,10 @@
 # DotScrollbar 采用说明
 
-Registry key：`yisiui/dot-scrollbar`，类别 `switching`，状态 `experimental`。独立的纵向圆点滚动配饰，随 `0.15.0` 本地 source-sync 源码版本分发，尚未批准视觉基线。
+Registry key：`yisiui/dot-scrollbar`，类别 `scrolling`（滚动附件），状态 `experimental`。独立的纵向圆点滚动配饰，随 `0.15.0` 本地 source-sync 源码版本分发，尚未批准视觉基线。
 
-圆点绑定已有的滚动元素，不拥有正文。当前区域高亮，悬停或键盘聚焦时圆点拉长，点击跳到对应滚动位置。`ResizableCollapseGroup` 默认应用于每个子项自己的内容区，`MessageComposer` 默认应用于单行和多行输入区。
+按 category 查找滚动附件时使用 `--category scrolling`；`--category switching` 仅返回视图切换控件。
+
+圆点绑定已有的滚动元素，不拥有正文。当前区域显示实心圆点，其余区域显示空心圆点，悬停或键盘聚焦时圆点拉长，点击跳到对应滚动位置。`ResizableCollapseGroup` 默认应用于每个子项自己的内容区，`MessageComposer` 默认应用于单行和多行输入区。
 
 ## 独立接入
 
@@ -44,14 +46,14 @@ function ReadingPanel() {
 | `hideNativeScrollbar` | 默认 `true`，圆点可用且没有横向溢出时隐藏目标的原生滚动条。卸载、改为 `false` 或更换目标后撤销自身添加的样式。 |
 | `behavior` | 默认 `smooth`，点击和键盘跳转使用平滑滚动；`auto` 直接跳转。系统减少动效时直接跳转。 |
 | `disabled` | 默认 `false`，禁用圆点按钮；正文自身的滚轮、触摸、键盘及程序滚动继续工作。 |
-| `dotColor` / `activeColor` | 默认使用文字弱色与主色 Token，可传入 CSS 颜色。当前圆点保持与普通圆点相同的大小，同时通过 `aria-current` 表达当前位置。 |
+| `dotColor` / `activeColor` | 分别设置普通空心圆点的描边色，以及当前实心圆点的描边与填充色。默认使用文字弱色与主色 Token，可传入 CSS 颜色；外径相同，同时通过 `aria-current` 表达当前位置。 |
 | `getDotLabel` | `(index, count) => string`，用于本地化每个按钮的名称；index 从 1 开始，count 为实际显示数量。 |
 | `className` / `style` | 调整圆点区域的布局，也支持其他根节点 HTML 属性。 |
 
 ## 数量、位置与更新
 
 - 原始屏数为 `ceil(scrollHeight / clientHeight)`。没有有效高度或溢出不超过 1px 时不显示圆点。
-- 每个按钮固定占 16px 高，顶部、底部各留 4px。显示数量为原始屏数、`maxDots`、可容纳按钮数量中的最小值。按钮点击区固定，普通和高亮圆点均为 6px，在悬停或键盘聚焦时拉长到 16px，不推挤其他圆点。
+- 每个按钮固定占 16px 高，顶部、底部各留 4px。显示数量为原始屏数、`maxDots`、可容纳按钮数量中的最小值。按钮点击区固定，空心和实心圆点外径均为 6px（包含 1px 描边），在悬停或键盘聚焦时拉长到 16px，不推挤其他圆点。禁用时继续保留空心／实心区别，只弱化颜色。
 - 未压缩时第 i 个位置为 `min(i × clientHeight, 最大滚动距离)`，i 从 0 开始。数量压缩后按最大滚动距离均匀映射，第一点到顶部，最后一点到实际底部。
 - 高亮随真实滚动位置更新，选择距离当前偏移最近的圆点。平滑滚动经过其他位置时，高亮也随实际位置变化。
 - 容器、圆点区域及直接内容节点使用 ResizeObserver；内容增删、文字或属性变化使用 MutationObserver，并响应图片加载、输入、字体加载和窗口变化。更新合并到动画帧，只有圆点数量、目标位置或高亮变化时更新 React 状态。
@@ -81,6 +83,6 @@ function ReadingPanel() {
 
 已查询 Registry 并比较 TabSwitch、UnderlineTabSwitch、ResizableCollapseGroup、SectionNavigationPanel 和原生滚动条。它们没有绑定外部滚动元素、按屏数生成圆点与点击定位的共享契约，因此新增原生候选，再由折叠组组合使用。
 
-Storybook：`yisiui-Components/Switching/DotScrollbar`，稳定入口 `switching-dotscrollbar--default`。四个场景展示按屏跳转、长内容与高度变化、短内容隐藏、保留原生与禁用导航。已有 `yisiui-Modules/ResizableCollapseGroup` 场景已更新为默认圆点模式，并提供模式及数量控件。
+Storybook：`yisiui-Components/Scrolling/DotScrollbar`，为兼容已有链接，保留稳定入口 `switching-dotscrollbar--default`；Story ID 不代表 Registry 分类。四个场景展示按屏跳转、长内容与高度变化、短内容隐藏、保留原生与禁用导航。已有 `yisiui-Modules/ResizableCollapseGroup` 场景已更新为默认圆点模式，并提供模式及数量控件。
 
 按用户要求不编写或运行新测试，也不执行浏览器自动化。组件及 Storybook 构建用于检查编译和生成预览，不代表交互、消费项目回接或视觉基线已批准。

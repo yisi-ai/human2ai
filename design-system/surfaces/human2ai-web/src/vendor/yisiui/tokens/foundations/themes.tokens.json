@@ -9,7 +9,8 @@
     "dark": {
       "page": { "$type": "color", "$value": "#141414" },
       "panel": { "$type": "color", "$value": "#1F1F1F" },
-      "text": { "$type": "color", "$value": "#F5F5F5" }
+      "text": { "$type": "color", "$value": "#F5F5F5" },
+      "interactive": { "$type": "color", "$value": "{color.brand.primaryHover}" }
     }
   }
 }

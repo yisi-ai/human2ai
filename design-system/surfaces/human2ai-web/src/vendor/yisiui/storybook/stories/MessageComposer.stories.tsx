@@ -58,7 +58,7 @@ function InteractiveFixture({ starsEnabled = true, scrollbar = "dots", maxScroll
         </div>
         <section className={styles.example} aria-labelledby="single-line-title">
           <h2 id="single-line-title" className={styles.heading}>单行模式</h2>
-          <p className={styles.description}>从一行自动增高到三行，超过后在输入区右侧显示圆点滚动条。点击上方按钮填入长消息，可查看紧凑间距、等大高亮和点击跳转；星星模式同时适用。</p>
+          <p className={styles.description}>从一行自动增高到三行，超过后在输入区右侧显示圆点滚动条。点击上方按钮填入长消息，可查看空心与实心圆点的位置指示和点击跳转；星星模式同时适用。</p>
           <MessageComposer
             variant="single-line"
             starsEnabled={starsEnabled}
@@ -79,7 +79,7 @@ function InteractiveFixture({ starsEnabled = true, scrollbar = "dots", maxScroll
 
         <section className={styles.example} aria-labelledby="multi-line-title">
           <h2 id="multi-line-title" className={styles.heading}>多行模式</h2>
-          <p className={styles.description}>从三行自动增高到八行，长消息通过圆点跳转或滚轮浏览，当前位置只改变颜色，悬停圆点时拉长。星星背景避开文字和滚动按钮区域；底部发送和快捷区保持固定。</p>
+          <p className={styles.description}>从三行自动增高到八行，长消息通过圆点跳转或滚轮浏览，当前位置显示实心圆点，其余为空心，悬停圆点时拉长。星星背景避开文字和滚动按钮区域；底部发送和快捷区保持固定。</p>
           <MessageComposer
             variant="multi-line"
             starsEnabled={starsEnabled}

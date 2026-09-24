@@ -20,7 +20,7 @@ function ScrollFixture({ height = 360, pages = 5, pageHeight = 360, short = fals
           : Array.from({ length: pages }, (_, index) => <section key={index} className={styles.page} style={{ minHeight: pageHeight }}>
             <span className={styles.number}>{String(index + 1).padStart(2, "0")}</span>
             <h2>第 {index + 1} 段内容</h2>
-            <p>滚动查看下一段，或点击右侧的圆点跳转。当前区域的圆点会高亮。</p>
+            <p>滚动查看下一段，或点击右侧的圆点跳转。当前区域显示实心圆点，其余区域显示空心圆点。</p>
             <p>每个圆点的点击区域保持固定，悬停时圆点拉长，其他圆点的位置不变。</p>
           </section>)}
       </div>
@@ -31,11 +31,11 @@ function ScrollFixture({ height = 360, pages = 5, pageHeight = 360, short = fals
 
 const meta = {
   id: "switching-dotscrollbar",
-  title: "yisiui-Components/Switching/DotScrollbar",
+  title: "yisiui-Components/Scrolling/DotScrollbar",
   component: DotScrollbar,
   parameters: {
     layout: "fullscreen",
-    docs: { description: { component: "绑定现有纵向滚动容器的圆点滚动条。按内容屏数生成圆点，当前区域高亮，悬停拉长，点击平滑跳转；数量受上限和可用高度约束，内容不足一屏时隐藏。" } },
+    docs: { description: { component: "绑定现有纵向滚动容器的圆点滚动条。按内容屏数生成圆点，当前区域实心、其余区域空心，悬停拉长，点击平滑跳转；数量受上限和可用高度约束，内容不足一屏时隐藏。" } },
   },
   args: { targetRef: { current: null }, ariaLabel: "正文滚动位置", maxDots: 12, hideNativeScrollbar: true, behavior: "smooth", disabled: false },
   argTypes: {
@@ -58,7 +58,7 @@ export const Default: Story = {
   name: "按屏生成圆点与点击跳转",
   render: (args) => <Frame>
     <h1 className={styles.heading}>圆点滚动条</h1>
-    <p className={styles.description}>默认示例为五屏内容，圆点紧密排列，高亮时保持原大小。试试滚轮、点击圆点，以及 Tab 聚焦后使用上下方向键、Home / End 跳转。</p>
+    <p className={styles.description}>默认示例为五屏内容，当前区域用实心圆点表示，其余圆点为空心，外径保持一致。试试滚轮、点击圆点，以及 Tab 聚焦后使用上下方向键、Home / End 跳转。</p>
     <ScrollFixture {...args} />
   </Frame>,
 };

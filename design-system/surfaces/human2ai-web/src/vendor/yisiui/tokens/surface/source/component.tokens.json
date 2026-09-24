@@ -42,9 +42,9 @@
     },
     "contentGraph": {
       "node": {
-        "actorFill": { "$type": "color", "$value": "#EAF4FF" },
-        "actorStroke": { "$type": "color", "$value": "{color.brand.primary}" },
-        "actorText": { "$type": "color", "$value": "#0958D9" },
+        "actorFill": { "$type": "color", "$value": "{color.brand.primaryBg}" },
+        "actorStroke": { "$type": "color", "$value": "{color.brand.primaryText}" },
+        "actorText": { "$type": "color", "$value": "{color.brand.primaryText}" },
         "eventFill": { "$type": "color", "$value": "{color.status.successBg}" },
         "eventStroke": { "$type": "color", "$value": "#389E0D" },
         "eventText": { "$type": "color", "$value": "#135200" },
@@ -81,7 +81,7 @@
       "selection": { "$type": "color", "$value": "{color.brand.primary}" }
     },
     "focus": {
-      "outline": { "$type": "color", "$value": "{color.brand.primary}" },
+      "outline": { "$type": "color", "$value": "{color.brand.primaryText}" },
       "outlineWidth": { "$type": "dimension", "$value": "2px" }
     }
   }

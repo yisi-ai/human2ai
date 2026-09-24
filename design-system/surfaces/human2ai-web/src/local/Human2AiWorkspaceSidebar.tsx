@@ -4,6 +4,7 @@ import {
   BgColorsOutlined,
   CodeSandboxOutlined,
   FolderAddOutlined,
+  GithubOutlined,
   LayoutOutlined,
   MoreOutlined,
   PictureOutlined,
@@ -18,6 +19,7 @@ import {
   type AssetSkeletonTreeNode,
 } from "../vendor/yisiui/runtime/src/patterns/AssetSkeletonTree";
 import { CompositeButton } from "../vendor/yisiui/runtime/src/components/CompositeButton";
+import { BasicButton } from "../vendor/yisiui/runtime/src/components/BasicButton";
 import { LoadingState } from "../vendor/yisiui/runtime/src/components/LoadingState";
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 import {
@@ -90,6 +92,7 @@ export interface Human2AiWorkspaceSidebarProps {
   errorMessage?: string | null;
   labels?: Partial<Human2AiWorkspaceSidebarLabels>;
   languageSelector?: CompactDropdownSelectProps;
+  repositoryLink?: { href: string; label: string };
   onCreateComposition: (projectId?: string) => Promise<void>;
   onCreateSpatial?: (projectId?: string) => Promise<void>;
   onCreateUiSketch: (projectId?: string) => Promise<void>;
@@ -154,6 +157,7 @@ export function Human2AiWorkspaceSidebar({
   errorMessage,
   labels: labelOverrides,
   languageSelector,
+  repositoryLink,
   onCreateComposition,
   onCreateUiSketch,
   onCreateSpatial,
@@ -693,9 +697,22 @@ export function Human2AiWorkspaceSidebar({
         )}
       </section>
 
-      {languageSelector ? (
+      {languageSelector || repositoryLink ? (
         <div className="human2ai-workspace-sidebar__language-selector">
-          <CompactDropdownSelect {...languageSelector} />
+          {repositoryLink ? (
+            <BasicButton
+              className="human2ai-workspace-sidebar__repository-link"
+              mode="icon-only"
+              icon={<GithubOutlined aria-hidden="true" />}
+              iconLabel={repositoryLink.label}
+              title={repositoryLink.label}
+              href={repositoryLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              backgroundColor="none"
+            />
+          ) : null}
+          {languageSelector ? <CompactDropdownSelect {...languageSelector} /> : null}
         </div>
       ) : null}
 

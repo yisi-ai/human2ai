@@ -1,5 +1,9 @@
 # 公共资产迁移说明
 
+当前鲜绿主色及前景、链接和焦点的语义调整见 [2026-09-23 鲜绿主题](2026-09-23-bright-green-theme.md)。
+
+AssetSkeletonTree 的通用状态、附加标记和序号颜色接口见 [2026-09-23 层级树通用化](2026-09-23-asset-skeleton-tree.md)。
+
 独立圆点滚动条及折叠组接入见 [2026-09-20 DotScrollbar 采用说明](2026-09-20-dot-scrollbar.md)。
 
 父容器定高、独立折叠与拖动调整功能面板见 [2026-09-20 ResizableCollapseGroup 采用说明](2026-09-20-resizable-collapse-group.md)。

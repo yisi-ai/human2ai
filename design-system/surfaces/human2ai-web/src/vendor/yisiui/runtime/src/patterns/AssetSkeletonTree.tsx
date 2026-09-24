@@ -1,14 +1,6 @@
 "use client";
 
-import {
-  CaretRightOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  ExclamationCircleOutlined,
-  FileDoneOutlined,
-  InboxOutlined,
-  PlayCircleOutlined,
-} from "@ant-design/icons";
+import { CaretRightOutlined } from "@ant-design/icons";
 import { Tree, Typography } from "antd";
 import type { TreeDataNode, TreeProps } from "antd";
 import { useEffect, useRef, useState } from "react";
@@ -25,13 +17,14 @@ const { Text } = Typography;
 
 export type AssetSkeletonTreeMode = "view" | "edit";
 export type AssetSkeletonTreeNodeKind = "container" | "content";
-export type AssetSkeletonTreeStatus =
-  | "planned"
-  | "ready"
-  | "drafted"
-  | "review_needed"
-  | "completed"
-  | "archived";
+
+/** Presentation supplied by the caller; the tree owns no workflow statuses. */
+export interface AssetSkeletonTreeStatus {
+  /** Visible text, or the accessible name and tooltip when an icon is supplied. */
+  label: string;
+  icon?: ReactNode;
+  tone?: StatusTone;
+}
 
 export interface AssetSkeletonTreeNode {
   key: string;
@@ -40,14 +33,16 @@ export interface AssetSkeletonTreeNode {
   nodeKind: AssetSkeletonTreeNodeKind;
   title: string;
   description?: string;
-  hasDraft?: boolean;
-  openTodoCount?: number;
+  /** Optional visual tone for the content order number. */
+  contentOrderTone?: StatusTone;
   locked?: boolean;
   lockedReason?: string;
+  /** Available on both container and content nodes. */
   status?: AssetSkeletonTreeStatus;
   isChanged?: boolean;
   isDeleted?: boolean;
   isNew?: boolean;
+  /** Caller-owned badges, counts, or other metadata. */
   trailing?: ReactNode;
   disabled?: boolean;
   extraClassNames?: string[];
@@ -62,45 +57,10 @@ export interface AssetSkeletonTreeProps
   maxTitleLength?: number;
   showCurrent?: boolean;
   showContentOrder?: boolean;
-  showDraft?: boolean;
   showLock?: boolean;
+  /** Defaults to true in view mode and false in edit mode. */
   showStatus?: boolean;
   canDragNode?: (node: AssetSkeletonTreeNode) => boolean;
-}
-
-export const ASSET_SKELETON_TREE_STATUS_LABELS: Record<AssetSkeletonTreeStatus, string> = {
-  planned: "计划中",
-  ready: "可写作",
-  drafted: "已起草",
-  review_needed: "待审查",
-  completed: "已完成",
-  archived: "已归档",
-};
-
-export const ASSET_SKELETON_TREE_STATUS_ICONS: Record<AssetSkeletonTreeStatus, ReactNode> = {
-  planned: <ClockCircleOutlined />,
-  ready: <PlayCircleOutlined />,
-  drafted: <FileDoneOutlined />,
-  review_needed: <ExclamationCircleOutlined />,
-  completed: <CheckCircleOutlined />,
-  archived: <InboxOutlined />,
-};
-
-const ASSET_SKELETON_TREE_STATUS_TONES: Record<AssetSkeletonTreeStatus, StatusTone> = {
-  planned: "default",
-  ready: "info",
-  drafted: "info",
-  review_needed: "warning",
-  completed: "success",
-  archived: "default",
-};
-
-export function assetSkeletonTreeStatusLabel(status: AssetSkeletonTreeStatus): string {
-  return ASSET_SKELETON_TREE_STATUS_LABELS[status];
-}
-
-export function assetSkeletonTreeStatusTone(status: AssetSkeletonTreeStatus): StatusTone {
-  return ASSET_SKELETON_TREE_STATUS_TONES[status];
 }
 
 export type AssetSkeletonTreeAllowDropOptions =
@@ -324,7 +284,6 @@ export function AssetSkeletonTree({
   maxTitleLength = 24,
   showCurrent,
   showContentOrder = true,
-  showDraft,
   showLock,
   showStatus,
   canDragNode,
@@ -343,7 +302,6 @@ export function AssetSkeletonTree({
   const scrollStopTimer = useRef<number | null>(null);
   const movedNodeTimer = useRef<number | null>(null);
   const shouldShowCurrent = showCurrent ?? mode === "view";
-  const shouldShowDraft = showDraft ?? mode === "edit";
   const shouldShowLock = showLock ?? mode === "edit";
   const shouldShowStatus = showStatus ?? mode === "view";
   const shouldShowChangeState = mode === "edit";
@@ -429,11 +387,7 @@ export function AssetSkeletonTree({
     const isCurrent = shouldShowCurrent && currentKey === node.key;
     const title = truncateText(node.title, maxTitleLength);
     const hasTrailingContent = Boolean(
-      node.trailing ||
-        (shouldShowDraft && node.hasDraft) ||
-        isCurrent ||
-        (node.openTodoCount ?? 0) > 0 ||
-        (shouldShowStatus && node.nodeKind === "content" && node.status),
+      node.trailing || isCurrent || (shouldShowStatus && node.status),
     );
 
     return (
@@ -488,26 +442,15 @@ export function AssetSkeletonTree({
             {node.trailing ? (
               <span className="yisi-asset-skeleton-tree-trailing">{node.trailing}</span>
             ) : null}
-            {shouldShowDraft && node.hasDraft ? (
-              <StatusBadge label="稿" tone="success" mode="text-only" />
-            ) : null}
             {isCurrent ? (
               <StatusBadge label="当前" tone="success" mode="text-only" />
             ) : null}
-            {(node.openTodoCount ?? 0) > 0 ? (
+            {shouldShowStatus && node.status ? (
               <StatusBadge
-                label={node.openTodoCount}
-                tone="danger"
-                mode="text-only"
-                tooltip={`${node.openTodoCount} 个待处理问题`}
-              />
-            ) : null}
-            {shouldShowStatus && node.nodeKind === "content" && node.status ? (
-              <StatusBadge
-                label={assetSkeletonTreeStatusLabel(node.status)}
-                tone={assetSkeletonTreeStatusTone(node.status)}
-                icon={ASSET_SKELETON_TREE_STATUS_ICONS[node.status]}
-                mode="icon-only"
+                label={node.status.label}
+                tone={node.status.tone}
+                icon={node.status.icon}
+                mode={node.status.icon ? "icon-only" : "text-only"}
               />
             ) : null}
           </span>
@@ -535,7 +478,7 @@ export function AssetSkeletonTree({
         {contentOrderLabel ? (
           <StatusBadge
             label={contentOrderLabel}
-            tone={node.hasDraft ? "success" : "default"}
+            tone={node.contentOrderTone ?? "default"}
             mode="text-only"
             tooltip={`内容顺序 ${contentOrderLabel}`}
           />

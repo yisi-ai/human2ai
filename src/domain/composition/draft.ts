@@ -78,7 +78,7 @@ export function createDraft(
   return validateDraft({
     version: 1,
     kind: "composition-draft",
-    processingSemantic: null,
+    processingSemantic: "scene-composition",
     frame: createCompositionFrame(frame),
     overallNote: "",
     focusPoints: [],

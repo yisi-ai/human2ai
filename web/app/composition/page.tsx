@@ -8,6 +8,7 @@ import {
   DeleteOutlined,
   FileTextOutlined,
   FontSizeOutlined,
+  LayoutOutlined,
   LineOutlined,
   LockOutlined,
   PictureOutlined,
@@ -15,7 +16,6 @@ import {
 } from "@ant-design/icons";
 import {
   COMPOSITION_FRAME_ID,
-  CompactDropdownSelect,
   CompositionWorkflowView,
   CompositionPlanningPanel,
   type CompositionPlanningLabels,
@@ -35,6 +35,7 @@ import {
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import { ConfirmAction } from "@human2ai/ui/yisiui/confirm-action";
+import { ExpandingSwitch } from "@human2ai/ui/yisiui/expanding-switch";
 import { LoadingState } from "@human2ai/ui/yisiui/loading-state";
 import { Input, Popover, Tooltip } from "antd";
 import type { TFunction } from "i18next";
@@ -231,13 +232,16 @@ function CompositionPageContent() {
   const selectedItemIds = selectedIds.filter((id) => id !== COMPOSITION_FRAME_ID);
   const processingSemanticOptions = [
     {
-      value: "scene-composition",
+      key: "scene-composition",
       label: t("composition.mode.scene"),
+      icon: <PictureOutlined aria-hidden="true" />,
     },
     {
-      value: "editorial-layout",
+      key: "editorial-layout",
       label: t("composition.mode.editorial"),
+      icon: <LayoutOutlined aria-hidden="true" />,
     },
+    ...(draft.processingSemantic ? [] : [{ key: "unselected", label: t("composition.mode.placeholder"), disabled: true }]),
   ];
 
   useEffect(() => {
@@ -743,12 +747,12 @@ function CompositionPageContent() {
                 primaryItem={{
                   label: t("composition.mode.label"),
                   value: (
-                    <CompactDropdownSelect
-                      className={styles.processingSemanticSelect}
-                      value={draft.processingSemantic ?? undefined}
-                      options={processingSemanticOptions}
+                    <ExpandingSwitch
+                      className={styles.processingSemanticSwitch}
+                      value={draft.processingSemantic ?? "unselected"}
+                      items={processingSemanticOptions}
+                      colors={{ mode: "multicolor" }}
                       aria-label={t("composition.mode.label")}
-                      placeholder={t("composition.mode.placeholder")}
                       disabled={!editing}
                       onChange={(value) => {
                         if (
