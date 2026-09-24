@@ -100,7 +100,7 @@ describe("agent-authored composition refinement", () => {
       draftFingerprint(setProcessingSemantic(draft, "editorial-layout")),
     ).not.toBe(draftFingerprint(draft));
     expect(
-      draftFingerprint(setProcessingSemantic(createDraft(), "scene-composition")),
+      draftFingerprint({ ...createDraft(), processingSemantic: null }),
     ).not.toBe(draftFingerprint(createDraft()));
     expect(
       draftFingerprint(updateAreaMetadata(draft, "area-1", { visualWeight: "high" })),
@@ -323,7 +323,7 @@ describe("agent-authored composition refinement", () => {
   });
 
   it("requires the user to choose a composition mode before refinement", () => {
-    const draft = createDraft();
+    const draft = { ...createDraft(), processingSemantic: null };
     expect(inspectComposition(draft).processingSemantic).toBeNull();
     expect(() => applyRefinementPlan(draft, {
       version: 1,

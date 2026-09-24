@@ -11,6 +11,14 @@
       "source": "apps/storybook/stories/Foundations.stories.tsx"
     },
     {
+      "id": "foundations-tokens--primary-color-comparison",
+      "title": "yisiui-Foundations/Tokens",
+      "name": "主色对比",
+      "kind": "foundation",
+      "description": "当前鲜绿与原深青绿、翡翠绿、青柠绿的交互对比预览。",
+      "source": "apps/storybook/stories/Foundations.stories.tsx"
+    },
+    {
       "id": "foundations-tokens--typography",
       "title": "yisiui-Foundations/Tokens",
       "name": "字体",
@@ -191,7 +199,7 @@
       "title": "yisiui-Modules/AssetSkeletonTree",
       "kind": "experimental",
       "assetKey": "yisiui/asset-skeleton-tree",
-      "description": "需要查看或编辑资产骨架层级",
+      "description": "需要查看或编辑通用资源的层级结构",
       "source": "apps/storybook/stories/AssetSkeletonTree.stories.tsx"
     },
     {
@@ -284,11 +292,19 @@
     },
     {
       "id": "switching-dotscrollbar--default",
-      "title": "yisiui-Components/Switching/DotScrollbar",
+      "title": "yisiui-Components/Scrolling/DotScrollbar",
       "kind": "experimental",
       "assetKey": "yisiui/dot-scrollbar",
       "description": "需要给现有纵向滚动容器附加圆点导航，并按内容屏数表示滚动范围",
       "source": "apps/storybook/stories/DotScrollbar.stories.tsx"
+    },
+    {
+      "id": "switching-expandingswitch--default",
+      "title": "yisiui-Components/Switching/ExpandingSwitch",
+      "kind": "experimental",
+      "assetKey": "yisiui/expanding-switch",
+      "description": "需要横向彩色方格在悬停时展开文字、移出后恢复选中项，并保持切换前后总宽度不变",
+      "source": "apps/storybook/stories/ExpandingSwitch.stories.tsx"
     },
     {
       "id": "system-architecture-status--migration-candidate",

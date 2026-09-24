@@ -65,7 +65,7 @@ export function Human2AiAppShell({
       <AppShellFrame
         sidebar={sidebar}
         sidebarTitle={brand ?? labels.productName}
-        title={<h1 className="human2ai-app-shell__page-title">{title}</h1>}
+        title={title ? <h1 className="human2ai-app-shell__page-title">{title}</h1> : undefined}
         rightPanel={rightPanel}
         rightPanelOpen={rightPanelOpen}
         onRightPanelOpenChange={onRightPanelOpenChange}

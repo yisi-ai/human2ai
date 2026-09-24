@@ -723,6 +723,45 @@
       "reviewTrigger": "新增规划类型、元素绑定、实时约束求解或更改画框参照语义之前"
     },
     {
+      "id": "composition.processing-mode",
+      "category": "composition",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "管理构图草稿的全局场景或版式解释模式及新建默认值",
+      "invariants": [
+        "新建及清空构图通过 createDraft 默认使用 scene-composition；Web 与 CLI 共用同一领域实现",
+        "加载已有草稿保留显式场景或版式模式；旧草稿缺少模式或显式 null 时保持未选择，不静默改写已有意图",
+        "模式切换使用 setProcessingSemantic，添加文字区域不自动切换模式；未选择的旧草稿继续由精修入口拒绝加工"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/app/composition/page.tsx"
+        }
+      ],
+      "consumers": [
+        "composition-cli",
+        "composition-editor"
+      ],
+      "variationPoints": [
+        "模式为场景构图或版式编排；旧草稿允许未选择以保留既有兼容契约"
+      ],
+      "contractTests": [
+        "test/unit/composition-draft.test.ts",
+        "test/unit/composition-refinement.test.ts",
+        "test/unit/composition-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/SessionDetails.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "改变新建默认模式、旧草稿迁移或自动推断模式规则时"
+    },
+    {
       "id": "composition.reference-projection",
       "category": "composition",
       "contractVersion": 3,

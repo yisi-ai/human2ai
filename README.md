@@ -231,7 +231,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.4.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
+在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.5.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
 
 ## 许可证
 

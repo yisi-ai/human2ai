@@ -140,8 +140,8 @@ describe("composition draft export", () => {
     const prompt = buildCompositionPrompt(createDraft(), promptTranslator("en"));
 
     expect(prompt).toContain("Output ratio: 16:9");
-    expect(prompt).toContain("Mode: Not selected");
-    expect(prompt).toContain("Choose Scene or Editorial before continuing");
+    expect(prompt).toContain("Mode: Scene");
+    expect(prompt).not.toContain("Choose Scene or Editorial before continuing");
     expect(prompt).not.toContain("suggested size");
     expect(prompt).not.toContain("Overall direction:");
     expect(prompt).not.toContain("Overall image relationships:");

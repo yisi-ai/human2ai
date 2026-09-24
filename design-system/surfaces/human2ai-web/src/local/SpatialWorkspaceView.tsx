@@ -303,7 +303,7 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
         <section className="spatial-objects" aria-label={labels.objects}>
           <h2>{labels.objects}</h2>
           {loading ? <LoadingState label={labels.title} rows={4} /> : <AssetSkeletonTree className="spatial-object-tree" aria-label={labels.objects}
-            nodes={nodes} mode="view" showCurrent={false} showContentOrder={false} showStatus={false} showDraft={false} showLock={false}
+            nodes={nodes} mode="view" showCurrent={false} showContentOrder={false} showStatus={false} showLock={false}
             showIcon expandAction={false} expandedKeys={expandedKeys} onExpand={keys => setExpandedKeys(keys)}
             selectedKeys={selection ? [selectionKey(selection)!] : []} onSelect={keys => choose(selections.get(String(keys[0])) ?? null, false)}
             icon={({ eventKey }) => { const value = selections.get(String(eventKey)); return value && "cameraId" in value ? <CameraOutlined aria-hidden="true" /> : value && "cameraBoxId" in value ? <BuildOutlined aria-hidden="true" /> : value && "objectId" in value ? <BorderOutlined aria-hidden="true" /> : value && "characterId" in value && value.jointId ? <AimOutlined className="spatial-joint-icon" aria-hidden="true" /> : value && "characterId" in value && value.boneId ? <LinkOutlined className="spatial-bone-icon" aria-hidden="true" /> : <UserOutlined aria-hidden="true" />; }} />}

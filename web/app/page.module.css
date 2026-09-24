@@ -1,34 +1,95 @@
 .page {
   box-sizing: border-box;
-  display: grid;
+  display: flex;
   min-height: 100%;
-  align-items: center;
   padding: var(--yisiui-surface-desktop-web-page-padding);
+  padding-block: clamp(24px, 4dvh, 64px);
 }
 
 .content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
   width: 100%;
   max-width: 904px;
   margin-inline: auto;
 }
 
+.introduction {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--yisiui-space-3);
+  margin-bottom: clamp(24px, 4dvh, 48px);
+  text-align: center;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-3);
+}
+
+.productName {
+  margin: 0;
+  color: var(--yisiui-color-text-primary);
+  font-size: 36px;
+  font-weight: var(--yisiui-font-weight-bold);
+  line-height: var(--yisiui-font-line-height-tight);
+  white-space: nowrap;
+}
+
+.repositoryLink.repositoryLink {
+  width: 32px;
+  height: 32px;
+  margin-inline-start: var(--yisiui-space-8);
+  padding: 0;
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-xl);
+}
+
+.repositoryLink.repositoryLink:hover {
+  color: var(--yisiui-color-action-link);
+}
+
+.description {
+  max-width: 640px;
+  margin: 0;
+  color: var(--yisiui-color-text-secondary);
+  font-size: var(--yisiui-font-size-md);
+  line-height: var(--yisiui-font-line-height-normal);
+}
+
 .cards {
   display: grid;
+  flex-shrink: 0;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--yisiui-space-5);
+  margin-top: auto;
 }
 
 .workspaceEntry.workspaceEntry {
   position: relative;
   width: 100%;
-  height: auto;
-  min-height: 300px;
-  aspect-ratio: 3 / 4;
+  height: 30dvh;
+  min-height: 180px;
+  max-height: 360px;
   padding: var(--yisiui-space-6) var(--yisiui-space-4);
   border: 1px solid var(--yisiui-color-border-subtle);
   border-radius: var(--yisiui-radius-lg);
   box-shadow: none;
   white-space: normal;
+}
+
+.workspaceEntry.workspaceEntry:not(:disabled):is(:hover, :focus-visible) {
+  background: var(--yisiui-color-action-primary);
+  border-color: var(--yisiui-color-action-primary);
+  color: var(--yisiui-color-text-on-primary);
+}
+
+.workspaceEntry:not(:disabled):is(:hover, :focus-visible) .cardIcon {
+  color: inherit;
 }
 
 .cardBody {
@@ -62,6 +123,64 @@
 }
 
 .error {
-  margin: var(--yisiui-space-4) 0 0;
+  margin: 0 0 var(--yisiui-space-4);
   color: var(--yisiui-color-feedback-error);
+}
+
+.installation {
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto clamp(24px, 4dvh, 48px);
+}
+
+.installationPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--yisiui-space-4);
+  padding-top: var(--yisiui-space-5);
+}
+
+.installationHeader {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--yisiui-space-6);
+}
+
+.installationTitle {
+  margin: 0;
+  font-size: var(--yisiui-font-size-md);
+  font-weight: var(--yisiui-font-weight-semibold);
+  white-space: nowrap;
+}
+
+.installationContent {
+  box-sizing: border-box;
+  min-height: 140px;
+  margin: 0;
+  padding: var(--yisiui-space-5);
+  border-radius: var(--yisiui-radius-md);
+  background: var(--yisiui-color-surface-panel);
+  color: var(--yisiui-color-text-primary);
+  font-size: var(--yisiui-font-size-sm);
+  line-height: var(--yisiui-font-line-height-normal);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.installationActions {
+  display: flex;
+  padding-top: var(--yisiui-space-5);
+}
+
+.installationCopy.installationCopy {
+  width: 28px;
+  min-width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.installationCopy [data-yisiui-slot="label"] {
+  display: none;
 }

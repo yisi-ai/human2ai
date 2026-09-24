@@ -1,5 +1,6 @@
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import { useState, type ReactNode } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import {
   assertStorySelector,
@@ -13,6 +14,8 @@ import {
 } from "./Human2AiWorkspaceSidebar";
 
 import "./Human2AiWorkspaceSidebar.stories.css";
+
+const repositoryLinkLabel = zh.app.repositoryLink.replace("{{productName}}", zh.app.title);
 
 const projects: Human2AiWorkspaceProject[] = [
   { id: "brand", name: "品牌升级" },
@@ -55,10 +58,12 @@ function SidebarHarness({
   initialProjects = projects,
   initialSessions = sessions,
   languageSelector,
+  repositoryLink,
 }: {
   initialProjects?: Human2AiWorkspaceProject[];
   initialSessions?: Human2AiWorkspaceSession[];
   languageSelector?: Human2AiWorkspaceSidebarProps["languageSelector"];
+  repositoryLink?: Human2AiWorkspaceSidebarProps["repositoryLink"];
 }) {
   const [nextProjects, setProjects] = useState(initialProjects);
   const [nextSessions, setSessions] = useState(initialSessions);
@@ -71,6 +76,7 @@ function SidebarHarness({
         sessions={nextSessions}
         currentSessionId={currentSessionId}
         languageSelector={languageSelector}
+        repositoryLink={repositoryLink}
         onCreateComposition={async (projectId) => {
           setSessions((current) => [
             {
@@ -143,6 +149,7 @@ function LanguageSelectorHarness() {
 
   return (
     <SidebarHarness
+      repositoryLink={{ href: "https://github.com/yisi-ai/human2ai", label: repositoryLinkLabel }}
       languageSelector={{
         "aria-label": "界面语言",
         onChange: setLanguage,
@@ -213,7 +220,7 @@ export const Default: Story = {
 };
 
 export const LanguageSelector: Story = {
-  name: "底部居中语言选择",
+  name: "底部仓库链接与语言选择",
   render: () => <LanguageSelectorHarness />,
   play: async ({ canvasElement }) => {
     const sidebar = getRequiredElement(
@@ -226,12 +233,18 @@ export const LanguageSelector: Story = {
     );
     const sidebarRect = sidebar.getBoundingClientRect();
     const selectorRect = selector.getBoundingClientRect();
+    const repository = canvasElement.querySelector<HTMLAnchorElement>('a[href="https://github.com/yisi-ai/human2ai"]');
+    if (!repository || repository.getAttribute("aria-label") !== repositoryLinkLabel || repository.target !== "_blank") {
+      throw new Error("Repository link must have an accessible name and open in a new tab");
+    }
+    const repositoryRect = repository.getBoundingClientRect();
+    if (repositoryRect.right > selectorRect.left) throw new Error("GitHub must appear to the left of the language selector");
     const centerDelta = Math.abs(
       sidebarRect.left + sidebarRect.width / 2
-        - (selectorRect.left + selectorRect.width / 2),
+        - (repositoryRect.left + selectorRect.right) / 2,
     );
     if (centerDelta > 1) {
-      throw new Error("Language selector must be horizontally centered in the sidebar");
+      throw new Error("Footer controls must be horizontally centered in the sidebar");
     }
 
     selector.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));

@@ -3,5 +3,14 @@
   "surface": "human2ai-web",
   "status": "candidate",
   "assetCount": 19,
-  "approvedByUser": false
+  "approvedByUser": false,
+  "verification": {
+    "date": "2026-09-23",
+    "sharedVersion": "0.16.0",
+    "scope": "SpatialWorkspaceView removes the obsolete showDraft=false prop; existing tree selection, expansion and parameter interactions remain intact.",
+    "storyId": "human2ai-spatial-workspace-view--lock-interactions",
+    "route": "/spatial/?session=<isolated-verification-session>",
+    "viewport": "1280x800",
+    "result": "Story play finished; production tree selection passed with no horizontal overflow, console errors or mounted Inspector. Typecheck, 741 tests, Storybook and Next builds passed."
+  }
 }

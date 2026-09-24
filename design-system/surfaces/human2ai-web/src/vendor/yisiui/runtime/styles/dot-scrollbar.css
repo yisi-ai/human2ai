@@ -32,20 +32,24 @@
 }
 .yisi-dot-scrollbar-stop:focus-visible { outline: 2px solid var(--yisiui-color-border-focus); outline-offset: -2px; }
 .yisi-dot-scrollbar-dot {
+  box-sizing: border-box;
   width: 6px;
   height: 6px;
+  border: 1px solid currentColor;
   border-radius: var(--yisiui-radius-full);
-  background: var(--yisiui-dot-scrollbar-color, var(--yisiui-color-text-muted));
+  color: var(--yisiui-dot-scrollbar-color, var(--yisiui-color-text-muted));
+  background: transparent;
   pointer-events: none;
-  transition: height var(--yisiui-motion-normal) ease, background-color var(--yisiui-motion-normal) ease;
+  transition: height var(--yisiui-motion-normal) ease, color var(--yisiui-motion-normal) ease, background-color var(--yisiui-motion-normal) ease;
 }
 .yisi-dot-scrollbar-stop[data-current="true"] .yisi-dot-scrollbar-dot {
-  background: var(--yisiui-dot-scrollbar-active-color, var(--yisiui-color-action-primary));
+  color: var(--yisiui-dot-scrollbar-active-color, var(--yisiui-color-action-primary));
+  background: currentColor;
 }
 .yisi-dot-scrollbar-stop:hover:not(:disabled) .yisi-dot-scrollbar-dot,
 .yisi-dot-scrollbar-stop:focus-visible .yisi-dot-scrollbar-dot { height: 16px; }
 .yisi-dot-scrollbar-stop:disabled { cursor: not-allowed; }
-.yisi-dot-scrollbar-stop:disabled .yisi-dot-scrollbar-dot { background: var(--yisiui-color-text-disabled); }
+.yisi-dot-scrollbar-stop:disabled .yisi-dot-scrollbar-dot { color: var(--yisiui-color-text-disabled); }
 
 .yisi-dot-scrollbar-native-hidden { scrollbar-width: none; }
 .yisi-dot-scrollbar-native-hidden::-webkit-scrollbar { display: none; }

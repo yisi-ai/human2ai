@@ -50,7 +50,7 @@ describe("composition draft v1", () => {
     expect(createDraft()).toEqual({
       version: 1,
       kind: "composition-draft",
-      processingSemantic: null,
+      processingSemantic: "scene-composition",
       frame: {
         width: 1600,
         height: 900,
@@ -342,7 +342,7 @@ describe("composition draft v1", () => {
     expect(area.height).toBeGreaterThan(0);
     expect(isCompositionTextRegion(area)).toBe(true);
     expect(isCompositionTextRegion(shape.draft.areas[0])).toBe(false);
-    expect(textRegion.draft.processingSemantic).toBeNull();
+    expect(textRegion.draft.processingSemantic).toBe("scene-composition");
 
     const described = updateAreaMetadata(textRegion.draft, textRegion.id, {
       displayText: "静观自得",

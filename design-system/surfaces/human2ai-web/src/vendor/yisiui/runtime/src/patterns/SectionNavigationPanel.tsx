@@ -137,7 +137,7 @@ export function SectionNavigationPanel({
                       item.disabled
                         ? "color.text.disabled"
                         : active
-                          ? "color.action.primary"
+                          ? "color.action.link"
                           : "color.text.primary"
                     }
                     aria-current={active ? "true" : undefined}

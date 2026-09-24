@@ -143,9 +143,9 @@
     },
     "composition.mode": {
       "meaning": "The user-selected interpretation of all composition regions as a scene or an editorial layout.",
-      "scope": "Composition mode selector and mode-dependent image-generation guidance.",
+      "scope": "Composition mode square-switch control and mode-dependent image-generation guidance. Scene uses a picture icon; Editorial uses a layout icon. Icons are decorative and retain the same localized option names.",
       "referent": "The draft processingSemantic value: scene-composition, editorial-layout, or null.",
-      "precedence": "Global interpretation, not per-node depth or an Agent-selected refinement method. A null value is genuinely unselected and must not be inferred from content.",
+      "precedence": "Global interpretation, not per-node depth or an Agent-selected refinement method. New drafts default to Scene. Existing drafts retain their saved mode; a legacy null value remains unselected and must not be inferred from content.",
       "canonicalKey": "composition.mode.label",
       "searchTerms": [
         "构图模式",
@@ -2077,7 +2077,7 @@
     "composition.mode.label": {
       "conceptId": "composition.mode",
       "variant": "field-label",
-      "role": "mode field label and selector accessible name",
+      "role": "mode field label and square-switch radiogroup accessible name",
       "grammar": "noun phrase",
       "tone": "neutral",
       "reusePolicy": "canonical"
@@ -2085,7 +2085,7 @@
     "composition.mode.placeholder": {
       "conceptId": "composition.mode",
       "variant": "selection-prompt",
-      "role": "placeholder inviting an explicit mode selection",
+      "role": "disabled presentation-only placeholder inviting an explicit mode selection; removed after a mode is chosen",
       "grammar": "imperative verb",
       "tone": "neutral",
       "reusePolicy": "contextual"

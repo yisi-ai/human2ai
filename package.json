@@ -1,6 +1,6 @@
 {
   "name": "human2ai",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local visual collaboration workspace for people and AI agents, with a browser UI and CLI.",
   "license": "MIT",
   "author": "贾思斋",

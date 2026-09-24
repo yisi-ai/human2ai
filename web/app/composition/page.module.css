@@ -116,16 +116,8 @@
   width: 100%;
 }
 
-.processingSemanticSelect {
-  width: 104px;
+.processingSemanticSwitch {
   max-width: 100%;
-}
-
-.processingSemanticSelect
-  :global(.human2ai-compact-dropdown-select__control.ant-select) {
-  min-height: 28px;
-  padding: var(--yisiui-space-1) var(--yisiui-space-2);
-  font-size: var(--yisiui-font-size-xs);
 }
 
 :global(.human2ai-infinite-canvas-viewport__side-actions) .toolGroup {

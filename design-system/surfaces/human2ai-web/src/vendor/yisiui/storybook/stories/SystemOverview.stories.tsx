@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
+import registry from "@human2ai/ui/yisiui/registry";
 
 const pageStyle: CSSProperties = {
   minHeight: "100vh",
@@ -33,7 +34,7 @@ function SystemOverview() {
         </p>
         <dl style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 16, margin: "36px 0 0" }}>
           {[
-            ["Shared assets", "28"],
+            ["Shared assets", String(registry.assets.filter((asset) => asset.status !== "removed").length)],
             ["Surface", "web-react"],
             ["System status", "migration candidate"],
           ].map(([term, value]) => (

@@ -1,0 +1,131 @@
+.yisi-expanding-switch {
+  --yisiui-expanding-switch-size: 28px;
+  position: relative;
+  display: inline-flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 4px;
+  overflow-x: auto;
+  vertical-align: middle;
+  font-family: var(--yisiui-typography-body-font-family);
+  font-size: var(--yisiui-font-size-md);
+  line-height: 1;
+}
+
+.yisi-expanding-switch-track {
+  display: grid;
+  flex: 0 0 auto;
+  width: calc(
+    (var(--yisiui-expanding-switch-item-count) - 1) * var(--yisiui-expanding-switch-size)
+    + max(var(--yisiui-expanding-switch-size), var(--yisiui-expanding-switch-expanded-width, 64px))
+  );
+  transition: grid-template-columns var(--yisiui-motion-normal) ease;
+}
+
+.yisi-expanding-switch-measure {
+  position: absolute;
+  display: grid;
+  width: max-content;
+  visibility: hidden;
+  pointer-events: none;
+  /* Keep the intrinsic probe out of the scrollable area. */
+  inset-inline-start: 0;
+  top: 0;
+  height: 0;
+  overflow: hidden;
+}
+
+.yisi-expanding-switch-measure > span {
+  grid-area: 1 / 1;
+  padding-inline: var(--yisiui-space-3);
+  white-space: nowrap;
+}
+
+.yisi-expanding-switch-item {
+  position: relative;
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  height: var(--yisiui-expanding-switch-size);
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  overflow: hidden;
+  font: inherit;
+  background: var(--yisiui-expanding-switch-unselected-background, var(--yisiui-color-selection-background));
+  color: var(--yisiui-expanding-switch-unselected-foreground, var(--yisiui-color-text-primary));
+  cursor: pointer;
+  touch-action: manipulation;
+  transition: background-color var(--yisiui-motion-fast) ease, color var(--yisiui-motion-fast) ease;
+}
+
+.yisi-expanding-switch-item:first-child {
+  border-start-start-radius: var(--yisiui-radius-sm);
+  border-end-start-radius: var(--yisiui-radius-sm);
+}
+
+.yisi-expanding-switch-item:last-child {
+  border-start-end-radius: var(--yisiui-radius-sm);
+  border-end-end-radius: var(--yisiui-radius-sm);
+}
+
+.yisi-expanding-switch[data-color-mode="duotone"] .yisi-expanding-switch-item[aria-checked="true"] {
+  background: var(--yisiui-expanding-switch-selected-background, var(--yisiui-color-action-primary));
+  color: var(--yisiui-expanding-switch-selected-foreground, var(--yisiui-color-text-on-primary));
+}
+
+.yisi-expanding-switch-item[data-palette] { color: var(--yisiui-color-text-primary); }
+.yisi-expanding-switch-item[data-palette="natural"] { background: var(--yisiui-color-paper-natural); }
+.yisi-expanding-switch-item[data-palette="sage"] { background: var(--yisiui-color-paper-sage); }
+.yisi-expanding-switch-item[data-palette="amber"] { background: var(--yisiui-color-paper-amber); }
+.yisi-expanding-switch-item[data-palette="rose"] { background: var(--yisiui-color-paper-rose); }
+.yisi-expanding-switch-item[data-palette="slate"] { background: var(--yisiui-color-paper-slate); }
+.yisi-expanding-switch-item[data-palette="sky"] { background: var(--yisiui-color-paper-sky); }
+.yisi-expanding-switch-item[data-palette="lavender"] { background: var(--yisiui-color-paper-lavender); }
+.yisi-expanding-switch-item[data-palette="clay"] { background: var(--yisiui-color-paper-clay); }
+
+/* Persist a shape cue even when hover temporarily collapses the selected item. */
+.yisi-expanding-switch-item[aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  width: 8px;
+  height: 2px;
+  bottom: 2px;
+  left: calc(50% - 4px);
+  border-radius: var(--yisiui-radius-full);
+  background: currentColor;
+}
+
+.yisi-expanding-switch-item:focus-visible {
+  outline: 2px solid var(--yisiui-color-border-focus);
+  outline-offset: 2px;
+  z-index: 1;
+}
+
+.yisi-expanding-switch-item:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.yisi-expanding-switch-label,
+.yisi-expanding-switch-icon {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.yisi-expanding-switch-label { visibility: hidden; }
+.yisi-expanding-switch-item[data-expanded="true"] .yisi-expanding-switch-label { visibility: visible; }
+.yisi-expanding-switch-item[data-expanded="true"] .yisi-expanding-switch-icon { visibility: hidden; }
+.yisi-expanding-switch-icon > svg { width: 1em; height: 1em; }
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-expanding-switch-track,
+  .yisi-expanding-switch-item { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .yisi-expanding-switch-item { border: 1px solid ButtonText; }
+  .yisi-expanding-switch-item[aria-checked="true"]::after { background: Highlight; }
+}

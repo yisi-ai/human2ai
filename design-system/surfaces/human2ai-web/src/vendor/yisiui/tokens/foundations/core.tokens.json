@@ -2,24 +2,27 @@
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "color": {
     "brand": {
-      "primary": { "$type": "color", "$value": "#1677FF" },
-      "primaryHover": { "$type": "color", "$value": "#4096FF" },
-      "primaryActive": { "$type": "color", "$value": "#0958D9" },
+      "primary": { "$type": "color", "$value": "#22C55E" },
+      "primaryHover": { "$type": "color", "$value": "#4ADE80" },
+      "primaryActive": { "$type": "color", "$value": "#16A34A" },
+      "primaryBg": { "$type": "color", "$value": "#F0FDF4" },
+      "primaryBgHover": { "$type": "color", "$value": "#DCFCE7" },
+      "primaryText": { "$type": "color", "$value": "#15803D" },
       "onPrimary": { "$type": "color", "$value": "#FFFFFF" }
     },
     "neutral": {
       "0": { "$type": "color", "$value": "#FFFFFF" },
-      "25": { "$type": "color", "$value": "#FCFDFE" },
-      "50": { "$type": "color", "$value": "#FBFCFE" },
-      "100": { "$type": "color", "$value": "#F4F6FB" },
-      "200": { "$type": "color", "$value": "#EEF1F6" },
-      "300": { "$type": "color", "$value": "#E8E8E8" },
-      "400": { "$type": "color", "$value": "#D9E1EC" },
-      "500": { "$type": "color", "$value": "#B8C4D2" },
-      "600": { "$type": "color", "$value": "#6B7280" },
-      "700": { "$type": "color", "$value": "#4B5563" },
-      "800": { "$type": "color", "$value": "#344054" },
-      "900": { "$type": "color", "$value": "#1F1F1F" }
+      "25": { "$type": "color", "$value": "#FCFDFD" },
+      "50": { "$type": "color", "$value": "#F8FAF9" },
+      "100": { "$type": "color", "$value": "#F3F6F5" },
+      "200": { "$type": "color", "$value": "#E2E9E7" },
+      "300": { "$type": "color", "$value": "#C9D4D1" },
+      "400": { "$type": "color", "$value": "#ADBDB8" },
+      "500": { "$type": "color", "$value": "#7C918B" },
+      "600": { "$type": "color", "$value": "#586B6F" },
+      "700": { "$type": "color", "$value": "#48595C" },
+      "800": { "$type": "color", "$value": "#334448" },
+      "900": { "$type": "color", "$value": "#1F292B" }
     },
     "paper": {
       "natural": { "$type": "color", "$value": "#F2E3C4" },
@@ -38,10 +41,10 @@
       "warningBg": { "$type": "color", "$value": "#FFF7E6" },
       "danger": { "$type": "color", "$value": "#CF1322" },
       "dangerBg": { "$type": "color", "$value": "#FFF1F0" },
-      "info": { "$type": "color", "$value": "#0958D9" },
-      "infoBg": { "$type": "color", "$value": "#F0F7FF" },
-      "processing": { "$type": "color", "$value": "#1677FF" },
-      "processingBg": { "$type": "color", "$value": "#E6F4FF" }
+      "info": { "$type": "color", "$value": "{color.neutral.700}" },
+      "infoBg": { "$type": "color", "$value": "{color.neutral.100}" },
+      "processing": { "$type": "color", "$value": "{color.brand.primaryText}" },
+      "processingBg": { "$type": "color", "$value": "{color.brand.primaryBg}" }
     }
   },
   "font": {
@@ -104,9 +107,9 @@
     "full": { "$type": "dimension", "$value": "9999px" }
   },
   "shadow": {
-    "panel": { "$type": "shadow", "$value": "0 16px 48px rgba(15, 23, 42, 0.06)" },
-    "card": { "$type": "shadow", "$value": "0 4px 12px rgba(15, 23, 42, 0.04)" },
-    "raised": { "$type": "shadow", "$value": "0 12px 30px rgba(15, 23, 42, 0.12)" }
+    "panel": { "$type": "shadow", "$value": "0 16px 48px rgba(31, 41, 43, 0.06)" },
+    "card": { "$type": "shadow", "$value": "0 4px 12px rgba(31, 41, 43, 0.04)" },
+    "raised": { "$type": "shadow", "$value": "0 12px 30px rgba(31, 41, 43, 0.12)" }
   },
   "motion": {
     "fast": { "$type": "duration", "$value": "120ms" },

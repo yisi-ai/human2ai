@@ -78,7 +78,7 @@
 }
 
 .yisi-adaptive-accordion-item[data-expanded="true"] > .yisi-adaptive-accordion-trigger:enabled {
-  color: var(--yisiui-color-brand-primary);
+  color: var(--yisiui-color-action-link);
 }
 
 .yisi-adaptive-accordion-title {

@@ -16,11 +16,16 @@
   border-color: var(--yisiui-color-feedback-danger);
 }
 
-.ant-tag.ant-tag-filled.yisi-status-badge.ant-tag-blue:not(.ant-tag-disabled),
-.ant-tag.ant-tag-filled.yisi-status-badge.ant-tag-processing:not(.ant-tag-disabled) {
-  color: var(--yisiui-color-brand-primary-active);
+.ant-tag.ant-tag-filled.yisi-status-badge.ant-tag-blue:not(.ant-tag-disabled) {
+  color: var(--yisiui-color-feedback-info);
   background: var(--yisiui-color-feedback-info-bg);
-  border-color: var(--yisiui-color-brand-primary-active);
+  border-color: var(--yisiui-color-feedback-info);
+}
+
+.ant-tag.ant-tag-filled.yisi-status-badge.ant-tag-processing:not(.ant-tag-disabled) {
+  color: var(--yisiui-color-feedback-processing);
+  background: var(--yisiui-color-feedback-processing-bg);
+  border-color: var(--yisiui-color-feedback-processing);
 }
 
 .yisi-status-badge-icon-only.ant-tag,
