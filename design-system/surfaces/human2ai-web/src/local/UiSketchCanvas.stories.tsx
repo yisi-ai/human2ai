@@ -6,6 +6,7 @@ import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
+import { waitFor } from "storybook/test";
 import { useState } from "react";
 
 import { placeNodeInStory, placementLayer, placementPointer } from "./canvasPlacementStoryChecks";
@@ -498,7 +499,7 @@ export const DefaultTextSize: Story = {
 
 export const NearbyRegionEditor: Story = {
   name: "自动保存区域信息",
-  args: { draft: EMPTY_UI_SKETCH_DRAFT },
+  args: { draft: EMPTY_UI_SKETCH_DRAFT, showHiddenNodes: true },
   play: async ({ canvasElement }: StoryContext) => {
     findButton(canvasElement, "区域").click();
     await waitForCanvasRender();
@@ -531,15 +532,30 @@ export const NearbyRegionEditor: Story = {
       throw new Error("自动保存的区域编辑器不应显示保存按钮");
     }
     setTextAreaValue(note, "导航与项目区域");
+    await waitFor(() => {
+      if (!canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域")) {
+        throw new Error("区域备注没有写回草图");
+      }
+    });
+    const visibility = editor.closest('[role="dialog"]')?.querySelector<HTMLButtonElement>('[role="switch"]');
+    if (!visibility) throw new Error("区域编辑器缺少显示开关");
+    // A second field can change before the note's transition has committed.
+    setTextAreaValue(note, "导航与项目区域 · 更新");
+    visibility.click();
+    await waitFor(() => {
+      if (note.value !== "导航与项目区域 · 更新"
+        || !canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域 · 更新")
+        || visibility.getAttribute("aria-checked") !== "false") {
+        throw new Error("输入备注后立即隐藏节点必须保留最新备注和显示状态");
+      }
+    });
+    visibility.click();
     await waitForCanvasRender();
-    if (!region.getAttribute("aria-label")?.includes("导航与项目区域")) {
-      throw new Error("区域备注没有即时写回草图");
-    }
     editor.closest<HTMLElement>('[role="dialog"]')?.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
     );
     await waitForCanvasRender();
-    if (!region.getAttribute("aria-label")?.includes("导航与项目区域")) {
+    if (!canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域 · 更新")) {
       throw new Error("关闭自动保存编辑器后不应撤销区域备注");
     }
   },

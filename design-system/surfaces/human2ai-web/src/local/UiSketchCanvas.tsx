@@ -17,10 +17,11 @@ import {
   TextMarkEditor,
   TextMarkEditorField,
   TextMarkEditorTextArea,
+  type TextMarkEditorTextAreaProps,
 } from "@human2ai/ui/yisiui/text-mark-editor";
 import { Dropdown, Input, Popover, Select, Switch, Tooltip } from "antd";
 import { createPortal } from "react-dom";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useEffect, useId, useLayoutEffect, useMemo, useOptimistic, useRef, useState } from "react";
 import type {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
@@ -337,6 +338,32 @@ export interface UiSketchCanvasProps {
 
 type Notice = { type: "success" | "warning" | "error"; message: string } | null;
 
+function UiSketchNoteInput({
+  value,
+  onNoteChange,
+  ...props
+}: Omit<TextMarkEditorTextAreaProps, "value" | "onChange"> & {
+  value: string;
+  onNoteChange: (note: string) => void;
+}) {
+  const [note, setNote] = useOptimistic(value);
+
+  return (
+    <TextMarkEditorTextArea
+      {...props}
+      value={note}
+      onChange={(event) => {
+        const next = event.target.value;
+        // Echo typing immediately; the controlled draft still updates in this action.
+        startTransition(() => {
+          setNote(next);
+          onNoteChange(next);
+        });
+      }}
+    />
+  );
+}
+
 export function UiSketchCanvas({
   interactionResetKey,
   draft,
@@ -394,6 +421,8 @@ export function UiSketchCanvas({
     () => uiSketchDraftForStage(draft, activeStageId),
     [activeStageId, draft],
   );
+  const latestDraftRef = useRef(draft);
+  useLayoutEffect(() => { latestDraftRef.current = draft; }, [draft]);
   const [placementTool, setPlacementTool] = useState<UiSketchItemKind | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<UiSketchLayerKey[]>([]);
   const [editingKey, setEditingKey] = useState<UiSketchItemKey | null>(null);
@@ -524,8 +553,18 @@ export function UiSketchCanvas({
     update: UiSketchDraft | ((current: UiSketchDraft) => UiSketchDraft),
   ): void {
     if (!onDraftChange) return;
-    const nextStageDraft = typeof update === "function" ? update(state) : update;
-    onDraftChange(updateUiSketchStageDraft(draft, activeStageId, nextStageDraft));
+    // A subsequent edit may arrive before a note's background render commits.
+    const currentDraft = latestDraftRef.current;
+    const currentState = currentDraft === draft ? state : uiSketchDraftForStage(currentDraft, activeStageId);
+    const nextStageDraft = typeof update === "function" ? update(currentState) : update;
+    const nextDraft = updateUiSketchStageDraft(currentDraft, activeStageId, nextStageDraft);
+    commitDraft(nextDraft);
+  }
+
+  function commitDraft(nextDraft: UiSketchDraft): void {
+    if (!onDraftChange) return;
+    latestDraftRef.current = nextDraft;
+    onDraftChange(nextDraft);
   }
 
   function armPlacement(tool: UiSketchItemKind): void {
@@ -671,7 +710,7 @@ export function UiSketchCanvas({
     event.preventDefault();
     event.stopPropagation();
     const pasteCount = pasteCountRef.current + 1;
-    const pasted = pasteUiSketchItems(draft, clipboardRef.current, {
+    const pasted = pasteUiSketchItems(latestDraftRef.current, clipboardRef.current, {
       x: CLIPBOARD_PASTE_OFFSET * pasteCount,
       y: CLIPBOARD_PASTE_OFFSET * pasteCount,
     }, activeStageId);
@@ -679,7 +718,7 @@ export function UiSketchCanvas({
     pasteCountRef.current = pasteCount;
     closeEditor();
     setPlacementTool(null);
-    onDraftChange(pasted.draft);
+    commitDraft(pasted.draft);
     const ids = new Set(pasted.ids);
     setSelectedKeys([
       ...pasted.draft.rectangles.filter((item) => ids.has(item.id)).map((item) => itemKey("rectangle", item.id)),
@@ -1791,7 +1830,7 @@ export function UiSketchCanvas({
                 ) : null}
 
                 <TextMarkEditorField label={labels.note}>
-                  <TextMarkEditorTextArea
+                  <UiSketchNoteInput
                     autoFocus={editorDraft.kind !== "text"}
                     name="nodeNote"
                     value={editorDraft.item.note}
@@ -1801,7 +1840,7 @@ export function UiSketchCanvas({
                         ? labels.textNotePlaceholder
                         : labels.imageNotePlaceholder}
                     aria-label={labels.note}
-                    onChange={(event) => updateEditorMetadata({ note: event.target.value })}
+                    onNoteChange={(note) => updateEditorMetadata({ note })}
                   />
                 </TextMarkEditorField>
 
@@ -1899,8 +1938,8 @@ export function UiSketchCanvas({
                             },
                           }
                         : current);
-                      onDraftChange?.(updateUiSketchImageCrop(
-                        draft,
+                      commitDraft(updateUiSketchImageCrop(
+                        latestDraftRef.current,
                         editorDraft.item.id,
                         crop,
                         cropAspectRatio,
