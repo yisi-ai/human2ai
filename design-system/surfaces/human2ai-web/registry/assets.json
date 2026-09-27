@@ -481,6 +481,7 @@
         "centered-local-geometry",
         "controlled-size",
         "controlled-fill-and-stroke",
+        "clipped-inner-stroke",
         "canvas-node-operation-outline-stroke-suppression",
         "read-only-presentation"
       ],
@@ -491,6 +492,7 @@
         "height",
         "fill",
         "stroke",
+        "innerStroke",
         "accessible-label"
       ],
       "aliases": [
@@ -805,6 +807,9 @@
       "storyId": "human2ai-composition-canvas--canvas-only",
       "capabilities": [
         "composition-draft-rendering",
+        "stable-node-id-marker-colors",
+        "same-color-overlap-inner-borders",
+        "retained-unaffected-node-rendering",
         "composition-to-canvas-element-adaptation",
         "canvas-scene-composition",
         "canvas-node-composition",
@@ -1029,6 +1034,9 @@
       "storyId": "human2ai-ui-sketch-canvas--default",
       "capabilities": [
         "ui-layout-draft-rendering",
+        "stable-node-id-marker-colors",
+        "same-color-overlap-inner-borders",
+        "retained-unaffected-node-rendering",
         "controlled-draft",
         "required-single-interface-frame",
         "canvas-frame-composition",
@@ -1407,7 +1415,12 @@
         "error",
         "empty",
         "long-content",
-        "external-source-repository-link"
+        "external-source-repository-link",
+        "project-display-groups",
+        "empty-group-create-rename-delete",
+        "same-project-session-drag-drop",
+        "keyboard-session-group-assignment",
+        "groups-before-ungrouped-sessions"
       ],
       "slots": [
         "projects",
@@ -1415,7 +1428,12 @@
         "node-trailing",
         "action-feedback",
         "language-selector",
-        "repository-link"
+        "repository-link",
+        "groups",
+        "onCreateGroup",
+        "onRenameGroup",
+        "onDeleteGroup",
+        "onGroupSession"
       ],
       "aliases": [
         "ProjectSessionSidebar",
@@ -1428,7 +1446,7 @@
         "需要通用文件树、应用级路由壳层或页面内构图工具栏",
         "需要组件直接读取 API、决定路由或持久化项目和会话"
       ],
-      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树与弹窗输入状态隔离缓存；输入项目名或会话名不重新生成导航节点，项目数据、语言、选择与待执行操作变化仍刷新树。",
+      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树与弹窗输入状态隔离缓存；输入项目名或会话名不重新生成导航节点，项目数据、语言、选择与待执行操作变化仍刷新树。 项目三点菜单可建立空分组；分组置于项目内未分组会话之前，独立展开收起，并提供重命名、删除确认。复用 AssetSkeletonTree view 模式的 titleRender 插槽，通过原生拖放仅允许项目内会话归入分组或释放到项目标题，支持空分组；不允许拖动分组、跨项目拖放或改动会话顺序。会话菜单同时提供键盘可用的分组选项。删除分组释放其会话，分组、名称与成员由应用适配层独立保存，不改变会话内容、归属或 revision。输入分组名称不使项目树缓存失效，拖动中不写页面或画布状态，落下时提交一次归组。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1977,6 +1995,7 @@
       "slots": [
         "value",
         "onChange",
+        "hasMultipleStates",
         "hasPreviousState",
         "disabled",
         "labels"
@@ -1990,7 +2009,7 @@
         "播放或导出动画",
         "决定业务状态顺序或保存草稿"
       ],
-      "differenceSummary": "组合已同步的 BasicButton，在 AppShell headerExtra 放置“全部显示”和“洋葱皮”两个独立的图标加文字切换按钮；“全部显示”包含当前状态的隐藏节点。可见文字、可访问名称和 title 共用标签，aria-pressed 表达开关，调用方仅在状态数量超过 1 时挂载控件，首个状态禁用洋葱皮；页面持有选项以跨状态重建画布保持。配套 CanvasOnionSkin 只提供 22% 不透明度、aria-hidden 和指针穿透，几何由各领域传入，不增加业务状态或 API。",
+      "differenceSummary": "组合已同步的 BasicButton，在 AppShell headerExtra 放置“全部显示”和“洋葱皮”两个独立的图标加文字切换按钮；“全部显示”包含当前状态的隐藏节点。可见文字、可访问名称和 title 共用标签，aria-pressed 表达开关，“全部显示”始终呈现，“洋葱皮”仅在状态数量超过 1 时呈现且首个状态禁用；页面持有选项以跨状态重建画布保持。配套 CanvasOnionSkin 只提供 22% 不透明度、aria-hidden 和指针穿透，几何由各领域传入，不增加业务状态或 API。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [

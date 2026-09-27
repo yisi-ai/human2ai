@@ -286,6 +286,177 @@
       "nonExamples": [
         "The command that creates a new interface."
       ]
+    },
+    "workspace.session-group-create": {
+      "meaning": "Create an empty display group inside the selected project.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.newSessionGroup",
+      "searchTerms": [
+        "新建分组",
+        "New group",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-name": {
+      "meaning": "The user-defined name of a project display group.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.sessionGroupName",
+      "searchTerms": [
+        "分组名称",
+        "Group name",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-actions": {
+      "meaning": "Open actions for a specific project display group.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.sessionGroupActions",
+      "searchTerms": [
+        "分组操作",
+        "Group actions",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-rename": {
+      "meaning": "Rename the display group without changing its membership or sessions.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.renameSessionGroup",
+      "searchTerms": [
+        "重命名分组",
+        "Rename group",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-delete": {
+      "meaning": "Remove a display group while keeping its sessions in the same project.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.deleteSessionGroup",
+      "searchTerms": [
+        "删除分组",
+        "Delete group",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-delete-effect": {
+      "meaning": "Explain that deleting a group releases its sessions to the project root without deleting them.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.deleteSessionGroupDescription",
+      "searchTerms": [
+        "分组内的会话将回到项目下，不会被删除。",
+        "Sessions in this group will appear directly under the project. They will not be deleted.",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-name-conflict": {
+      "meaning": "Reject a display group name already used within the same project.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.sessionGroupNameConflict",
+      "searchTerms": [
+        "该项目中已存在同名分组",
+        "A group with this name already exists in this project.",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-assign": {
+      "meaning": "Choose the display group for a session within its existing project.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.groupSession",
+      "searchTerms": [
+        "移入分组",
+        "Move to group",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
+    },
+    "workspace.session-group-ungrouped": {
+      "meaning": "A session belongs to the project but is not assigned to a display group.",
+      "scope": "Project-local display organization in the workspace sidebar.",
+      "referent": "A display group or its membership within an existing project.",
+      "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
+      "canonicalKey": "workspaceSidebar.ungroupedSessions",
+      "searchTerms": [
+        "未分组",
+        "Ungrouped",
+        "session group"
+      ],
+      "examples": [
+        "Organize reference sessions inside a project."
+      ],
+      "nonExamples": [
+        "Move a session to another project.",
+        "Group nodes on a canvas."
+      ]
     }
   },
   "keys": {
@@ -464,6 +635,78 @@
       "grammar": "imperative verb phrase",
       "tone": "concise and direct",
       "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.newSessionGroup": {
+      "conceptId": "workspace.session-group-create",
+      "variant": "canonical",
+      "role": "menu action and dialog title",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.sessionGroupName": {
+      "conceptId": "workspace.session-group-name",
+      "variant": "canonical",
+      "role": "input accessible name and placeholder",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.sessionGroupActions": {
+      "conceptId": "workspace.session-group-actions",
+      "variant": "canonical",
+      "role": "menu trigger accessible name and tooltip",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.renameSessionGroup": {
+      "conceptId": "workspace.session-group-rename",
+      "variant": "canonical",
+      "role": "dialog title",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.deleteSessionGroup": {
+      "conceptId": "workspace.session-group-delete",
+      "variant": "canonical",
+      "role": "confirmation dialog title",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.deleteSessionGroupDescription": {
+      "conceptId": "workspace.session-group-delete-effect",
+      "variant": "canonical",
+      "role": "confirmation description",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.sessionGroupNameConflict": {
+      "conceptId": "workspace.session-group-name-conflict",
+      "variant": "canonical",
+      "role": "validation message",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.groupSession": {
+      "conceptId": "workspace.session-group-assign",
+      "variant": "canonical",
+      "role": "session submenu label",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.ungroupedSessions": {
+      "conceptId": "workspace.session-group-ungrouped",
+      "variant": "canonical",
+      "role": "membership option label",
+      "grammar": "concise control label",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
     }
   }
 }

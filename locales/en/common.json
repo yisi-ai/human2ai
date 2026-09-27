@@ -158,7 +158,16 @@
     "deleteSessionTitle": "Delete session",
     "deleteSessionDescription": "Deleting this session also removes its drafts and refinement records.",
     "loading": "Loading projects",
-    "loadFailed": "Could not load projects"
+    "loadFailed": "Could not load projects",
+    "newSessionGroup": "New group",
+    "sessionGroupName": "Group name",
+    "sessionGroupActions": "Group actions",
+    "renameSessionGroup": "Rename group",
+    "deleteSessionGroup": "Delete group",
+    "deleteSessionGroupDescription": "Sessions in this group will appear directly under the project. They will not be deleted.",
+    "sessionGroupNameConflict": "A group with this name already exists in this project.",
+    "groupSession": "Move to group",
+    "ungroupedSessions": "Ungrouped"
   },
   "actions": {
     "start": "Start",

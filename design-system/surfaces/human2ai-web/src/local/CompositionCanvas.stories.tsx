@@ -1,4 +1,5 @@
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import { AimOutlined, FontSizeOutlined, LineOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
@@ -1109,6 +1110,7 @@ export const CanvasOnly: Story = {
       throw new Error("Frame corner resizing must remain proportional with Shift");
     }
 
+    const checkAppearance = captureCanvasNodeAppearance(canvasElement, '[data-composition-kind="area"]');
     const areaCount = canvasElement.querySelectorAll("[data-composition-item]").length;
     const currentCircle = canvasElement.querySelector<SVGGElement>(
       '[data-composition-item="area-1"]',
@@ -1116,6 +1118,7 @@ export const CanvasOnly: Story = {
     if (!currentCircle) throw new Error("Story deletion contract missing its target area");
     currentCircle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextFrame();
+    const checkDeleteExecutions = captureCanvasNodeExecutions(canvasElement);
     currentCircle.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Delete", bubbles: true, cancelable: true }),
     );
@@ -1127,6 +1130,8 @@ export const CanvasOnly: Story = {
     ) {
       throw new Error("Delete must remove the selected composition item and clear selection");
     }
+    checkAppearance();
+    checkDeleteExecutions();
 
     const currentTriangle = canvasElement.querySelector<SVGGElement>(
       '[data-composition-item="area-2"]',
@@ -1134,6 +1139,7 @@ export const CanvasOnly: Story = {
     if (!currentTriangle) throw new Error("Story deletion contract missing its Backspace target");
     currentTriangle.dispatchEvent(new MouseEvent("click", { bubbles: true }));
     await nextFrame();
+    const checkBackspaceExecutions = captureCanvasNodeExecutions(canvasElement);
     currentTriangle.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Backspace", bubbles: true, cancelable: true }),
     );
@@ -1145,6 +1151,8 @@ export const CanvasOnly: Story = {
     ) {
       throw new Error("Backspace must remove the selected composition item and clear selection");
     }
+    checkAppearance();
+    checkBackspaceExecutions();
   },
 };
 

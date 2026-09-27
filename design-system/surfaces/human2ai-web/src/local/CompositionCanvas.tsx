@@ -1,6 +1,9 @@
 "use client";
 
-import { createViewportNodeCache } from "./viewportNodeCache";
+import { useCanvasNodeActions, useCanvasNodeCache } from "./useCanvasNodeCache";
+import { createCanvasShapeOverlap } from "./canvasShapeOverlap";
+import { compositionOverlapShape, compositionShapeGeometry } from "./compositionShapeOverlap";
+import { canvasNodeTone } from "./canvasNodeTone";
 
 import { withOptimisticInput } from "./optimisticInput";
 
@@ -342,7 +345,6 @@ export function CompositionCanvas({
     : null, [draft, onionSkin, previousStateId, resolveImageSource]);
   const { contextMenuOpen, contextMenuPoint, contextMenuPopupRef, openContextMenuAt, closeContextMenu, dismissContextMenu } = useCanvasContextMenu();
   const layerLabels = { ...DEFAULT_CANVAS_LAYER_LABELS, ...layerLabelOverrides };
-  const renderViewportNode = createViewportNodeCache();
   const [controlsHost, setControlsHost] = useState<SVGGElement | null>(null);
   const interactionRef = useRef<PointerInteraction | null>(null);
   const suppressClickRef = useRef(false);
@@ -542,15 +544,15 @@ export function CompositionCanvas({
     const ids = selectedItemIds.length > 1 && selectedItemIdSet.has(id)
       ? selectedItemIds
       : [id];
-    onDraftChange(moveItemsByDelta(draft, ids, delta));
+    onDraftChange(moveItemsByDelta(latestDraftRef.current.draft, ids, delta));
   }
 
   function deleteItem(id: string): void {
-    if (!onDraftChange || !findItem(draft, id)) return;
+    if (!onDraftChange || !findItem(latestDraftRef.current.draft, id)) return;
     const ids = selectedItemIds.length > 1 && selectedItemIdSet.has(id)
       ? selectedItemIds
       : [id];
-    onDraftChange(removeItems(draft, ids));
+    onDraftChange(removeItems(latestDraftRef.current.draft, ids));
     onSelectionChange?.([]);
     if (editingTarget && ids.includes(editingTarget.id)) closeItemEditor();
   }
@@ -810,12 +812,12 @@ export function CompositionCanvas({
 
   function resizeAreaNode(id: string, change: CanvasNodeResizeChange): void {
     if (!onDraftChange) return;
-    const area = draft.areas.find((item) => item.id === id);
+    const area = latestDraftRef.current.draft.areas.find((item) => item.id === id);
     if (!area) return;
     const origin = areaOriginForBounds(area, change.bounds);
     const offset = rotateVector(origin, change.sourceRotation);
     const resized = resizeFreeArea(
-      draft,
+      latestDraftRef.current.draft,
       id,
       change.bounds.width / COMPOSITION_CANVAS.width,
       change.bounds.height / COMPOSITION_CANVAS.height,
@@ -829,14 +831,14 @@ export function CompositionCanvas({
   }
 
   function resizeImageNode(id: string, change: CanvasNodeResizeChange): void {
-    if (!onDraftChange || !draft.images.some((item) => item.id === id)) return;
+    if (!onDraftChange || !latestDraftRef.current.draft.images.some((item) => item.id === id)) return;
     const origin = {
       x: change.bounds.x + change.bounds.width / 2,
       y: change.bounds.y + change.bounds.height / 2,
     };
     const offset = rotateVector(origin, change.sourceRotation);
     const resized = resizeCompositionImage(
-      draft,
+      latestDraftRef.current.draft,
       id,
       change.bounds.width / COMPOSITION_CANVAS.width,
       change.bounds.height / COMPOSITION_CANVAS.height,
@@ -887,7 +889,7 @@ export function CompositionCanvas({
   function resizeCompositionFrame(change: CanvasNodeResizeChange): void {
     if (!onDraftChange) return;
     onDraftChange(
-      resizeFrameToBounds(draft, {
+      resizeFrameToBounds(latestDraftRef.current.draft, {
         x: change.sourcePosition.x + change.bounds.x,
         y: change.sourcePosition.y + change.bounds.y,
         width: change.bounds.width,
@@ -899,7 +901,7 @@ export function CompositionCanvas({
   function moveCompositionFrame(change: CanvasFrameMoveChange): void {
     if (!onDraftChange) return;
     onDraftChange(
-      moveFrame(draft, {
+      moveFrame(latestDraftRef.current.draft, {
         x: change.bounds.x / COMPOSITION_CANVAS.width,
         y: change.bounds.y / COMPOSITION_CANVAS.height,
       }),
@@ -911,7 +913,7 @@ export function CompositionCanvas({
     if (!["+", "=", "-", "_"].includes(event.key)) return;
     event.preventDefault();
     onSelectionChange?.([COMPOSITION_FRAME_ID]);
-    onDraftChange(resizeFrame(draft, event.key === "+" || event.key === "=" ? 1.05 : 0.95));
+    onDraftChange(resizeFrame(latestDraftRef.current.draft, event.key === "+" || event.key === "=" ? 1.05 : 0.95));
   }
 
   function openContextMenu(request: { clientX: number; clientY: number; target: EventTarget | null }): void {
@@ -961,6 +963,33 @@ export function CompositionCanvas({
     onDraftChange(pasted.draft);
     onSelectionChange?.(pasted.ids);
   }
+
+  const overlapTracker = useRef(createCanvasShapeOverlap());
+  const borderedAreas = overlapTracker.current(draft.areas.filter((area) =>
+    area.visible !== false && !area.isLightSource && !isCompositionTextRegion(area),
+  ).map(compositionOverlapShape));
+  const nodeActions = useCanvasNodeActions({
+    selectItem, nudgeItem, resizeAreaNode, resizeImageNode, openItemEditor, deleteItem,
+    rotateArea: (id: string, rotation: number) => onDraftChange?.(rotateArea(latestDraftRef.current.draft, id, rotation)),
+    rotateImage: (id: string, rotation: number) => onDraftChange?.(rotateCompositionImage(latestDraftRef.current.draft, id, rotation)),
+    selectFrame: () => onSelectionChange?.([COMPOSITION_FRAME_ID]),
+    nudgeFrame: (delta: Point) => {
+      const current = latestDraftRef.current.draft;
+      onSelectionChange?.([COMPOSITION_FRAME_ID]);
+      onDraftChange?.(moveFrame(current, { x: current.frame.bounds.x + delta.x, y: current.frame.bounds.y + delta.y }));
+    },
+    moveCompositionFrame, resizeCompositionFrame, handleFrameKeyDown,
+  });
+  const renderViewportNode = useCanvasNodeCache([
+    COMPOSITION_FRAME_ID, ...draft.images.map(({ id }) => id), ...draft.areas.map(({ id }) => id),
+    ...draft.focusPoints.map(({ id }) => id), ...(draft.directionLine ? [draft.directionLine.id] : []),
+  ], [appearance, Boolean(onDraftChange), Boolean(onItemDoubleClick), controlsHost, Boolean(draft.layerOrder),
+    nodeEditorLabels?.imageKind, nodeEditorLabels?.textKind, nodeEditorLabels?.lineKind,
+    nodeEditorLabels?.nodeDescription, nodeEditorLabels?.note, areaEditorLabels.displayText]);
+  const nodeInputs = (item: CompositionItem) => [
+    item.x, item.y, item.note, item.annotation, item.visible,
+    selectedItemIdSet.has(item.id), Boolean(multiSelectionBounds && selectedItemIdSet.has(item.id)),
+  ];
 
   function renderCanvas(viewport?: InfiniteCanvasRenderState): ReactNode {
     const viewportBounds = viewport?.viewportBounds ?? frame;
@@ -1046,7 +1075,8 @@ export function CompositionCanvas({
           height={appearance === "reference" ? frame.height : viewportBounds.height}
         />
 
-        {appearance !== "reference" ? (
+        {appearance !== "reference" ? renderViewportNode(COMPOSITION_FRAME_ID, screenScale,
+          [frame.x, frame.y, frame.width, frame.height, frameSelected, frameEditable], () => (
           <CanvasFrame
             controlsHost={draft.layerOrder ? controlsHost : undefined}
             id={COMPOSITION_FRAME_ID}
@@ -1060,30 +1090,16 @@ export function CompositionCanvas({
             resizeHitSize={40}
             minimumWidth={96}
             minimumHeight={96}
-            onSelect={
-              frameEditable ? () => onSelectionChange?.([COMPOSITION_FRAME_ID]) : undefined
-            }
-            onNudge={
-              frameEditable
-                ? (delta) => {
-                    onSelectionChange?.([COMPOSITION_FRAME_ID]);
-                    onDraftChange?.(
-                      moveFrame(draft, {
-                        x: draft.frame.bounds.x + delta.x,
-                        y: draft.frame.bounds.y + delta.y,
-                      }),
-                    );
-                  }
-                : undefined
-            }
-            onMove={frameEditable ? moveCompositionFrame : undefined}
-            onResize={frameEditable ? resizeCompositionFrame : undefined}
-            onKeyDown={frameEditable ? handleFrameKeyDown : undefined}
+            onSelect={frameEditable ? nodeActions.selectFrame : undefined}
+            onNudge={frameEditable ? nodeActions.nudgeFrame : undefined}
+            onMove={frameEditable ? nodeActions.moveCompositionFrame : undefined}
+            onResize={frameEditable ? nodeActions.resizeCompositionFrame : undefined}
+            onKeyDown={frameEditable ? nodeActions.handleFrameKeyDown : undefined}
             nudgeStep={0.01}
             largeNudgeStep={0.05}
             className="human2ai-composition-canvas__frame"
           />
-        ) : null}
+        )) : null}
 
         {appearance !== "reference" && onionSkinMarkup !== null && previousStateId ? (
           <CanvasOnionSkin stateId={previousStateId}>
@@ -1098,7 +1114,7 @@ export function CompositionCanvas({
           const height = image.height * COMPOSITION_CANVAS.height;
           const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
           const imageLabel = nodeEditorLabels?.imageKind ?? "图片";
-          return renderViewportNode(image.id, selectedItemIdSet.has(image.id) ? screenScale : 1, () => (
+          return renderViewportNode(image.id, selectedItemIdSet.has(image.id) ? screenScale : 1, [...nodeInputs(image), image.rotation, width, height, src, image.crop?.x, image.crop?.y, image.crop?.width, image.crop?.height], () => (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={image.id}
@@ -1118,34 +1134,32 @@ export function CompositionCanvas({
               resizeMode="proportional"
               resizeCenter={{ x: 0, y: 0 }}
               screenScale={screenScale}
-              onSelect={appearance !== "reference" ? selectItem : undefined}
+              onSelect={appearance !== "reference" ? nodeActions.selectItem : undefined}
               onNudge={
                 appearance !== "reference" && onDraftChange
-                  ? (delta) => nudgeItem(image.id, delta)
+                  ? (delta) => nodeActions.nudgeItem(image.id, delta)
                   : undefined
               }
               onResize={
                 appearance !== "reference" && onDraftChange &&
                 !(multiSelectionBounds && selectedItemIdSet.has(image.id))
-                  ? (change) => resizeImageNode(image.id, change)
+                  ? (change) => nodeActions.resizeImageNode(image.id, change)
                   : undefined
               }
               onRotate={
                 appearance !== "reference" && onDraftChange &&
                 !(multiSelectionBounds && selectedItemIdSet.has(image.id))
-                  ? (change) => onDraftChange(
-                      rotateCompositionImage(draft, image.id, change.rotation),
-                    )
+                  ? (change) => nodeActions.rotateImage(image.id, change.rotation)
                   : undefined
               }
               onDoubleClick={
                 appearance !== "reference" && (onDraftChange || onItemDoubleClick)
-                  ? () => openItemEditor(image.id, "image")
+                  ? () => nodeActions.openItemEditor(image.id, "image")
                   : undefined
               }
               onDelete={
                 appearance !== "reference" && onDraftChange
-                  ? () => deleteItem(image.id)
+                  ? () => nodeActions.deleteItem(image.id)
                   : undefined
               }
               nudgeStep={0.01}
@@ -1168,8 +1182,10 @@ export function CompositionCanvas({
             </CanvasNode>
           ));
         }),
-          ...draft.areas.map((area, index) => {
+          ...draft.areas.map((area) => {
           if (area.visible === false && (!showHiddenNodes || appearance === "reference")) return null;
+          return renderViewportNode(area.id, selectedItemIdSet.has(area.id) ? screenScale : 1,
+            [...nodeInputs(area), ...compositionShapeGeometry(area), area.semanticType, area.displayText, area.isLightSource, borderedAreas.has(area.id)], () => {
           const geometry = areaGeometry(area, COMPOSITION_CANVAS);
           const textRegion = isCompositionTextRegion(area);
           const center = geometry.type === "circle" || geometry.type === "ellipse"
@@ -1182,7 +1198,7 @@ export function CompositionCanvas({
           const itemLabel = textRegion
             ? nodeEditorLabels?.textKind ?? "文字区域"
             : AREA_LABELS[area.primitive];
-          return renderViewportNode(area.id, selectedItemIdSet.has(area.id) ? screenScale : 1, () => (
+          return (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={area.id}
@@ -1201,17 +1217,17 @@ export function CompositionCanvas({
               }
               resizeCenter={{ x: 0, y: 0 }}
               screenScale={screenScale}
-              onSelect={appearance !== "reference" ? selectItem : undefined}
+              onSelect={appearance !== "reference" ? nodeActions.selectItem : undefined}
               onNudge={
                 appearance !== "reference" && onDraftChange
-                  ? (delta) => nudgeItem(area.id, delta)
+                  ? (delta) => nodeActions.nudgeItem(area.id, delta)
                   : undefined
               }
               onResize={
                 appearance !== "reference" &&
                 onDraftChange &&
                 !(multiSelectionBounds && selectedItemIdSet.has(area.id))
-                  ? (change) => resizeAreaNode(area.id, change)
+                  ? (change) => nodeActions.resizeAreaNode(area.id, change)
                   : undefined
               }
               onRotate={
@@ -1219,17 +1235,17 @@ export function CompositionCanvas({
                 onDraftChange &&
                 !(multiSelectionBounds && selectedItemIdSet.has(area.id)) &&
                 (area.primitive !== "circle" || area.aspect === "free")
-                  ? (change) => onDraftChange(rotateArea(draft, area.id, change.rotation))
+                  ? (change) => nodeActions.rotateArea(area.id, change.rotation)
                   : undefined
               }
               onDoubleClick={
                 appearance !== "reference" && (onDraftChange || onItemDoubleClick)
-                  ? () => openItemEditor(area.id, textRegion ? "text" : "shape")
+                  ? () => nodeActions.openItemEditor(area.id, textRegion ? "text" : "shape")
                   : undefined
               }
               onDelete={
                 appearance !== "reference" && onDraftChange
-                  ? () => deleteItem(area.id)
+                  ? () => nodeActions.deleteItem(area.id)
                   : undefined
               }
               nudgeStep={0.01}
@@ -1237,7 +1253,7 @@ export function CompositionCanvas({
               className={[
                 "human2ai-composition-canvas__item",
                 "human2ai-composition-canvas__area",
-                `human2ai-composition-canvas__area--tone-${index % 6}`,
+                `human2ai-composition-canvas__area--tone-${canvasNodeTone(area.id)}`,
                 textRegion ? "human2ai-composition-canvas__area--text-region" : null,
               ].filter(Boolean).join(" ")}
               data-composition-item={area.id}
@@ -1255,6 +1271,7 @@ export function CompositionCanvas({
                   type="circle"
                   size={geometry.radius * 2}
                   className="human2ai-composition-canvas__shape"
+                  innerStroke={appearance !== "reference" && borderedAreas.has(area.id)}
                 />
               ) : geometry.type === "ellipse" ? (
                 <CanvasShape
@@ -1262,6 +1279,7 @@ export function CompositionCanvas({
                   width={geometry.radiusX * 2}
                   height={geometry.radiusY * 2}
                   className="human2ai-composition-canvas__shape"
+                  innerStroke={appearance !== "reference" && borderedAreas.has(area.id)}
                 />
               ) : textRegion ? (
                 <>
@@ -1293,35 +1311,38 @@ export function CompositionCanvas({
                   width={area.primitive === "triangle" ? geometry.side ?? 0 : geometry.width ?? 0}
                   height={geometry.height}
                   className="human2ai-composition-canvas__shape"
+                  innerStroke={appearance !== "reference" && borderedAreas.has(area.id)}
                 />
               )}
             </CanvasNode>
-          ));
+          );
+          });
         }),
           ...(draft.directionLine && displayedDraft.directionLine ? [
-          <DirectionLineItem
-            key={draft.directionLine.id}
+          renderViewportNode(draft.directionLine.id, 1, [...nodeInputs(draft.directionLine), draft.directionLine.rotation,
+            sceneBounds.x, sceneBounds.y, sceneBounds.width, sceneBounds.height], () => <DirectionLineItem
+            key={draft.directionLine!.id}
             draft={draft}
             label={nodeEditorLabels?.lineKind ?? "动势线"}
-            selected={selectedItemIdSet.has(draft.directionLine.id)}
-            onSelect={appearance !== "reference" ? selectItem : undefined}
-            onNudge={appearance !== "reference" && onDraftChange ? nudgeItem : undefined}
+            selected={selectedItemIdSet.has(draft.directionLine!.id)}
+            onSelect={appearance !== "reference" ? nodeActions.selectItem : undefined}
+            onNudge={appearance !== "reference" && onDraftChange ? nodeActions.nudgeItem : undefined}
             onDoubleClick={
               appearance !== "reference" && (onDraftChange || onItemDoubleClick)
-                ? (id) => openItemEditor(id, "line")
+                ? (id) => nodeActions.openItemEditor(id, "line")
                 : undefined
             }
-            onDelete={appearance !== "reference" && onDraftChange ? deleteItem : undefined}
+            onDelete={appearance !== "reference" && onDraftChange ? nodeActions.deleteItem : undefined}
             bounds={sceneBounds}
-            tooltip={itemTooltip(draft.directionLine)}
-          />
+            tooltip={itemTooltip(draft.directionLine!)}
+          />)
           ] : []),
           ...draft.focusPoints.map((focus) => {
           if (focus.visible === false && (!showHiddenNodes || appearance === "reference")) return null;
           const x = focus.x * COMPOSITION_CANVAS.width;
           const y = focus.y * COMPOSITION_CANVAS.height;
           const radius = Math.min(COMPOSITION_CANVAS.width, COMPOSITION_CANVAS.height) * 0.018;
-          return renderViewportNode(focus.id, selectedItemIdSet.has(focus.id) ? screenScale : 1, () => (
+          return renderViewportNode(focus.id, selectedItemIdSet.has(focus.id) ? screenScale : 1, nodeInputs(focus), () => (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={focus.id}
@@ -1331,20 +1352,20 @@ export function CompositionCanvas({
               x={x}
               y={y}
               selected={selectedItemIdSet.has(focus.id)}
-              onSelect={appearance !== "reference" ? selectItem : undefined}
+              onSelect={appearance !== "reference" ? nodeActions.selectItem : undefined}
               onNudge={
                 appearance !== "reference" && onDraftChange
-                  ? (delta) => nudgeItem(focus.id, delta)
+                  ? (delta) => nodeActions.nudgeItem(focus.id, delta)
                   : undefined
               }
               onDoubleClick={
                 appearance !== "reference" && (onDraftChange || onItemDoubleClick)
-                  ? () => openItemEditor(focus.id, "point")
+                  ? () => nodeActions.openItemEditor(focus.id, "point")
                   : undefined
               }
               onDelete={
                 appearance !== "reference" && onDraftChange
-                  ? () => deleteItem(focus.id)
+                  ? () => nodeActions.deleteItem(focus.id)
                   : undefined
               }
               nudgeStep={0.01}

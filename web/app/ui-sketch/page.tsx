@@ -454,10 +454,11 @@ function UiSketchPageContent() {
       currentSessionId={requestedSessionId}
       onCurrentSessionRename={setSessionTitle}
       title={sessionTitle ?? t("uiSketch.session.new")}
-      headerExtra={stateTabs.length > 1 ? <CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+      headerExtra={<CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+        hasMultipleStates={stateTabs.length > 1}
         hasPreviousState={stateTabs.findIndex((tab) => tab.id === selectedStageId) > 0}
         disabled={loading || sessionLoadFailed}
-        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} /> : undefined}
+        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} />}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(

@@ -15,6 +15,36 @@ import type {
   SessionStyleState,
 } from "../../src/domain/style";
 import type { StyleProcessing } from "../../src/domain/session";
+import type { SessionGroup } from "../../src/domain/session";
+export type { SessionGroup } from "../../src/domain/session";
+
+export async function listSessionGroups(fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup[]> {
+  return (await requestJson<{ groups: SessionGroup[] }>("/api/v1/session-groups", {}, fetcher)).groups;
+}
+
+export function createSessionGroup(projectId: string, name: string, fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup> {
+  return requestJson(`/api/v1/projects/${encodeURIComponent(projectId)}/groups`, {
+    method: "POST", body: JSON.stringify({ name }),
+  }, fetcher);
+}
+
+export function renameSessionGroup(groupId: string, name: string, expectedRevision: number, fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup> {
+  return requestJson(`/api/v1/session-groups/${encodeURIComponent(groupId)}`, {
+    method: "PATCH", body: JSON.stringify({ name, expectedRevision }),
+  }, fetcher);
+}
+
+export async function deleteSessionGroup(groupId: string, expectedRevision: number, fetcher: typeof fetch = globalThis.fetch): Promise<void> {
+  await requestResponse(`/api/v1/session-groups/${encodeURIComponent(groupId)}`, {
+    method: "DELETE", body: JSON.stringify({ expectedRevision }),
+  }, fetcher);
+}
+
+export async function setSessionGroup(projectId: string, sessionId: string, groupId: string | null, fetcher: typeof fetch = globalThis.fetch): Promise<void> {
+  await requestResponse(`/api/v1/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}/group`, {
+    method: "PUT", body: JSON.stringify({ groupId }),
+  }, fetcher);
+}
 
 export type {
   StyleCategory,

@@ -1,6 +1,8 @@
 "use client";
 
-import { createViewportNodeCache } from "./viewportNodeCache";
+import { useCanvasNodeActions, useCanvasNodeCache } from "./useCanvasNodeCache";
+import { createCanvasShapeOverlap, rectangleOutline } from "./canvasShapeOverlap";
+import { canvasNodeTone } from "./canvasNodeTone";
 
 import {
   BorderOutlined,
@@ -415,7 +417,6 @@ export function UiSketchCanvas({
   const [openCopyMenu, setOpenCopyMenu] = useState<"prompt" | "sketch" | null>(null);
   const { contextMenuOpen, contextMenuPoint, contextMenuPopupRef, openContextMenuAt, closeContextMenu, dismissContextMenu } = useCanvasContextMenu();
   const [textMeasurements, setTextMeasurements] = useState<TextMeasurements>({});
-  const renderViewportNode = createViewportNodeCache();
   const [controlsHost, setControlsHost] = useState<SVGGElement | null>(null);
   const interactionRef = useRef<PointerInteraction | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
@@ -1126,6 +1127,34 @@ export function UiSketchCanvas({
     }
   }
 
+  const overlapTracker = useRef(createCanvasShapeOverlap());
+  const previousOverlapTracker = useRef(createCanvasShapeOverlap());
+  const overlapShapes = (rectangles: readonly UiSketchRectangle[]) => rectangles.filter((item) => item.visible).map((item) => ({
+    id: item.id, tone: canvasNodeTone(item.id), geometry: [item.x, item.y, item.width, item.height],
+    outline: () => rectangleOutline(item.x, item.y, item.width, item.height),
+  }));
+  const borderedRectangles = overlapTracker.current(overlapShapes(state.rectangles));
+  const previousBorders = previousOverlapTracker.current(overlapShapes(previousState?.rectangles ?? []));
+  const nodeActions = useCanvasNodeActions({
+    selectItem, nudgeItem, resizeImage, resizeRectangle, openEditor, deleteItem,
+    resizeText: (id: string, change: CanvasNodeResizeChange) => {
+      const text = state.texts.find((item) => item.id === id);
+      if (text) resizeText(id, text, change);
+    },
+    selectFrame: () => { setSelectedKeys([FRAME_KEY]); closeEditor(); },
+    moveFrame, updateFrame,
+  });
+  const renderViewportNode = useCanvasNodeCache([FRAME_KEY,
+    ...state.images.map(({ id }) => itemKey("image", id)),
+    ...state.rectangles.map(({ id }) => itemKey("rectangle", id)),
+    ...state.texts.map(({ id }) => itemKey("text", id)),
+  ], [controlsHost, Boolean(state.layerOrder), labels.image, labels.region, labels.missingRegionNote,
+    labels.text, labels.emptyText, labels.nodeDescription, labels.textContent, labels.note]);
+  const nodeInputs = (item: UiSketchRectangle | UiSketchText | UiSketchImage, key: UiSketchItemKey) => [
+    item.x, item.y, item.note, item.annotation, item.visible,
+    selectedItemKeySet.has(key), Boolean(multiSelectionBounds && selectedItemKeySet.has(key)),
+  ];
+
   const overallNoteEditor = (
     <label className="human2ai-ui-sketch-canvas__overall-editor">
       <span>{labels.overallNoteTitle}</span>
@@ -1434,7 +1463,9 @@ export function UiSketchCanvas({
                   aria-hidden="true"
                 />
 
-                <CanvasFrame
+                {renderViewportNode(FRAME_KEY, viewport.zoom,
+                  [state.frame.x, state.frame.y, state.frame.width, state.frame.height,
+                    selectedKeys.includes(FRAME_KEY), interfaceFrameLocked, labels.frameAction], () => <CanvasFrame
                   controlsHost={state.layerOrder ? controlsHost : undefined}
                   id="ui-frame"
                   label={labels.frameAction}
@@ -1447,14 +1478,11 @@ export function UiSketchCanvas({
                   screenScale={viewport.zoom}
                   resizeHitSize={32}
                   locked={interfaceFrameLocked}
-                  onSelect={() => {
-                    setSelectedKeys([FRAME_KEY]);
-                    closeEditor();
-                  }}
-                  onMove={moveFrame}
-                  onResize={updateFrame}
+                  onSelect={nodeActions.selectFrame}
+                  onMove={nodeActions.moveFrame}
+                  onResize={nodeActions.updateFrame}
                   className="human2ai-ui-sketch-canvas__frame"
-                />
+                />)}
 
                 <g
                   className="human2ai-ui-sketch-canvas__frame-label"
@@ -1487,14 +1515,15 @@ export function UiSketchCanvas({
                           </g>
                         );
                       }),
-                      ...previousState.rectangles.map((rectangle, index) => {
+                      ...previousState.rectangles.map((rectangle) => {
                         if (!rectangle.visible) return null;
                         const center = boundsCenter(rectangle);
                         return (
                           <g key={rectangle.id} transform={`translate(${center.x} ${center.y})`}
-                            className={`human2ai-ui-sketch-canvas__rectangle--tone-${index % 6}`}>
+                            className={`human2ai-ui-sketch-canvas__rectangle--tone-${canvasNodeTone(rectangle.id)}`}>
                             <CanvasShape type="rectangle" width={rectangle.width} height={rectangle.height}
-                              className="human2ai-ui-sketch-canvas__rectangle-surface" />
+                              className="human2ai-ui-sketch-canvas__rectangle-surface"
+                              innerStroke={previousBorders.has(rectangle.id)} />
                           </g>
                         );
                       }),
@@ -1518,7 +1547,7 @@ export function UiSketchCanvas({
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(image);
                   const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
-                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(image, key), image.width, image.height, src, image.crop?.x, image.crop?.y, image.crop?.width, image.crop?.height], () => (
                     <g key={image.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1537,11 +1566,11 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeImage(image.id, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeImage(image.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className="human2ai-ui-sketch-canvas__item human2ai-ui-sketch-canvas__image"
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="image"
@@ -1561,12 +1590,12 @@ export function UiSketchCanvas({
                     </g>
                   ));
                 }),
-                  ...state.rectangles.map((rectangle, index) => {
+                  ...state.rectangles.map((rectangle) => {
                   if (!showHiddenNodes && !rectangle.visible) return null;
                   const key = itemKey("rectangle", rectangle.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(rectangle);
-                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(rectangle, key), rectangle.width, rectangle.height, borderedRectangles.has(rectangle.id)], () => (
                     <g key={rectangle.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1585,15 +1614,15 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeRectangle(rectangle.id, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeRectangle(rectangle.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className={[
                           "human2ai-ui-sketch-canvas__item",
                           "human2ai-ui-sketch-canvas__rectangle",
-                          `human2ai-ui-sketch-canvas__rectangle--tone-${index % 6}`,
+                          `human2ai-ui-sketch-canvas__rectangle--tone-${canvasNodeTone(rectangle.id)}`,
                         ].join(" ")}
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="rectangle"
@@ -1604,6 +1633,7 @@ export function UiSketchCanvas({
                           width={rectangle.width}
                           height={rectangle.height}
                           className="human2ai-ui-sketch-canvas__rectangle-surface"
+                          innerStroke={borderedRectangles.has(rectangle.id)}
                         />
                       </CanvasNode>
                     </g>
@@ -1617,7 +1647,7 @@ export function UiSketchCanvas({
                   const center = boundsCenter(bounds);
                   const empty = text.text.length === 0;
                   const displayedText = empty ? labels.emptyText : text.text;
-                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(text, key), text.text, text.fontSize, bounds.width, bounds.height], () => (
                     <g key={text.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1636,11 +1666,11 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeText(text.id, text, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeText(text.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className="human2ai-ui-sketch-canvas__item human2ai-ui-sketch-canvas__text"
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="text"

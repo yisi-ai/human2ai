@@ -24,3 +24,12 @@ export interface Session {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Project-tree organization; membership never changes session data or revisions. */
+export interface SessionGroup {
+  id: string;
+  projectId: string;
+  name: string;
+  revision: number;
+  sessionIds: string[];
+}

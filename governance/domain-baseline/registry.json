@@ -909,6 +909,50 @@
       "reviewTrigger": "扩展凹多边形、曲线轮廓、字形透视变形或普通图形四角编辑之前"
     },
     {
+      "id": "project.session-groups",
+      "category": "project",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "保存项目树的空分组、命名和单一会话归组关系，仅组织显示，不修改会话",
+      "invariants": [
+        "分组属于一个真实项目，可为空；同一项目内名称去除首尾空白后不得重复，长度为 1 到 200",
+        "每个会话最多属于一个分组，分组和会话必须属于同一项目；null 归组表示释放到项目下",
+        "创建、重命名、删除分组和调整归组不改变项目或会话 revision、修改时间、草稿和历史",
+        "分组重命名和删除校验分组自身 expectedRevision；删除分组仅删除归组关系",
+        "复用既有项目移动和会话删除；跨项目移动自动清除旧分组关系，删除会话或空项目级联清理组织数据"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/project-session-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/project-sessions.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/human2ai-api.ts",
+          "consumer": "workspace-sidebar"
+        }
+      ],
+      "consumers": [
+        "workspace-sidebar"
+      ],
+      "variationPoints": [
+        "已比较 project.session-organization 和画布节点建组；项目归属仍由既有共享能力管理，显示分组独立保存且不复制其 revision 语义",
+        "三类会话共用分组关系，界面把分组置于未分组会话之前；成员顺序沿用会话列表"
+      ],
+      "contractTests": [
+        "test/integration/session-groups.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/Human2AiWorkspaceSidebar.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "支持跨项目分组、多重归组、嵌套分组或改变会话版本边界之前"
+    },
+    {
       "id": "project.session-organization",
       "category": "project",
       "contractVersion": 1,

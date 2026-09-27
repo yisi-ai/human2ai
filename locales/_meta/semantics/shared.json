@@ -1204,7 +1204,7 @@
     },
     "canvas.show-hidden-nodes": {
       "meaning": "An editor-only toggle that displays all nodes in the active canvas state, including nodes marked invisible, which appear faded and remain editable.",
-      "scope": "Composition and UI-sketch canvas display controls in the AppShell header extra slot, shown only when more than one state exists.",
+      "scope": "Composition and UI-sketch canvas display controls in the AppShell header extra slot, shown for both single-state and multi-state canvases.",
       "referent": "The canvas display preference, not a node visibility value.",
       "precedence": "Does not change saved visibility, state snapshots, export, or grouped editing rules. Independent from onion skin.",
       "canonicalKey": "canvas.display.showHiddenNodes",

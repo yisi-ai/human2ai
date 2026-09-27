@@ -161,6 +161,18 @@
   vector-effect: non-scaling-stroke;
 }
 
+.human2ai-canvas-shape[data-inner-stroke="true"] {
+  clip-path: inset(0) fill-box;
+}
+
+.human2ai-canvas-shape[data-inner-stroke="true"][data-shape-type="circle"] {
+  clip-path: ellipse(50% 50%) fill-box;
+}
+
+.human2ai-canvas-shape[data-inner-stroke="true"][data-shape-type="triangle"] {
+  clip-path: polygon(50% 0, 0 100%, 100% 100%) fill-box;
+}
+
 .human2ai-canvas-line__visible,
 .human2ai-canvas-line__hit {
   vector-effect: non-scaling-stroke;

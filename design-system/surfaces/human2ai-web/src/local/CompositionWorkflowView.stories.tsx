@@ -126,8 +126,8 @@ function LayoutStatesHarness() {
   const [selected, setSelected] = useState<string[]>([]);
   return (
     <Human2AiAppShell title={t("composition.session.untitled")} sidebar={<div />} rightPanel={<div />}
-      headerExtra={states.length > 1 ? <CanvasDisplayControls value={display} onChange={setDisplay}
-        hasPreviousState={states.findIndex((state) => state.id === draft.activeStateId) > 0} /> : undefined}>
+      headerExtra={<CanvasDisplayControls value={display} onChange={setDisplay} hasMultipleStates={states.length > 1}
+        hasPreviousState={states.findIndex((state) => state.id === draft.activeStateId) > 0} />}>
       <CompositionWorkflowView
         draft={draft} status="waiting" activeView="draft" onViewChange={() => undefined}
         {...display} selectedIds={selected} onSelectionChange={setSelected}

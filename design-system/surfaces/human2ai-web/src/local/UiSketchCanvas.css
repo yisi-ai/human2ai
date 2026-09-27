@@ -84,11 +84,17 @@
   fill: currentColor;
   fill-opacity: 0.82;
   stroke: none;
+  stroke-width: 6;
+  vector-effect: non-scaling-stroke;
   transition: fill-opacity var(--yisiui-motion-fast) ease;
 }
 
 .human2ai-ui-sketch-canvas__rectangle--tone-0 {
   color: var(--yisiui-color-paper-sage);
+}
+
+.human2ai-ui-sketch-canvas__rectangle-surface[data-inner-stroke="true"] {
+  stroke: color-mix(in srgb, currentColor 25%, var(--yisiui-color-text-primary));
 }
 
 .human2ai-ui-sketch-canvas__rectangle--tone-1 {

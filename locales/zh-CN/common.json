@@ -158,7 +158,16 @@
     "deleteSessionTitle": "删除会话",
     "deleteSessionDescription": "删除后，该会话的草图和加工记录也会被删除。",
     "loading": "正在加载项目",
-    "loadFailed": "项目列表加载失败"
+    "loadFailed": "项目列表加载失败",
+    "newSessionGroup": "新建分组",
+    "sessionGroupName": "分组名称",
+    "sessionGroupActions": "分组操作",
+    "renameSessionGroup": "重命名分组",
+    "deleteSessionGroup": "删除分组",
+    "deleteSessionGroupDescription": "分组内的会话将回到项目下，不会被删除。",
+    "sessionGroupNameConflict": "该项目中已存在同名分组",
+    "groupSession": "移入分组",
+    "ungroupedSessions": "未分组"
   },
   "actions": {
     "start": "开始",

@@ -1,10 +1,12 @@
 import type { CSSProperties } from "react";
+import { memo } from "react";
 
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 
 import "./CanvasElements.css";
 
 interface CanvasShapeBaseProps {
+  innerStroke?: boolean;
   className?: string;
   fill?: string;
   stroke?: string;
@@ -21,9 +23,10 @@ export type CanvasShapeProps = CanvasShapeBaseProps &
     | { type: "triangle" | "rectangle"; width: number; height: number; size?: never }
   );
 
-export function CanvasShape(props: CanvasShapeProps) {
+export const CanvasShape = memo(function CanvasShape(props: CanvasShapeProps) {
   const {
     type,
+    innerStroke,
     className,
     fill,
     stroke,
@@ -52,6 +55,7 @@ export function CanvasShape(props: CanvasShapeProps) {
     "aria-label": ariaLabel,
     "aria-hidden": ariaLabel ? undefined : true,
     "data-shape-type": type,
+    "data-inner-stroke": innerStroke || undefined,
   };
 
   if (type === "circle") {
@@ -80,4 +84,4 @@ export function CanvasShape(props: CanvasShapeProps) {
     `${props.width / 2},${props.height / 3}`,
   ].join(" ");
   return <polygon {...commonProps} points={points} />;
-}
+});

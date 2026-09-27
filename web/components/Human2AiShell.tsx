@@ -18,6 +18,12 @@ import {
   createUiSketchSession,
   createSpatialSession,
   createProject,
+  createSessionGroup,
+  renameSessionGroup,
+  deleteSessionGroup,
+  setSessionGroup,
+  listSessionGroups,
+  type SessionGroup,
   deleteProject,
   deleteSession,
   listProjects,
@@ -96,6 +102,7 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
   const { i18n, t } = useTranslation();
   const [projects, setProjects] = useState<Human2AiProject[]>([]);
   const [sessions, setSessions] = useState<Human2AiSession[]>([]);
+  const [groups, setGroups] = useState<SessionGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
@@ -104,11 +111,12 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
-    void Promise.all([listProjects(), listSessions()])
-      .then(([nextProjects, nextSessions]) => {
+    void Promise.all([listProjects(), listSessions(), listSessionGroups()])
+      .then(([nextProjects, nextSessions, nextGroups]) => {
         if (cancelled) return;
         setProjects(nextProjects);
         setSessions(nextSessions);
+        setGroups(nextGroups);
       })
       .catch(() => {
         if (!cancelled) setLoadError(t("workspaceSidebar.loadFailed"));
@@ -125,6 +133,7 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
     <Human2AiWorkspaceSidebar
       projects={projects}
       sessions={sessions}
+      groups={groups}
       currentSessionId={currentSessionId}
       loading={loading}
       errorMessage={loadError}
@@ -163,6 +172,15 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
         uiLayoutSession: t("workspaceSidebar.uiLayoutSession"),
         sessionActions: t("workspaceSidebar.sessionActions"),
         projectActions: t("workspaceSidebar.projectActions"),
+        newSessionGroup: t("workspaceSidebar.newSessionGroup"),
+        sessionGroupName: t("workspaceSidebar.sessionGroupName"),
+        sessionGroupActions: t("workspaceSidebar.sessionGroupActions"),
+        renameSessionGroup: t("workspaceSidebar.renameSessionGroup"),
+        deleteSessionGroup: t("workspaceSidebar.deleteSessionGroup"),
+        deleteSessionGroupDescription: t("workspaceSidebar.deleteSessionGroupDescription"),
+        sessionGroupNameConflict: t("workspaceSidebar.sessionGroupNameConflict"),
+        groupSession: t("workspaceSidebar.groupSession"),
+        ungroupedSessions: t("workspaceSidebar.ungroupedSessions"),
         rename: t("actions.rename"),
         confirmRename: t("workspaceSidebar.confirmRename"),
         move: t("actions.move"),
@@ -211,6 +229,30 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
         setProjects((current) => [project, ...current]);
       }}
       onOpenStyleLibrary={() => router.push("/styles")}
+      onCreateGroup={async (projectId, name) => {
+        const group = await createSessionGroup(projectId, name);
+        setGroups(current => [...current, group]);
+      }}
+      onRenameGroup={async (groupId, name) => {
+        const group = groups.find(item => item.id === groupId);
+        if (!group) throw new Error("SESSION_GROUP_NOT_FOUND");
+        const renamed = await renameSessionGroup(groupId, name, group.revision);
+        setGroups(current => current.map(item => item.id === groupId ? renamed : item));
+      }}
+      onDeleteGroup={async groupId => {
+        const group = groups.find(item => item.id === groupId);
+        if (!group) throw new Error("SESSION_GROUP_NOT_FOUND");
+        await deleteSessionGroup(groupId, group.revision);
+        setGroups(current => current.filter(item => item.id !== groupId));
+      }}
+      onGroupSession={async (sessionId, groupId) => {
+        const session = sessions.find(item => item.id === sessionId);
+        if (!session?.projectId) throw new Error("SESSION_NOT_FOUND");
+        await setSessionGroup(session.projectId, sessionId, groupId);
+        setGroups(current => current.map(group => group.id === groupId
+          ? { ...group, sessionIds: [...group.sessionIds.filter(id => id !== sessionId), sessionId] }
+          : group.sessionIds.includes(sessionId) ? { ...group, sessionIds: group.sessionIds.filter(id => id !== sessionId) } : group));
+      }}
       onRenameProject={async (projectId, name) => {
         const project = projects.find((item) => item.id === projectId);
         if (!project) throw new Error("PROJECT_NOT_FOUND");
@@ -224,6 +266,7 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
         if (!project) throw new Error("PROJECT_NOT_FOUND");
         await deleteProject(projectId, project.revision);
         setProjects((current) => current.filter((item) => item.id !== projectId));
+        setGroups(current => current.filter(group => group.projectId !== projectId));
       }}
       onOpenSession={(sessionId) => {
         const session = sessions.find((item) => item.id === sessionId);
@@ -246,6 +289,8 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
         const session = sessions.find((item) => item.id === sessionId);
         if (!session) throw new Error("SESSION_NOT_FOUND");
         const moved = await moveSession(sessionId, projectId, session.revision);
+        setGroups(current => current.map(group => group.sessionIds.includes(sessionId)
+          ? { ...group, sessionIds: group.sessionIds.filter(id => id !== sessionId) } : group));
         setSessions((current) =>
           current.map((item) => (item.id === sessionId ? moved : item)),
         );
@@ -254,6 +299,8 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
         const session = sessions.find((item) => item.id === sessionId);
         if (!session) throw new Error("SESSION_NOT_FOUND");
         await deleteSession(sessionId, session.revision);
+        setGroups(current => current.map(group => group.sessionIds.includes(sessionId)
+          ? { ...group, sessionIds: group.sessionIds.filter(id => id !== sessionId) } : group));
         setSessions((current) => current.filter((item) => item.id !== sessionId));
         if (currentSessionId === sessionId) router.push("/");
       }}

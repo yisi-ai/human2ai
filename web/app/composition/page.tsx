@@ -729,9 +729,10 @@ function CompositionPageContent() {
       currentSessionId={requestedSessionId}
       onCurrentSessionRename={setSessionTitle}
       title={sessionTitle ?? t("composition.session.new")}
-      headerExtra={states.length > 1 ? <CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+      headerExtra={<CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+        hasMultipleStates={states.length > 1}
         hasPreviousState={states.findIndex((state) => state.id === activeStateId) > 0} disabled={loading}
-        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} /> : undefined}
+        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} />}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(

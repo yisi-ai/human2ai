@@ -4,6 +4,7 @@ import { Human2AiAppShell } from "./Human2AiAppShell";
 import { CompositionWorkflowView } from "./CompositionWorkflowView";
 import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import { waitFor } from "storybook/test";
@@ -598,6 +599,7 @@ export const DeleteFromEditor: Story = {
   name: "TextMarkEditor 删除区域确认",
   args: { draft: UI_SKETCH_FIXTURE },
   play: async ({ canvasElement }: StoryContext) => {
+    const checkAppearance = captureCanvasNodeAppearance(canvasElement, '[data-ui-sketch-kind="rectangle"]');
     const region = canvasElement.querySelector<SVGGElement>(
       '[data-ui-sketch-item="rectangle:rectangle-summary"]',
     );
@@ -615,11 +617,14 @@ export const DeleteFromEditor: Story = {
 
     const confirmButton = findButtons(document.body, "删除区域").at(-1);
     if (!confirmButton) throw new Error("删除确认缺少确认按钮");
+    const checkDeleteExecutions = captureCanvasNodeExecutions(canvasElement);
     confirmButton.click();
     await waitForCanvasRender();
     if (canvasElement.querySelector('[data-ui-sketch-item="rectangle:rectangle-summary"]')) {
       throw new Error("确认删除后区域节点仍然存在");
     }
+    checkAppearance();
+    checkDeleteExecutions();
   },
 };
 
@@ -1785,7 +1790,7 @@ function DisplayControlsFixture({ draft: initialDraft, activeStageId = "start", 
   return (
     <ConfigProvider theme={{ token: { motion: false } }}>
       <Human2AiAppShell title={storyI18n.t("uiSketch.title")} sidebar={<div />} rightPanel={<div />}
-        headerExtra={tabs.length > 1 ? <CanvasDisplayControls value={display} onChange={setDisplay} hasPreviousState={tabs.findIndex((tab) => tab.id === selected) > 0} /> : undefined}>
+        headerExtra={<CanvasDisplayControls value={display} onChange={setDisplay} hasMultipleStates={tabs.length > 1} hasPreviousState={tabs.findIndex((tab) => tab.id === selected) > 0} />}>
         <div style={{ height: "100%" }} data-draft-changes={changes}>
           <CompositionWorkflowView stateControls={(
             <UiSketchStateTabs

@@ -4,6 +4,7 @@ import {
   BgColorsOutlined,
   CodeSandboxOutlined,
   FolderAddOutlined,
+  FolderOutlined,
   GithubOutlined,
   LayoutOutlined,
   MoreOutlined,
@@ -13,6 +14,7 @@ import {
 import { Button, Dropdown, Input, Modal, Tooltip } from "antd";
 import type { InputRef, MenuProps } from "antd";
 import { useEffect, useMemo, useRef, useState } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import {
   AssetSkeletonTree,
@@ -42,6 +44,15 @@ export interface Human2AiWorkspaceSession {
   revision: number;
 }
 
+export interface Human2AiWorkspaceGroup {
+  id: string;
+  projectId: string;
+  name: string;
+  sessionIds: string[];
+}
+
+const EMPTY_GROUPS: Human2AiWorkspaceGroup[] = [];
+
 export interface Human2AiWorkspaceSidebarLabels {
   functionArea: string;
   projectArea: string;
@@ -61,6 +72,15 @@ export interface Human2AiWorkspaceSidebarLabels {
   uiLayoutSession: string;
   sessionActions: string;
   projectActions: string;
+  newSessionGroup: string;
+  sessionGroupName: string;
+  sessionGroupActions: string;
+  renameSessionGroup: string;
+  deleteSessionGroup: string;
+  deleteSessionGroupDescription: string;
+  sessionGroupNameConflict: string;
+  groupSession: string;
+  ungroupedSessions: string;
   rename: string;
   confirmRename: string;
   move: string;
@@ -87,6 +107,11 @@ export interface Human2AiWorkspaceSidebarLabels {
 export interface Human2AiWorkspaceSidebarProps {
   projects: Human2AiWorkspaceProject[];
   sessions: Human2AiWorkspaceSession[];
+  groups?: Human2AiWorkspaceGroup[];
+  onCreateGroup?: (projectId: string, name: string) => Promise<void>;
+  onRenameGroup?: (groupId: string, name: string) => Promise<void>;
+  onDeleteGroup?: (groupId: string) => Promise<void>;
+  onGroupSession?: (sessionId: string, groupId: string | null) => Promise<void>;
   currentSessionId?: string | null;
   loading?: boolean;
   errorMessage?: string | null;
@@ -126,6 +151,15 @@ const DEFAULT_LABELS: Human2AiWorkspaceSidebarLabels = {
   uiLayoutSession: "UI 界面会话",
   sessionActions: "会话操作",
   projectActions: "项目操作",
+  newSessionGroup: zh.workspaceSidebar.newSessionGroup,
+  sessionGroupName: zh.workspaceSidebar.sessionGroupName,
+  sessionGroupActions: zh.workspaceSidebar.sessionGroupActions,
+  renameSessionGroup: zh.workspaceSidebar.renameSessionGroup,
+  deleteSessionGroup: zh.workspaceSidebar.deleteSessionGroup,
+  deleteSessionGroupDescription: zh.workspaceSidebar.deleteSessionGroupDescription,
+  sessionGroupNameConflict: zh.workspaceSidebar.sessionGroupNameConflict,
+  groupSession: zh.workspaceSidebar.groupSession,
+  ungroupedSessions: zh.workspaceSidebar.ungroupedSessions,
   rename: "重命名",
   confirmRename: "确认",
   move: "移动",
@@ -152,6 +186,11 @@ const DEFAULT_LABELS: Human2AiWorkspaceSidebarLabels = {
 export function Human2AiWorkspaceSidebar({
   projects,
   sessions,
+  groups = EMPTY_GROUPS,
+  onCreateGroup,
+  onRenameGroup,
+  onDeleteGroup,
+  onGroupSession,
   currentSessionId = null,
   loading = false,
   errorMessage,
@@ -185,6 +224,9 @@ export function Human2AiWorkspaceSidebar({
     | "rename-session"
     | "move-session"
     | "delete-session"
+    | "save-group"
+    | "delete-group"
+    | "group-session"
     | null
   >(null);
   const [pendingSessionProjectId, setPendingSessionProjectId] = useState<
@@ -203,6 +245,16 @@ export function Human2AiWorkspaceSidebar({
   const [moveProjectId, setMoveProjectId] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<Human2AiWorkspaceSession | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [groupEditor, setGroupEditor] = useState<{ projectId: string; groupId?: string } | null>(null);
+  const [groupName, setGroupName] = useState("");
+  const groupNameInput = useRef<InputRef>(null);
+  const draggedSession = useRef<string | null>(null);
+  const dropHighlight = useRef<HTMLDivElement | null>(null);
+  const [deleteGroupTarget, setDeleteGroupTarget] = useState<Human2AiWorkspaceGroup | null>(null);
+  const existingGroupNames = useMemo(() => new Set(groups
+    .filter(group => group.projectId === groupEditor?.projectId && group.id !== groupEditor?.groupId)
+    .map(group => group.name)), [groups, groupEditor]);
+  const groupNameConflict = existingGroupNames.has(groupName.trim());
 
   const projectNameConflict = isDuplicateProjectName(projects, projectName);
   const renameProjectNameConflict = isDuplicateProjectName(
@@ -215,6 +267,7 @@ export function Human2AiWorkspaceSidebar({
   useEffect(() => {
     const nextProjectKeys = [
       ...projects.map((project) => projectKey(project.id)),
+      ...groups.map(group => groupKey(group.id)),
       ...(hasUnassignedSessions ? ["project:unassigned"] : []),
     ];
     const addedProjectKeys = nextProjectKeys.filter(
@@ -225,10 +278,13 @@ export function Human2AiWorkspaceSidebar({
     setExpandedProjectKeys((current) => [
       ...new Set([...current, ...addedProjectKeys]),
     ]);
-  }, [hasUnassignedSessions, projects]);
+  }, [hasUnassignedSessions, projects, groups]);
 
   const projectTree = useMemo(() => {
+    const projectsByKey = new Map(projects.map(project => [projectKey(project.id), project]));
     const sessionsByKey = new Map(sessions.map((session) => [sessionKey(session.id), session]));
+    const groupsByKey = new Map(groups.map(group => [groupKey(group.id), group]));
+    const groupBySession = new Map(groups.flatMap(group => group.sessionIds.map(id => [id, group] as const)));
     const nodes: AssetSkeletonTreeNode[] = (() => {
       const projectNodes = projects.flatMap<AssetSkeletonTreeNode>((project, projectIndex) => [
         {
@@ -239,12 +295,18 @@ export function Human2AiWorkspaceSidebar({
           title: project.name,
           trailing: renderProjectActions(project),
         },
+        ...groups.filter(group => group.projectId === project.id).map<AssetSkeletonTreeNode>((group, index) => ({
+          key: groupKey(group.id), parentKey: projectKey(project.id), order: index,
+          nodeKind: "container", title: group.name, trailing: renderGroupMenu(group),
+          extraClassNames: ["human2ai-workspace-sidebar__group"],
+        })),
         ...sessions
           .filter((session) => session.projectId === project.id)
           .map<AssetSkeletonTreeNode>((session, sessionIndex) => ({
             key: sessionKey(session.id),
-            parentKey: projectKey(project.id),
-            order: sessionIndex,
+            parentKey: groupBySession.get(session.id)?.projectId === project.id
+              ? groupKey(groupBySession.get(session.id)!.id) : projectKey(project.id),
+            order: groups.length + sessionIndex,
             nodeKind: "content",
             title: session.title,
             trailing: renderSessionMenu(session),
@@ -280,6 +342,50 @@ export function Human2AiWorkspaceSidebar({
       <AssetSkeletonTree
         nodes={nodes}
         mode="view"
+        titleRender={node => {
+          const key = String(node.key);
+          const session = sessionsByKey.get(key);
+          const targetGroup = groupsByKey.get(key);
+          const targetProject = projectsByKey.get(key);
+          const targetProjectId = targetGroup?.projectId ?? targetProject?.id;
+          const canReceive = () => {
+            const source = draggedSession.current ? sessionsByKey.get(sessionKey(draggedSession.current)) : undefined;
+            return Boolean(onGroupSession && !pendingAction && source?.projectId && source.projectId === targetProjectId
+              && (groupBySession.get(source.id)?.id ?? null) !== (targetGroup?.id ?? null));
+          };
+          return <div className="human2ai-workspace-sidebar__tree-node" data-session-tree-key={key}
+            aria-label={session?.title ?? targetGroup?.name ?? targetProject?.name ?? labels.unassigned}
+            draggable={Boolean(onGroupSession && session?.projectId && !pendingAction)}
+            onDragStart={event => {
+              if (!session?.projectId || (event.target as HTMLElement).closest("button")) { event.preventDefault(); return; }
+              draggedSession.current = session.id;
+              event.dataTransfer.effectAllowed = "move";
+              event.dataTransfer.setData("text/plain", session.title);
+              event.stopPropagation();
+            }}
+            onDragOver={event => {
+              if (!canReceive()) return;
+              event.preventDefault(); event.stopPropagation();
+              event.dataTransfer.dropEffect = "move";
+              if (dropHighlight.current !== event.currentTarget) clearDropHighlight();
+              dropHighlight.current = event.currentTarget;
+              event.currentTarget.dataset.dropTarget = "true";
+            }}
+            onDragLeave={event => {
+              if (!event.currentTarget.contains(event.relatedTarget as Node | null)) clearDropHighlight();
+            }}
+            onDrop={event => {
+              if (!canReceive() || !draggedSession.current) return;
+              event.preventDefault(); event.stopPropagation();
+              const id = draggedSession.current;
+              draggedSession.current = null;
+              clearDropHighlight();
+              void assignGroup(id, targetGroup?.id ?? null);
+            }}
+            onDragEnd={() => { draggedSession.current = null; clearDropHighlight(); }}>
+            {typeof node.title === "function" ? node.title(node) : node.title}
+          </div>;
+        }}
         defaultExpandAll
         showContentOrder={false}
         showCurrent={false}
@@ -289,7 +395,8 @@ export function Human2AiWorkspaceSidebar({
         onExpand={(keys) => setExpandedProjectKeys(keys.map(String))}
         icon={({ eventKey }) => {
           const session = sessionsByKey.get(String(eventKey));
-          return session ? renderSessionTypeIcon(session.sessionType, labels) : null;
+          return session ? renderSessionTypeIcon(session.sessionType, labels)
+            : groupsByKey.has(String(eventKey)) ? <FolderOutlined aria-hidden="true" /> : null;
         }}
         currentKey={currentSessionId ? sessionKey(currentSessionId) : null}
         selectedKeys={currentSessionId ? [sessionKey(currentSessionId)] : []}
@@ -299,8 +406,9 @@ export function Human2AiWorkspaceSidebar({
         }}
       />
     );
-  }, [projects, sessions, labels, pendingAction, pendingSessionProjectId,
+  }, [projects, sessions, groups, labels, pendingAction, pendingSessionProjectId,
     onCreateComposition, onCreateUiSketch, onCreateSpatial, onOpenSession,
+    onCreateGroup, onRenameGroup, onDeleteGroup, onGroupSession,
     currentSessionId, expandedProjectKeys]);
 
   function renderProjectActions(project: Human2AiWorkspaceProject) {
@@ -368,6 +476,7 @@ export function Human2AiWorkspaceSidebar({
   function renderProjectMenu(project: Human2AiWorkspaceProject) {
     const hasChildren = sessions.some((session) => session.projectId === project.id);
     const items: MenuProps["items"] = [
+      ...(onCreateGroup ? [{ key: "create-group", label: labels.newSessionGroup, disabled: Boolean(pendingAction) }] : []),
       { key: "rename", label: labels.rename },
       {
         key: "delete",
@@ -385,7 +494,10 @@ export function Human2AiWorkspaceSidebar({
           onClick: ({ key, domEvent }) => {
             domEvent.stopPropagation();
             setActionError(null);
-            if (key === "rename") {
+            if (key === "create-group") {
+              setGroupEditor({ projectId: project.id });
+              setGroupName("");
+            } else if (key === "rename") {
               setRenameProjectTarget(project);
               setRenameProjectName(project.name);
             } else if (key === "delete" && !hasChildren) {
@@ -412,6 +524,15 @@ export function Human2AiWorkspaceSidebar({
     const moveDisabled = projects.every((project) => project.id === session.projectId);
     const items: MenuProps["items"] = [
       { key: "rename", label: labels.rename },
+      ...(onGroupSession && session.projectId ? [{
+        key: "group", label: labels.groupSession, disabled: Boolean(pendingAction),
+        children: [
+          { key: "ungroup", label: labels.ungroupedSessions, disabled: !groups.some(group => group.sessionIds.includes(session.id)) },
+          ...groups.filter(group => group.projectId === session.projectId).map(group => ({
+            key: groupKey(group.id), label: group.name, disabled: group.sessionIds.includes(session.id),
+          })),
+        ],
+      }] : []),
       {
         key: "move",
         label: labels.move,
@@ -428,7 +549,9 @@ export function Human2AiWorkspaceSidebar({
           onClick: ({ key, domEvent }) => {
             domEvent.stopPropagation();
             setActionError(null);
-            if (key === "rename") {
+            if (key === "ungroup" || key.startsWith("group:")) {
+              void assignGroup(session.id, key === "ungroup" ? null : key.slice("group:".length));
+            } else if (key === "rename") {
               setRenameTarget(session);
               setRenameTitle(session.title);
             } else if (key === "move" && !moveDisabled) {
@@ -452,6 +575,75 @@ export function Human2AiWorkspaceSidebar({
         />
       </Dropdown>
     );
+  }
+
+  function clearDropHighlight(): void {
+    if (dropHighlight.current) delete dropHighlight.current.dataset.dropTarget;
+    dropHighlight.current = null;
+  }
+
+  function renderGroupMenu(group: Human2AiWorkspaceGroup) {
+    return (
+      <Dropdown trigger={["click"]} menu={{
+        items: [
+          { key: "rename", label: labels.rename, disabled: !onRenameGroup || Boolean(pendingAction) },
+          { key: "delete", label: labels.delete, danger: true, disabled: !onDeleteGroup || Boolean(pendingAction) },
+        ],
+        onClick: ({ key, domEvent }) => {
+          domEvent.stopPropagation();
+          setActionError(null);
+          if (key === "rename") {
+            setGroupEditor({ projectId: group.projectId, groupId: group.id });
+            setGroupName(group.name);
+          } else if (key === "delete") setDeleteGroupTarget(group);
+        },
+      }}>
+        <Button className="human2ai-workspace-sidebar__node-menu" type="text" size="small"
+          icon={<MoreOutlined />} aria-label={`${group.name}：${labels.sessionGroupActions}`} title={labels.sessionGroupActions}
+          onClick={event => event.stopPropagation()} onPointerDown={event => event.stopPropagation()} />
+      </Dropdown>
+    );
+  }
+
+  async function submitGroup(): Promise<void> {
+    if (!groupEditor || !groupName.trim() || groupNameConflict || pendingAction) return;
+    setPendingAction("save-group");
+    setActionError(null);
+    try {
+      if (groupEditor.groupId) await onRenameGroup?.(groupEditor.groupId, groupName.trim());
+      else await onCreateGroup?.(groupEditor.projectId, groupName.trim());
+      expandProject(groupEditor.projectId);
+      setGroupEditor(null);
+    } catch (error) {
+      setActionError(error && typeof error === "object" && "code" in error && error.code === "SESSION_GROUP_NAME_CONFLICT"
+        ? labels.sessionGroupNameConflict : labels.actionFailed);
+    } finally { setPendingAction(null); }
+  }
+
+  async function submitGroupDelete(): Promise<void> {
+    if (!deleteGroupTarget || !onDeleteGroup || pendingAction) return;
+    setPendingAction("delete-group");
+    setActionError(null);
+    try {
+      await onDeleteGroup(deleteGroupTarget.id);
+      expandProject(deleteGroupTarget.projectId);
+      setDeleteGroupTarget(null);
+    } catch { setActionError(labels.actionFailed); }
+    finally { setPendingAction(null); }
+  }
+
+  async function assignGroup(sessionId: string, groupId: string | null): Promise<void> {
+    if (!onGroupSession || pendingAction) return;
+    const session = sessions.find(item => item.id === sessionId);
+    const group = groups.find(item => item.id === groupId);
+    if (!session?.projectId || (groupId !== null && group?.projectId !== session.projectId)) return;
+    setPendingAction("group-session");
+    setActionError(null);
+    try {
+      await onGroupSession(sessionId, groupId);
+      setExpandedProjectKeys(current => [...new Set([...current, projectKey(session.projectId!), ...(groupId ? [groupKey(groupId)] : [])])]);
+    } catch { setActionError(labels.actionFailed); }
+    finally { setPendingAction(null); }
   }
 
   function openProjectDialog(): void {
@@ -661,6 +853,8 @@ export function Human2AiWorkspaceSidebar({
           onClick={onOpenStyleLibrary}
         />
         {actionError &&
+          !groupEditor &&
+          !deleteGroupTarget &&
           !projectDialogOpen &&
           !renameProjectTarget &&
           !deleteProjectTarget &&
@@ -723,6 +917,31 @@ export function Human2AiWorkspaceSidebar({
           {languageSelector ? <CompactDropdownSelect {...languageSelector} /> : null}
         </div>
       ) : null}
+
+      <Modal open={Boolean(groupEditor)} title={groupEditor?.groupId ? labels.renameSessionGroup : labels.newSessionGroup}
+        okText={groupEditor?.groupId ? labels.confirmRename : labels.createProject}
+        cancelText={labels.cancel} confirmLoading={pendingAction === "save-group"}
+        okButtonProps={{ disabled: !groupName.trim() || groupNameConflict }}
+        afterOpenChange={open => { if (open) groupNameInput.current?.focus(); }}
+        onOk={() => void submitGroup()}
+        onCancel={() => { if (!pendingAction) { setGroupEditor(null); setActionError(null); } }}>
+        <Input ref={groupNameInput} value={groupName} maxLength={200} disabled={Boolean(pendingAction)}
+          placeholder={labels.sessionGroupName} aria-label={labels.sessionGroupName}
+          status={groupNameConflict ? "error" : undefined} aria-invalid={groupNameConflict}
+          aria-describedby={groupNameConflict || actionError ? "human2ai-group-name-error" : undefined}
+          onChange={event => { setGroupName(event.target.value); setActionError(null); }}
+          onPressEnter={() => void submitGroup()} />
+        {groupNameConflict || actionError ? <p id="human2ai-group-name-error" className="human2ai-workspace-sidebar__error" role="alert">{groupNameConflict ? labels.sessionGroupNameConflict : actionError}</p> : null}
+      </Modal>
+
+      <Modal open={Boolean(deleteGroupTarget)} title={labels.deleteSessionGroup}
+        okText={labels.delete} cancelText={labels.cancel} okButtonProps={{ danger: true }}
+        confirmLoading={pendingAction === "delete-group"} onOk={() => void submitGroupDelete()}
+        onCancel={() => { if (!pendingAction) { setDeleteGroupTarget(null); setActionError(null); } }}>
+        <p>{deleteGroupTarget?.name}</p>
+        <p>{labels.deleteSessionGroupDescription}</p>
+        {actionError ? <p className="human2ai-workspace-sidebar__error" role="alert">{actionError}</p> : null}
+      </Modal>
 
       <Modal
         open={projectDialogOpen}
@@ -929,6 +1148,10 @@ export function Human2AiWorkspaceSidebar({
 
 function projectKey(projectId: string): string {
   return `project:${projectId}`;
+}
+
+function groupKey(groupId: string): string {
+  return `group:${groupId}`;
 }
 
 function sessionKey(sessionId: string): string {

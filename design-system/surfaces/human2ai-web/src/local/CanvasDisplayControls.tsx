@@ -15,13 +15,14 @@ export interface CanvasDisplayOptions {
 export interface CanvasDisplayControlsProps {
   value: CanvasDisplayOptions;
   onChange: (value: CanvasDisplayOptions) => void;
+  hasMultipleStates: boolean;
   hasPreviousState: boolean;
   disabled?: boolean;
   labels?: { showHiddenNodes: string; onionSkin: string };
 }
 
 export function CanvasDisplayControls({
-  value, onChange, hasPreviousState, disabled = false, labels = zh.canvas.display,
+  value, onChange, hasMultipleStates, hasPreviousState, disabled = false, labels = zh.canvas.display,
 }: CanvasDisplayControlsProps) {
   return (
     <div
@@ -31,7 +32,7 @@ export function CanvasDisplayControls({
       {([
         { key: "showHiddenNodes", icon: <EyeOutlined aria-hidden="true" />, enabled: value.showHiddenNodes, disabled },
         { key: "onionSkin", icon: <BlockOutlined aria-hidden="true" />, enabled: value.onionSkin && hasPreviousState, disabled: disabled || !hasPreviousState },
-      ] as const).map((option) => (
+      ] as const).filter((option) => option.key !== "onionSkin" || hasMultipleStates).map((option) => (
         <BasicButton key={option.key} mode="with-icon" size="small" icon={option.icon}
           aria-label={labels[option.key]} title={labels[option.key]}
           aria-pressed={option.enabled} disabled={option.disabled}
