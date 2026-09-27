@@ -22,6 +22,7 @@ import {
   UiSketchStateTabs,
   SessionDetails,
   CanvasHistoryControls,
+  CanvasDisplayControls,
   buildCompositionPrompt,
   copyCompositionSketchPng,
   type CompositionPromptTranslator,
@@ -182,6 +183,7 @@ function CompositionPageContent() {
   const [draft, setDraft] = useState(createDraft);
   const [placementTool, setPlacementTool] = useState<CompositionPlacementTool | null>(null);
   const [showPlanning, setShowPlanning] = useState(true);
+  const [displayOptions, setDisplayOptions] = useState({ showHiddenNodes: false, onionSkin: false });
   const [frameLocked, setFrameLocked] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
   const [canvasZoom, setCanvasZoom] = useState(1);
@@ -727,6 +729,9 @@ function CompositionPageContent() {
       currentSessionId={requestedSessionId}
       onCurrentSessionRename={setSessionTitle}
       title={sessionTitle ?? t("composition.session.new")}
+      headerExtra={states.length > 1 ? <CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+        hasPreviousState={states.findIndex((state) => state.id === activeStateId) > 0} disabled={loading}
+        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} /> : undefined}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(
@@ -960,6 +965,8 @@ function CompositionPageContent() {
                   />
               )}
               showPlanning={showPlanning}
+              {...displayOptions}
+              visibilityLabels={{ visibility: t("canvas.nodeVisibility.visibility"), visible: t("canvas.nodeVisibility.visible"), hidden: t("canvas.nodeVisibility.hidden") }}
               selectedPlanIds={selectedPlanIds}
               planningLocked={planningLocked}
               onPlanSelectionChange={selectPlan}

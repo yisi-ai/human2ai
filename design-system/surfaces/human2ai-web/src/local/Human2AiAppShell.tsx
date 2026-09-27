@@ -16,6 +16,8 @@ export interface Human2AiAppShellLabels extends AppShellFrameLabels {
 
 export interface Human2AiAppShellProps {
   title: ReactNode;
+  titleExtra?: ReactNode;
+  headerExtra?: ReactNode;
   brand?: ReactNode;
   children: ReactNode;
   sidebar: ReactNode;
@@ -39,6 +41,8 @@ const DEFAULT_LABELS: Human2AiAppShellLabels = {
 
 export function Human2AiAppShell({
   title,
+  titleExtra,
+  headerExtra,
   brand,
   children,
   sidebar,
@@ -65,7 +69,15 @@ export function Human2AiAppShell({
       <AppShellFrame
         sidebar={sidebar}
         sidebarTitle={brand ?? labels.productName}
-        title={title ? <h1 className="human2ai-app-shell__page-title">{title}</h1> : undefined}
+        title={title ? (
+          <div className="human2ai-app-shell__page-heading">
+            <h1 className="human2ai-app-shell__page-title">{title}</h1>
+            {titleExtra ? (
+              <div className="human2ai-app-shell__title-extra">{titleExtra}</div>
+            ) : null}
+          </div>
+        ) : undefined}
+        headerExtra={headerExtra}
         rightPanel={rightPanel}
         rightPanelOpen={rightPanelOpen}
         onRightPanelOpenChange={onRightPanelOpenChange}

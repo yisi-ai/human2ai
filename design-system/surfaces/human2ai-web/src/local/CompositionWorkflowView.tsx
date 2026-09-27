@@ -88,6 +88,9 @@ interface CompositionWorkflowCanvasProps {
   onSelectionChange?: (ids: string[]) => void;
   onItemDoubleClick?: (id: string) => void;
   showPlanning?: boolean;
+  showHiddenNodes?: boolean;
+  onionSkin?: boolean;
+  visibilityLabels?: { visibility: string; visible: string; hidden: string };
   frameLocked?: boolean;
   canvasZoom?: number;
   canvasViewportAction?: CompositionCanvasViewportAction;
@@ -210,6 +213,9 @@ function CompositionWorkflowCanvasView({
   planningLocked = false,
   onPlanSelectionChange,
   planningLabels,
+  showHiddenNodes,
+  onionSkin,
+  visibilityLabels,
   draft,
   status,
   refinement = null,
@@ -293,6 +299,9 @@ function CompositionWorkflowCanvasView({
             planningLabels={planningLabels}
             draft={draft}
             showPlanning={showPlanning}
+            showHiddenNodes={showHiddenNodes}
+            onionSkin={onionSkin}
+            visibilityLabels={visibilityLabels}
             frameLocked={frameLocked}
             zoom={canvasZoom}
             viewportAction={canvasViewportAction}

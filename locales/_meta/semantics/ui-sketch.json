@@ -64,29 +64,6 @@
         "Describe the dimensions of the interface frame."
       ]
     },
-    "ui-sketch.visibility": {
-      "meaning": "Whether an interface element is shown in a particular sketch stage, with transitions describing changes between stages.",
-      "scope": "UI-sketch element editor and static or motion prompt exports.",
-      "referent": "An element visible boolean for the selected stage.",
-      "precedence": "A hidden element still exists in the draft; changing visibility is not deletion. State labels differ from transition instructions.",
-      "canonicalKey": "uiSketch.canvasLabels.visibility",
-      "searchTerms": [
-        "显示状态",
-        "显示",
-        "隐藏",
-        "Visibility",
-        "Visible",
-        "Hidden"
-      ],
-      "examples": [
-        "Mark an element hidden in the final stage.",
-        "Describe a transition from hidden to visible."
-      ],
-      "nonExamples": [
-        "Delete a node.",
-        "Collapse editor tools."
-      ]
-    },
     "ui-sketch.font-size": {
       "meaning": "The reference text size in pixels for a UI-sketch text element.",
       "scope": "UI-sketch text editor and generated layout prompts.",
@@ -497,46 +474,6 @@
       "variant": "scene-name",
       "role": "accessible name for the drawing scene within the viewport",
       "grammar": "noun phrase",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
-    "uiSketch.canvasLabels.visibility": {
-      "conceptId": "ui-sketch.visibility",
-      "variant": "field-label",
-      "role": "editor visibility field label and switch accessible name",
-      "grammar": "noun phrase",
-      "tone": "neutral",
-      "reusePolicy": "canonical"
-    },
-    "uiSketch.canvasLabels.visible": {
-      "conceptId": "ui-sketch.visibility",
-      "variant": "visible-state",
-      "role": "switch state text and prompt state value",
-      "grammar": "state adjective",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
-    "uiSketch.canvasLabels.hidden": {
-      "conceptId": "ui-sketch.visibility",
-      "variant": "hidden-state",
-      "role": "switch state text and prompt state value",
-      "grammar": "state adjective",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
-    "uiSketch.prompt.changeVisible": {
-      "conceptId": "ui-sketch.visibility",
-      "variant": "show-transition",
-      "role": "prompt instruction describing a transition to visible",
-      "grammar": "imperative verb phrase",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
-    "uiSketch.prompt.changeHidden": {
-      "conceptId": "ui-sketch.visibility",
-      "variant": "hide-transition",
-      "role": "prompt instruction describing a transition to hidden",
-      "grammar": "imperative verb phrase",
       "tone": "neutral",
       "reusePolicy": "contextual"
     },

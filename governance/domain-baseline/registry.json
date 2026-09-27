@@ -519,17 +519,18 @@
     {
       "id": "composition.layout-states",
       "category": "composition",
-      "contractVersion": 3,
+      "contractVersion": 4,
       "status": "local",
       "responsibility": "管理同一构图会话中共享节点内容、独立画框和节点布局的可自定义状态",
       "invariants": [
         "无 states 的旧草稿解析为一个默认状态，保持原持久化结构和指纹",
         "所有状态共用节点身份、类型、文字、图片来源与裁切、备注和业务语义；增删节点同步到各状态",
-        "状态独立保存画框尺寸与边界、节点位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
+        "状态独立保存画框尺寸与边界、节点可见性、位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
         "新增复制指定来源布局、插入其后并选中，命名排序和删除边界委托 capture.named-states；删除活动状态选择邻近状态",
         "状态和当前选择通过既有草稿版本、自动保存、外部版本同步及本地撤销恢复；指纹覆盖全部状态",
         "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容",
-        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划"
+        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划",
+        "内容节点 visible 按状态保存，旧节点或旧布局缺省为可见；隐藏不删除节点，编辑显示开关不改动草稿；预览、生成参考和构图分析只投影当前状态可见内容，指纹仍覆盖完整草稿"
       ],
       "implementations": [
         {
@@ -555,6 +556,10 @@
         {
           "role": "current",
           "path": "web/app/composition/page.tsx"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/render.ts"
         }
       ],
       "consumers": [
@@ -562,7 +567,7 @@
         "composition-editor"
       ],
       "variationPoints": [
-        "UI 状态保留共享画框和层级以及独立可见性；构图不引入节点可见性或状态转换图",
+        "UI 状态复用其既有快照与必填 visible；构图 visible 可省略以兼容旧草稿，画框与层级仍按构图状态保存。两者复用本地 CanvasDisplayControls 与 CanvasOnionSkin，具体内容绘制由各领域负责。",
         "状态组件复用本地 UiSketchStateTabs；不复制状态菜单和拖动实现",
         "保存、并发与撤销继续委托 capture.draft-versioning 和 capture.canvas-edit-history，不新增路由或数据库表"
       ],
@@ -570,14 +575,15 @@
         "test/unit/composition-states.test.ts",
         "test/integration/composition-sessions.test.ts",
         "test/unit/composition-text-outline.test.ts",
-        "test/unit/composition-planning.test.ts"
+        "test/unit/composition-planning.test.ts",
+        "test/unit/composition-visibility.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/composition-layout-states.md",
         "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx"
       ],
       "exceptions": [],
-      "reviewTrigger": "新增独立内容、可见性、动画或跨状态加工操作之前"
+      "reviewTrigger": "新增独立内容、状态转换图或跨状态加工操作之前"
     },
     {
       "id": "composition.light-source",

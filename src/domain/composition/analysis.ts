@@ -1,4 +1,4 @@
-import { validateDraft, visibleAreaMetrics } from "./draft.ts";
+import { validateDraft, visibleAreaMetrics, visibleCompositionDraft } from "./draft.ts";
 import {
   COMPOSITION_CANVAS,
   canvasPointToFrame,
@@ -128,7 +128,7 @@ export function draftFingerprint(input: CompositionDraft): string {
 }
 
 export function inspectComposition(input: CompositionDraft): CompositionInspection {
-  const draft = validateDraft(input);
+  const draft = visibleCompositionDraft(validateDraft(input));
   const metrics = visibleAreaMetrics(draft);
   const inspectedAreas = draft.areas.map((area, index) => {
     const bounds = geometryBounds(areaGeometry(area, COMPOSITION_CANVAS));
@@ -189,7 +189,7 @@ export function inspectComposition(input: CompositionDraft): CompositionInspecti
     kind: "composition-inspection",
     ...(draft.plans ? { plans: structuredClone(draft.plans) } : {}),
     planningIntersections: compositionPlanningIntersections(draft),
-    sourceFingerprint: draftFingerprint(draft),
+    sourceFingerprint: draftFingerprint(input),
     processingSemantic: draft.processingSemantic,
     frame: structuredClone(draft.frame),
     overallNote: draft.overallNote,
@@ -503,8 +503,10 @@ function nonEmptyMetadata(metadata: {
   annotation: string;
   semanticType: string;
   shotScale: CompositionArea["shotScale"];
-}): Record<string, string> {
+  visible?: boolean;
+}): Record<string, string | boolean> {
   return {
+    ...(metadata.visible === false ? { visible: false } : {}),
     ...(metadata.note === "" ? {} : { note: metadata.note }),
     ...(metadata.annotation === "" ? {} : { annotation: metadata.annotation }),
     ...(metadata.semanticType === "" ? {} : { semanticType: metadata.semanticType }),

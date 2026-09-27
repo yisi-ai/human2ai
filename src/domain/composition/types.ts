@@ -16,6 +16,8 @@ export type CompositionVisualWeight =
   | "decorative";
 
 export interface CompositionNodeMetadata extends Human2AiCanvasNodeMetadata {
+  /** State-local visibility; omitted in legacy drafts means visible. */
+  visible?: boolean;
   shotScale: CompositionShotScale;
 }
 
@@ -126,10 +128,10 @@ export interface CompositionLayout {
   plans?: CompositionPlan[];
   frame: CompositionFrame;
   layerOrder: string[];
-  focusPoints: Pick<FocusPoint, "id" | "x" | "y">[];
-  directionLine: Pick<DirectionLine, "id" | "x" | "y" | "rotation"> | null;
-  areas: Pick<CompositionArea, "id" | "x" | "y" | "area" | "aspect" | "rotation" | "width" | "height" | "corners">[];
-  images: Pick<CompositionImage, "id" | "x" | "y" | "width" | "height" | "rotation">[];
+  focusPoints: Pick<FocusPoint, "id" | "x" | "y" | "visible">[];
+  directionLine: Pick<DirectionLine, "id" | "x" | "y" | "rotation" | "visible"> | null;
+  areas: Pick<CompositionArea, "id" | "x" | "y" | "area" | "aspect" | "rotation" | "width" | "height" | "corners" | "visible">[];
+  images: Pick<CompositionImage, "id" | "x" | "y" | "width" | "height" | "rotation" | "visible">[];
 }
 
 export interface CompositionState extends CanvasStateTab {

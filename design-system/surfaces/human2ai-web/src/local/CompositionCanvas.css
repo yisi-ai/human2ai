@@ -1,3 +1,7 @@
+.human2ai-composition-canvas__item[data-composition-visible="false"] {
+  opacity: 0.3;
+}
+
 .human2ai-composition-canvas {
   position: relative;
   box-sizing: border-box;

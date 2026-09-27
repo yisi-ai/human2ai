@@ -1,4 +1,8 @@
 import { ConfigProvider } from "antd";
+import { CanvasDisplayControls } from "./CanvasDisplayControls";
+import { Human2AiAppShell } from "./Human2AiAppShell";
+import { CompositionWorkflowView } from "./CompositionWorkflowView";
+import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
@@ -22,6 +26,11 @@ import {
 } from "./uiSketchFixtures";
 import {
   cloneUiSketchDraft,
+  insertUiSketchStage,
+  uiSketchStateTabs,
+  reorderUiSketchStates,
+  renameUiSketchState,
+  deleteUiSketchState,
   EMPTY_UI_SKETCH_DRAFT,
   UI_SKETCH_END_STAGE_ID,
   UI_SKETCH_START_STAGE_ID,
@@ -285,7 +294,10 @@ export const StagedVisibilityAndCopy: Story = {
       stagedPrompt = content;
     },
   },
+  render: (args) => <DisplayControlsFixture {...args} />,
   play: async ({ canvasElement }: StoryContext) => {
+    findButton(canvasElement, "全部显示").click();
+    await waitForCanvasRender();
     const hiddenRegion = canvasElement.querySelector<SVGGElement>(
       '[data-ui-sketch-kind="rectangle"][data-ui-sketch-visible="false"]',
     );
@@ -295,8 +307,8 @@ export const StagedVisibilityAndCopy: Story = {
 
     findButton(canvasElement, "复制提示词").click();
     await waitForCanvasRender();
-    findMenuItem("开始");
-    findMenuItem("结束");
+    findMenuItem("状态 1");
+    findMenuItem("状态 2");
     findMenuItem("动效").click();
     await waitForCanvasRender();
     const firstRegion = promptElementBlock(stagedPrompt, "区域#1", "区域#2");
@@ -314,11 +326,79 @@ export const StagedVisibilityAndCopy: Story = {
 
     findButton(canvasElement, "复制预览图").click();
     await waitForCanvasRender();
-    findMenuItem("开始");
-    findMenuItem("结束");
+    findMenuItem("状态 1");
+    findMenuItem("状态 2");
     if (findMenuItems("动效").length > 0) {
       throw new Error("复制预览图下拉不能提供动效提示词选项");
     }
+  },
+};
+
+const displayControlsFixture = (() => {
+  const draft = cloneUiSketchDraft(UI_SKETCH_FIXTURE);
+  draft.images = [{
+    ...draft.rectangles[0]!, id: "display-image", x: 600, y: 20, width: 120, height: 80,
+    assetId: null, crop: null,
+  }];
+  const next = insertUiSketchStage(draft, "start", "middle");
+  const middle = uiSketchDraftForStage(next, "middle");
+  middle.rectangles[0].x = 120;
+  middle.rectangles[1].visible = false;
+  middle.texts[0].fontSize = 48;
+  middle.texts[1].visible = false;
+  middle.images[0].visible = false;
+  return insertUiSketchStage(updateUiSketchStageDraft(next, "middle", middle), "middle", "last");
+})();
+
+export const DisplayControls: Story = {
+  name: "隐藏节点与上一状态洋葱皮",
+  args: { draft: displayControlsFixture, activeStageId: "middle", canvasSideActionPanelDefaultCollapsed: true },
+  render: (args) => <DisplayControlsFixture {...args} />,
+  play: async ({ canvasElement }) => {
+    const header = canvasElement.querySelector<HTMLElement>('[data-yisiui-slot="header-extra"]')!;
+    const showHidden = findButton(header, "全部显示");
+    const onionSkin = findButton(header, "洋葱皮");
+    const ghost = () => canvasElement.querySelector<SVGGElement>("[data-canvas-onion-skin]");
+    const hidden = () => canvasElement.querySelectorAll('[data-ui-sketch-item][data-ui-sketch-visible="false"]');
+    if (hidden().length || ghost()) throw new Error("显示辅助默认应关闭");
+    onionSkin.click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "start" || ghost()?.children.length !== 6) {
+      throw new Error("洋葱皮应显示顺序中前一状态的可见区域、文字和图片");
+    }
+    if (ghost()!.querySelector('[tabindex], [role="button"], [data-ui-sketch-item]')
+      || [...ghost()!.querySelectorAll("*")].some((node) => getComputedStyle(node).pointerEvents !== "none")) {
+      throw new Error("洋葱皮不能接收焦点或指针操作");
+    }
+    showHidden.click();
+    await waitForCanvasRender();
+    if (hidden().length !== 3 || !ghost()) throw new Error("两个开关必须独立工作");
+    hidden()[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    showHidden.click();
+    await waitForCanvasRender();
+    if (hidden().length || canvasElement.querySelector('[data-ui-sketch-multi-selection]')) {
+      throw new Error("关闭隐藏节点后不应遗留选框");
+    }
+    findButton(canvasElement, "状态 3").click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "middle" || ghost()?.children.length !== 3
+      || ghost()?.querySelector("text")?.getAttribute("font-size") !== "48") {
+      throw new Error("洋葱皮必须使用前一状态的可见性和字号");
+    }
+    findButton(canvasElement, "状态 1").click();
+    await waitForCanvasRender();
+    if (ghost() || !onionSkin.disabled) throw new Error("首个状态不能显示洋葱皮");
+    findButton(canvasElement, "状态 3").click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "middle") throw new Error("上一状态不应取决于访问历史");
+    if (canvasElement.querySelector('[data-draft-changes="0"]') === null) {
+      throw new Error("辅助显示和状态切换不能修改草稿");
+    }
+    findButton(canvasElement, "状态 3").dispatchEvent(new KeyboardEvent("keydown", {
+      key: "ArrowLeft", ctrlKey: true, shiftKey: true, bubbles: true,
+    }));
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "start") throw new Error("洋葱皮必须跟随状态重排");
   },
 };
 
@@ -1676,6 +1756,50 @@ function ControlledUiSketchCanvas({
         onDraftChange?.(nextDraft);
       }}
     />
+  );
+}
+
+function DisplayControlsFixture({ draft: initialDraft, activeStageId = "start", ...props }: UiSketchCanvasProps) {
+  const [draft, setDraft] = useState(() => cloneUiSketchDraft(initialDraft));
+  const [active, setActive] = useState(activeStageId);
+  const [display, setDisplay] = useState({ showHiddenNodes: false, onionSkin: false });
+  const [changes, setChanges] = useState(0);
+  const tabs = uiSketchStateTabs(draft);
+  const selected = tabs.some((tab) => tab.id === active) ? active : tabs[0].id;
+  return (
+    <ConfigProvider theme={{ token: { motion: false } }}>
+      <Human2AiAppShell title={storyI18n.t("uiSketch.title")} sidebar={<div />} rightPanel={<div />}
+        headerExtra={tabs.length > 1 ? <CanvasDisplayControls value={display} onChange={setDisplay} hasPreviousState={tabs.findIndex((tab) => tab.id === selected) > 0} /> : undefined}>
+        <div style={{ height: "100%" }} data-draft-changes={changes}>
+          <CompositionWorkflowView stateControls={(
+            <UiSketchStateTabs
+              items={tabs.map((tab) => ({ id: tab.id, label: tab.name ?? storyI18n.t("uiSketch.states.defaultName", { number: tab.number }) }))}
+              value={selected}
+              labels={{
+                switch: storyI18n.t("uiSketch.views.switch"), add: storyI18n.t("uiSketch.views.enableMotion"),
+                rename: storyI18n.t("actions.rename"), name: storyI18n.t("uiSketch.states.name"),
+                new: storyI18n.t("uiSketch.states.new"), delete: storyI18n.t("uiSketch.states.delete"),
+                cancel: storyI18n.t("actions.cancel"), reorderHint: storyI18n.t("uiSketch.states.reorderHint"),
+                actions: (name) => storyI18n.t("uiSketch.states.actions", { name }),
+                deleteTitle: (name) => storyI18n.t("uiSketch.states.deleteTitle", { name }),
+              }}
+              onChange={setActive}
+              onReorder={(ids) => setDraft(reorderUiSketchStates(draft, ids))}
+              onRename={(id, name) => setDraft(renameUiSketchState(draft, id, name))}
+              onDelete={(id) => setDraft(deleteUiSketchState(draft, id))}
+              onCreate={(id) => {
+                const nextId = `state-${tabs.length + 1}`;
+                setDraft(insertUiSketchStage(draft, id, nextId));
+                setActive(nextId);
+              }}
+            />
+          )}>
+            <UiSketchCanvas {...props} draft={draft} activeStageId={selected} {...display}
+              onDraftChange={(next) => { setDraft(next); setChanges((count) => count + 1); props.onDraftChange?.(next); }} />
+          </CompositionWorkflowView>
+        </div>
+      </Human2AiAppShell>
+    </ConfigProvider>
   );
 }
 

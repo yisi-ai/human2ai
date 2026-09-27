@@ -1,6 +1,6 @@
 import { compositionLayerOrder } from "./layers.ts";
 import { compositionPlanGeometry } from "./planning.ts";
-import { validateDraft } from "./draft.ts";
+import { validateDraft, visibleCompositionDraft } from "./draft.ts";
 import {
   COMPOSITION_CANVAS,
   frameBoundsInCanvas,
@@ -20,7 +20,7 @@ export function renderCompositionSvg(
   input: CompositionDraft,
   resolveImageSource?: CompositionImageSourceResolver,
 ): string {
-  const draft = validateDraft(input);
+  const draft = visibleCompositionDraft(validateDraft(input));
   const frame = frameBoundsInCanvas(draft.frame);
   const world = compositionDraftWorldBounds(draft);
   const background = [
@@ -28,6 +28,30 @@ export function renderCompositionSvg(
     `<rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}" fill="#ffffff"/>`,
   ];
 
+  const orderedElements = [...background, ...renderCompositionNodesSvg(draft, resolveImageSource)];
+  if (draft.plans?.some((plan) => plan.visible)) {
+    orderedElements.push(`<defs><clipPath id="composition-planning-frame"><rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}"/></clipPath></defs>`);
+    for (const plan of draft.plans.filter((entry) => entry.visible)) {
+      const paths = compositionPlanGeometry(plan, draft.frame).paths.map((points) =>
+        `<polyline points="${points.map((p) => `${format(p.x)},${format(p.y)}`).join(" ")}"/>`).join("");
+      orderedElements.push(`<g data-composition-plan="${escapeAttribute(plan.id)}" clip-path="url(#composition-planning-frame)" fill="none" stroke="#B8C4D2" stroke-width="2" stroke-dasharray="8 5">${paths}</g>`);
+    }
+  }
+  orderedElements.push(
+    `<rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}" fill="none" stroke="#000000" stroke-width="2"/>`,
+  );
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${format(world.x)} ${format(world.y)} ${format(world.width)} ${format(world.height)}" width="${format(world.width)}" height="${format(world.height)}" role="img" aria-label="构图草图">
+${orderedElements.map((element) => `  ${element}`).join("\n")}
+</svg>`;
+}
+
+/** Content-only drawing, shared by the editor onion skin and CLI preview. */
+export function renderCompositionNodesSvg(
+  input: CompositionDraft,
+  resolveImageSource?: CompositionImageSourceResolver,
+): string[] {
+  const draft = visibleCompositionDraft(input);
   const elements: string[] = [];
   for (const image of draft.images) {
     elements.push(renderImageElement(image, resolveImageSource));
@@ -71,29 +95,14 @@ export function renderCompositionSvg(
     ].join(""));
   }
 
-  const orderedElements = [...background, ...orderedCompositionElements(draft, elements)];
-  if (draft.plans?.some((plan) => plan.visible)) {
-    orderedElements.push(`<defs><clipPath id="composition-planning-frame"><rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}"/></clipPath></defs>`);
-    for (const plan of draft.plans.filter((entry) => entry.visible)) {
-      const paths = compositionPlanGeometry(plan, draft.frame).paths.map((points) =>
-        `<polyline points="${points.map((p) => `${format(p.x)},${format(p.y)}`).join(" ")}"/>`).join("");
-      orderedElements.push(`<g data-composition-plan="${escapeAttribute(plan.id)}" clip-path="url(#composition-planning-frame)" fill="none" stroke="#B8C4D2" stroke-width="2" stroke-dasharray="8 5">${paths}</g>`);
-    }
-  }
-  orderedElements.push(
-    `<rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}" fill="none" stroke="#000000" stroke-width="2"/>`,
-  );
-
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${format(world.x)} ${format(world.y)} ${format(world.width)} ${format(world.height)}" width="${format(world.width)}" height="${format(world.height)}" role="img" aria-label="构图草图">
-${orderedElements.map((element) => `  ${element}`).join("\n")}
-</svg>`;
+  return orderedCompositionElements(draft, elements);
 }
 
 export function renderCompositionReferenceSvg(
   input: CompositionDraft,
   resolveImageSource?: CompositionImageSourceResolver,
 ): string {
-  const draft = validateDraft(input);
+  const draft = visibleCompositionDraft(validateDraft(input));
   const frame = frameBoundsInCanvas(draft.frame);
   const minimumEdge = Math.min(frame.width, frame.height);
   const strokeWidth = minimumEdge * 0.004;

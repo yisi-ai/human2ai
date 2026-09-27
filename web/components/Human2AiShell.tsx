@@ -1,5 +1,7 @@
 "use client";
 
+import { CopyOutlined } from "@ant-design/icons";
+import { ActionButton } from "@human2ai/ui/yisiui/action-button";
 import {
   Human2AiAppShell,
   Human2AiWorkspaceSidebar,
@@ -27,7 +29,7 @@ import {
   type Human2AiSession,
 } from "../lib/human2ai-api";
 
-type Human2AiShellProps = Omit<Human2AiAppShellProps, "labels" | "sidebar"> & {
+type Human2AiShellProps = Omit<Human2AiAppShellProps, "labels" | "sidebar" | "titleExtra"> & {
   currentSessionId?: string | null;
   onCurrentSessionRename?: (title: string) => void;
 };
@@ -74,6 +76,18 @@ export function Human2AiShell({
   return (
     <Human2AiAppShell
       {...props}
+      titleExtra={currentSessionId ? (
+        <ActionButton
+          key={currentSessionId}
+          size="small"
+          label={t("sessionDetails.copyId")}
+          pendingLabel={t("sessionDetails.copying")}
+          successLabel={t("clipboard.copied")}
+          errorLabel={t("sessionDetails.copyFailed")}
+          idleIcon={<CopyOutlined aria-hidden="true" />}
+          onAction={() => navigator.clipboard.writeText(currentSessionId)}
+        />
+      ) : undefined}
       brand={(
         <Link href="/" className="human2ai-app-shell__brand">
           <img className="human2ai-app-shell__brand-icon" src="/brand/h2a.svg" alt="" width={24} height={24} />

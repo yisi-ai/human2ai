@@ -35,8 +35,8 @@ const compositionPromptKeys: Record<string, string> = {
 
 const uiSketchPromptKeys: Record<string, string> = {
   stateName: "uiSketch.states.defaultName",
-  visible: "uiSketch.canvasLabels.visible",
-  hidden: "uiSketch.canvasLabels.hidden",
+  visible: "canvas.nodeVisibility.visible",
+  hidden: "canvas.nodeVisibility.hidden",
 };
 
 // Exporters use local message roles; callers resolve those roles to shared or

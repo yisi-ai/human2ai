@@ -34,6 +34,7 @@ export {
   updateItemMetadata,
   validateDraft,
   visibleAreaMetrics,
+  visibleCompositionDraft,
 } from "./draft.ts";
 export {
   COMPOSITION_CANVAS,
@@ -64,7 +65,7 @@ export {
   inspectComposition,
 } from "./analysis.ts";
 export { compositionPlanningIntersections, type CompositionPlanIntersection, type CompositionPlanIntersectionSource } from "./planning-intersections.ts";
-export { renderCompositionLightSourceSvg, renderCompositionReferenceSvg, renderCompositionSvg } from "./render.ts";
+export { renderCompositionNodesSvg, renderCompositionLightSourceSvg, renderCompositionReferenceSvg, renderCompositionSvg } from "./render.ts";
 export {
   beginCompositionRefinement,
   createCompositionWorkflowState,

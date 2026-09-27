@@ -1,8 +1,10 @@
 import {
   AimOutlined,
+  CopyOutlined,
   DeleteOutlined,
   LineOutlined,
 } from "@ant-design/icons";
+import { ActionButton } from "@human2ai/ui/yisiui/action-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import { ConfirmAction } from "@human2ai/ui/yisiui/confirm-action";
 import { SideActionPanel } from "@human2ai/ui/yisiui/side-action-panel";
@@ -10,6 +12,7 @@ import { Tooltip } from "antd";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import {
   assertStorySelector,
@@ -35,6 +38,7 @@ const labels = {
 function ShellHarness({
   rightPanel,
   title = "工作概览",
+  titleExtra,
   sidebar = <div className="human2ai-app-shell-story-sidebar">侧栏内容</div>,
   children = <div className="human2ai-app-shell-story-content">页面内容</div>,
   rightPanelOpen,
@@ -42,6 +46,7 @@ function ShellHarness({
 }: {
   rightPanel?: ReactNode;
   title?: ReactNode;
+  titleExtra?: ReactNode;
   sidebar?: ReactNode;
   children?: ReactNode;
   rightPanelOpen?: boolean;
@@ -50,6 +55,7 @@ function ShellHarness({
   return (
     <Human2AiAppShell
       title={title}
+      titleExtra={titleExtra}
       brand={(
         <a href="/" className="human2ai-app-shell__brand">
           <img className="human2ai-app-shell__brand-icon" src="/brand/h2a.svg" alt="" width={24} height={24} />
@@ -94,6 +100,17 @@ function CompositionPropertiesHarness() {
   return (
     <ShellHarness
       title="构图编辑器"
+      titleExtra={(
+        <ActionButton
+          size="small"
+          label={zh.sessionDetails.copyId}
+          pendingLabel={zh.sessionDetails.copying}
+          successLabel={zh.clipboard.copied}
+          errorLabel={zh.sessionDetails.copyFailed}
+          idleIcon={<CopyOutlined aria-hidden="true" />}
+          onAction={() => undefined}
+        />
+      )}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(

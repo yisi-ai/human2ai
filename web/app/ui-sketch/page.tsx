@@ -11,6 +11,7 @@ import {
   UI_SKETCH_START_STAGE_ID,
   SessionDetails,
   CanvasHistoryControls,
+  CanvasDisplayControls,
   CompositionWorkflowView,
   UiSketchCanvas,
   cloneUiSketchDraft,
@@ -161,6 +162,7 @@ function UiSketchPageContent() {
   const [interfaceFrameLocked, setInterfaceFrameLocked] = useState(false);
   const [toolHost, setToolHost] = useState<HTMLDivElement | null>(null);
   const [clearActionHost, setClearActionHost] = useState<HTMLDivElement | null>(null);
+  const [displayOptions, setDisplayOptions] = useState({ showHiddenNodes: false, onionSkin: false });
   const presetRatioChangeRef = useRef(false);
   const draftChangeVersionRef = useRef(0);
   const saveContextVersionRef = useRef(0);
@@ -452,6 +454,10 @@ function UiSketchPageContent() {
       currentSessionId={requestedSessionId}
       onCurrentSessionRename={setSessionTitle}
       title={sessionTitle ?? t("uiSketch.session.new")}
+      headerExtra={stateTabs.length > 1 ? <CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+        hasPreviousState={stateTabs.findIndex((tab) => tab.id === selectedStageId) > 0}
+        disabled={loading || sessionLoadFailed}
+        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} /> : undefined}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(
@@ -621,6 +627,7 @@ function UiSketchPageContent() {
                 resolveStylePrompt={sessionStyle.readPromptLine}
                 toolHost={rightPanelOpen ? toolHost : null}
                 clearActionHost={rightPanelOpen ? clearActionHost : null}
+                {...displayOptions}
                 showCanvasTools={!rightPanelOpen}
                 canvasSideActionPanelDefaultCollapsed
                 interfaceFrameLocked={interfaceFrameLocked}
@@ -706,9 +713,9 @@ function UiSketchPageContent() {
                   shapeKind: t("canvasNodeEditor.shapeKind"),
                   emptyText: t("uiSketch.canvasLabels.emptyText"),
                   visualWeight: t("visualWeight.label"),
-                  visibility: t("uiSketch.canvasLabels.visibility"),
-                  visible: t("uiSketch.canvasLabels.visible"),
-                  hidden: t("uiSketch.canvasLabels.hidden"),
+                  visibility: t("canvas.nodeVisibility.visibility"),
+                  visible: t("canvas.nodeVisibility.visible"),
+                  hidden: t("canvas.nodeVisibility.hidden"),
                   weightAuto: t("visualWeight.auto"),
                   weightHigh: t("visualWeight.high"),
                   weightMedium: t("visualWeight.medium"),

@@ -11,11 +11,17 @@ function captureLayout(draft: CompositionDraft): CompositionLayout {
       width: draft.frame.bounds.width, height: draft.frame.bounds.height,
     } },
     layerOrder: compositionLayerOrder(draft),
-    focusPoints: draft.focusPoints.map(({ id, x, y }) => ({ id, x, y })),
-    directionLine: draft.directionLine ? (({ id, x, y, rotation }) => ({ id, x, y, rotation }))(draft.directionLine) : null,
-    areas: draft.areas.map(({ id, x, y, area, aspect, rotation, width, height, corners }) => ({ id, x, y, area, aspect, rotation, width, height, ...(corners ? { corners: structuredClone(corners) } : {}) })),
-    images: draft.images.map(({ id, x, y, width, height, rotation }) => ({ id, x, y, width, height, rotation })),
+    focusPoints: draft.focusPoints.map(({ id, x, y, visible }) => ({ id, x, y, ...(visible === undefined ? {} : { visible }) })),
+    directionLine: draft.directionLine ? (({ id, x, y, rotation, visible }) => ({ id, x, y, rotation, ...(visible === undefined ? {} : { visible }) }))(draft.directionLine) : null,
+    areas: draft.areas.map(({ id, x, y, area, aspect, rotation, width, height, corners, visible }) => ({ id, x, y, area, aspect, rotation, width, height, ...(visible === undefined ? {} : { visible }), ...(corners ? { corners: structuredClone(corners) } : {}) })),
+    images: draft.images.map(({ id, x, y, width, height, rotation, visible }) => ({ id, x, y, width, height, rotation, ...(visible === undefined ? {} : { visible }) })),
   };
+}
+
+function applyNodeLayout<T extends { visible?: boolean }>(node: T, layout: Partial<T> | undefined): T {
+  if (!layout) return { ...node };
+  const { visible, ...content } = node;
+  return { ...content, ...layout } as T;
 }
 
 function applyLayout(draft: CompositionDraft, layout: CompositionLayout): CompositionDraft {
@@ -28,15 +34,15 @@ function applyLayout(draft: CompositionDraft, layout: CompositionLayout): Compos
     ...(layout.plans ? { plans: structuredClone(layout.plans) } : {}),
     frame: structuredClone(layout.frame),
     layerOrder: [...layout.layerOrder],
-    focusPoints: draft.focusPoints.map((node) => ({ ...node, ...points.get(node.id) })),
-    directionLine: draft.directionLine ? { ...draft.directionLine, ...layout.directionLine } : null,
+    focusPoints: draft.focusPoints.map((node) => applyNodeLayout(node, points.get(node.id))),
+    directionLine: draft.directionLine ? applyNodeLayout(draft.directionLine, layout.directionLine ?? undefined) : null,
     areas: draft.areas.map((node) => {
       const saved = areas.get(node.id);
       if (!saved) return { ...node };
-      const { x, y, area, aspect, rotation, width, height, corners, ...content } = node;
+      const { x, y, area, aspect, rotation, width, height, corners, visible, ...content } = node;
       return { ...content, ...saved };
     }),
-    images: draft.images.map((node) => ({ ...node, ...images.get(node.id) })),
+    images: draft.images.map((node) => applyNodeLayout(node, images.get(node.id))),
   };
 }
 

@@ -50,6 +50,7 @@ export interface Human2AiCanvasNodeEditorProps {
   onRequestClose: () => void;
   onDelete?: () => void;
   labels?: Partial<Human2AiCanvasNodeEditorLabels>;
+  titleExtra?: ReactNode;
   leadingFields?: ReactNode;
   propertyFields?: ReactNode;
   trailingFields?: ReactNode;
@@ -90,6 +91,7 @@ export function Human2AiCanvasNodeEditor({
   onRequestClose,
   onDelete,
   labels: labelOverrides,
+  titleExtra,
   leadingFields,
   propertyFields,
   trailingFields,
@@ -111,7 +113,12 @@ export function Human2AiCanvasNodeEditor({
   return (
     <TextMarkEditor
       open
-      title={`${labels.title} · ${kind}`}
+      title={titleExtra ? (
+        <div className="human2ai-canvas-node-editor__title">
+          <span>{`${labels.title} · ${kind}`}</span>
+          {titleExtra}
+        </div>
+      ) : `${labels.title} · ${kind}`}
       selectedText={kind}
       selectedTextLabel={labels.title}
       saveLabel=""

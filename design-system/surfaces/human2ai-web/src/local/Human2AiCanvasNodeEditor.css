@@ -8,6 +8,18 @@
   gap: var(--yisiui-space-3);
 }
 
+.human2ai-canvas-node-editor__title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+  padding-inline-end: var(--yisiui-space-6);
+}
+
+.human2ai-canvas-node-editor__title > :last-child {
+  flex-shrink: 0;
+}
+
 .human2ai-canvas-node-editor__primary-fields {
   display: grid;
   min-width: 0;

@@ -123,6 +123,7 @@
     "updated": "Last updated",
     "nodes": "Nodes",
     "agent": "Agent",
+    "copyId": "Copy ID",
     "copyCommand": "Copy command",
     "copying": "Copying",
     "copyFailed": "Copy failed",
@@ -214,6 +215,15 @@
       "originUser": "user",
       "originAgent": "agent",
       "originImport": "import"
+    },
+    "display": {
+      "showHiddenNodes": "Show all",
+      "onionSkin": "Onion skin"
+    },
+    "nodeVisibility": {
+      "visibility": "Visibility",
+      "visible": "Visible",
+      "hidden": "Hidden"
     }
   },
   "canvasNodeEditor": {
@@ -454,9 +464,6 @@
       "editRegionNote": "Edit region details",
       "editText": "Edit text",
       "emptyText": "---No text entered---",
-      "visibility": "Visibility",
-      "visible": "Visible",
-      "hidden": "Hidden",
       "fontSize": "Font size",
       "decreaseFontSize": "Decrease font size",
       "increaseFontSize": "Increase font size",

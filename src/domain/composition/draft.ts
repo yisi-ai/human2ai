@@ -661,7 +661,19 @@ export function resizeFrameToBounds(
 }
 
 export function visibleAreaMetrics(input: CompositionDraft): VisibleAreaMetrics {
-  return calculateVisibleAreaMetrics(validateDraft(input));
+  return calculateVisibleAreaMetrics(visibleCompositionDraft(validateDraft(input)));
+}
+
+/** Read-only projection for output and hit testing; never persist this filtered draft. */
+export function visibleCompositionDraft(input: CompositionDraft): CompositionDraft {
+  const { states, activeStateId, ...draft } = input;
+  return {
+    ...draft,
+    focusPoints: draft.focusPoints.filter((node) => node.visible !== false),
+    directionLine: draft.directionLine?.visible === false ? null : draft.directionLine,
+    areas: draft.areas.filter((node) => node.visible !== false),
+    images: draft.images.filter((node) => node.visible !== false),
+  };
 }
 
 function validateFrame(frame: unknown): asserts frame is CompositionFrame {

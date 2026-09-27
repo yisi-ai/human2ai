@@ -123,6 +123,7 @@
     "updated": "修改时间",
     "nodes": "节点数",
     "agent": "Agent",
+    "copyId": "复制ID",
     "copyCommand": "复制命令",
     "copying": "复制中",
     "copyFailed": "复制失败",
@@ -214,6 +215,15 @@
       "originUser": "user",
       "originAgent": "agent",
       "originImport": "import"
+    },
+    "display": {
+      "showHiddenNodes": "全部显示",
+      "onionSkin": "洋葱皮"
+    },
+    "nodeVisibility": {
+      "visibility": "显示状态",
+      "visible": "显示",
+      "hidden": "隐藏"
     }
   },
   "canvasNodeEditor": {
@@ -454,9 +464,6 @@
       "editRegionNote": "编辑区域信息",
       "editText": "编辑文字",
       "emptyText": "---文字未输入---",
-      "visibility": "显示状态",
-      "visible": "显示",
-      "hidden": "隐藏",
       "fontSize": "字号",
       "decreaseFontSize": "减小字号",
       "increaseFontSize": "增大字号",

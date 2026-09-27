@@ -44,6 +44,7 @@ import {
   type CanvasNodeTooltip,
 } from "./CanvasNode";
 import { CanvasScene } from "./CanvasScene";
+import { CanvasOnionSkin } from "./CanvasDisplayControls";
 import { CanvasShape } from "./CanvasShape";
 import { CanvasText, type CanvasTextBounds } from "./CanvasText";
 import { InfiniteCanvasViewport } from "./InfiniteCanvasViewport";
@@ -319,6 +320,8 @@ export interface UiSketchCanvasProps {
   resolveStylePrompt?: () => Promise<string | undefined>;
   toolHost?: HTMLElement | null;
   clearActionHost?: HTMLElement | null;
+  showHiddenNodes?: boolean;
+  onionSkin?: boolean;
   showCanvasTools?: boolean;
   canvasSideActionPanelDefaultCollapsed?: boolean;
   interfaceFrameLocked?: boolean;
@@ -345,6 +348,8 @@ export function UiSketchCanvas({
   resolveStylePrompt,
   toolHost = null,
   clearActionHost = null,
+  showHiddenNodes = false,
+  onionSkin = false,
   showCanvasTools = true,
   canvasSideActionPanelDefaultCollapsed = false,
   interfaceFrameLocked = false,
@@ -411,6 +416,17 @@ export function UiSketchCanvas({
   const clipboardTokenRef = useRef("");
   const pasteCountRef = useRef(0);
   const stateTabs = uiSketchStateTabs(draft);
+  const previousStageId = stateTabs[stateTabs.findIndex((tab) => tab.id === activeStageId) - 1]?.id;
+  const previousState = useMemo(
+    () => onionSkin && previousStageId ? uiSketchDraftForStage(draft, previousStageId) : null,
+    [draft, onionSkin, previousStageId],
+  );
+  const displayedState = useMemo(() => showHiddenNodes ? state : {
+    ...state,
+    rectangles: state.rectangles.filter((item) => item.visible),
+    texts: state.texts.filter((item) => item.visible),
+    images: state.images.filter((item) => item.visible),
+  }, [showHiddenNodes, state]);
   const motionSketchEnabled = stateTabs.length > 1;
   const visualWeightOptions: Array<{
     value: UiSketchVisualWeight;
@@ -424,8 +440,9 @@ export function UiSketchCanvas({
   ];
   const selectedItemKeys = selectedKeys.filter(isItemKey);
   const selectedItemKeySet = new Set(selectedItemKeys);
-  const multiSelectionBounds = selectedItemKeys.length > 1
-    ? boundsForItems(state, selectedItemKeys, textMeasurements)
+  const displayedSelectedKeys = selectedItemKeys.filter((key) => itemForKey(displayedState, key));
+  const multiSelectionBounds = displayedSelectedKeys.length > 1
+    ? boundsForItems(displayedState, displayedSelectedKeys, textMeasurements)
     : null;
   const editingItem = editingKey ? itemForKey(state, editingKey) : null;
   const latestImageUpdateRef = useRef({ updateImage, interactionResetKey });
@@ -477,7 +494,23 @@ export function UiSketchCanvas({
   useLayoutEffect(() => {
     setPlacementTool(null);
     dismissContextMenu();
-  }, [activeStageId]);
+  }, [activeStageId, showHiddenNodes]);
+
+  useLayoutEffect(() => {
+    setSelectedKeys((current) => {
+      const visibleKeys = current.filter(isItemKey).filter((key) => itemForKey(displayedState, key));
+      const next: UiSketchLayerKey[] = [
+        ...current.filter((key) => key === FRAME_KEY),
+        ...selectionWithGroups(state, visibleKeys),
+      ];
+      return current.length === next.length && current.every((key, index) => key === next[index])
+        ? current : next;
+    });
+    if (editingKey && !itemForKey(displayedState, editingKey)) {
+      setEditingKey(null);
+      setEditorDraft(null);
+    }
+  }, [displayedState, state, editingKey]);
 
   useLayoutEffect(() => () => {
     const interaction = interactionRef.current;
@@ -485,7 +518,7 @@ export function UiSketchCanvas({
       clearMovePreview(interaction);
       interactionRef.current = null;
     }
-  }, [activeStageId]);
+  }, [activeStageId, showHiddenNodes]);
 
   function updateDraft(
     update: UiSketchDraft | ((current: UiSketchDraft) => UiSketchDraft),
@@ -966,7 +999,7 @@ export function UiSketchCanvas({
     if (interaction.type === "marquee") {
       const hitKeys = interaction.moved
         ? selectionWithGroups(state, itemsIntersectingBounds(
-            state,
+            displayedState,
             rectangleFromPoints(
               interaction.start,
               worldPoint(event, event.currentTarget),
@@ -1413,8 +1446,54 @@ export function UiSketchCanvas({
                   </text>
                 </g>
 
+                {previousState ? (
+                  <CanvasOnionSkin stateId={previousStageId!}>
+                    {sortCanvasLayers([
+                      ...previousState.images.filter((item) => item.visible).map((image) => {
+                        const center = boundsCenter(image);
+                        const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
+                        return (
+                          <g key={image.id} transform={`translate(${center.x} ${center.y})`}>
+                            <CanvasImage
+                              src={src}
+                              alt={image.note || labels.image}
+                              width={image.width}
+                              height={image.height}
+                              fit="cover"
+                              crop={image.crop}
+                              status={src ? "ready" : "empty"}
+                              emptyLabel={labels.image}
+                            />
+                          </g>
+                        );
+                      }),
+                      ...previousState.rectangles.map((rectangle, index) => {
+                        if (!rectangle.visible) return null;
+                        const center = boundsCenter(rectangle);
+                        return (
+                          <g key={rectangle.id} transform={`translate(${center.x} ${center.y})`}
+                            className={`human2ai-ui-sketch-canvas__rectangle--tone-${index % 6}`}>
+                            <CanvasShape type="rectangle" width={rectangle.width} height={rectangle.height}
+                              className="human2ai-ui-sketch-canvas__rectangle-surface" />
+                          </g>
+                        );
+                      }),
+                      ...previousState.texts.filter((item) => item.visible).map((text) => (
+                        <g key={text.id} transform={`translate(${text.x} ${text.y})`}>
+                          <CanvasText text={text.text || labels.emptyText} fontSize={text.fontSize}
+                            className={[
+                              "human2ai-ui-sketch-canvas__text-content",
+                              text.text.length === 0 ? "human2ai-ui-sketch-canvas__text-content--empty" : null,
+                            ].filter(Boolean).join(" ")} />
+                        </g>
+                      )),
+                    ].filter((node) => node !== null), previousState.layerOrder, (node) => String(node.key))}
+                  </CanvasOnionSkin>
+                ) : null}
+
                 {sortCanvasLayers([
                   ...state.images.map((image) => {
+                  if (!showHiddenNodes && !image.visible) return null;
                   const key = itemKey("image", image.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(image);
@@ -1463,6 +1542,7 @@ export function UiSketchCanvas({
                   );
                 }),
                   ...state.rectangles.map((rectangle, index) => {
+                  if (!showHiddenNodes && !rectangle.visible) return null;
                   const key = itemKey("rectangle", rectangle.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(rectangle);
@@ -1510,6 +1590,7 @@ export function UiSketchCanvas({
                   );
                 }),
                   ...state.texts.map((text) => {
+                  if (!showHiddenNodes && !text.visible) return null;
                   const key = itemKey("text", text.id);
                   const selected = selectedItemKeySet.has(key);
                   const bounds = textBounds(text, textMeasurements);
@@ -1562,7 +1643,7 @@ export function UiSketchCanvas({
                     </g>
                   );
                 }),
-                ], state.layerOrder, (node) => String(node.key))}
+                ].filter((node) => node !== null), state.layerOrder, (node) => String(node.key))}
 
                 {multiSelectionBounds ? (
                   <rect
@@ -1611,11 +1692,24 @@ export function UiSketchCanvas({
         {editingKey && editingItem && editorDraft ? (
           <TextMarkEditor
             open
-            title={editorDraft.kind === "rectangle"
-              ? labels.editRegionNote
-              : editorDraft.kind === "text"
-                ? labels.editText
-                : labels.image}
+            title={(
+              <div className="human2ai-canvas-node-editor__title">
+                <span>
+                  {editorDraft.kind === "rectangle"
+                    ? labels.editRegionNote
+                    : editorDraft.kind === "text"
+                      ? labels.editText
+                      : labels.image}
+                </span>
+                <Switch
+                  checked={editorDraft.item.visible}
+                  checkedChildren={labels.visible}
+                  unCheckedChildren={labels.hidden}
+                  aria-label={labels.visibility}
+                  onChange={(visible) => updateEditorMetadata({ visible })}
+                />
+              </div>
+            )}
             selectedText={editingItem.kind === "rectangle"
               ? editingItem.item.note.trim() || labels.missingRegionNote
               : editingItem.kind === "text"
@@ -1719,16 +1813,6 @@ export function UiSketchCanvas({
                       options={visualWeightOptions}
                       aria-label={labels.visualWeight}
                       onChange={(weight: UiSketchVisualWeight) => updateEditorMetadata({ weight })}
-                    />
-                  </TextMarkEditorField>
-
-                  <TextMarkEditorField label={labels.visibility}>
-                    <Switch
-                      checked={editorDraft.item.visible}
-                      checkedChildren={labels.visible}
-                      unCheckedChildren={labels.hidden}
-                      aria-label={labels.visibility}
-                      onChange={(visible) => updateEditorMetadata({ visible })}
                     />
                   </TextMarkEditorField>
 
