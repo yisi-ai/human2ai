@@ -71,14 +71,13 @@ export function CanvasText({
     }
 
     measure();
-    const observer = typeof ResizeObserver === "undefined"
-      ? null
-      : new ResizeObserver(measure);
-    observer?.observe(textElement);
+    // SVG zoom can change hinted glyph bounds by fractions of a pixel. Those
+    // viewport-only changes must not become edits to every text node's bounds.
+    document.fonts?.addEventListener("loadingdone", measure);
     void document.fonts?.ready.then(measure);
     return () => {
       active = false;
-      observer?.disconnect();
+      document.fonts?.removeEventListener("loadingdone", measure);
     };
   }, [
     className,

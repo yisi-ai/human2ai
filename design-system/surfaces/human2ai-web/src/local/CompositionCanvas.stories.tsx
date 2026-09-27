@@ -4,6 +4,7 @@ import { AimOutlined, FontSizeOutlined, LineOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { ConfigProvider } from "antd";
 import { useState } from "react";
+import { waitFor } from "storybook/test";
 import { useCanvasHistory } from "../../../../../web/lib/use-canvas-history";
 
 import {
@@ -282,6 +283,7 @@ function SelectableCanvasExample() {
       data-note-target-id={noteTargetId ?? undefined}
       data-node-note={draft.areas[0]?.note}
       data-node-shot-scale={draft.areas[0]?.shotScale}
+      data-node-visible={draft.areas[0]?.visible !== false}
       data-focus-note={draft.focusPoints[0]?.note}
       data-direction-note={draft.directionLine?.note}
     >
@@ -1364,16 +1366,28 @@ export const NodeMetadataEditors: Story = {
       );
       if (!editor) throw new Error("节点信息 Story 没有打开编辑器");
       setInputValue(requiredInput(editor, "备注"), target.value);
-      await nextFrame();
-      if (harness.dataset[target.datasetKey] !== target.value) {
-        throw new Error(`${target.id} 的备注没有写回构图草图`);
+      await waitFor(() => {
+        if (harness.dataset[target.datasetKey] !== target.value) {
+          throw new Error(`${target.id} 的备注没有写回构图草图`);
+        }
+      });
+      if (target.id === "area-1") {
+        const visibility = editor.closest('[role="dialog"]')?.querySelector<HTMLButtonElement>('[role="switch"]');
+        if (!visibility) throw new Error("节点信息缺少显示开关");
+        setInputValue(requiredInput(editor, "备注"), "形状备注 · 最后输入");
+        visibility.click();
+        await waitFor(() => {
+          if (harness.dataset.nodeNote !== "形状备注 · 最后输入" || harness.dataset.nodeVisible !== "false") {
+            throw new Error("备注输入后立即隐藏必须保留两个字段");
+          }
+        });
       }
     }
     const editor = document.body.querySelector<HTMLElement>(
       '[data-yisiui-asset="human2ai/canvas-node-editor"]',
     );
     if (!editor) throw new Error("节点信息 Story 缺少删除面板");
-    findButton(editor, "删除节点").click();
+    findButton(editor.closest<HTMLElement>('[role="dialog"]')!, "删除节点").click();
     await nextFrame();
     const deleteButtons = [...document.body.querySelectorAll<HTMLButtonElement>("button")]
       .filter((button) => button.textContent?.trim() === "删除节点");
@@ -1446,7 +1460,7 @@ export const TextRegion: Story = {
       '[data-composition-kind="text-region"]',
     );
     if (!node) throw new Error("构图画布缺少文字区域节点");
-    if (canvasElement.querySelector<HTMLElement>("[data-processing-semantic]")?.dataset.processingSemantic !== "unselected") {
+    if (canvasElement.querySelector<HTMLElement>("[data-processing-semantic]")?.dataset.processingSemantic !== (createDraft().processingSemantic ?? "unselected")) {
       throw new Error("添加文字区域不应自动切换草稿构图模式");
     }
     if (node.querySelectorAll(".human2ai-composition-canvas__text-region-marks line").length !== 3) {
@@ -1544,14 +1558,13 @@ export const TextRegion: Story = {
     }
     setInputValue(displayText, "静观自得");
     setInputValue(requiredInput(editor, "备注"), "左上主标题，右下留白");
-    await nextFrame();
-    const harness = canvasElement.querySelector<HTMLElement>("[data-text-region-note]");
-    if (
-      harness?.dataset.textRegionNote !== "左上主标题，右下留白"
-      || harness.dataset.textRegionDisplayText !== "静观自得"
-    ) {
-      throw new Error("文字区域字段没有即时写回构图草图");
-    }
+    await waitFor(() => {
+      const harness = canvasElement.querySelector<HTMLElement>("[data-text-region-note]");
+      if (harness?.dataset.textRegionNote !== "左上主标题，右下留白"
+        || harness.dataset.textRegionDisplayText !== "静观自得") {
+        throw new Error("连续输入必须保留显示文字和备注两个字段");
+      }
+    });
   },
 };
 

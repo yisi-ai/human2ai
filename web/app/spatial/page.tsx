@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { SpatialWorkspaceView, SessionDetails, CanvasHistoryControls, type SpatialLabels } from "@human2ai/ui";
@@ -151,7 +151,8 @@ function SpatialSessionPage() {
     if (error === "spatial.saveFailed") { state.current.stopped = false; setError(null); }
     else setReload(value => value + 1);
   };
-  return <Human2AiShell title={session?.title ?? t("spatial.title")} currentSessionId={sessionId} onCurrentSessionRename={title => setSession(value => value ? { ...value, title } : value)}
+  const renameCurrentSession = useCallback((title: string) => setSession(value => value ? { ...value, title } : value), []);
+  return <Human2AiShell title={session?.title ?? t("spatial.title")} currentSessionId={sessionId} onCurrentSessionRename={renameCurrentSession}
     rightPanelOpen={rightPanelOpen} onRightPanelOpenChange={setRightPanelOpen}
     rightPanel={sessionId ? <div ref={setPanelHost} className="spatial-panel-host" /> : undefined}>
     {!sessionId ? <BasicButton onClick={async () => { const created = await createSpatialSession(t("spatial.untitled")); router.push(`/spatial?session=${encodeURIComponent(created.id)}`); }}>{t("spatial.newSpace")}</BasicButton> : <SpatialWorkspaceView

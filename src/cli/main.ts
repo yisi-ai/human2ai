@@ -1160,6 +1160,15 @@ function parseStyleProcessing(input: unknown): StyleProcessing {
   return value as unknown as StyleProcessing;
 }
 
+async function writeCompositionPreview(previewPath: string, svg: string) {
+  if (path.extname(previewPath).toLowerCase() === ".png") {
+    await sharp(Buffer.from(svg)).png().toFile(previewPath);
+    return { previewSvg: null, previewPng: previewPath };
+  }
+  await writeFile(previewPath, svg, "utf8");
+  return { previewSvg: previewPath };
+}
+
 async function inspectLocalDraft(options: CommandOptions): Promise<unknown> {
   assertOnlyOptions(options, ["draft", "preview"], "inspect with --draft");
   const draftPath = path.resolve(requireOption(options, "draft"));
@@ -1169,10 +1178,12 @@ async function inspectLocalDraft(options: CommandOptions): Promise<unknown> {
     [{ label: "preview", filename: previewPath }],
     [{ label: "draft", filename: draftPath }],
   );
-  if (previewPath) await writeFile(previewPath, renderCompositionSvg(draft), "utf8");
+  const artifacts = previewPath
+    ? await writeCompositionPreview(previewPath, renderCompositionSvg(draft))
+    : { previewSvg: null };
   return {
     ...inspectComposition(draft),
-    artifacts: { previewSvg: previewPath },
+    artifacts,
   };
 }
 
@@ -1228,9 +1239,9 @@ async function inspectSessionDraft(
     ),
   );
   const previewPath = options.preview ? path.resolve(options.preview) : null;
-  if (previewPath) {
-    await writeFile(previewPath, renderCompositionSvg(version.draft, await sessionImageSources(version.draft, sessionId, dependencies)), "utf8");
-  }
+  const artifacts = previewPath
+    ? await writeCompositionPreview(previewPath, renderCompositionSvg(version.draft, await sessionImageSources(version.draft, sessionId, dependencies)))
+    : { previewSvg: null };
   return {
     ...inspectComposition(version.draft),
     source: {
@@ -1239,7 +1250,7 @@ async function inspectSessionDraft(
       draftVersionId: version.id,
       draftRevision: version.revision,
     },
-    artifacts: { previewSvg: previewPath },
+    artifacts,
   };
 }
 
@@ -1266,17 +1277,17 @@ async function applyLocalRefinement(options: CommandOptions): Promise<unknown> {
   const draft = validateDraft(await readJson(draftPath));
   const plan = await readJson(planPath);
   const result = applyRefinementPlan(draft, plan);
+  const preview = previewPath
+    ? await writeCompositionPreview(previewPath, renderCompositionSvg(result.refinedDraft))
+    : { previewSvg: null };
   const payload = {
     ...result,
     artifacts: {
       result: outputPath,
-      previewSvg: previewPath,
+      ...preview,
     },
   };
   if (outputPath) await writeJson(outputPath, payload);
-  if (previewPath) {
-    await writeFile(previewPath, renderCompositionSvg(result.refinedDraft), "utf8");
-  }
   return payload;
 }
 
@@ -1327,17 +1338,17 @@ async function writeSessionRefinementArtifacts(
     ],
     [],
   );
+  const preview = previewPath
+    ? await writeCompositionPreview(previewPath, renderCompositionSvg(run.result.refinedDraft, await sessionImageSources(run.result.refinedDraft, run.sessionId, dependencies)))
+    : { previewSvg: null };
   const payload = {
     ...run,
     artifacts: {
       result: outputPath,
-      previewSvg: previewPath,
+      ...preview,
     },
   };
   if (outputPath) await writeJson(outputPath, payload);
-  if (previewPath) {
-    await writeFile(previewPath, renderCompositionSvg(run.result.refinedDraft, await sessionImageSources(run.result.refinedDraft, run.sessionId, dependencies)), "utf8");
-  }
   return payload;
 }
 
@@ -1821,12 +1832,12 @@ function usage(): string {
     "  human2ai composition methods",
     "  human2ai composition save --session <id> --draft <draft.json> --expected-revision <n>",
     "  human2ai composition drafts --session <id>",
-    "  human2ai composition inspect --draft <draft.json> [--preview <preview.svg>]",
-    "  human2ai composition inspect --session <id> --revision <n> [--preview <preview.svg>]",
-    "  human2ai composition apply --draft <draft.json> --plan <plan.json> [--output <result.json>] [--preview <preview.svg>]",
-    "  human2ai composition apply --session <id> --revision <n> --plan <plan.json> [--output <run.json>] [--preview <preview.svg>]",
+    "  human2ai composition inspect --draft <draft.json> [--preview <preview.png|preview.svg>]",
+    "  human2ai composition inspect --session <id> --revision <n> [--preview <preview.png|preview.svg>]",
+    "  human2ai composition apply --draft <draft.json> --plan <plan.json> [--output <result.json>] [--preview <preview.png|preview.svg>]",
+    "  human2ai composition apply --session <id> --revision <n> --plan <plan.json> [--output <run.json>] [--preview <preview.png|preview.svg>]",
     "  human2ai composition refinements --session <id>",
-    "  human2ai composition refinement --session <id> --run <id> [--output <run.json>] [--preview <preview.svg>]",
+    "  human2ai composition refinement --session <id> --run <id> [--output <run.json>] [--preview <preview.png|preview.svg>]",
     "  human2ai composition reference --session <id> --run <id> --output <reference.png>",
   ].join("\n");
 }

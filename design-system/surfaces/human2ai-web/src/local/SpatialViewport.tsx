@@ -8,6 +8,7 @@ import { angles, boneAngles, fingerBasis, handJointIds, fingerPart, boneWorldTra
 import { createSpatialPreview } from "../../../../../src/domain/spatial/preview";
 import { createOutputCamera, disposeSpatialScene } from "../../../../../src/domain/spatial/scene";
 import { SpatialSceneCache } from "../../../../../src/domain/spatial/scene-cache";
+import { spatialEntityRenderKey } from "../../../../../src/domain/spatial/render-inputs";
 import { fitSpatialLight, getSpatialLighting } from "../../../../../src/domain/spatial/lighting";
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 
@@ -75,17 +76,25 @@ export function SpatialViewport(props: SpatialViewportProps) {
     let lightingEnabled: boolean | undefined;
     const boxGuides = new Group(); scene.add(boxGuides);
     const cameraGuides = new Group(); scene.add(cameraGuides);
+    const boxAxes = new AxesHelper(1); boxAxes.visible = false; scene.add(boxAxes);
     let dragging = false;
     let base: SpatialDraft | null = null;
     let previewOperation: ReturnType<typeof createSpatialPreview> | null = null;
     let guidesKey: string | undefined;
+    let contentKey: string | undefined;
+    let selectionKey: string | undefined;
+    let transformKey: string | undefined;
     let frame = 0;
     let drawFrame = 0;
     const draw = () => {
       if (!drawFrame) drawFrame = requestAnimationFrame(() => { drawFrame = 0; renderer.render(scene, camera); });
     };
     const rebuild = (draft: SpatialDraft) => {
-      const surfacesChanged = contentCache.update(draft, { showRig: current.current.showRig, dragging: dragging || current.current.interacting });
+      const interacting = dragging || current.current.interacting;
+      const nextContentKey = JSON.stringify([draft.characters.map(spatialEntityRenderKey), draft.objects.map(spatialEntityRenderKey), current.current.showRig, Boolean(interacting)]);
+      const contentChanged = contentKey !== nextContentKey;
+      contentKey = nextContentKey;
+      const surfacesChanged = contentChanged && contentCache.update(draft, { showRig: current.current.showRig, dragging: interacting });
       const lightChanged = lightingEnabled !== Boolean(draft.lightingEnabled);
       lightingEnabled = Boolean(draft.lightingEnabled);
       const lighting = getSpatialLighting(draft);
@@ -97,8 +106,9 @@ export function SpatialViewport(props: SpatialViewportProps) {
       }
       const selection = current.current.selection;
       const highlight = getComputedStyle(element).getPropertyValue("--yisiui-color-action-primary").trim() || "#467bd3";
-      const nextGuidesKey = JSON.stringify([draft.cameras, draft.cameraBoxes, current.current.showCameras, selection && ("cameraId" in selection || "cameraBoxId" in selection) ? selection : null, highlight]);
-      if (guidesKey !== nextGuidesKey) {
+      const nextGuidesKey = JSON.stringify([draft.cameras.map(({ name, note, ...camera }) => camera), draft.cameraBoxes?.map(({ name, note, ...box }) => box), current.current.showCameras]);
+      const guidesChanged = guidesKey !== nextGuidesKey;
+      if (guidesChanged) {
         guidesKey = nextGuidesKey;
         disposeSpatialScene(cameraGuides); cameraGuides.clear();
         for (const source of current.current.showCameras === false ? [] : draft.cameras) {
@@ -122,8 +132,25 @@ export function SpatialViewport(props: SpatialViewportProps) {
           const outline = new LineSegments(new EdgesGeometry(geometry), new LineBasicMaterial({ color: selected ? "#467bd3" : "#9cbbd3", transparent: true, opacity: selected ? .95 : .45, depthTest: false }));
           geometry.dispose(); outline.position.copy(vector(box.position)); outline.quaternion.copy(quaternion(box.rotation));
           outline.userData.cameraBoxId = box.id; outline.renderOrder = 1; boxGuides.add(outline);
-          if (selected) { const axes = new AxesHelper(box.size * .25); axes.position.copy(outline.position); axes.quaternion.copy(outline.quaternion); boxGuides.add(axes); }
         }
+      }
+      const nextSelectionKey = JSON.stringify([selection, highlight]);
+      const selectionChanged = selectionKey !== nextSelectionKey;
+      selectionKey = nextSelectionKey;
+      if (guidesChanged || selectionChanged) {
+        for (const guide of cameraGuides.children as CameraHelper[]) {
+          const selected = selection && "cameraId" in selection && selection.cameraId === guide.userData.cameraId;
+          const material = guide.material as LineBasicMaterial;
+          material.color.set(selected ? highlight : "#9cbbd3"); material.opacity = selected ? .95 : .45;
+        }
+        for (const guide of boxGuides.children as LineSegments[]) {
+          const selected = selection && "cameraBoxId" in selection && selection.cameraBoxId === guide.userData.cameraBoxId;
+          const material = guide.material as LineBasicMaterial;
+          material.color.set(selected ? highlight : "#9cbbd3"); material.opacity = selected ? .95 : .45;
+        }
+        const selectedBox = selection && "cameraBoxId" in selection ? draft.cameraBoxes?.find(box => box.id === selection.cameraBoxId) : undefined;
+        boxAxes.visible = Boolean(selectedBox);
+        if (selectedBox) { boxAxes.position.copy(vector(selectedBox.position)); boxAxes.quaternion.copy(quaternion(selectedBox.rotation)); boxAxes.scale.setScalar(selectedBox.size * .25); }
       }
       const handActor = selection && "characterId" in selection && selection.handBoneId ? draft.characters.find(c => c.id === selection.characterId) : undefined;
       const hand = handActor?.bones.find(b => b.id === (selection && "characterId" in selection ? selection.handBoneId : undefined));
@@ -131,7 +158,7 @@ export function SpatialViewport(props: SpatialViewportProps) {
       const isSelected = (data: Record<string,string>) => selection && ("characterId" in selection
         ? data.characterId === selection.characterId && (handIds ? handIds.has(data.jointId) || data.jointId === hand!.startJointId || handIds.has(handActor!.bones.find(b => b.id === data.boneId)?.endJointId ?? "") : selection.jointId ? data.jointId === selection.jointId : selection.boneId ? data.boneId === selection.boneId : true)
         : "objectId" in selection && data.objectId === selection.objectId);
-      content.traverse(mesh => {
+      if (surfacesChanged || selectionChanged) content.traverse(mesh => {
         if (!(mesh instanceof Mesh) || !(mesh.material instanceof MeshLambertMaterial)) return;
         if (mesh instanceof InstancedMesh && mesh.userData.rig) {
           const color = new Color(), baseColor = mesh.userData.rig === "joint" ? "#e6a65c" : "#728aa1";
@@ -150,11 +177,14 @@ export function SpatialViewport(props: SpatialViewportProps) {
           else mesh.material.color.set(highlight);
         }
       });
-      draw();
+      if (surfacesChanged || lightChanged || guidesChanged || selectionChanged) draw();
     };
     const select = () => {
       if (dragging) return;
       const { draft, selection, mode, disabled } = current.current;
+      const nextTransformKey = JSON.stringify([contentKey, guidesKey, selection, mode, disabled]);
+      if (transformKey === nextTransformKey) return;
+      transformKey = nextTransformKey;
       const activeMode = selection && "characterId" in selection ? selection.jointId ? "translate" : selection.boneId || selection.handBoneId ? "rotate" : mode : mode;
       transform.setMode(activeMode);
       transform.setSpace(selection && "characterId" in selection && (selection.boneId || selection.handBoneId) ? "local" : "world");
@@ -308,6 +338,7 @@ export function SpatialViewport(props: SpatialViewportProps) {
       contentCache.dispose();
       shadingWorker?.terminate(); rejectShading?.(new DOMException("", "AbortError"));
       disposeSpatialScene(cameraGuides); disposeSpatialScene(boxGuides);
+      boxAxes.dispose();
       light.dispose();
       renderer.dispose(); renderer.forceContextLoss(); renderer.domElement.remove();
     };

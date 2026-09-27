@@ -2,6 +2,18 @@
 
 The Agent decides which compositional relationships support the user’s intent. Human2AI provides neutral measurements, deterministic relation operations, final relation checks and independent results. Style processing is a separate workflow used only when the request calls for it.
 
+## Export a preview
+
+Export any saved composition revision directly as PNG; no refinement run is required. Create `.human2ai-data/output/` before exporting:
+
+```text
+<runner> composition inspect --session <session-id> --revision <n> --preview .human2ai-data/output/preview.png
+```
+
+Use `.svg` for a vector preview. The same format choice applies to local `composition inspect --draft`, `composition apply`, and saved `composition refinement` previews. A `.png` extension (case-insensitive) rasterizes the existing preview; other filenames retain the legacy SVG output. PNG results return `artifacts.previewPng` and set `artifacts.previewSvg` to `null`; SVG results retain `artifacts.previewSvg`. Omitting `--preview` writes no image.
+
+Both formats preserve the same visible nodes, planning guides, layer order and outside-frame content. Session previews embed saved image assets. These inspection previews differ from the guide-free generation-reference PNG exported by `composition reference`.
+
 ## Draw a reference picture on the canvas
 
 Geometric areas may explicitly set `isLightSource: true` (missing or false means ordinary content). Interpret light markers at the same approximate level as ordinary composition shapes: preserve the intended lighting contribution and broad spatial relationships, not a measured light-patch template. Rectangles suggest band-shaped or extended illumination; circles suggest localized illumination. The drawn width, length, contour and gradient are descriptions, not default output constraints. User instructions and node notes take precedence; otherwise the Agent freely adapts width, length, curvature, continuity, softness and strength to the scene.
@@ -103,15 +115,15 @@ the specific limitation instead of claiming the planned composition is fulfilled
 
 Use the style workflow in `SKILL.md` and save a complete draft through `style.commands.save`. This supports proportion changes and new accents. The `composition apply` workflow below remains a separate Agent-directed derivative workflow; explicit ratio and geometry-symmetry rules may resize existing areas, while node identity and content remain intact.
 
-Read the current capture and inspect it with `composition inspect --session <session-id> --revision <n> --preview <preview.svg>`. Preserve the user's explicit `processingSemantic`; when it is `null`, ask the user to choose Scene or Editorial before processing. Keep the frame and existing visible text, ids, user notes and approximate placement. In Scene mode interpret areas as subjects and spatial relationships; in Editorial mode interpret them as typography, imagery and negative space. Apply the style through supported sizes, proportions, placement, rotations, weights and optional agent-origin accents. Do not turn the sketch into a literal inventory of bordered boxes.
+Read the current capture and inspect it with `composition inspect --session <session-id> --revision <n> --preview .human2ai-data/output/preview.png`. Preserve the user's explicit `processingSemantic`; when it is `null`, ask the user to choose Scene or Editorial before processing. Keep the frame and existing visible text, ids, user notes and approximate placement. In Scene mode interpret areas as subjects and spatial relationships; in Editorial mode interpret them as typography, imagery and negative space. Apply the style through supported sizes, proportions, placement, rotations, weights and optional agent-origin accents. Do not turn the sketch into a literal inventory of bordered boxes.
 
-Coordinates use the signed world coordinate system below, not pixel values copied from the preview. Validate the saved revision and inspect its preview. The browser can copy the current canvas as a PNG and a prompt with one style sentence. For downstream work, use the full bound specification; a guide-bearing preview SVG is not a generation reference.
+Coordinates use the signed world coordinate system below, not pixel values copied from the preview. Validate the saved revision and inspect its preview. The browser can copy the current canvas as a PNG and a prompt with one style sentence. For downstream work, use the full bound specification; a guide-bearing preview is not a generation reference, regardless of file format.
 
 ## Refine a composition
 
 Refinement clarifies the user's composition through deliberate, optional relationships. Mathematical rules are tools, not mandatory templates or evidence of aesthetic quality. Do not select a convenient operation first and invent a reason afterward. Do not bind a style or rewrite the editable capture in response to a refinement request.
 
-1. Discover current methods and the plan schema with `composition methods`. Read the exact saved revision with `capture get`, then run `composition inspect --session <session-id> --revision <n> --preview <source.svg>` and actually inspect the rendered composition. Reuse the user's explicit `processingSemantic`; when it is null, ask for Scene or Editorial. Re-inspect after their choice. Preserve the exact source fingerprint.
+1. Discover current methods and the plan schema with `composition methods`. Read the exact saved revision with `capture get`, then run `composition inspect --session <session-id> --revision <n> --preview .human2ai-data/output/source.png` and actually inspect the rendered composition. Reuse the user's explicit `processingSemantic`; when it is null, ask for Scene or Editorial. Re-inspect after their choice. Preserve the exact source fingerprint.
 
 2. Read the composition before deciding to change it. Describe the intended viewing experience, relevant masses, scale contrasts, open space, focal relationships and existing motion. Use visible evidence and user notes; do not assume every shape is a subject, every focus has a rank, or every empty space needs filling. Record uncertainty instead of inventing missing intent. `inspect.guidance` provides neutral angle and perpendicular/forward distances from existing shape axes and the direction line to focuses; these measurements do not prove how viewers will look. Distances use output pixels and angles use physical world geometry, including on portrait or moved frames.
 
@@ -126,7 +138,7 @@ Refinement clarifies the user's composition through deliberate, optional relatio
 5. Explain the concrete plan and obtain user consent in the conversation unless their existing request already authorizes it. The Agent owns that conversation; Human2AI has no separate approval state or confirmation API. Apply using:
 
    ```text
-   <runner> composition apply --session <session-id> --revision <n> --plan <plan.json> --output <run.json> --preview <refined.svg>
+   <runner> composition apply --session <session-id> --revision <n> --plan <plan.json> --output .human2ai-data/output/run.json --preview .human2ai-data/output/refined.png
    ```
 
    Execute dependent operations in a deliberate order: establish proportions and subject placement, propagate subject/focus associations, then arrange guidance as applicable. The engine remeasures **every chosen relationship on the final draft**. A later operation cannot silently invalidate an earlier one. `audit.relations` reports before/after/target/error and technical satisfaction; incompatible relations or changed `fixedIds` produce `REFINEMENT_CONSTRAINT` with the affected operation indices. Revise the plan, order, or explicitly conflicting intention; do not repeat a failing plan or overwrite the source to make it fit. This is exact relation validation, not a general constraint optimizer.
@@ -154,7 +166,7 @@ Rules need not all be used, and none is compulsory. Mathematics can describe foc
 
 Version 1 plans and stored results remain readable and executable for compatibility. New Agent work uses version 2 so it records intent and validates final relationships. The legacy `strength: "subtle"` is optional and imposes no amplitude limit. Source fingerprint, mode, valid geometry and protected content are still checked. Displacement, rotation, clipping, overlap and visual-center changes are observations, not aesthetic rejection thresholds.
 
-When downstream image generation is authorized, export the saved run through `composition reference --session <session-id> --run <run-id> --output <reference.png>`. Attach the returned image path as a soft spatial map, not line art, and carry the mode-specific interpretation and required typography into the generation instruction. The CLI preview SVG includes guides and outside content and must not replace that PNG.
+When downstream image generation is authorized, export the saved run through `composition reference --session <session-id> --run <run-id> --output <reference.png>`. Attach the returned image path as a soft spatial map, not line art, and carry the mode-specific interpretation and required typography into the generation instruction. CLI inspection previews in either PNG or SVG include guides and outside content and must not replace that generation reference.
 
 ## Shared composition planning
 
@@ -208,7 +220,7 @@ Example: `{ "id": "plan-1", "type": "golden-spiral",
 "visible": true, "x": 0.618,
 "y": 0.382, "rotation": 135, "scale": 0.65, "mirrored": false }`.
 
-`composition inspect` exposes active `plans`; its SVG preview renders visible
+`composition inspect` exposes active `plans`; its PNG and SVG previews render visible
 plans using the same geometry as the browser. Planning guides never enter the
 generation-reference PNG. Carry all planning intent into any
 separately authorized generation work using the

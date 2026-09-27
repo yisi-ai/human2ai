@@ -1,5 +1,9 @@
 "use client";
 
+import { createViewportNodeCache } from "./viewportNodeCache";
+
+import { withOptimisticInput } from "./optimisticInput";
+
 import { Dropdown, Select, Switch } from "antd";
 import {
   TextMarkEditorField,
@@ -101,6 +105,8 @@ import "./CompositionCanvas.css";
 import zh from "../../../../../locales/zh-CN/common.json";
 import { CompositionPlanningOverlay } from "./CompositionPlanningOverlay";
 import type { CompositionPlanningLabels } from "./CompositionPlanningPanel";
+
+const ImmediateNoteInput = withOptimisticInput(TextMarkEditorTextArea);
 
 export interface CompositionCanvasProps {
   selectedPlanIds?: readonly string[];
@@ -302,7 +308,7 @@ export function CompositionCanvas({
   onImageUpload,
   onReadImageFile,
   selectedIds = [],
-  onDraftChange,
+  onDraftChange: changeDraft,
   placementTool = null,
   onPlacementToolChange,
   onSelectionChange,
@@ -320,6 +326,10 @@ export function CompositionCanvas({
   ]
     .filter(Boolean)
     .join(" ");
+  const onDraftChange = changeDraft ? (next: CompositionDraft) => {
+    latestDraftRef.current.draft = next;
+    changeDraft(next);
+  } : undefined;
   const canvasRootRef = useRef<HTMLDivElement>(null);
   const displayedDraft = useMemo(() => showHiddenNodes && appearance !== "reference"
     ? draft : visibleCompositionDraft(draft), [appearance, draft, showHiddenNodes]);
@@ -332,6 +342,7 @@ export function CompositionCanvas({
     : null, [draft, onionSkin, previousStateId, resolveImageSource]);
   const { contextMenuOpen, contextMenuPoint, contextMenuPopupRef, openContextMenuAt, closeContextMenu, dismissContextMenu } = useCanvasContextMenu();
   const layerLabels = { ...DEFAULT_CANVAS_LAYER_LABELS, ...layerLabelOverrides };
+  const renderViewportNode = createViewportNodeCache();
   const [controlsHost, setControlsHost] = useState<SVGGElement | null>(null);
   const interactionRef = useRef<PointerInteraction | null>(null);
   const suppressClickRef = useRef(false);
@@ -391,7 +402,7 @@ export function CompositionCanvas({
   const lightGradientPrefix = useId().replace(/:/g, "");
   const imageEditorLabels = { ...DEFAULT_IMAGE_EDITOR_LABELS, ...imageEditorLabelOverrides };
   const latestDraftRef = useRef({ draft, onDraftChange, interactionResetKey });
-  useLayoutEffect(() => { latestDraftRef.current = { draft, onDraftChange, interactionResetKey }; });
+  useLayoutEffect(() => { latestDraftRef.current = { draft, onDraftChange, interactionResetKey }; }, [draft, changeDraft, interactionResetKey]);
   const imagePaste = useCanvasImagePaste({
     disabled: appearance === "reference" || !onDraftChange || Boolean(editingTarget),
     resetKey: interactionResetKey,
@@ -1087,7 +1098,7 @@ export function CompositionCanvas({
           const height = image.height * COMPOSITION_CANVAS.height;
           const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
           const imageLabel = nodeEditorLabels?.imageKind ?? "图片";
-          return (
+          return renderViewportNode(image.id, selectedItemIdSet.has(image.id) ? screenScale : 1, () => (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={image.id}
@@ -1155,7 +1166,7 @@ export function CompositionCanvas({
                 emptyLabel={imageLabel}
               />
             </CanvasNode>
-          );
+          ));
         }),
           ...draft.areas.map((area, index) => {
           if (area.visible === false && (!showHiddenNodes || appearance === "reference")) return null;
@@ -1171,7 +1182,7 @@ export function CompositionCanvas({
           const itemLabel = textRegion
             ? nodeEditorLabels?.textKind ?? "文字区域"
             : AREA_LABELS[area.primitive];
-          return (
+          return renderViewportNode(area.id, selectedItemIdSet.has(area.id) ? screenScale : 1, () => (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={area.id}
@@ -1285,7 +1296,7 @@ export function CompositionCanvas({
                 />
               )}
             </CanvasNode>
-          );
+          ));
         }),
           ...(draft.directionLine && displayedDraft.directionLine ? [
           <DirectionLineItem
@@ -1310,7 +1321,7 @@ export function CompositionCanvas({
           const x = focus.x * COMPOSITION_CANVAS.width;
           const y = focus.y * COMPOSITION_CANVAS.height;
           const radius = Math.min(COMPOSITION_CANVAS.width, COMPOSITION_CANVAS.height) * 0.018;
-          return (
+          return renderViewportNode(focus.id, selectedItemIdSet.has(focus.id) ? screenScale : 1, () => (
             <CanvasNode
               controlsHost={draft.layerOrder ? controlsHost : undefined}
               key={focus.id}
@@ -1355,7 +1366,7 @@ export function CompositionCanvas({
                 radius={4}
               />
             </CanvasNode>
-          );
+          ));
         }),
         ].filter((node) => node !== null), draft.layerOrder, (node) => String(node.key))}
 
@@ -1590,13 +1601,13 @@ export function CompositionCanvas({
               unCheckedChildren={visibilityLabels.hidden}
               aria-label={visibilityLabels.visibility}
               disabled={!onDraftChange}
-              onChange={(visible) => onDraftChange?.(updateItemMetadata(draft, editingItem.id, { visible }))}
+              onChange={(visible) => onDraftChange?.(updateItemMetadata(latestDraftRef.current.draft, editingItem.id, { visible }))}
             />
           )}
           leadingFields={
             editingArea && isCompositionTextRegion(editingArea) ? (
               <TextMarkEditorField label={areaEditorLabels.displayText}>
-                <TextMarkEditorTextArea
+                <ImmediateNoteInput
                   name="displayText"
                   autoFocus
                   value={editingArea.displayText ?? ""}
@@ -1605,7 +1616,7 @@ export function CompositionCanvas({
                   disabled={!onDraftChange}
                   onChange={(event) => {
                     if (!onDraftChange) return;
-                    onDraftChange(updateAreaMetadata(draft, editingArea.id, {
+                    onDraftChange(updateAreaMetadata(latestDraftRef.current.draft, editingArea.id, {
                       displayText: event.target.value,
                     }));
                   }}
@@ -1623,7 +1634,7 @@ export function CompositionCanvas({
                       aria-label={areaEditorLabels.lightSource}
                       disabled={!onDraftChange}
                       onChange={(isLightSource) => {
-                        onDraftChange?.(updateAreaMetadata(draft, editingArea.id, { isLightSource }));
+                        onDraftChange?.(updateAreaMetadata(latestDraftRef.current.draft, editingArea.id, { isLightSource }));
                       }}
                     />
                   </TextMarkEditorField>
@@ -1639,8 +1650,8 @@ export function CompositionCanvas({
                       if (!onDraftChange) return;
                       onDraftChange(
                         editingArea
-                          ? updateAreaMetadata(draft, editingArea.id, { visualWeight })
-                          : updateCompositionImage(draft, editingImage!.id, { visualWeight }),
+                          ? updateAreaMetadata(latestDraftRef.current.draft, editingArea.id, { visualWeight })
+                          : updateCompositionImage(latestDraftRef.current.draft, editingImage!.id, { visualWeight }),
                       );
                     }}
                   />
@@ -1678,7 +1689,7 @@ export function CompositionCanvas({
                 }}
                 onCropChange={(crop, cropAspectRatio) => {
                   if (!onDraftChange) return;
-                  const cropped = updateCompositionImage(draft, editingImage.id, { crop });
+                  const cropped = updateCompositionImage(latestDraftRef.current.draft, editingImage.id, { crop });
                   onDraftChange(resizeCompositionImage(
                     cropped,
                     editingImage.id,
@@ -1695,7 +1706,7 @@ export function CompositionCanvas({
           }
           onMetadataChange={(patch) => {
             if (!onDraftChange) return;
-            onDraftChange(updateItemMetadata(draft, editingTarget.id, patch));
+            onDraftChange(updateItemMetadata(latestDraftRef.current.draft, editingTarget.id, patch));
           }}
           onRequestClose={closeItemEditor}
           onDelete={() => deleteItem(editingTarget.id)}

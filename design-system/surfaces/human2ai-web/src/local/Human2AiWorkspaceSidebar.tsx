@@ -12,7 +12,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Dropdown, Input, Modal, Tooltip } from "antd";
 import type { InputRef, MenuProps } from "antd";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   AssetSkeletonTree,
@@ -171,7 +171,7 @@ export function Human2AiWorkspaceSidebar({
   onDeleteSession,
   onRetry,
 }: Human2AiWorkspaceSidebarProps) {
-  const labels = { ...DEFAULT_LABELS, ...labelOverrides };
+  const labels = useMemo(() => ({ ...DEFAULT_LABELS, ...labelOverrides }), [labelOverrides]);
   const projectNameInput = useRef<InputRef>(null);
   const [projectDialogOpen, setProjectDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState("");
@@ -227,53 +227,81 @@ export function Human2AiWorkspaceSidebar({
     ]);
   }, [hasUnassignedSessions, projects]);
 
-  const sessionsByKey = new Map(sessions.map((session) => [sessionKey(session.id), session]));
-  const nodes: AssetSkeletonTreeNode[] = (() => {
-    const projectNodes = projects.flatMap<AssetSkeletonTreeNode>((project, projectIndex) => [
-      {
-        key: projectKey(project.id),
-        parentKey: null,
-        order: projectIndex,
-        nodeKind: "container",
-        title: project.name,
-        trailing: renderProjectActions(project),
-      },
-      ...sessions
-        .filter((session) => session.projectId === project.id)
+  const projectTree = useMemo(() => {
+    const sessionsByKey = new Map(sessions.map((session) => [sessionKey(session.id), session]));
+    const nodes: AssetSkeletonTreeNode[] = (() => {
+      const projectNodes = projects.flatMap<AssetSkeletonTreeNode>((project, projectIndex) => [
+        {
+          key: projectKey(project.id),
+          parentKey: null,
+          order: projectIndex,
+          nodeKind: "container",
+          title: project.name,
+          trailing: renderProjectActions(project),
+        },
+        ...sessions
+          .filter((session) => session.projectId === project.id)
+          .map<AssetSkeletonTreeNode>((session, sessionIndex) => ({
+            key: sessionKey(session.id),
+            parentKey: projectKey(project.id),
+            order: sessionIndex,
+            nodeKind: "content",
+            title: session.title,
+            trailing: renderSessionMenu(session),
+          })),
+      ]);
+      const unassignedSessions = sessions
+        .filter((session) => session.projectId === null)
         .map<AssetSkeletonTreeNode>((session, sessionIndex) => ({
           key: sessionKey(session.id),
-          parentKey: projectKey(project.id),
+          parentKey: "project:unassigned",
           order: sessionIndex,
           nodeKind: "content",
           title: session.title,
           trailing: renderSessionMenu(session),
-        })),
-    ]);
-    const unassignedSessions = sessions
-      .filter((session) => session.projectId === null)
-      .map<AssetSkeletonTreeNode>((session, sessionIndex) => ({
-        key: sessionKey(session.id),
-        parentKey: "project:unassigned",
-        order: sessionIndex,
-        nodeKind: "content",
-        title: session.title,
-        trailing: renderSessionMenu(session),
-      }));
+        }));
 
-    if (unassignedSessions.length === 0) return projectNodes;
+      if (unassignedSessions.length === 0) return projectNodes;
 
-    return [
-      ...projectNodes,
-      {
-        key: "project:unassigned",
-        parentKey: null,
-        order: projects.length,
-        nodeKind: "container",
-        title: labels.unassigned,
-      },
-      ...unassignedSessions,
-    ];
-  })();
+      return [
+        ...projectNodes,
+        {
+          key: "project:unassigned",
+          parentKey: null,
+          order: projects.length,
+          nodeKind: "container",
+          title: labels.unassigned,
+        },
+        ...unassignedSessions,
+      ];
+    })();
+
+    return (
+      <AssetSkeletonTree
+        nodes={nodes}
+        mode="view"
+        defaultExpandAll
+        showContentOrder={false}
+        showCurrent={false}
+        showIcon
+        showStatus={false}
+        expandedKeys={expandedProjectKeys}
+        onExpand={(keys) => setExpandedProjectKeys(keys.map(String))}
+        icon={({ eventKey }) => {
+          const session = sessionsByKey.get(String(eventKey));
+          return session ? renderSessionTypeIcon(session.sessionType, labels) : null;
+        }}
+        currentKey={currentSessionId ? sessionKey(currentSessionId) : null}
+        selectedKeys={currentSessionId ? [sessionKey(currentSessionId)] : []}
+        onSelect={(keys) => {
+          const key = String(keys[0] ?? "");
+          if (key.startsWith("session:")) onOpenSession(key.slice("session:".length));
+        }}
+      />
+    );
+  }, [projects, sessions, labels, pendingAction, pendingSessionProjectId,
+    onCreateComposition, onCreateUiSketch, onCreateSpatial, onOpenSession,
+    currentSessionId, expandedProjectKeys]);
 
   function renderProjectActions(project: Human2AiWorkspaceProject) {
     const compositionLabel = labels.newCompositionInProject(project.name);
@@ -673,27 +701,7 @@ export function Human2AiWorkspaceSidebar({
             ) : null}
           </div>
         ) : (
-          <AssetSkeletonTree
-            nodes={nodes}
-            mode="view"
-            defaultExpandAll
-            showContentOrder={false}
-            showCurrent={false}
-            showIcon
-            showStatus={false}
-            expandedKeys={expandedProjectKeys}
-            onExpand={(keys) => setExpandedProjectKeys(keys.map(String))}
-            icon={({ eventKey }) => {
-              const session = sessionsByKey.get(String(eventKey));
-              return session ? renderSessionTypeIcon(session.sessionType, labels) : null;
-            }}
-            currentKey={currentSessionId ? sessionKey(currentSessionId) : null}
-            selectedKeys={currentSessionId ? [sessionKey(currentSessionId)] : []}
-            onSelect={(keys) => {
-              const key = String(keys[0] ?? "");
-              if (key.startsWith("session:")) onOpenSession(key.slice("session:".length));
-            }}
-          />
+          projectTree
         )}
       </section>
 

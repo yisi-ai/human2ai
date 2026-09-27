@@ -8,6 +8,33 @@
 
 Human2AI 是供人和 AI Agent 协作的本地创作工作区：用户在桌面浏览器中编辑构图、UI 草图和 3D 空间，Agent 通过 CLI 连接同一会话、读取版本、修改和导出结果。
 
+## 快速安装
+
+需要 Node.js 22+。将 Human2AI 安装到全局，再将专用 Skill 安装到需要使用它的项目中。
+
+### 交给 Agent 安装
+
+在目标项目中打开 Codex，复制下面的指令交给 Agent：
+
+```text
+请通过 npm install -g human2ai 将 Human2AI 安装到全局，再在当前项目根目录执行 human2ai integration install --agent codex --mode copy，将 Human2AI 专用 Skill 安装到当前项目。
+阅读安装后的 .agents/skills/human2ai/SKILL.md，启动服务，检查接入和服务状态并验证可用，最后告诉我访问地址和下次启动命令。
+如果当前项目已有 .human2ai/integration.json，请先检查并沿用其中的 runner 和服务配置，保留项目内已有的 Skill 修改。
+```
+
+### 自己用 CLI 安装
+
+在目标项目根目录执行：
+
+```bash
+npm install -g human2ai
+human2ai integration install --agent codex --mode copy
+human2ai integration doctor
+human2ai web
+```
+
+保持服务终端运行，在浏览器打开 <http://127.0.0.1:4179>。Skill 安装到当前项目的 `.agents/skills/human2ai/`；详细步骤见[安装与使用](#安装与使用)。
+
 ## 功能预览
 
 ### 构图
@@ -44,45 +71,41 @@ Agent 也可以自主建模、摆放物体和调整复杂动作，将持械、�
 
 ## 安装与使用
 
-### 交给 Agent 安装
+### Agent 安装流程
 
-在目标项目中打开 Codex，把下面这句话交给 Agent：
+Agent 可以用 `npm view human2ai readme` 读取公开安装说明，安装后也可以在 `npm root -g` 返回的目录中读取 `human2ai/README.md`。完整流程由 Agent 执行：
 
-> 帮我在当前项目安装 human2ai，按 npm 包的 README 完成 Human2AI 专用 Skill 接入、启动服务并验证可用，最后告诉我访问地址。
-
-Agent 可以用 `npm view human2ai readme` 读取公开安装说明，安装后也可以读取 `node_modules/human2ai/README.md`。完整流程由 Agent 执行：
-
-1. 确认目标项目目录、Node.js 22+ 和 npm 可用；项目没有 `package.json` 时先执行 `npm init -y`。
-2. 检查已有 `.human2ai/integration.json`。已有接入时，按记录的 runner 检查并沿用项目的版本和服务地址；首次接入时执行下方“安装 npm 包”和“安装 Agent Skill”中的命令。
+1. 确认目标项目目录、Node.js 22+ 和 npm 可用；项目无需创建 `package.json`。
+2. 检查已有 `.human2ai/integration.json`。已有接入时，按记录的 runner 检查并沿用项目的版本和服务地址；首次接入时，执行 `npm install -g human2ai` 全局安装，再在目标项目根目录执行下方“安装 Agent Skill”中的命令。
 3. 阅读安装后的 `.agents/skills/human2ai/SKILL.md`，运行 `integration doctor` 和 `service status`。接入文件由 CLI 生成；出现同步冲突时保留项目内已有修改。
 4. 服务未运行时，在持久终端执行配置中的 `service.start`，等待服务就绪后重试。项目已有明确启动约定时沿用该约定；首次 npm 安装默认使用 `4179` 和 `~/.human2ai/` 数据目录。
-5. 确认接入检查与服务检查均返回 `ready`，浏览器地址可访问，按 runner 执行 `session list` 可以读取会话；同时查看安装的安全审计结果，遇到漏洞时报告受影响依赖与修复情况。
+5. 确认接入检查与服务检查均返回 `ready`，浏览器地址可访问，按 runner 执行 `session list` 可以读取会话；安装过程若报告警告或漏洞，说明其影响与处理结果。
 6. 向用户报告安装版本、项目路径、Skill 路径、浏览器地址和下次启动命令。用户无需再手动补装 Skill。
 
 当前自动接入命令支持 Codex。用户也可以自行执行下面的相同安装流程。
 
 ### 自己按命令安装
 
-#### 1. 安装 npm 包
+#### 1. 全局安装 npm 包
 
-在需要接入 Human2AI 的消费项目根目录执行。空白目录尚无 `package.json` 时，先运行 `npm init -y`；已有项目保留原配置。
+全局安装一次，即可在不同项目中使用 `human2ai` 命令；消费项目无需创建 `package.json`。
 
 ```bash
-npm install --save-dev human2ai
+npm install -g human2ai
 ```
 
-安装包包含预构建的 Web 页面、CLI、数据库迁移、Schema 和 Human2AI 专用 Skill。`npm install` 将这些文件安装到 `node_modules/human2ai/`；要让 Agent 发现并使用 Skill，还需要执行下一步接入命令。
+安装包包含预构建的 Web 页面、CLI、数据库迁移、Schema 和 Human2AI 专用 Skill，安装位置可通过 `npm root -g` 查看。要让 Agent 在当前项目中发现并使用 Skill，还需要执行下一步接入命令。
 
 #### 2. 安装 Agent Skill（Codex）
 
-在同一个消费项目根目录执行；已经安装 npm 包的项目可以直接从这里开始：
+在需要接入 Human2AI 的消费项目根目录执行；已经全局安装 npm 包时可以直接从这里开始：
 
 ```bash
-npx --no-install human2ai integration install --agent codex --mode copy
-npx --no-install human2ai integration doctor
+human2ai integration install --agent codex --mode copy
+human2ai integration doctor
 ```
 
-接入命令从当前项目安装的 npm 包复制完整 Skill，并生成以下文件：
+接入命令从全局安装的 npm 包复制完整 Skill，在当前项目中生成以下文件：
 
 | 路径 | 用途 |
 | --- | --- |
@@ -98,7 +121,7 @@ npx --no-install human2ai integration doctor
 #### 3. 启动与验证
 
 ```bash
-npx --no-install human2ai web
+human2ai web
 ```
 
 这个命令启动一个同时提供 Web 页面和后端 API 的服务，两者共用 <http://127.0.0.1:4179>。其他消费项目使用默认配置时也连接这一个服务；重复启动会复用已运行的兼容服务。
@@ -106,15 +129,15 @@ npx --no-install human2ai web
 保持服务终端运行，在浏览器打开上述地址。另开终端，在同一个消费项目中执行：
 
 ```bash
-npx --no-install human2ai service status
-npx --no-install human2ai session list
+human2ai service status
+human2ai session list
 ```
 
 服务检查返回 `status: "ready"`，且会话列表可以读取，即完成基本安装验证；新数据目录返回空列表也是正常结果。Agent 按 `.human2ai/integration.json` 中的 runner 调用 CLI。
 
 ### 安装提示与升级检查
 
-如果 npm 提示 `better-sqlite3` 的安装脚本尚未记录到 `allowScripts`，可先查看脚本列表；审核该数据库依赖的原生构建脚本后，记录授权：
+对于已有的项目内安装，如果 npm 提示 `better-sqlite3` 的安装脚本尚未记录到 `allowScripts`，可先查看脚本列表；审核该数据库依赖的原生构建脚本后，记录授权：
 
 ```bash
 npm install-scripts ls
@@ -128,8 +151,8 @@ npm install-scripts approve better-sqlite3
 ### 连接与使用会话
 
 ```bash
-npx --no-install human2ai session connect --session <session-id>
-npx --no-install human2ai session open --session <session-id>
+human2ai session connect --session <session-id>
+human2ai session open --session <session-id>
 ```
 
 `session connect` 返回浏览器地址、最新 Capture 版本和当前会话支持的命令。`capture get` 读取指定版本，`capture save` 保存新版本，`capture undo` 追加恢复版本。不同项目通过项目 ID 和会话 ID 组织在同一本地服务中。
@@ -202,12 +225,12 @@ Storybook 使用 `npm run storybook`，默认地址为 <http://localhost:6006>�
 
 ## 升级安装版
 
-在消费项目执行：
+更新全局安装包，再在每个已接入的消费项目根目录同步 Skill：
 
 ```bash
-npm install --save-dev human2ai@latest
-npx --no-install human2ai integration sync --check
-npx --no-install human2ai integration sync
+npm install -g human2ai@latest
+human2ai integration sync --check
+human2ai integration sync
 ```
 
 升级前停止服务并备份数据目录，升级后重新运行 `human2ai web`。数据库迁移在启动时执行；软件版本回退时应使用对应版本的数据备份。
@@ -231,7 +254,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-在独立项目中执行 `npm install --save-dev /absolute/path/to/human2ai-0.1.5.tgz`，再按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
+执行 `npm install -g /absolute/path/to/human2ai-0.1.5.tgz`，再在独立项目中按安装步骤接入并启动。安装包检查会验证必需文件和许可证，并拒绝内部文档、数据库及用户产物。
 
 ## 许可证
 

@@ -2,6 +2,7 @@ import { AimOutlined } from "@ant-design/icons";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
+import { waitFor } from "storybook/test";
 
 import { assertStoryRole, assertStorySelector } from "../vendor/yisiui/storybook/interactionChecks";
 import {
@@ -252,10 +253,22 @@ export const Default: Story = {
       deltaY: -120,
     });
     viewport.dispatchEvent(wheel);
-    await nextFrame();
-    if (!wheel.defaultPrevented || Number(viewport.dataset.cameraZoom) <= zoomBeforeWheel) {
-      throw new Error("Wheel input did not zoom the camera without native scrolling");
+    await waitFor(() => {
+      if (!wheel.defaultPrevented || Number(viewport.dataset.cameraZoom) <= zoomBeforeWheel) {
+        throw new Error("Wheel input did not zoom the camera without native scrolling");
+      }
+    });
+    const burstStart = Number(viewport.dataset.cameraZoom);
+    for (let index = 0; index < 4; index += 1) {
+      viewport.dispatchEvent(new WheelEvent("wheel", {
+        bubbles: true, cancelable: true, clientX: startX, clientY: startY, deltaY: -10,
+      }));
     }
+    await waitFor(() => {
+      if (Math.abs(Number(viewport.dataset.cameraZoom) - burstStart * Math.exp(40 * 0.0015)) > 0.00001) {
+        throw new Error("Wheel events in one frame must accumulate their full zoom delta");
+      }
+    });
 
     findButton(canvasElement, "适应全部").click();
     await nextFrame();

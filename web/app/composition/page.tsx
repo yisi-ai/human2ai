@@ -1,5 +1,7 @@
 "use client";
 
+import { withOptimisticInput } from "../../../design-system/surfaces/human2ai-web/src/local/optimisticInput";
+
 import { promptTranslationKey } from "../../../locales/promptKeys";
 import {
   AimOutlined,
@@ -168,6 +170,8 @@ export default function CompositionPage() {
   );
 }
 
+const ImmediateTextArea = withOptimisticInput(Input.TextArea);
+
 function CompositionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -186,7 +190,6 @@ function CompositionPageContent() {
   const [displayOptions, setDisplayOptions] = useState({ showHiddenNodes: false, onionSkin: false });
   const [frameLocked, setFrameLocked] = useState(false);
   const [rightPanelOpen, setRightPanelOpen] = useState(true);
-  const [canvasZoom, setCanvasZoom] = useState(1);
   const [canvasViewportAction, setCanvasViewportAction] =
     useState<CompositionCanvasViewportAction>({ id: 0, type: "fit-frame" });
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -278,7 +281,6 @@ function CompositionPageContent() {
       setShowPlanning(true);
       setFrameLocked(false);
       setPlanningLocked(false);
-      setCanvasZoom(1);
       requestCanvasViewport("fit-frame");
       setSelectedIds([]);
       setSelectedPlanIds([]);
@@ -299,7 +301,6 @@ function CompositionPageContent() {
     setShowPlanning(true);
     setFrameLocked(false);
     setPlanningLocked(false);
-    setCanvasZoom(1);
     setSessionId(null);
     setSessionTitle(null);
     setSessionMetadata(null);
@@ -499,7 +500,6 @@ function CompositionPageContent() {
     setShowPlanning(true);
     setFrameLocked(false);
     setPlanningLocked(false);
-    setCanvasZoom(1);
     requestCanvasViewport("fit-frame");
     setSelectedIds([]);
     setSelectedPlanIds([]);
@@ -570,7 +570,7 @@ function CompositionPageContent() {
   const overallNoteEditor = (
     <label className={styles.overallNoteEditor}>
       <span>{t("composition.globalNote.title")}</span>
-      <Input.TextArea
+      <ImmediateTextArea
         name="overallNote"
         autoFocus
         autoSize={{ minRows: 4, maxRows: 8 }}
@@ -972,9 +972,7 @@ function CompositionPageContent() {
               onPlanSelectionChange={selectPlan}
               planningLabels={planningLabels}
               frameLocked={frameLocked}
-              canvasZoom={canvasZoom}
               canvasViewportAction={canvasViewportAction}
-              onCanvasZoomChange={setCanvasZoom}
               canvasBackgroundPattern="dots"
               showCanvasViewportControls={!loading}
               canvasViewportLabels={{

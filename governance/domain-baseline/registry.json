@@ -729,6 +729,51 @@
       "reviewTrigger": "新增规划类型、元素绑定、实时约束求解或更改画框参照语义之前"
     },
     {
+      "id": "composition.preview-export",
+      "category": "composition",
+      "contractVersion": 1,
+      "status": "local",
+      "responsibility": "通过既有构图 CLI 导出本地草稿、已保存版本及独立精修结果的 PNG 或 SVG 检查预览",
+      "invariants": [
+        "inspect、apply 和 refinement 的预览均复用 renderCompositionSvg 与 writeCompositionPreview；PNG 和 SVG 保留相同的可见节点、规划线、层级及画框外范围",
+        "--preview 路径以 .png 结尾时使用 sharp 输出真正的 PNG，扩展名不区分大小写；其余路径沿用既有 SVG 输出行为",
+        "PNG 返回 artifacts.previewPng 并将 previewSvg 置为 null；SVG 和未指定预览时保留原有 previewSvg 契约",
+        "会话预览通过既有版本及图片 API 获取明确版本的草稿或精修结果并内嵌图片；本地草稿沿用原图片解析行为",
+        "预览导出不追加或修改草稿，不新增路由或打开浏览器；apply 的精修结果生命周期保持既有领域契约",
+        "检查预览包含规划与画框外内容，不能代替 composition reference 导出的生图参考 PNG"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/composition/render.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "composition-cli"
+        }
+      ],
+      "consumers": [
+        "composition-cli"
+      ],
+      "variationPoints": [
+        "已比较 UI 预览、构图检查预览和构图生图参考；复用现有 sharp 栅格化能力，绘制范围、规划可见性与源版本选择由各领域保留",
+        "UI CLI 仅接受 .png/.svg，构图为兼容既有调用保留其他扩展名输出 SVG；不合并格式校验规则",
+        "本地草稿、会话草稿及精修结果分别读取各自来源，统一预览编码与产物字段"
+      ],
+      "contractTests": [
+        "test/unit/composition-cli.test.ts",
+        "test/integration/composition-session-cli.test.ts",
+        "test/unit/composition-export.test.ts"
+      ],
+      "reviewEvidence": [
+        "skills/human2ai/references/composition.md",
+        "skills/human2ai/references/composition-projection.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增输出格式、改变预览范围、产物字段或与生图参考的边界之前"
+    },
+    {
       "id": "composition.processing-mode",
       "category": "composition",
       "contractVersion": 1,

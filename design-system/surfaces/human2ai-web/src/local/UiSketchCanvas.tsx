@@ -1,5 +1,7 @@
 "use client";
 
+import { createViewportNodeCache } from "./viewportNodeCache";
+
 import {
   BorderOutlined,
   CopyOutlined,
@@ -17,11 +19,11 @@ import {
   TextMarkEditor,
   TextMarkEditorField,
   TextMarkEditorTextArea,
-  type TextMarkEditorTextAreaProps,
 } from "@human2ai/ui/yisiui/text-mark-editor";
 import { Dropdown, Input, Popover, Select, Switch, Tooltip } from "antd";
+import { withOptimisticInput } from "./optimisticInput";
 import { createPortal } from "react-dom";
-import { startTransition, useEffect, useId, useLayoutEffect, useMemo, useOptimistic, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type {
   CSSProperties,
   PointerEvent as ReactPointerEvent,
@@ -338,31 +340,9 @@ export interface UiSketchCanvasProps {
 
 type Notice = { type: "success" | "warning" | "error"; message: string } | null;
 
-function UiSketchNoteInput({
-  value,
-  onNoteChange,
-  ...props
-}: Omit<TextMarkEditorTextAreaProps, "value" | "onChange"> & {
-  value: string;
-  onNoteChange: (note: string) => void;
-}) {
-  const [note, setNote] = useOptimistic(value);
-
-  return (
-    <TextMarkEditorTextArea
-      {...props}
-      value={note}
-      onChange={(event) => {
-        const next = event.target.value;
-        // Echo typing immediately; the controlled draft still updates in this action.
-        startTransition(() => {
-          setNote(next);
-          onNoteChange(next);
-        });
-      }}
-    />
-  );
-}
+const ImmediateInput = withOptimisticInput(Input);
+const ImmediateTextArea = withOptimisticInput(Input.TextArea);
+const ImmediateNoteInput = withOptimisticInput(TextMarkEditorTextArea);
 
 export function UiSketchCanvas({
   interactionResetKey,
@@ -435,6 +415,7 @@ export function UiSketchCanvas({
   const [openCopyMenu, setOpenCopyMenu] = useState<"prompt" | "sketch" | null>(null);
   const { contextMenuOpen, contextMenuPoint, contextMenuPopupRef, openContextMenuAt, closeContextMenu, dismissContextMenu } = useCanvasContextMenu();
   const [textMeasurements, setTextMeasurements] = useState<TextMeasurements>({});
+  const renderViewportNode = createViewportNodeCache();
   const [controlsHost, setControlsHost] = useState<SVGGElement | null>(null);
   const interactionRef = useRef<PointerInteraction | null>(null);
   const workspaceRef = useRef<HTMLDivElement | null>(null);
@@ -1148,7 +1129,7 @@ export function UiSketchCanvas({
   const overallNoteEditor = (
     <label className="human2ai-ui-sketch-canvas__overall-editor">
       <span>{labels.overallNoteTitle}</span>
-      <Input.TextArea
+      <ImmediateTextArea
         name="overallNote"
         autoFocus
         autoSize={{ minRows: 4, maxRows: 8 }}
@@ -1537,7 +1518,7 @@ export function UiSketchCanvas({
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(image);
                   const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
-                  return (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
                     <g key={image.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1578,14 +1559,14 @@ export function UiSketchCanvas({
                         />
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
                   ...state.rectangles.map((rectangle, index) => {
                   if (!showHiddenNodes && !rectangle.visible) return null;
                   const key = itemKey("rectangle", rectangle.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(rectangle);
-                  return (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
                     <g key={rectangle.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1626,7 +1607,7 @@ export function UiSketchCanvas({
                         />
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
                   ...state.texts.map((text) => {
                   if (!showHiddenNodes && !text.visible) return null;
@@ -1636,7 +1617,7 @@ export function UiSketchCanvas({
                   const center = boundsCenter(bounds);
                   const empty = text.text.length === 0;
                   const displayedText = empty ? labels.emptyText : text.text;
-                  return (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, () => (
                     <g key={text.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1680,7 +1661,7 @@ export function UiSketchCanvas({
                         </g>
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
                 ].filter((node) => node !== null), state.layerOrder, (node) => String(node.key))}
 
@@ -1818,7 +1799,7 @@ export function UiSketchCanvas({
 
                 {editorDraft.kind === "text" ? (
                   <TextMarkEditorField label={labels.textContent}>
-                    <Input
+                    <ImmediateInput
                       autoFocus
                       name="textContent"
                       value={editorDraft.item.text}
@@ -1830,7 +1811,7 @@ export function UiSketchCanvas({
                 ) : null}
 
                 <TextMarkEditorField label={labels.note}>
-                  <UiSketchNoteInput
+                  <ImmediateNoteInput
                     autoFocus={editorDraft.kind !== "text"}
                     name="nodeNote"
                     value={editorDraft.item.note}
@@ -1840,7 +1821,7 @@ export function UiSketchCanvas({
                         ? labels.textNotePlaceholder
                         : labels.imageNotePlaceholder}
                     aria-label={labels.note}
-                    onNoteChange={(note) => updateEditorMetadata({ note })}
+                    onChange={(event) => updateEditorMetadata({ note: event.target.value })}
                   />
                 </TextMarkEditorField>
 

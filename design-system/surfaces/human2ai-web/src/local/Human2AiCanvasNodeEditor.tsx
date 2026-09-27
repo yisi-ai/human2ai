@@ -1,5 +1,7 @@
 "use client";
 
+import { withOptimisticInput } from "./optimisticInput";
+
 import {
   TextMarkEditor,
   TextMarkEditorField,
@@ -16,6 +18,8 @@ import type {
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 
 import "./Human2AiCanvasNodeEditor.css";
+
+const ImmediateNoteInput = withOptimisticInput(TextMarkEditorTextArea);
 
 export type Human2AiCanvasNodeKind = "shape" | "point" | "line" | "text" | "image";
 export type Human2AiCanvasNodeEditorAutoFocusField = "note" | "none";
@@ -161,7 +165,7 @@ export function Human2AiCanvasNodeEditor({
           {leadingFields}
 
           <TextMarkEditorField label={labels.note}>
-            <TextMarkEditorTextArea
+            <ImmediateNoteInput
               name="nodeNote"
               autoFocus={autoFocusField === "note"}
               value={metadata.note}

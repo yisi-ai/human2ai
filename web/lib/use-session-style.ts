@@ -39,8 +39,9 @@ export function useSessionStyle(
           listStyles(), sessionId ? getSessionStyle(sessionId) : Promise.resolve(null),
         ]);
         if (cancelled || version !== requestVersion.current) return;
-        setStyles(nextStyles);
-        setState(nextState);
+        // Polling unchanged JSON must not invalidate the owning canvas page.
+        setStyles(current => JSON.stringify(current) === JSON.stringify(nextStyles) ? current : nextStyles);
+        setState(current => JSON.stringify(current) === JSON.stringify(nextState) ? current : nextState);
         setError(null);
       } catch {
         if (!cancelled && version === requestVersion.current) setError(t("styleLibrary.loadFailed"));
