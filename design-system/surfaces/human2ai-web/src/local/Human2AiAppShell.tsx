@@ -3,6 +3,7 @@
 import {
   AppShellFrame,
   type AppShellFrameLabels,
+  type AppShellFrameProps,
 } from "@human2ai/ui/yisiui/app-shell-frame";
 import type { ReactNode } from "react";
 
@@ -14,8 +15,12 @@ export interface Human2AiAppShellLabels extends AppShellFrameLabels {
   productName: string;
 }
 
-export interface Human2AiAppShellProps {
+export interface Human2AiAppShellProps extends Pick<AppShellFrameProps,
+  "sidebarWidth" | "rightPanelWidth" | "onSidebarWidthChange" | "onRightPanelWidthChange"
+> {
   title: ReactNode;
+  titleExtra?: ReactNode;
+  headerExtra?: ReactNode;
   brand?: ReactNode;
   children: ReactNode;
   sidebar: ReactNode;
@@ -32,19 +37,27 @@ const DEFAULT_LABELS: Human2AiAppShellLabels = {
   navigation: "Human2AI 应用导航",
   collapseSidebar: "收起应用侧栏",
   expandSidebar: "展开应用侧栏",
+  resizeSidebar: "调整应用侧栏宽度",
   rightPanel: "页面属性",
   collapseRightPanel: "收起页面属性",
   expandRightPanel: "展开页面属性",
+  resizeRightPanel: "调整操作面板宽度",
 };
 
 export function Human2AiAppShell({
   title,
+  titleExtra,
+  headerExtra,
   brand,
   children,
   sidebar,
   rightPanel,
   rightPanelOpen,
   onRightPanelOpenChange,
+  sidebarWidth = 280,
+  rightPanelWidth = 300,
+  onSidebarWidthChange,
+  onRightPanelWidthChange,
   labels: labelOverrides,
   className,
 }: Human2AiAppShellProps) {
@@ -65,12 +78,24 @@ export function Human2AiAppShell({
       <AppShellFrame
         sidebar={sidebar}
         sidebarTitle={brand ?? labels.productName}
-        title={title ? <h1 className="human2ai-app-shell__page-title">{title}</h1> : undefined}
+        title={title ? (
+          <div className="human2ai-app-shell__page-heading">
+            <h1 className="human2ai-app-shell__page-title">{title}</h1>
+            {titleExtra ? (
+              <div className="human2ai-app-shell__title-extra">{titleExtra}</div>
+            ) : null}
+          </div>
+        ) : undefined}
+        headerExtra={headerExtra}
         rightPanel={rightPanel}
         rightPanelOpen={rightPanelOpen}
         onRightPanelOpenChange={onRightPanelOpenChange}
-        sidebarWidth={280}
-        rightPanelWidth={300}
+        sidebarWidth={sidebarWidth}
+        rightPanelWidth={rightPanelWidth}
+        onSidebarWidthChange={onSidebarWidthChange}
+        onRightPanelWidthChange={onRightPanelWidthChange}
+        sidebarResizable
+        rightPanelResizable
         labels={labels}
       >
         {children}

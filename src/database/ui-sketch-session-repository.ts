@@ -8,6 +8,8 @@ import type { UiSketchDraft } from "../domain/ui-sketch/index.ts";
 import { DraftVersionStore } from "./draft-version-store.ts";
 import type { CreateDraftVersionInput } from "../domain/session/index.ts";
 import type { DatabaseConnection } from "./migrate.ts";
+import { validateSessionPreviewReferences } from "./session-preview-validation.ts";
+import type { DraftSavedEvent } from "./draft-version-store.ts";
 
 export {
   DraftRevisionConflictError as UiSketchDraftRevisionConflictError,
@@ -26,7 +28,14 @@ export class UiSketchSessionRepository {
       sessionLabel: "UI sketch session",
       validateDraft: validateUiSketchDraft,
       fingerprint: uiSketchDraftFingerprint,
+      validateSessionDraft: (id, draft, previous) => validateSessionPreviewReferences(database, id, draft, previous),
     });
+  }
+
+  onDraftSaved(listener: (event: DraftSavedEvent<UiSketchDraft>) => void) { return this.draftVersions.onSaved(listener); }
+
+  refreshPreviewVersion(sessionId: string, input: CreateDraftVersionInput, batchId: string) {
+    return this.draftVersions.createDraftVersion(sessionId, input, batchId);
   }
 
   listDraftVersions(sessionId: string): UiSketchDraftVersion[] {

@@ -11,7 +11,29 @@
   border-bottom: 0;
 }
 
+.human2ai-app-shell__page-heading {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+}
+
+.human2ai-app-shell__title-extra {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.human2ai-app-shell__page-heading:hover .human2ai-app-shell__title-extra,
+.human2ai-app-shell__page-heading:focus-within .human2ai-app-shell__title-extra {
+  opacity: 1;
+  pointer-events: auto;
+}
+
 .human2ai-app-shell__page-title {
+  min-width: 0;
   margin: 0;
   overflow: hidden;
   font: inherit;

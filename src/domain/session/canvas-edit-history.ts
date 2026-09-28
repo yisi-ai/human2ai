@@ -62,4 +62,7 @@ export class CanvasEditHistory<T, Context = undefined> {
     this.past = [];
     this.future = [];
   }
+
+  /** Adopt derived content without creating a user operation or cancelling a gesture. */
+  synchronize(draft: T): void { this.current = draft; }
 }

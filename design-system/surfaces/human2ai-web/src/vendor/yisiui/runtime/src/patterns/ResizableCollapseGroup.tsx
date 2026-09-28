@@ -1,7 +1,7 @@
 "use client";
 
 import { CaretRightOutlined } from "@ant-design/icons";
-import { Fragment, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { Fragment, memo, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import type { HTMLAttributes, KeyboardEvent, PointerEvent, ReactNode } from "react";
 
 import { DotScrollbar } from "../components/DotScrollbar";
@@ -60,30 +60,43 @@ interface DragSession {
   weights: Record<string, number>;
   latest: Record<string, number>;
   environment: string;
+  latestHeight: number;
+}
+
+interface CollapseLayout {
+  weights: Record<string, number>;
+  heights: Record<string, number>;
+  panels: CollapsePanelSize[];
+  environment: string;
 }
 
 const useBrowserLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 const defaultResizeLabel = (upper: string, lower: string) => `调整“${upper}”与“${lower}”的高度`;
 
-function CollapseContent({ item, expanded, height, contentId, headerId, scrollbar, maxScrollDots, setNode }: {
-  item: ResizableCollapseItem;
+const CollapseContent = memo(function CollapseContent({ itemKey, title, content, expanded, minimumHeight, contentId, headerId, scrollbar, maxScrollDots, nodes }: {
+  itemKey: string;
+  title: string;
+  content: ReactNode;
   expanded: boolean;
-  height: number;
+  minimumHeight: number;
   contentId: string;
   headerId: string;
   scrollbar: "native" | "dots";
   maxScrollDots: number;
-  setNode: (node: HTMLDivElement | null) => void;
+  nodes: Map<string, HTMLDivElement>;
 }) {
   const scrollRef = useRef<HTMLDivElement>(null);
-  return <div ref={setNode} className="yisi-resizable-collapse-panel" hidden={!expanded} style={{ height }}>
+  const setNode = useCallback((node: HTMLDivElement | null) => {
+    if (node) nodes.set(itemKey, node); else nodes.delete(itemKey);
+  }, [nodes, itemKey]);
+  return <div ref={setNode} className="yisi-resizable-collapse-panel" hidden={!expanded} style={{ height: minimumHeight }}>
     <div ref={scrollRef} id={contentId} className="yisi-resizable-collapse-scroll" role="region"
       aria-labelledby={headerId} tabIndex={expanded ? 0 : undefined} data-yisiui-slot="item-content">
-      {item.content}
+      {content}
     </div>
-    {scrollbar === "dots" && <DotScrollbar targetRef={scrollRef} ariaLabel={`${item.title} · 滚动位置`} maxDots={maxScrollDots} />}
+    {scrollbar === "dots" && <DotScrollbar targetRef={scrollRef} ariaLabel={`${title} · 滚动位置`} maxDots={maxScrollDots} />}
   </div>;
-}
+});
 
 export function ResizableCollapseGroup({
   items, ariaLabel, expandedKeys, defaultExpandedKeys, onExpandedChange,
@@ -99,10 +112,12 @@ export function ResizableCollapseGroup({
   const contents = useRef(new Map<string, HTMLDivElement>());
   const dividers = useRef(new Map<string, HTMLDivElement>());
   const drag = useRef<DragSession | null>(null);
-  const [draggingKey, setDraggingKey] = useState<string | null>(null);
+
   const [internalKeys, setInternalKeys] = useState<readonly string[]>(() => defaultExpandedKeys ?? items.map((item) => item.key));
-  const [internalSizes, setInternalSizes] = useState<ResizableCollapseSizes>(defaultSizes);
-  const [availableHeight, setAvailableHeight] = useState<number | null>(null);
+  const internalSizes = useRef<ResizableCollapseSizes>(defaultSizes);
+  const availableHeight = useRef(0);
+  const layout = useRef<CollapseLayout>({ weights: {}, heights: {}, panels: [], environment: "" });
+  const refresh = useRef<(() => void) | null>(null);
 
   const keys = new Set<string>();
   if (!Number.isFinite(minPanelHeight) || minPanelHeight <= 0) {
@@ -115,24 +130,76 @@ export function ResizableCollapseGroup({
     if (item.minHeight !== undefined && (!Number.isFinite(item.minHeight) || item.minHeight <= 0)) {
       throw new Error("ResizableCollapseGroup item minHeight must be a positive finite number.");
     }
+    const currentSizes = sizes ?? internalSizes.current;
+    if (Object.hasOwn(currentSizes, item.key) && (!Number.isFinite(currentSizes[item.key]) || currentSizes[item.key] <= 0)) {
+      throw new Error("ResizableCollapseGroup sizes must contain positive finite weights.");
+    }
     keys.add(item.key);
   }
 
   const requestedKeys = new Set(expandedKeys ?? internalKeys);
-  const openItems = items.filter((item) => requestedKeys.has(item.key));
-  const currentSizes = sizes ?? internalSizes;
-  const weights = Object.fromEntries(items.map((item) => {
-    const weight = Object.hasOwn(currentSizes, item.key) ? currentSizes[item.key] : 1;
-    if (!Number.isFinite(weight) || weight <= 0) {
-      throw new Error("ResizableCollapseGroup sizes must contain positive finite weights.");
-    }
-    return [item.key, weight];
-  }));
-  const panels = openItems.map((item) => ({ key: item.key, weight: weights[item.key], minHeight: item.minHeight ?? minPanelHeight }));
-  const heights = allocateCollapseHeights(panels, availableHeight ?? 0);
   const structure = JSON.stringify(items.map((item) => item.key));
-  const environment = JSON.stringify([structure, availableHeight, disabled, resizable,
-    items.map((item) => [item.key, item.disabled]), panels.map((panel) => [panel.key, panel.minHeight])]);
+  // Height and separator attributes are owned by this layout layer. Pointer moves
+  // write the affected geometry without changing React state or remounting content.
+  function calculateLayout(): CollapseLayout {
+    const currentSizes = sizes ?? internalSizes.current;
+    const weights = Object.fromEntries(items.map((item) => {
+      const weight = Object.hasOwn(currentSizes, item.key) ? currentSizes[item.key] : 1;
+      if (!Number.isFinite(weight) || weight <= 0) {
+        throw new Error("ResizableCollapseGroup sizes must contain positive finite weights.");
+      }
+      return [item.key, weight];
+    }));
+    const panels = items.filter((item) => requestedKeys.has(item.key)).map((item) =>
+      ({ key: item.key, weight: weights[item.key], minHeight: item.minHeight ?? minPanelHeight }));
+    const environment = JSON.stringify([structure, availableHeight.current, disabled, resizable, sizes !== undefined,
+      items.map((item) => [item.key, item.disabled]), panels.map((panel) => [panel.key, panel.minHeight])]);
+    return { weights, panels, environment, heights: allocateCollapseHeights(panels, availableHeight.current) };
+  }
+
+  function paintLayout(next: CollapseLayout) {
+    layout.current = next;
+    const openIndex = new Map(next.panels.map((panel, index) => [panel.key, index]));
+    const itemByKey = new Map(items.map((item) => [item.key, item]));
+    for (const item of items) {
+      const content = contents.current.get(item.key);
+      const height = `${next.heights[item.key] ?? 0}px`;
+      if (content && (!Number.isFinite(parseFloat(content.style.height)) ||
+        Math.abs(parseFloat(content.style.height) - parseFloat(height)) > 0.01)) content.style.height = height;
+      const handle = dividers.current.get(item.key);
+      if (!handle) continue;
+      const index = openIndex.get(item.key);
+      const upper = index === undefined ? undefined : next.panels[index];
+      const lower = index === undefined ? undefined : next.panels[index + 1];
+      const lowerItem = lower && itemByKey.get(lower.key);
+      const canResize = Boolean(resizable && !disabled && !item.disabled && upper && lower && !lowerItem?.disabled
+        && next.heights[upper.key] + next.heights[lower.key] > upper.minHeight + lower.minHeight + 0.01);
+      const attributes: Record<string, string | null> = {
+        "data-resizable": String(canResize), role: canResize ? "separator" : null,
+        "aria-hidden": canResize ? null : "true", "aria-orientation": canResize ? "horizontal" : null,
+        tabindex: canResize ? "0" : null,
+        "aria-label": canResize ? resizeLabel(item.title, lowerItem!.title) : null,
+        "aria-controls": canResize ? contentId(item.key) : null,
+        "aria-valuemin": canResize ? String(Math.round(upper!.minHeight)) : null,
+        "aria-valuemax": canResize ? String(Math.round(next.heights[item.key] + next.heights[lower!.key] - lower!.minHeight)) : null,
+        "aria-valuenow": canResize ? String(Math.round(next.heights[item.key])) : null,
+        "aria-valuetext": canResize ? `${Math.round(next.heights[item.key])}px` : null,
+      };
+      for (const [name, value] of Object.entries(attributes)) {
+        if (handle.getAttribute(name) === value) continue;
+        if (value === null) handle.removeAttribute(name); else handle.setAttribute(name, value);
+      }
+    }
+  }
+
+  useBrowserLayoutEffect(() => {
+    refresh.current = () => {
+      const next = calculateLayout();
+      if (drag.current && drag.current.environment !== next.environment) finishDrag(true);
+      paintLayout(next);
+    };
+    refresh.current();
+  });
 
   useBrowserLayoutEffect(() => {
     const viewport = viewportRef.current;
@@ -142,7 +209,7 @@ export function ResizableCollapseGroup({
       const headerHeight = Array.from(headers.current.values()).reduce((sum, node) => sum + measuredHeight(node), 0);
       const dividerHeight = Array.from(dividers.current.values()).reduce((sum, node) => sum + measuredHeight(node), 0);
       const next = Math.max(0, measuredHeight(viewport) - headerHeight - dividerHeight);
-      setAvailableHeight((previous) => previous === next ? previous : next);
+      if (availableHeight.current !== next) { availableHeight.current = next; refresh.current?.(); }
     };
     measure();
     const observer = new ResizeObserver(measure);
@@ -152,8 +219,14 @@ export function ResizableCollapseGroup({
     return () => observer.disconnect();
   }, [structure]);
 
-  function changeSizes(next: Record<string, number>) {
-    if (sizes === undefined) setInternalSizes(next);
+  function changeSizes(next: Record<string, number>, nextHeights?: Record<string, number>) {
+    if (sizes === undefined) {
+      internalSizes.current = next;
+      const current = layout.current;
+      const panels = current.panels.map((panel) => ({ ...panel, weight: next[panel.key] }));
+      paintLayout({ ...current, panels, weights: next,
+        heights: nextHeights ?? allocateCollapseHeights(panels, availableHeight.current) });
+    }
     onSizesChange?.(next);
   }
 
@@ -161,15 +234,14 @@ export function ResizableCollapseGroup({
     const session = drag.current;
     if (!session) return;
     drag.current = null;
-    setDraggingKey(null);
+    rootRef.current?.setAttribute("data-resizing", "false");
+    session.node.removeAttribute("data-active");
     if (session.node.hasPointerCapture(session.pointerId)) session.node.releasePointerCapture(session.pointerId);
     if (commit) onResizeEnd?.(session.latest);
-    else changeSizes(session.weights);
+    else changeSizes(session.weights, session.heights);
   }
 
   useBrowserLayoutEffect(() => {
-    // Changing the container or the set of open panels invalidates drag geometry.
-    if (drag.current && drag.current.environment !== environment) finishDrag(true);
     const active = viewportRef.current?.ownerDocument.activeElement;
     for (const item of items) {
       if (!requestedKeys.has(item.key) && active && contents.current.get(item.key)?.contains(active)) {
@@ -183,6 +255,7 @@ export function ResizableCollapseGroup({
   useEffect(() => () => {
     const session = drag.current;
     drag.current = null;
+    refresh.current = null;
     if (session?.node.hasPointerCapture(session.pointerId)) session.node.releasePointerCapture(session.pointerId);
   }, []);
 
@@ -193,7 +266,11 @@ export function ResizableCollapseGroup({
     onExpandedChange?.(next);
   }
 
-  function startDrag(event: PointerEvent<HTMLDivElement>, upperKey: string, lowerKey: string) {
+  function startDrag(event: PointerEvent<HTMLDivElement>, upperKey: string) {
+    if (event.currentTarget.dataset.resizable !== "true") return;
+    const { panels, heights, weights, environment } = layout.current;
+    const lowerKey = panels[panels.findIndex((panel) => panel.key === upperKey) + 1]?.key;
+    if (!lowerKey) return;
     if (event.button !== 0 || !event.isPrimary || drag.current) return;
     event.preventDefault();
     event.stopPropagation();
@@ -202,22 +279,33 @@ export function ResizableCollapseGroup({
     const viewport = viewportRef.current!;
     const scale = viewport.getBoundingClientRect().height / viewport.offsetHeight || 1;
     drag.current = { pointerId: event.pointerId, node: event.currentTarget, startY: event.clientY, scale,
-      upperKey, lowerKey, panels, heights, weights, latest: weights, environment };
-    setDraggingKey(upperKey);
+      upperKey, lowerKey, panels, heights, weights, latest: weights, environment, latestHeight: heights[upperKey] };
+    rootRef.current?.setAttribute("data-resizing", "true");
+    event.currentTarget.setAttribute("data-active", "true");
   }
 
   function moveDrag(event: PointerEvent<HTMLDivElement>) {
     const session = drag.current;
     if (!session || event.pointerId !== session.pointerId) return;
     event.preventDefault();
-    if (event.clientY === session.startY && session.latest === session.weights) return;
+    const upper = session.panels.find((panel) => panel.key === session.upperKey)!;
+    const lower = session.panels.find((panel) => panel.key === session.lowerKey)!;
+    const pairHeight = session.heights[upper.key] + session.heights[lower.key];
+    const upperHeight = Math.max(upper.minHeight, Math.min(pairHeight - lower.minHeight,
+      session.heights[upper.key] + (event.clientY - session.startY) / session.scale));
+    if (upperHeight === session.latestHeight) return;
+    session.latestHeight = upperHeight;
     const next = resizeCollapsePair(session.panels, session.heights, session.weights, session.upperKey, session.lowerKey,
       session.heights[session.upperKey] + (event.clientY - session.startY) / session.scale);
     session.latest = next;
-    changeSizes(next);
+    changeSizes(next, { ...session.heights, [upper.key]: upperHeight, [lower.key]: pairHeight - upperHeight });
   }
 
-  function resizeWithKeyboard(event: KeyboardEvent<HTMLDivElement>, upperKey: string, lowerKey: string) {
+  function resizeWithKeyboard(event: KeyboardEvent<HTMLDivElement>, upperKey: string) {
+    if (event.currentTarget.dataset.resizable !== "true") return;
+    const { panels, heights, weights } = layout.current;
+    const lowerKey = panels[panels.findIndex((panel) => panel.key === upperKey) + 1]?.key;
+    if (!lowerKey) return;
     const upper = panels.find((panel) => panel.key === upperKey)!;
     const lower = panels.find((panel) => panel.key === lowerKey)!;
     const step = event.shiftKey ? 32 : 8;
@@ -230,7 +318,8 @@ export function ResizableCollapseGroup({
     event.stopPropagation();
     if (drag.current) return;
     const next = resizeCollapsePair(panels, heights, weights, upperKey, lowerKey, target);
-    changeSizes(next);
+    const upperHeight = Math.max(upper.minHeight, Math.min(heights[upperKey] + heights[lowerKey] - lower.minHeight, target));
+    changeSizes(next, { ...heights, [upperKey]: upperHeight, [lowerKey]: heights[upperKey] + heights[lowerKey] - upperHeight });
     onResizeEnd?.(next);
   }
 
@@ -254,20 +343,16 @@ export function ResizableCollapseGroup({
     buttons[next].focus();
   }
 
-  const contentId = (key: string) => `${instanceId}-${encodeURIComponent(key)}-content`;
+  function contentId(key: string) { return `${instanceId}-${encodeURIComponent(key)}-content`; }
   return (
     <div tabIndex={-1} {...rootProps} {...uiAssetAttributes("resizable-collapse-group", "ResizableCollapseGroup")} ref={rootRef}
       className={["yisi-resizable-collapse-group", className].filter(Boolean).join(" ")}
-      role="group" aria-label={ariaLabel} aria-disabled={disabled} data-resizing={draggingKey !== null}
+      role="group" aria-label={ariaLabel} aria-disabled={disabled} data-resizing="false"
       onKeyDown={handleKeyDown}>
       <div ref={viewportRef} className="yisi-resizable-collapse-viewport">
         {items.length === 0 && <div className="yisi-resizable-collapse-empty" data-yisiui-slot="empty-content">{emptyContent}</div>}
         {items.map((item, index) => {
           const expanded = requestedKeys.has(item.key);
-          const openIndex = openItems.findIndex((open) => open.key === item.key);
-          const nextOpen = openIndex >= 0 ? openItems[openIndex + 1] : undefined;
-          const canResize = resizable && !disabled && !item.disabled && nextOpen && !nextOpen.disabled
-            && heights[item.key] + heights[nextOpen.key] > (item.minHeight ?? minPanelHeight) + (nextOpen.minHeight ?? minPanelHeight) + 0.01;
           const headerId = `${instanceId}-${encodeURIComponent(item.key)}-title`;
           return <Fragment key={item.key}>
             <div className="yisi-resizable-collapse-item" data-expanded={expanded}>
@@ -277,27 +362,20 @@ export function ResizableCollapseGroup({
                 <CaretRightOutlined className="yisi-resizable-collapse-triangle" aria-hidden="true" />
                 <span className="yisi-resizable-collapse-title" data-yisiui-slot="item-title">{item.title}</span>
               </button>
-              <CollapseContent item={item} expanded={expanded} height={heights[item.key] ?? 0}
+              <CollapseContent itemKey={item.key} title={item.title} content={item.content} expanded={expanded}
+                minimumHeight={item.minHeight ?? minPanelHeight}
                 contentId={contentId(item.key)} headerId={headerId} scrollbar={scrollbar} maxScrollDots={maxScrollDots}
-                setNode={(node) => { if (node) contents.current.set(item.key, node); else contents.current.delete(item.key); }} />
+                nodes={contents.current} />
             </div>
             {index < items.length - 1 && <div
               ref={(node) => { if (node) dividers.current.set(item.key, node); else dividers.current.delete(item.key); }}
-              className="yisi-resizable-collapse-divider" data-resizable={Boolean(canResize)} data-active={draggingKey === item.key}
-              role={canResize ? "separator" : undefined} aria-hidden={canResize ? undefined : true}
-              aria-orientation={canResize ? "horizontal" : undefined} tabIndex={canResize ? 0 : undefined}
-              aria-label={canResize ? resizeLabel(item.title, nextOpen!.title) : undefined}
-              aria-controls={canResize ? contentId(item.key) : undefined}
-              aria-valuemin={canResize ? Math.round(item.minHeight ?? minPanelHeight) : undefined}
-              aria-valuemax={canResize ? Math.round(heights[item.key] + heights[nextOpen!.key] - (nextOpen!.minHeight ?? minPanelHeight)) : undefined}
-              aria-valuenow={canResize ? Math.round(heights[item.key]) : undefined}
-              aria-valuetext={canResize ? `${Math.round(heights[item.key])}px` : undefined}
-              onPointerDown={canResize ? (event) => startDrag(event, item.key, nextOpen!.key) : undefined}
+              className="yisi-resizable-collapse-divider"
+              onPointerDown={(event) => startDrag(event, item.key)}
               onPointerMove={moveDrag}
               onPointerUp={(event) => { if (event.pointerId === drag.current?.pointerId) { moveDrag(event); finishDrag(true); } }}
               onPointerCancel={(event) => { if (event.pointerId === drag.current?.pointerId) finishDrag(false); }}
               onLostPointerCapture={(event) => { if (event.pointerId === drag.current?.pointerId) finishDrag(true); }}
-              onKeyDown={canResize ? (event) => resizeWithKeyboard(event, item.key, nextOpen!.key) : undefined}
+              onKeyDown={(event) => resizeWithKeyboard(event, item.key)}
             />}
           </Fragment>;
         })}

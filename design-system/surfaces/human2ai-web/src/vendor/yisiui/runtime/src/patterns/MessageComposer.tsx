@@ -9,7 +9,7 @@ import type {
   KeyboardEvent,
   ReactNode,
 } from "react";
-import { Children, forwardRef, useCallback, useEffect, useId, useImperativeHandle, useRef } from "react";
+import { Children, forwardRef, memo, useCallback, useEffect, useId, useImperativeHandle, useRef } from "react";
 
 import { BasicButton } from "../components/BasicButton";
 import { AnimatedIcon, type AnimatedIconHandle } from "../components/AnimatedIcon";
@@ -30,10 +30,23 @@ export interface MessageComposerHandle {
 }
 
 export interface MessageComposerQuickPrompt {
+  /** Stable identity for editable/reordered prompts. Without it, message + occurrence is used. */
+  key?: string;
   icon: ReactNode;
   label: string;
   message: string;
 }
+
+const QuickPrompt = memo(function QuickPrompt({ icon, label, message, disabled, starsEnabled, onSubmit }: {
+  icon: ReactNode; label: string; message: string; disabled: boolean; starsEnabled: boolean;
+  onSubmit: (message: string) => void;
+}) {
+  return <div className={styles.quickPromptItem} data-message-composer-quick-prompt={label}>
+    <CompositeButton className={styles.quickPromptButton} textColor={starsEnabled ? "none" : undefined}
+      icon={icon} label={label} aria-label={`发送快捷消息：${label}`} title={message}
+      disabled={disabled || !message.trim()} onClick={() => onSubmit(message)} />
+  </div>;
+});
 
 type MessageTextAreaRef = ComponentRef<typeof Input.TextArea>;
 
@@ -116,6 +129,13 @@ export const MessageComposer = forwardRef<
   const errorId = useId();
   const submitDisabled = disabled || readOnly || loading || !value.trim();
   const hasTopContent = topContentEnabled && Children.toArray(topContent).some((child) => child !== "");
+  const promptOccurrences = new Map<string, number>();
+  const promptKeys = quickPrompts.map((prompt) => {
+    if (prompt.key !== undefined) return JSON.stringify(["key", prompt.key]);
+    const occurrence = promptOccurrences.get(prompt.message) ?? 0;
+    promptOccurrences.set(prompt.message, occurrence + 1);
+    return JSON.stringify(["message", prompt.message, occurrence]);
+  });
 
   const setInputRef = useCallback((input: MessageTextAreaRef | null) => {
     inputRef.current = input;
@@ -123,13 +143,13 @@ export const MessageComposer = forwardRef<
   }, []);
 
   const submitMessage = useCallback(
-    (candidate = value) => {
+    (candidate: string) => {
       const message = candidate.trim();
       if (!message || disabled || readOnly || loading) return;
       sendIconRef.current?.play();
       onSubmit(message);
     },
-    [disabled, loading, onSubmit, readOnly, value],
+    [disabled, loading, onSubmit, readOnly],
   );
 
   useImperativeHandle(
@@ -158,14 +178,14 @@ export const MessageComposer = forwardRef<
     if (event.key !== "Enter") return undefined;
     if (event.ctrlKey || event.metaKey) {
       event.preventDefault();
-      submitMessage();
+      submitMessage(value);
     }
     return false;
   };
 
   const handleFormSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    submitMessage();
+    submitMessage(value);
   };
 
   return (
@@ -249,22 +269,8 @@ export const MessageComposer = forwardRef<
           {quickPrompts.length ? (
             <div className={styles.quickPromptList} aria-label="快捷语言">
               {quickPrompts.map((prompt, index) => (
-                <div
-                  key={`${prompt.label}:${prompt.message}:${index}`}
-                  className={styles.quickPromptItem}
-                  data-message-composer-quick-prompt={prompt.label}
-                >
-                  <CompositeButton
-                    className={styles.quickPromptButton}
-                    textColor={starsEnabled ? "none" : undefined}
-                    icon={prompt.icon}
-                    label={prompt.label}
-                    aria-label={`发送快捷消息：${prompt.label}`}
-                    title={prompt.message}
-                    disabled={disabled || readOnly || loading || !prompt.message.trim()}
-                    onClick={() => submitMessage(prompt.message)}
-                  />
-                </div>
+                <QuickPrompt key={promptKeys[index]} icon={prompt.icon} label={prompt.label} message={prompt.message}
+                  starsEnabled={starsEnabled} disabled={disabled || readOnly || loading} onSubmit={submitMessage} />
               ))}
             </div>
           ) : null}

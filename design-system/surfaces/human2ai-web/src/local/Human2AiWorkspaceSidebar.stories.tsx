@@ -1,5 +1,7 @@
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import { useState, type ReactNode } from "react";
+import { waitFor } from "storybook/test";
+import { ConfigProvider } from "antd";
 import zh from "../../../../../locales/zh-CN/common.json";
 
 import {
@@ -10,6 +12,7 @@ import {
   Human2AiWorkspaceSidebar,
   type Human2AiWorkspaceProject,
   type Human2AiWorkspaceSession,
+  type Human2AiWorkspaceGroup,
   type Human2AiWorkspaceSidebarProps,
 } from "./Human2AiWorkspaceSidebar";
 
@@ -57,27 +60,42 @@ const sessions: Human2AiWorkspaceSession[] = [
 function SidebarHarness({
   initialProjects = projects,
   initialSessions = sessions,
+  initialGroups = [],
   languageSelector,
   repositoryLink,
 }: {
   initialProjects?: Human2AiWorkspaceProject[];
   initialSessions?: Human2AiWorkspaceSession[];
+  initialGroups?: Human2AiWorkspaceGroup[];
   languageSelector?: Human2AiWorkspaceSidebarProps["languageSelector"];
   repositoryLink?: Human2AiWorkspaceSidebarProps["repositoryLink"];
 }) {
   const [nextProjects, setProjects] = useState(initialProjects);
   const [nextSessions, setSessions] = useState(initialSessions);
+  const [groups, setGroups] = useState(initialGroups);
   const [currentSessionId, setCurrentSessionId] = useState("hero");
+
+  function addToGroup(sessionId: string, groupId?: string): void {
+    if (groupId) setGroups(current => current.map(group => group.id === groupId
+      ? { ...group, sessionIds: [...group.sessionIds, sessionId] } : group));
+  }
 
   return (
     <StoryFrame>
       <Human2AiWorkspaceSidebar
         projects={nextProjects}
         sessions={nextSessions}
+        groups={groups}
+        onCreateGroup={async (projectId, name) => setGroups(current => [...current, { id: `group-${current.length}`, projectId, name, sessionIds: [] }])}
+        onRenameGroup={async (id, name) => setGroups(current => current.map(group => group.id === id ? { ...group, name } : group))}
+        onDeleteGroup={async id => setGroups(current => current.filter(group => group.id !== id))}
+        onGroupSession={async (sessionId, groupId) => setGroups(current => current.map(group => ({
+          ...group, sessionIds: [...group.sessionIds.filter(id => id !== sessionId), ...(group.id === groupId ? [sessionId] : [])],
+        })))}
         currentSessionId={currentSessionId}
         languageSelector={languageSelector}
         repositoryLink={repositoryLink}
-        onCreateComposition={async (projectId) => {
+        onCreateComposition={async (projectId, groupId) => {
           setSessions((current) => [
             {
               id: "new",
@@ -89,8 +107,9 @@ function SidebarHarness({
             ...current,
           ]);
           setCurrentSessionId("new");
+          addToGroup("new", groupId);
         }}
-        onCreateUiSketch={async (projectId) => {
+        onCreateUiSketch={async (projectId, groupId) => {
           setSessions((current) => [
             {
               id: "new-ui-sketch",
@@ -102,6 +121,15 @@ function SidebarHarness({
             ...current,
           ]);
           setCurrentSessionId("new-ui-sketch");
+          addToGroup("new-ui-sketch", groupId);
+        }}
+        onCreateSpatial={async (projectId, groupId) => {
+          setSessions(current => [{
+            id: "new-spatial", projectId: projectId ?? null, sessionType: "spatial",
+            title: zh.spatial.untitled, revision: 1,
+          }, ...current]);
+          setCurrentSessionId("new-spatial");
+          addToGroup("new-spatial", groupId);
         }}
         onCreateProject={async (name) => {
           setProjects((current) => [{ id: `project-${current.length}`, name }, ...current]);
@@ -215,6 +243,120 @@ export const Default: Story = {
     }
     if (canvasElement.textContent?.includes("当前")) {
       throw new Error("The selected session must not render a current badge");
+    }
+    const tree = getRequiredElement(canvasElement, '[data-yisiui-asset="yisiui/asset-skeleton-tree"]');
+    const preserved = getRequiredElement(canvasElement, '[data-session-tree-key="session:poster"]');
+    getRequiredElement(canvasElement, '[data-session-tree-key="session:detail"]').click();
+    await waitFor(() => {
+      if (!getRequiredElement(canvasElement, '[data-session-tree-key="session:detail"]').closest(".ant-tree-treenode-selected")) {
+        throw new Error("Session selection must update in place");
+      }
+    });
+    findButton(canvasElement, "新建构图").click();
+    await waitFor(() => assertStorySelector(canvasElement, '[data-session-tree-key="session:new"]'));
+    findButton(canvasElement, "未命名构图：会话操作").click();
+    await waitFor(() => findMenuItem(canvasElement.ownerDocument, "删除"));
+    findMenuItem(canvasElement.ownerDocument, "删除").click();
+    await waitFor(() => getRequiredElement(canvasElement.ownerDocument.body, ".ant-modal-footer"));
+    findButton(getRequiredElement(canvasElement.ownerDocument.body, ".ant-modal-footer"), "删除").click();
+    await waitFor(() => {
+      if (canvasElement.querySelector('[data-session-tree-key="session:new"]')) throw new Error("Deleted session must leave the tree");
+    });
+    if (tree !== canvasElement.querySelector('[data-yisiui-asset="yisiui/asset-skeleton-tree"]')
+      || preserved !== canvasElement.querySelector('[data-session-tree-key="session:poster"]')) {
+      throw new Error("Selection, insertion and deletion must preserve the tree and unrelated rows");
+    }
+  },
+};
+
+export const SessionGroups: Story = {
+  name: "项目分组与会话拖放",
+  render: () => <ConfigProvider theme={{ token: { motion: false } }}><SidebarHarness initialGroups={[
+    { id: "reference", projectId: "brand", name: "参考", sessionIds: [] },
+    { id: "archive", projectId: "brand", name: "归档", sessionIds: ["detail"] },
+  ]} /></ConfigProvider>,
+  play: async ({ canvasElement }) => {
+    const row = (title: string) => canvasElement.querySelector<HTMLElement>(`.yisi-asset-skeleton-tree-node[title="${title}"]`)?.closest<HTMLElement>(".ant-tree-treenode");
+    const dialog = () => [...document.querySelectorAll<HTMLElement>('[role="dialog"]')].find(node => node.getClientRects().length)!;
+    const depth = (title: string) => row(title)?.querySelectorAll(".ant-tree-indent-unit").length;
+    const drag = async (source: string, target: string) => {
+      const from = row(source)!.querySelector<HTMLElement>(".human2ai-workspace-sidebar__tree-node")!;
+      const to = row(target)!.querySelector<HTMLElement>(".human2ai-workspace-sidebar__tree-node")!;
+      const box = to.getBoundingClientRect();
+      const options = { bubbles: true, cancelable: true, dataTransfer: new DataTransfer(), clientX: box.x + box.width / 2, clientY: box.y + box.height / 2 };
+      from.dispatchEvent(new DragEvent("dragstart", options));
+      to.dispatchEvent(new DragEvent("dragenter", options));
+      to.dispatchEvent(new DragEvent("dragover", options));
+      await nextFrame();
+      to.dispatchEvent(new DragEvent("drop", options));
+      from.dispatchEvent(new DragEvent("dragend", options));
+      await nextFrame();
+    };
+    await waitFor(() => { if (!row("参考") || depth("产品详情页") !== 2) throw new Error("Empty and populated groups must be visible"); });
+    if (!(row("参考")!.compareDocumentPosition(row("首屏主视觉")!) & Node.DOCUMENT_POSITION_FOLLOWING)) throw new Error("Groups must precede ungrouped sessions");
+    findButton(canvasElement, "品牌升级：项目操作").click();
+    await nextFrame();
+    findMenuItem(document, zh.workspaceSidebar.newSessionGroup).click();
+    await nextFrame();
+    const input = document.querySelector<HTMLInputElement>(`input[aria-label="${zh.workspaceSidebar.sessionGroupName}"]`)!;
+    setInputValue(input, "参考");
+    await nextFrame();
+    if (input.getAttribute("aria-invalid") !== "true") throw new Error("Duplicate group names must be rejected within the project");
+    setInputValue(input, "待整理");
+    await nextFrame();
+    findButton(dialog(), "创建").click();
+    await waitFor(() => { if (!row("待整理")) throw new Error("Creating a group must retain an empty row"); });
+    findButton(canvasElement, "待整理：分组操作").click();
+    await nextFrame();
+    findMenuItem(document, "重命名").click();
+    await nextFrame();
+    setInputValue(document.querySelector<HTMLInputElement>(`input[aria-label="${zh.workspaceSidebar.sessionGroupName}"]`)!, "设计稿");
+    await nextFrame();
+    findButton(dialog(), "确认").click();
+    await waitFor(() => { if (!row("设计稿")) throw new Error("Group rename must update its row"); });
+    await drag("首屏主视觉", "夏季活动");
+    if (depth("首屏主视觉") !== 1) throw new Error("Grouping must reject cross-project drops");
+    await drag("首屏主视觉", "设计稿");
+    await waitFor(() => { if (depth("首屏主视觉") !== 2) throw new Error("Drop into empty group failed"); });
+    await drag("首屏主视觉", "品牌升级");
+    await waitFor(() => { if (depth("首屏主视觉") !== 1) throw new Error("Drop onto project must release membership"); });
+    await drag("首屏主视觉", "设计稿");
+    await waitFor(() => { if (depth("首屏主视觉") !== 2) throw new Error("Regrouping failed"); });
+    findButton(canvasElement, "设计稿：分组操作").click();
+    await nextFrame();
+    findMenuItem(document, "删除").click();
+    await nextFrame();
+    findButton(dialog(), "删除").click();
+    await waitFor(() => {
+      if (row("设计稿") || depth("首屏主视觉") !== 1 || depth("产品详情页") !== 2) throw new Error("Deleting a group must release only its sessions");
+    });
+    for (const [label, title] of [
+      [zh.workspaceSidebar.newCompositionInGroup, "未命名构图"],
+      [zh.workspaceSidebar.newUiSketchInGroup, "未命名 UI 界面"],
+      [zh.spatial.newInGroup, zh.spatial.untitled],
+    ]) {
+      await waitFor(() => {
+        if (canvasElement.querySelector(".ant-tree-treenode-motion")) throw new Error("Wait for tree expansion to finish before toggling it again");
+      });
+      await nextFrame();
+      const groupRow = row("参考")!;
+      if (groupRow.getAttribute("aria-expanded") === "true") {
+        groupRow.querySelector<HTMLElement>(".ant-tree-switcher")!.click();
+        await waitFor(() => {
+          if (row("参考")?.getAttribute("aria-expanded") !== "false") throw new Error("The group must start collapsed");
+        });
+      }
+      findButton(canvasElement, label.replace("{{group}}", "参考")).click();
+      await waitFor(() => {
+        if (depth(title) !== 2 || row("参考")?.getAttribute("aria-expanded") !== "true") {
+          throw new Error("Group creation must expand the group and reveal its new session");
+        }
+        if (row(title)?.getAttribute("aria-selected") !== "true") throw new Error("The newly created session must be selected");
+        if (!(row("参考")!.compareDocumentPosition(row(title)!) & Node.DOCUMENT_POSITION_FOLLOWING)
+          || !(row(title)!.compareDocumentPosition(row("归档")!) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+          throw new Error("The created session must belong to the target group");
+        }
+      });
     }
   },
 };
@@ -373,18 +515,25 @@ export const ProjectCreateActions: Story = {
     }
 
     findButton(canvasElement, "在“品牌升级”中新建构图").click();
-    await nextFrame();
-    assertStoryText(canvasElement, "未命名构图");
+    await waitFor(() => {
+      assertStoryText(canvasElement, "未命名构图");
+      if (findButton(canvasElement, "在“品牌升级”中新建 UI 界面").disabled) throw new Error("Wait for creation to finish");
+    });
     if (canvasElement.textContent?.includes("无项目")) {
       throw new Error("The project action must create the composition inside its project");
     }
 
     findButton(canvasElement, "在“品牌升级”中新建 UI 界面").click();
-    await nextFrame();
-    assertStoryText(canvasElement, "未命名 UI 界面");
+    await waitFor(() => {
+      assertStoryText(canvasElement, "未命名 UI 界面");
+      if (findButton(canvasElement, "在“品牌升级”中新建 3D 空间").disabled) throw new Error("Wait for creation to finish");
+    });
     if (canvasElement.textContent?.includes("无项目")) {
       throw new Error("The project action must create the interface inside its project");
     }
+    findButton(canvasElement, "在“品牌升级”中新建 3D 空间").click();
+    await waitFor(() => assertStoryText(canvasElement, zh.spatial.untitled));
+    if (canvasElement.textContent?.includes("无项目")) throw new Error("The project action must create the 3D space inside its project");
   },
 };
 
@@ -551,7 +700,7 @@ function getRequiredElement(root: HTMLElement, selector: string): HTMLElement {
 
 function findMenuItem(document: Document, label: string): HTMLElement {
   const item = Array.from(document.querySelectorAll<HTMLElement>("[role='menuitem']"))
-    .find((candidate) => candidate.textContent?.trim() === label);
+    .find((candidate) => candidate.getClientRects().length > 0 && candidate.textContent?.trim() === label);
   if (!item) throw new Error(`Story interaction contract missing menu item: ${label}`);
   return item;
 }

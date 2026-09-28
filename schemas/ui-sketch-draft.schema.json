@@ -100,6 +100,91 @@
           "y": { "type": "number" },
           "width": { "type": "number", "exclusiveMinimum": 0 },
           "height": { "type": "number", "exclusiveMinimum": 0 },
+          "previewReference": {
+            "oneOf": [
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sessionId",
+                  "sessionType",
+                  "cameraId",
+                  "renderedRevision"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sessionType": {
+                    "const": "spatial"
+                  },
+                  "cameraId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "renderedRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sessionId",
+                  "sessionType",
+                  "stateId",
+                  "renderedRevision"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sessionType": {
+                    "const": "ui-layout"
+                  },
+                  "stateId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "renderedRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "sessionId",
+                  "sessionType",
+                  "stateId",
+                  "renderedRevision"
+                ],
+                "properties": {
+                  "sessionId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sessionType": {
+                    "const": "image-composition"
+                  },
+                  "stateId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "renderedRevision": {
+                    "type": "integer",
+                    "minimum": 1
+                  }
+                }
+              }
+            ]
+          },
           "assetId": {
             "type": ["string", "null"],
             "minLength": 1

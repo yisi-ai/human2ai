@@ -324,7 +324,7 @@
     },
     "composition.text-region": {
       "meaning": "An editable composition area that must contain visible typography in the final artwork.",
-      "scope": "Composition text-region creation tool, node-kind label, numbered exported area headings, and typography requirements in image-generation prompts.",
+      "scope": "Composition text-region creation tool, node-kind label, numbered exported area headings, and typography requirements in image-generation prompts. Filled display text is also rendered in the editable canvas and precise references, stretched to the region dimensions and warped with its four corners; explicit line breaks are retained and empty content keeps typography placeholders. Soft references always use typography placeholders, including when display text is provided.",
       "referent": "A freely sized composition text area marked semanticType text-region, with an optional convex four-corner outline.",
       "precedence": "Distinct from a plain shape region and from the textContent field containing its literal copy. Blank display text requests model-created copy, not omission of typography. Prompt numbering follows the shared area sequence, not a separate text-only count.",
       "canonicalKey": "composition.toolNames.textRegion",
@@ -335,7 +335,8 @@
         "text-region"
       ],
       "examples": [
-        "Add a text region for a headline and describe its placement."
+        "Add a text region for a headline and describe its placement.",
+        "Render a supplied headline directly in its freely resized text region."
       ],
       "nonExamples": [
         "Add a region with no typography requirement.",
@@ -1939,6 +1940,52 @@
         "Moving content elements when a composition guide changes.",
         "The geometric primitive of a content region."
       ]
+    },
+    "composition.preview-mode": {
+      "meaning": "The saved fidelity of composition generation references: Precise retains authored shape geometry and asks generation to closely follow the canvas; Soft preserves recognizable mass and basic shape while allowing free reinterpretation.",
+      "scope": "Composition session settings, reference view, copied reference, Agent instructions and composition previews embedded in UI sessions. The selection applies across layout states. Soft references show typography placeholders for every text region regardless of supplied display text; stored wording and generation requirements are retained.",
+      "referent": "The composition draft previewMode value, precise or soft. New drafts explicitly start in soft; an absent value on a legacy draft still means precise, and saved selections are preserved.",
+      "precedence": "Independent of Scene versus Editorial processing mode. Governs reference rendering and generation fidelity, not editable geometry, output resolution or guide visibility. User instructions and node notes still take precedence.",
+      "canonicalKey": "composition.previewMode.label",
+      "searchTerms": [
+        "预览模式",
+        "精准",
+        "模糊",
+        "preview mode",
+        "precise",
+        "soft",
+        "fidelity"
+      ],
+      "examples": [
+        "Precise keeps a triangle outline and asks generation to preserve its placement and proportions.",
+        "Soft shades the triangle radially while retaining its pointed mass and allows a loosely corresponding subject."
+      ],
+      "nonExamples": [
+        "Scene versus Editorial interpretation.",
+        "Blurring imported photographs.",
+        "Changing node geometry or visibility."
+      ]
+    },
+    "composition.output-frame": {
+      "meaning": "The bounded composition output area, movable and resizable inside the infinite editing canvas.",
+      "scope": "Shared frame controls, on-canvas caption and accessible interaction name. Numeric values are pixel bounds, using the same sizing, presets and reset behavior as the UI interface frame.",
+      "referent": "The composition frame world bounds; editing writes matching output dimensions. Legacy saved output dimensions remain readable without changing its crop on load.",
+      "precedence": "Distinct from the output aspect-ratio selector, the infinite viewport and content-node bounds. The caption does not form part of exported images.",
+      "canonicalKey": "composition.frameLabel",
+      "searchTerms": [
+        "画框",
+        "Frame",
+        "frame caption",
+        "移动或缩放画框"
+      ],
+      "examples": [
+        "Show Frame · 960 × 560 above the top-left corner.",
+        "Name the action that moves or resizes the composition frame."
+      ],
+      "nonExamples": [
+        "Label the UI interface frame.",
+        "Describe viewport zoom or an individual node size."
+      ]
     }
   },
   "keys": {
@@ -2293,7 +2340,7 @@
     "composition.prompt.flexibleImplementation": {
       "conceptId": "composition.prompt-layout-intent",
       "variant": "adaptation-guidance",
-      "role": "instruction preserving relative placement and visual relationships while allowing content reconstruction",
+      "role": "instruction preserving relative placement and visual relationships while allowing content reconstruction; used only with Soft preview fidelity",
       "grammar": "instructional sentences",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -2301,7 +2348,7 @@
     "composition.prompt.referenceImageGuidance": {
       "conceptId": "composition.prompt-layout-intent",
       "variant": "reference-guidance",
-      "role": "instruction treating the uploaded reference as a spatial cue rather than line art",
+      "role": "instruction treating the uploaded reference as a spatial cue rather than line art; used only with Soft preview fidelity",
       "grammar": "instructional sentences",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -2317,7 +2364,7 @@
     "composition.prompt.regionSemanticsGuidance": {
       "conceptId": "composition.prompt-layout-intent",
       "variant": "region-boundary-guidance",
-      "role": "instruction against reproducing complete region boundaries or fixed silhouettes",
+      "role": "instruction against reproducing complete region boundaries or fixed silhouettes; used only with Soft preview fidelity",
       "grammar": "instructional sentences",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -2782,7 +2829,7 @@
     "composition.prompt.lightSourceGuidance": {
       "conceptId": "composition.light-source",
       "variant": "prompt-legend",
-      "role": "generation instruction",
+      "role": "generation instruction; used only with Soft preview fidelity",
       "grammar": "instruction sentence",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -2790,7 +2837,7 @@
     "composition.prompt.lightBandGuidance": {
       "conceptId": "composition.light-source",
       "variant": "per-light-band-guidance",
-      "role": "approximate lighting interpretation for an individual rectangular light source",
+      "role": "approximate lighting interpretation for an individual rectangular light source; used only with Soft preview fidelity",
       "grammar": "instruction sentences",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -3186,6 +3233,79 @@
       "grammar": "sentence",
       "tone": "neutral",
       "reusePolicy": "canonical"
+    },
+    "composition.previewMode.label": {
+      "conceptId": "composition.preview-mode",
+      "variant": "field-label",
+      "role": "preview fidelity field label and radiogroup accessible name",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.previewMode.precise": {
+      "conceptId": "composition.preview-mode",
+      "variant": "precise-option",
+      "role": "option naming close adherence to the authored canvas",
+      "grammar": "adjective",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.previewMode.soft": {
+      "conceptId": "composition.preview-mode",
+      "variant": "soft-option",
+      "role": "option naming shape-aware soft spatial guidance",
+      "grammar": "adjective",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.previewMode.prompt": {
+      "conceptId": "composition.preview-mode",
+      "variant": "prompt-heading",
+      "role": "generated prompt declaring the selected reference fidelity",
+      "grammar": "label with mode placeholder",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.previewMode.preciseGuidance": {
+      "conceptId": "composition.preview-mode",
+      "variant": "precise-instruction",
+      "role": "generation instruction to closely preserve authored geometry, spacing and relative visual relationships",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.previewMode.preciseLightGuidance": {
+      "conceptId": "composition.preview-mode",
+      "variant": "precise-light-instruction",
+      "role": "generation instruction preserving authored lighting placement and extent without literal diagnostic marks",
+      "grammar": "instructional sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "composition.frameLabel": {
+      "conceptId": "composition.output-frame",
+      "variant": "caption-name",
+      "role": "On-canvas frame caption name",
+      "grammar": "Noun",
+      "tone": "Neutral",
+      "reusePolicy": "canonical"
+    },
+    "composition.frameAction": {
+      "conceptId": "composition.output-frame",
+      "variant": "interaction",
+      "role": "Accessible label for moving or resizing the composition frame",
+      "grammar": "Imperative verb phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "composition.frameReset": {
+      "conceptId": "composition.output-frame",
+      "variant": "reset",
+      "role": "Tooltip and accessible name for resetting the frame",
+      "grammar": "Imperative verb phrase",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual",
+      "duplicateReason": "UI reset uses uiSketch.canvasLabels.resetFrame for the interface frame; this action resets the composition frame."
     }
   }
 }

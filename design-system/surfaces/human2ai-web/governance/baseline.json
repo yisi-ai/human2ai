@@ -5,12 +5,12 @@
   "assetCount": 19,
   "approvedByUser": false,
   "verification": {
-    "date": "2026-09-23",
-    "sharedVersion": "0.16.0",
-    "scope": "SpatialWorkspaceView removes the obsolete showDraft=false prop; existing tree selection, expansion and parameter interactions remain intact.",
-    "storyId": "human2ai-spatial-workspace-view--lock-interactions",
-    "route": "/spatial/?session=<isolated-verification-session>",
-    "viewport": "1280x800",
-    "result": "Story play finished; production tree selection passed with no horizontal overflow, console errors or mounted Inspector. Typecheck, 741 tests, Storybook and Next builds passed."
+    "date": "2026-09-28",
+    "sharedVersion": "0.17.1",
+    "scope": "Persistent root shell/sidebar across composition, UI and spatial routes; stable row actions and separate tree data/selection preserve unrelated titles during session insertion, deletion and rename.",
+    "storyId": "human2ai-workspace-sidebar--default",
+    "route": "/composition, /ui-sketch, /spatial (isolated sessions)",
+    "viewport": "1024x800, 1280x800, 1536x960",
+    "result": "Manual instrumented Next browser checks at 20 and 200 sessions: unrelated title executions, replaced retained rows and navigation list reloads all zero; expansion and scrolling retained. Dialog typing renders neither tree nor active 3D viewport and allocates no WebGL resources. Pending actions still update global action-control availability. Typecheck, 225 domain tests (1 skipped), 34 focused tests, Next and Storybook builds passed; 24 retained sidebar/shell Story plays passed. Existing immediate-note-navigation autosave loss also reproduced with pre-change shell/layout. Production static-export navigation also retained all rows with no list reloads, overflow or Inspector. Detailed local evidence: .human2ai-data/output/workspace-tree-local-updates/verification.md. Browser checks are manual, not CI protection."
   }
 }

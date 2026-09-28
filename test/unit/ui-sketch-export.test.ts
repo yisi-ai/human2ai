@@ -39,6 +39,27 @@ describe("UI sketch stage export", () => {
     expect(renderUiSketchSvg).toBe(renderDomainUiSketchSvg);
   });
 
+  it.each(["start", UI_SKETCH_END_STAGE_ID])("omits notes from %s preview while retaining visible text, source data and prompts", (stageId) => {
+    const draft = uiSketchDraftForStage(cloneUiSketchDraft(UI_SKETCH_FIXTURE), stageId);
+    draft.rectangles[0]!.note = "Region instruction, not visible content";
+    draft.texts[0]!.note = "Text instruction, not visible content";
+    draft.texts[0]!.text = "Visible <content>\nSecond line";
+    const before = structuredClone(draft);
+    const svg = renderUiSketchSvg(draft);
+    expect(svg).not.toContain(draft.rectangles[0]!.note);
+    expect(svg).not.toContain(draft.texts[0]!.note);
+    expect(svg).toContain("Visible &lt;content&gt;");
+    expect(svg).toContain("Second line");
+    expect(draft).toEqual(before);
+    for (const translate of [translateChinesePrompt, translateEnglishPrompt]) {
+      const prompt = buildUiSketchPrompt(draft, translate);
+      expect(prompt).toContain(draft.rectangles[0]!.note);
+      expect(prompt).toContain(draft.texts[0]!.note);
+    }
+    draft.rectangles[0]!.note = "A different instruction";
+    expect(renderUiSketchSvg(draft)).toBe(svg);
+  });
+
   it("exports every adjacent pair in display order with persisted names", () => {
     let draft = insertUiSketchStage(UI_SKETCH_FIXTURE, "start", "second");
     draft = insertUiSketchStage(draft, "second", "third");

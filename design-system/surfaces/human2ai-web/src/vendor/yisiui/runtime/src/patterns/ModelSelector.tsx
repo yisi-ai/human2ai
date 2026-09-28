@@ -3,7 +3,7 @@
 import { CheckOutlined, DownOutlined, MoreOutlined } from "@ant-design/icons";
 import { Dropdown, Slider } from "antd";
 import type { CSSProperties, KeyboardEvent, ReactNode } from "react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 
 import "../../styles/tokens.css";
 import "../../styles/model-selector.css";
@@ -128,10 +128,24 @@ function ChoiceMenu({ id, label, options, selectedKey, onSelect }: {
   selectedKey?: string;
   onSelect: (key: string) => void;
 }) {
+  const menuRef = useRef<HTMLDivElement>(null);
+  const hadFocus = useRef(false);
   const tabStop = options.find((option) => option.key === selectedKey && !option.disabled) ??
     options.find((option) => !option.disabled);
+  useLayoutEffect(() => {
+    const menu = menuRef.current;
+    if (!menu || !hadFocus.current) return;
+    const active = menu.ownerDocument.activeElement;
+    if (menu.contains(active) && !(active instanceof HTMLButtonElement && active.disabled)) return;
+    (menu.querySelector<HTMLButtonElement>('[aria-checked="true"]:not(:disabled)') ??
+      menu.querySelector<HTMLButtonElement>('button:not(:disabled)') ?? menu).focus();
+  }, [options]);
   return (
-    <div id={id} className="yisi-model-selector-menu" role="menu" aria-label={label} tabIndex={tabStop ? -1 : 0}
+    <div ref={menuRef} id={id} className="yisi-model-selector-menu" role="menu" aria-label={label} tabIndex={tabStop ? -1 : 0}
+      onFocusCapture={() => { hadFocus.current = true; }}
+      onBlurCapture={(event) => {
+        if (event.relatedTarget && !event.currentTarget.contains(event.relatedTarget as Node)) hadFocus.current = false;
+      }}
       onKeyDown={(event) => moveFocus(event, '[role="menuitemradio"]', false)}>
       {options.map((option) => (
         <button key={option.key} type="button" role="menuitemradio" aria-checked={option.key === selectedKey}
@@ -165,7 +179,7 @@ export function ModelSelector({
   const [reducedMotion, setReducedMotion] = useState(false);
   // Each portal keeps its own id while another portal's exit animation finishes.
   const activeMenuId = popup?.kind === "models" ? `${menuId}-models`
-    : `${menuId}-sources-${modes.findIndex((item) => item.key === (popup?.kind === "sources" ? popup.modeKey : undefined))}`;
+    : `${menuId}-sources-${encodeURIComponent(popup?.kind === "sources" ? popup.modeKey : "")}`;
   const locked = disabled || loading;
   const mode = modes.find((item) => item.key === value?.modeKey) ?? modes.find((item) => !item.disabled);
   const source = mode?.sources.find((item) => item.key === value?.sourceKey) ?? mode?.sources.find((item) => !item.disabled);
@@ -181,6 +195,9 @@ export function ModelSelector({
   if (model && !visibleModels.includes(model)) visibleModels[visibleModels.length - 1] = model;
   const firstMode = modes.find((item) => !item.disabled);
   const firstModel = visibleModels.find((item) => !item.disabled);
+  const popupMode = popup?.kind === "sources" ? modes.find((item) => item.key === popup.modeKey) : undefined;
+  const popupUnavailable = popup?.kind === "models" ? modelLocked || models.length <= limit
+    : popup?.kind === "sources" ? locked || !popupMode || popupMode.disabled || popupMode.sources.length <= 1 : false;
 
   function updateModelMenuPlacement() {
     const body = bodyRef.current;
@@ -232,7 +249,13 @@ export function ModelSelector({
 
   useEffect(() => {
     setPopup(null);
-  }, [disabled, loading, value?.modeKey, value?.sourceKey, value?.modelKey, modes, modeLayout]);
+  }, [disabled, loading, value?.modeKey, value?.sourceKey, value?.modelKey, mode?.key, source?.key, model?.key, modeLayout]);
+
+  useEffect(() => {
+    if (!popupUnavailable) return;
+    setPopup(null);
+    if (triggerRef.current?.isConnected && !triggerRef.current.disabled) triggerRef.current.focus();
+  }, [popupUnavailable]);
 
   useEffect(() => {
     if (popup?.kind !== "models") return;
@@ -288,8 +311,8 @@ export function ModelSelector({
           onKeyDown={(event) => {
             if ((event.target as HTMLElement).getAttribute("role") === "radio") moveFocus(event, '[role="radio"]', true);
           }}>
-          {modes.map((item, index) => {
-            const sourceMenuId = `${menuId}-sources-${index}`;
+          {modes.map((item) => {
+            const sourceMenuId = `${menuId}-sources-${encodeURIComponent(item.key)}`;
             const selected = item.key === mode?.key;
             const selectedSource = selected ? source : item.sources.find((option) => !option.disabled);
             const open = !locked && popup?.kind === "sources" && popup.modeKey === item.key;

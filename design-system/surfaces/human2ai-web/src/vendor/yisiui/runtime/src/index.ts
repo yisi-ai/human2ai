@@ -34,6 +34,7 @@ export * from "./components/LoadingState";
 export * from "./patterns/ConfirmAction";
 export * from "./patterns/AspectRatioSelector";
 export * from "./patterns/ModelSelector";
+export * from "./patterns/CascadeSelector";
 export * from "./patterns/AdaptiveAccordion";
 export * from "./patterns/ResizableCollapseGroup";
 export * from "./patterns/AssetSkeletonTree";

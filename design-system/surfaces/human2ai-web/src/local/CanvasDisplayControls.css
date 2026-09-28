@@ -1,0 +1,14 @@
+.human2ai-canvas-display-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-1);
+}
+
+.human2ai-canvas-onion-skin {
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.human2ai-canvas-onion-skin.human2ai-canvas-onion-skin * {
+  pointer-events: none;
+}

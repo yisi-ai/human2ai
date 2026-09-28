@@ -8,6 +8,8 @@ import {
   ProjectSessionRepository,
   RevisionConflictError,
   SessionNotFoundError,
+  SessionGroupNotFoundError,
+  SessionGroupNameConflictError,
 } from "../../database/project-session-repository.ts";
 import { SESSION_TYPES, type SessionType } from "../../domain/session/index.ts";
 
@@ -34,6 +36,7 @@ interface CreateSessionBody {
   sessionType: SessionType;
   title: string;
   projectId?: string | null;
+  groupId?: string;
 }
 
 interface MoveSessionBody {
@@ -123,7 +126,7 @@ const errorSchema = {
   },
 } as const;
 
-const idParamsSchema = (key: "projectId" | "sessionId") =>
+const idParamsSchema = (key: "projectId" | "sessionId" | "groupId") =>
   ({
     type: "object",
     additionalProperties: false,
@@ -135,6 +138,55 @@ export function registerProjectSessionRoutes(
   server: FastifyInstance,
   repository: ProjectSessionRepository,
 ): void {
+  const groupSchema = {
+    type: "object", additionalProperties: false,
+    required: ["id", "projectId", "name", "revision", "sessionIds"],
+    properties: {
+      id: { type: "string" }, projectId: { type: "string" }, name: { type: "string" },
+      revision: { type: "integer", minimum: 1 },
+      sessionIds: { type: "array", items: { type: "string" } },
+    },
+  } as const;
+  const groupWriteResponse = { 400: errorSchema, 404: errorSchema, 409: errorSchema };
+  const revisionProperty = { type: "integer", minimum: 1 } as const;
+  const nameProperty = { type: "string", minLength: 1, maxLength: 200 } as const;
+
+  server.get("/api/v1/session-groups", {
+    schema: { response: { 200: { type: "object", required: ["groups"], properties: { groups: { type: "array", items: groupSchema } } } } },
+  }, async () => ({ groups: repository.listSessionGroups() }));
+
+  server.post<{ Params: ProjectParams; Body: { name: string } }>("/api/v1/projects/:projectId/groups", {
+    schema: {
+      params: idParamsSchema("projectId"),
+      body: { type: "object", additionalProperties: false, required: ["name"], properties: { name: nameProperty } },
+      response: { 201: groupSchema, ...groupWriteResponse },
+    },
+  }, async (request, reply) => execute(reply, 201, () => repository.createSessionGroup(request.params.projectId, request.body)));
+
+  server.patch<{ Params: { groupId: string }; Body: { name: string; expectedRevision: number } }>("/api/v1/session-groups/:groupId", {
+    schema: {
+      params: idParamsSchema("groupId"),
+      body: { type: "object", additionalProperties: false, required: ["name", "expectedRevision"], properties: { name: nameProperty, expectedRevision: revisionProperty } },
+      response: { 200: groupSchema, ...groupWriteResponse },
+    },
+  }, async (request, reply) => execute(reply, 200, () => repository.renameSessionGroup(request.params.groupId, request.body)));
+
+  server.delete<{ Params: { groupId: string }; Body: { expectedRevision: number } }>("/api/v1/session-groups/:groupId", {
+    schema: {
+      params: idParamsSchema("groupId"),
+      body: { type: "object", additionalProperties: false, required: ["expectedRevision"], properties: { expectedRevision: revisionProperty } },
+      response: groupWriteResponse,
+    },
+  }, async (request, reply) => execute(reply, 204, () => repository.deleteSessionGroup(request.params.groupId, request.body)));
+
+  server.put<{ Params: ProjectParams & SessionParams; Body: { groupId: string | null } }>("/api/v1/projects/:projectId/sessions/:sessionId/group", {
+    schema: {
+      params: { type: "object", additionalProperties: false, required: ["projectId", "sessionId"], properties: { projectId: { type: "string", minLength: 1 }, sessionId: { type: "string", minLength: 1 } } },
+      body: { type: "object", additionalProperties: false, required: ["groupId"], properties: { groupId: nullableStringSchema } },
+      response: groupWriteResponse,
+    },
+  }, async (request, reply) => execute(reply, 204, () => repository.setSessionGroup(request.params.projectId, request.params.sessionId, request.body.groupId)));
+
   server.get(
     "/api/v1/projects",
     {
@@ -308,6 +360,7 @@ export function registerProjectSessionRoutes(
             sessionType: { type: "string", enum: SESSION_TYPES },
             title: { type: "string", minLength: 1, maxLength: 200 },
             projectId: nullableStringSchema,
+            groupId: { type: "string", minLength: 1 },
           },
         },
         response: {
@@ -425,7 +478,7 @@ function execute<T>(
   } catch (error) {
     if (
       error instanceof ProjectNotFoundError ||
-      error instanceof SessionNotFoundError
+      error instanceof SessionNotFoundError || error instanceof SessionGroupNotFoundError
     ) {
       return reply.code(404).send({ code: error.code, message: error.message });
     }
@@ -436,7 +489,7 @@ function execute<T>(
         actualRevision: error.actualRevision,
       });
     }
-    if (error instanceof ProjectNameConflictError) {
+    if (error instanceof ProjectNameConflictError || error instanceof SessionGroupNameConflictError) {
       return reply.code(409).send({ code: error.code, message: error.message });
     }
     if (error instanceof ProjectNotEmptyError) {

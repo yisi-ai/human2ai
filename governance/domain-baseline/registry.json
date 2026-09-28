@@ -34,7 +34,7 @@
     {
       "id": "asset.image-validation",
       "category": "asset",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "shared",
       "responsibility": "校验会话图片与风格参考图的输入字节，并识别格式、MIME 与原始尺寸",
       "invariants": [
@@ -42,7 +42,8 @@
         "根据图片字节读取元数据，接受具有有效宽高的 PNG、JPEG 和 WebP；会话图片显式允许自包含静态 SVG，风格参考图仍只接受位图，不依赖文件名或上传 MIME 声明",
         "读取元数据时禁用动画模式，校验不改写原始图片字节",
         "输入不合格时，在写入图片文件与图片记录之前拒绝请求",
-        "SVG 必须在读取图片元数据前通过 XML 及自包含内容校验；不允许脚本、事件、DTD 或外部资源，保留接受的原始源码字节"
+        "SVG 必须在读取图片元数据前通过 XML 及自包含内容校验；不允许脚本、事件、DTD 或外部资源，保留接受的原始源码字节",
+        "会话 SVG 可内嵌 base64 静态 SVG 图片，每层递归执行同一自包含内容校验，最多 32 层；总输入仍限制为 10 MiB，风格参考图仍不接受 SVG。"
       ],
       "implementations": [
         {
@@ -90,7 +91,7 @@
     {
       "id": "capture.canvas-edit-history",
       "category": "capture",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "shared",
       "responsibility": "在当前打开的会话中按完整操作记录、撤销和重做画布草稿，并与各领域保存流程衔接",
       "invariants": [
@@ -98,7 +99,8 @@
         "撤销与重做恢复完整草稿；新编辑清空重做分支，加载或收到外部版本时重建起点，保存回执不新增历史",
         "原生文字输入的撤销优先，画布观察视角与选择不进入草稿历史；UI 历史同时保存目标状态定位",
         "本地撤销立即生效，保存中的旧回执不得覆盖后续本地操作；3D 操作队列先保存目标快照，再通过共享指定版本恢复提交撤销或重做",
-        "3D 恢复不绕过任意新草稿的领域约束，只恢复已验证且已保存的历史草稿；冲突停止写入，禁止以旧快照覆盖外部版本"
+        "3D 恢复不绕过任意新草稿的领域约束，只恢复已验证且已保存的历史草稿；冲突停止写入，禁止以旧快照覆盖外部版本",
+        "会话预览的派生内容可同步到当前草稿而不创建用户撤销步骤、不取消手势、不修改已有历史快照。"
       ],
       "implementations": [
         {
@@ -153,7 +155,7 @@
     {
       "id": "capture.draft-versioning",
       "category": "capture",
-      "contractVersion": 4,
+      "contractVersion": 5,
       "status": "shared",
       "responsibility": "管理捕捉草稿的不可变版本、乐观并发检查与撤销恢复",
       "invariants": [
@@ -165,7 +167,8 @@
         "带 styleProcessing 的保存须在追加事务内校验当前风格绑定、风格 revision 和会话 revision，不匹配返回 STYLE_PROCESSING_STALE 且不写版本",
         "加工元数据记录 styleId、styleRevision、sourceRevision 和 resultRevision；普通编辑继承上次记录，undo 恢复目标文档的记录（包括无记录）",
         "最新版本查询复用同一会话类型校验和规范化版本读取；无历史或 knownRevision 等于最新 revision 时返回空结果且不读取历史草稿 JSON，否则仅返回最新版本；读取不写入新版本，完整历史与撤销接口保持原语义",
-        "指定历史版本恢复复用版本追加、会话类型与乐观并发检查，恢复目标草稿及其加工元数据；只允许恢复同一会话中已保存的版本，保留原有 undo 上一版本协议"
+        "指定历史版本恢复复用版本追加、会话类型与乐观并发检查，恢复目标草稿及其加工元数据；只允许恢复同一会话中已保存的版本，保留原有 undo 上一版本协议",
+        "所有保存和恢复在版本事务内执行可选会话上下文校验；草稿成功提交后通知订阅者，外层事务回滚不发布事件；派生预览写入携带服务端批次标识且仍执行乐观并发检查。"
       ],
       "implementations": [
         {
@@ -233,10 +236,71 @@
         "test/integration/ui-sketch-sessions.test.ts",
         "test/unit/shared-capability-boundaries.test.ts",
         "test/integration/session-styles.test.ts",
-        "test/integration/spatial-sessions.test.ts"
+        "test/integration/spatial-sessions.test.ts",
+        "test/integration/session-preview.test.ts",
+        "test/unit/draft-saved-events.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "新增捕捉类型，或修改共享的 revision、并发、undo、指纹或会话类型不变量之前，或改变指定历史版本恢复协议之前"
+    },
+    {
+      "id": "capture.frame-geometry",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "复用原 UI 界面范围的默认像素边界、手动尺寸、比例预设和指针取整规则，供 UI 与构图共同使用",
+      "invariants": [
+        "默认边界为 x=0、y=0、960×560；编辑宽高按整数像素处理，最小为 10，不设置最大值或宽高比范围。",
+        "手动宽高保持中心，低于最小值或非有限输入不提交；比例预设保留当前宽度并计算高度。",
+        "指针缩放通过同一 CanvasFrame/CanvasNode 自由宽高、Shift 保持手势起始比例、Alt 围绕中心，按 UI 原规则取整。",
+        "构图仅转换 1200×800 基准下的归一化存储坐标，调整后输出尺寸匹配世界像素边界；旧草稿加载保持其原裁切和输出尺寸，不静默迁移。",
+        "共享边界控制不拥有会话读取、保存、历史或图片资源；两个适配器把最新边界合并到最新草稿。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-frame.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/composition/frame.ts",
+          "consumer": "composition-editor"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/ui-sketch/draft.ts",
+          "consumer": "ui-sketch-editor"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/CanvasFrame.tsx",
+          "consumer": "canvas-editors"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/CanvasFrameControls.tsx",
+          "consumer": "canvas-editors"
+        }
+      ],
+      "consumers": [
+        "canvas-editors",
+        "composition-editor",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "UI 存储像素 bounds；构图保留已发布的归一化 bounds，适配层只转换坐标。",
+        "API 草稿沿用 UI 的有限正尺寸表示，可读取旧小数数据；交互编辑统一取整与最小 10，未引入新的持久化类型。"
+      ],
+      "contractTests": [
+        "test/unit/canvas-frame.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/ui-sketch-frame-boundary.md",
+        "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx",
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "改变共享最小尺寸、默认边界、比例预设或像素语义之前"
     },
     {
       "id": "capture.layer-order",
@@ -332,6 +396,59 @@
       "reviewTrigger": "引入状态权限、跨会话移动或改变命名与最少状态数量约束之前"
     },
     {
+      "id": "capture.node-appearance",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "为构图、UI 编辑器及 UI 导出提供稳定节点色号与同色图形重叠内描边判断。",
+      "invariants": [
+        "色号仅由稳定节点 ID 决定，删除、重排或切换状态不改变幸存节点色号。",
+        "仅同色且正面积相交的轮廓参与内描边；严格包含只描内部，部分相交及完全重合描双方。",
+        "重叠缓存只更新变化几何和相关关系，删除不重建幸存节点轮廓；导出使用相同规则独立计算一次。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-node-tone.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/domain/canvas-shape-overlap.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/canvasNodeTone.ts",
+          "consumer": "canvas-editors"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/canvasShapeOverlap.ts",
+          "consumer": "canvas-editors"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/ui-sketch/appearance.ts",
+          "consumer": "ui-sketch-preview"
+        }
+      ],
+      "consumers": [
+        "canvas-editors",
+        "ui-sketch-preview"
+      ],
+      "variationPoints": [
+        "构图适配旋转多边形/椭圆，UI 适配轴对齐矩形；各端保留主题绘制和编辑控制，不统一跨领域渲染器。"
+      ],
+      "contractTests": [
+        "test/unit/canvas-shape-overlap.test.ts",
+        "test/unit/ui-sketch-preview-appearance.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/session-preview.md"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "改变节点配色稳定性、同色相交/包含规则或重叠缓存失效边界之前"
+    },
+    {
       "id": "capture.node-origin",
       "category": "capture",
       "contractVersion": 1,
@@ -376,7 +493,7 @@
     {
       "id": "composition.agent-refinement",
       "category": "composition",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "local",
       "responsibility": "执行 Agent 有目标、有依据的构图关系计划，生成独立精修结果与最终关系验证；用户同意和视觉复核由 Agent 负责",
       "invariants": [
@@ -388,7 +505,8 @@
         "focusLinks 显式关联焦点与区域并联动变换；fixedIds 必须完全保留；不会自动推断主次焦点或新增引导节点",
         "v2 在最终结果上重新验证所有所选关系；冲突返回具体关系索引和测量数据，不以最后一个操作覆盖先前关系的失败",
         "数学验证只确认关系成立；用户同意和最终画面复核由 Agent 负责，服务不引入审批状态",
-        "精修生成的关系校验辅助线仅属于结果验证证据，不写入草稿或生图参考"
+        "精修生成的关系校验辅助线仅属于结果验证证据，不写入草稿或生图参考",
+        "精修保留会话预览模式，审计比较缺省为 precise 的有效值；旧审计结果允许未记录 previewMode。"
       ],
       "implementations": [
         {
@@ -420,7 +538,8 @@
         "test/unit/composition-refinement.test.ts",
         "test/unit/composition-session-repository.test.ts",
         "test/integration/composition-sessions.test.ts",
-        "test/unit/composition-relations.test.ts"
+        "test/unit/composition-relations.test.ts",
+        "test/unit/composition-preview-mode.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "新增精修方法、改变内容不变量或改变精修结果与原稿隔离方式时重新评审；UI 像素标准化属于不同领域，保留独立约束"
@@ -519,17 +638,19 @@
     {
       "id": "composition.layout-states",
       "category": "composition",
-      "contractVersion": 3,
+      "contractVersion": 5,
       "status": "local",
       "responsibility": "管理同一构图会话中共享节点内容、独立画框和节点布局的可自定义状态",
       "invariants": [
         "无 states 的旧草稿解析为一个默认状态，保持原持久化结构和指纹",
         "所有状态共用节点身份、类型、文字、图片来源与裁切、备注和业务语义；增删节点同步到各状态",
-        "状态独立保存画框尺寸与边界、节点位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
+        "状态独立保存画框尺寸与边界、节点可见性、位置尺寸旋转、文字区域四角轮廓和层级；顶层几何是 activeStateId 对应的可编辑布局，验证时同步其快照",
         "新增复制指定来源布局、插入其后并选中，命名排序和删除边界委托 capture.named-states；删除活动状态选择邻近状态",
         "状态和当前选择通过既有草稿版本、自动保存、外部版本同步及本地撤销恢复；指纹覆盖全部状态",
         "复制提示词和图片使用顶层当前布局；状态快照不持有共享节点内容",
-        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划"
+        "每个状态独立保存可选 plans；缺少该字段的旧状态表示无规划，不继承其他状态的规划",
+        "内容节点 visible 按状态保存，旧节点或旧布局缺省为可见；隐藏不删除节点，编辑显示开关不改动草稿；预览、生成参考和构图分析只投影当前状态可见内容，指纹仍覆盖完整草稿",
+        "画框编辑复用 capture.frame-geometry 的 UI 像素规则，不再限制比例为 1:2–2:1 或尺寸为 256–4096；旧已保存的状态保持可读取。"
       ],
       "implementations": [
         {
@@ -555,6 +676,10 @@
         {
           "role": "current",
           "path": "web/app/composition/page.tsx"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/render.ts"
         }
       ],
       "consumers": [
@@ -562,7 +687,7 @@
         "composition-editor"
       ],
       "variationPoints": [
-        "UI 状态保留共享画框和层级以及独立可见性；构图不引入节点可见性或状态转换图",
+        "UI 状态复用其既有快照与必填 visible；构图 visible 可省略以兼容旧草稿，画框与层级仍按构图状态保存。两者复用本地 CanvasDisplayControls 与 CanvasOnionSkin，具体内容绘制由各领域负责。",
         "状态组件复用本地 UiSketchStateTabs；不复制状态菜单和拖动实现",
         "保存、并发与撤销继续委托 capture.draft-versioning 和 capture.canvas-edit-history，不新增路由或数据库表"
       ],
@@ -570,26 +695,27 @@
         "test/unit/composition-states.test.ts",
         "test/integration/composition-sessions.test.ts",
         "test/unit/composition-text-outline.test.ts",
-        "test/unit/composition-planning.test.ts"
+        "test/unit/composition-planning.test.ts",
+        "test/unit/composition-visibility.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/composition-layout-states.md",
         "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx"
       ],
       "exceptions": [],
-      "reviewTrigger": "新增独立内容、可见性、动画或跨状态加工操作之前"
+      "reviewTrigger": "新增独立内容、状态转换图或跨状态加工操作之前"
     },
     {
       "id": "composition.light-source",
       "category": "composition",
-      "contractVersion": 4,
+      "contractVersion": 5,
       "status": "local",
       "responsibility": "管理构图图形的显式光源属性与编辑、精修、生成参考中的统一照明语义",
       "invariants": [
         "isLightSource 缺省或 false 表示普通图形且不改变旧草稿指纹；true 改变指纹，文字区域不得标记为光源",
         "切换只改变光源属性，保留几何、备注与来源；复制及版本存储保留属性，精修不得改变光源身份",
         "编辑与精修保留可操作的光源图形；矩形沿长边形成光带、沿短边渐隐，圆形使用径向渐变；浏览器参考预览和 SVG/PNG 导出复用无描边、柔化边缘的标识，多个光源保留独立节点与渐变定义；颜色是识别约定",
-        "光源与普通形状采用相同的大致意图解释：保留照明方位、延展趋势和空间作用，矩形的带状特征可以变宽、变窄、断续或融合；用户指令和备注优先，未指定的宽度、长度、连续性、边缘和强弱由Agent自由安排，不自行增加等宽、完整贯穿、中强对比或缩略图醒目要求；按整体大致呼应验收，不逐边逐段比对，也不完全忽略光照意图"
+        "在 soft 预览模式，光源与普通形状采用相同的大致意图解释：保留照明方位、延展趋势和空间作用，矩形的带状特征可以变宽、变窄、断续或融合；用户指令和备注优先，未指定的宽度、长度、连续性、边缘和强弱由Agent自由安排，不自行增加等宽、完整贯穿、中强对比或缩略图醒目要求；按整体大致呼应验收，不逐边逐段比对，也不完全忽略光照意图；precise 模式要求尽量保留光源的位置、形态、延展和相对比例，不输出自由变宽、拆分和融合的模糊指引。"
       ],
       "implementations": [
         {
@@ -625,7 +751,8 @@
       "contractTests": [
         "test/unit/composition-light-source.test.ts",
         "test/integration/composition-sessions.test.ts",
-        "test/unit/integration-cli.test.ts"
+        "test/unit/integration-cli.test.ts",
+        "test/unit/composition-preview-mode.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
@@ -723,6 +850,95 @@
       "reviewTrigger": "新增规划类型、元素绑定、实时约束求解或更改画框参照语义之前"
     },
     {
+      "id": "composition.preview-export",
+      "category": "composition",
+      "contractVersion": 7,
+      "status": "local",
+      "responsibility": "通过既有构图 CLI 导出本地草稿、已保存版本及独立精修结果的 PNG 或 SVG 检查预览；管理构图参考预览的精准与模糊模式及 Agent 保真指引",
+      "invariants": [
+        "inspect、apply 和 refinement 的预览均复用 renderCompositionSvg 与 writeCompositionPreview；PNG 和 SVG 保留相同的可见节点、规划线、层级及画框外范围",
+        "--preview 路径以 .png 结尾时使用 sharp 输出真正的 PNG，扩展名不区分大小写；其余路径沿用既有 SVG 输出行为",
+        "PNG 返回 artifacts.previewPng 并将 previewSvg 置为 null；SVG 和未指定预览时保留原有 previewSvg 契约",
+        "会话预览通过既有版本及图片 API 获取明确版本的草稿或精修结果并内嵌图片；本地草稿沿用原图片解析行为",
+        "预览导出不追加或修改草稿，不新增路由或打开浏览器；apply 的精修结果生命周期保持既有领域契约",
+        "检查预览包含规划与画框外内容，不能代替 composition reference 导出的生图参考 PNG",
+        "精准模式按 areaGeometry 绘制实际形状，保留顶点、比例、旋转、图层和可见性，沿用当前参考画布样式；模糊模式在实际图形内部径向渐变，降低边缘浓度并用较宽渐隐跨越原始边界；不描边，只保留三角和矩形的大致形态，不替换成外接椭圆。文字区域和图片保持可辨认，光源遵守自己的照明绘制契约。",
+        "可选 previewMode 属于整个构图会话，值为 precise 或 soft；createDraft 新建时显式写入 soft，已有保存选择保持不变；旧草稿缺省与显式 precise 等价且保留旧指纹，soft 改变指纹。状态切换、保存、撤销和精修均保留设置，模式更新保留无关节点身份。",
+        "构图参考视图、复制预览、悬停预览、CLI 生图参考和 UI 会话引用采用同一设置；Agent 在 precise 尽量遵循形态与空间关系，在 soft 允许不受固定形状约束但大致呼应构图。",
+        "精准参考图显示已填写正文；模糊参考图无论是否填写正文均使用既有文字占位样式，保留轮廓、位置与层级；浏览器原生 SVG 使用 textLength 匹配区域宽度，服务端 PNG 适配 librsvg 不支持 textLength 的差异，通过 Pango 测量字宽并横向缩放，长文本不得丢失尾部。",
+        "自定义文字轮廓的正文按四角透视变形，共用 textRegionWarp 网格与本地 SVG use 引用；悬停预览前缀化定义 id、url 和 href，避免引用其他画布的定义。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/composition/render.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "composition-cli"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/session-preview-service.ts",
+          "consumer": "session-preview-service"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/compositionExport.ts",
+          "consumer": "composition-editor"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/draft.ts"
+        },
+        {
+          "role": "current",
+          "path": "schemas/composition-draft.schema.json"
+        },
+        {
+          "role": "adapter",
+          "path": "src/domain/composition/raster.ts",
+          "consumer": "composition-cli"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/routes/session-previews.ts",
+          "consumer": "session-preview-service"
+        }
+      ],
+      "consumers": [
+        "composition-cli",
+        "composition-editor",
+        "session-preview-service"
+      ],
+      "variationPoints": [
+        "已比较 UI 预览、构图检查预览和构图生图参考；复用现有 sharp 栅格化能力，绘制范围、规划可见性与源版本选择由各领域保留",
+        "UI CLI 仅接受 .png/.svg，构图为兼容既有调用保留其他扩展名输出 SVG；不合并格式校验规则",
+        "本地草稿、会话草稿及精修结果分别读取各自来源，统一预览编码与产物字段",
+        "会话预览服务复用明确状态的领域渲染器与已保存图片资产；构图嵌入采用既有复制预览的 renderCompositionReferenceSvg，CLI 检查预览保持原绘制范围。"
+      ],
+      "contractTests": [
+        "test/unit/composition-cli.test.ts",
+        "test/integration/composition-session-cli.test.ts",
+        "test/unit/composition-export.test.ts",
+        "test/unit/composition-preview-shapes.test.ts",
+        "test/unit/composition-preview-mode.test.ts",
+        "test/integration/session-preview.test.ts",
+        "test/unit/composition-display-text.test.ts",
+        "test/unit/composition-text-warp.test.ts"
+      ],
+      "reviewEvidence": [
+        "skills/human2ai/references/composition.md",
+        "skills/human2ai/references/composition-projection.md",
+        "design-system/surfaces/human2ai-web/src/local/CompositionWorkflowView.stories.tsx",
+        "design-system/surfaces/human2ai-web/governance/session-preview.md",
+        "design-system/surfaces/human2ai-web/src/local/CompositionPreviewHover.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增输出格式、改变预览范围、产物字段或与生图参考的边界之前"
+    },
+    {
       "id": "composition.processing-mode",
       "category": "composition",
       "contractVersion": 1,
@@ -801,15 +1017,16 @@
     {
       "id": "composition.text-region-outline",
       "category": "composition",
-      "contractVersion": 1,
+      "contractVersion": 4,
       "status": "local",
-      "responsibility": "管理构图文字区域的凸四角轮廓、独立拖角和统一参考图呈现",
+      "responsibility": "管理构图文字区域的凸四角轮廓、独立拖角、正文随区域缩放和统一参考图呈现",
       "invariants": [
         "corners 缺省时保留旧矩形数据和指纹；存在时仅允许 text-region、quadrilateral 和 free，四点按顺时针归一化保存且形成非退化凸四边形",
         "移动一个角点时保持其他角点的世界位置；无效手势不更新草稿，面积按多边形计算",
         "移动、缩放、旋转、复制及各布局状态保留轮廓；主动设置固定长宽比清除自由轮廓",
-        "绘制文字占位线和导出参考图均使用同一四点几何；不将节点说明或新轮廓段落写入提示词",
-        "保存和撤销沿用既有 Capture 版本与手势历史；精修不得改变归一化轮廓"
+        "填写 displayText 时由同一领域 SVG 渲染器在编辑画布与精准参考图绘制纯文本，按区域宽高独立缩放、保留显式换行；四角轮廓将整块字形做透视映射而非裁掉字形，空白内容保留文字占位线；模糊参考图始终显示占位线且不清除已填写正文；不将节点说明或新轮廓段落写入提示词",
+        "保存和撤销沿用既有 Capture 版本与手势历史；精修不得改变归一化轮廓",
+        "凸四边形使用有界自适应三角片近似透视映射，矩形和平行四边形使用单个精确仿射变换；同一文字定义供各片引用，画布、SVG 与 PNG 沿用同一映射。拖角按动画帧合并，保留最后有效位置、松手终值和已有撤销语义，状态切换及卸载丢弃待处理旧手势。 指针高频校验复用 moveTextRegionAreaCorner，仅计算当前节点的四点几何；完整草稿校验和历史提交每帧至多一次，并读取最新草稿保留并行备注修改。"
       ],
       "implementations": [
         {
@@ -836,6 +1053,10 @@
           "role": "adapter",
           "path": "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.tsx",
           "consumer": "composition-editor"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/text-warp.ts"
         }
       ],
       "consumers": [
@@ -848,19 +1069,68 @@
       ],
       "contractTests": [
         "test/unit/composition-text-outline.test.ts",
-        "test/integration/composition-sessions.test.ts"
+        "test/integration/composition-sessions.test.ts",
+        "test/unit/composition-display-text.test.ts",
+        "test/unit/composition-text-warp.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/composition-text-outline.md",
         "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
       ],
       "exceptions": [],
-      "reviewTrigger": "扩展凹多边形、曲线轮廓、字形透视变形或普通图形四角编辑之前"
+      "reviewTrigger": "扩展凹多边形、曲线轮廓或普通图形四角编辑之前"
+    },
+    {
+      "id": "project.session-groups",
+      "category": "project",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "保存项目树的空分组、命名和单一会话归组关系，仅组织显示，不修改会话",
+      "invariants": [
+        "分组属于一个真实项目，可为空；同一项目内名称去除首尾空白后不得重复，长度为 1 到 200",
+        "每个会话最多属于一个分组，分组和会话必须属于同一项目；null 归组表示释放到项目下",
+        "创建、重命名、删除分组和调整归组不改变项目或会话 revision、修改时间、草稿和历史",
+        "分组重命名和删除校验分组自身 expectedRevision；删除分组仅删除归组关系",
+        "复用既有项目移动和会话删除；跨项目移动自动清除旧分组关系，删除会话或空项目级联清理组织数据",
+        "创建会话可携带 groupId，与领域会话写入在同一事务内复用 setSessionGroup；分组无效、跨项目或缺少项目时整体回滚，不留下未归组会话"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/project-session-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/project-sessions.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/human2ai-api.ts",
+          "consumer": "workspace-sidebar"
+        }
+      ],
+      "consumers": [
+        "workspace-sidebar"
+      ],
+      "variationPoints": [
+        "已比较 project.session-organization 和画布节点建组；项目归属仍由既有共享能力管理，显示分组独立保存且不复制其 revision 语义",
+        "三类会话共用分组关系，界面把分组置于未分组会话之前；成员顺序沿用会话列表",
+        "侧栏的项目行与分组行共用三类新建图标；分组行传递所属 projectId 和 groupId，成功后展开分组并打开会话"
+      ],
+      "contractTests": [
+        "test/integration/session-groups.test.ts",
+        "test/unit/web-api.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/Human2AiWorkspaceSidebar.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "支持跨项目分组、多重归组、嵌套分组或改变会话版本边界之前"
     },
     {
       "id": "project.session-organization",
       "category": "project",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "shared",
       "responsibility": "管理构图、UI 和 3D 空间会话的可选项目归属、项目内创建和跨项目移动",
       "invariants": [
@@ -868,7 +1138,8 @@
         "创建会话时提供 projectId 会立即建立项目归属，省略或传入 null 时创建无项目会话",
         "移动会话必须检查 expectedRevision，并在归属变化时递增 revision",
         "无项目分组只表示 projectId 为 null 的会话，不对应真实项目记录",
-        "包含会话的项目不能删除"
+        "包含会话的项目不能删除",
+        "创建时可指定同项目的 groupId，归组复用 project.session-groups 并在创建事务内完成；失败不保留新会话"
       ],
       "implementations": [
         {
@@ -905,7 +1176,8 @@
       "contractTests": [
         "test/integration/project-sessions.test.ts",
         "test/unit/web-api.test.ts",
-        "test/integration/spatial-sessions.test.ts"
+        "test/integration/spatial-sessions.test.ts",
+        "test/integration/session-groups.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "修改会话创建时的项目校验、无项目语义、移动 revision 或非空项目删除约束之前",
@@ -1459,20 +1731,27 @@
     {
       "id": "ui-sketch.preview-export",
       "category": "ui-sketch",
-      "contractVersion": 1,
+      "contractVersion": 4,
       "status": "local",
       "responsibility": "按已保存的 UI 界面版本和状态导出自包含预览，浏览器与 CLI 复用同一 SVG 绘制逻辑",
       "invariants": [
         "CLI 从既有 Capture 和图片 API 读取明确 revision，不打开浏览器、不写入草稿或访问数据库文件",
         "使用 stateTabs 的稳定 id 选择状态，省略时选择显示顺序首项；已删除或不存在的状态不能回退到其他状态",
-        "预览按界面范围裁切，保留状态几何、可见性、文字、图片裁剪与共享 layerOrder，排除编辑器控制和观察视口",
+        "预览按界面范围裁切，保留状态几何、可见性、文字、图片裁剪与共享 layerOrder，排除编辑器控制和观察视口；内容层使用显式 SVG clipPath，完全在范围外的内容不可见，跨界节点仅显示范围内部分，内嵌悬停浮层与 Agent 导出遵守同一边界。",
         "CLI 根据 .png 或 .svg 扩展名输出预览，图片资源以内嵌内容保存，返回源版本、fingerprint、状态及产物绝对路径和尺寸",
-        "消费 Agent 默认经 CLI 操作与检查导出预览；仅确需浏览器交互时使用 Chrome MCP，静态视觉检查不触发浏览器自动化"
+        "消费 Agent 默认经 CLI 操作与检查导出预览；仅确需浏览器交互时使用 Chrome MCP，静态视觉检查不触发浏览器自动化",
+        "Agent 导出、界面复制与会话引用预览共用不绘制节点备注的 SVG 渲染规则；正文正常绘制，备注仍完整保存在结构化草稿与提示词中。",
+        "编辑画布与导出共用文字显式 alphabetic 基线和 1.4 倍行距；矩形保持直角、稳定 ID 的六色填充与 0.82 透明度，仅同色重叠时应用内描边。文字字形栅格化仍由各端系统字体决定。",
+        "浏览器复制 PNG 时先内嵌当前状态可见图片的实际字节，再由浏览器 SVG/Canvas 绘制；保留裁剪、嵌套 SVG 及图片边框，排除编辑辅助线与控件。"
       ],
       "implementations": [
         {
           "role": "canonical",
           "path": "src/domain/ui-sketch/render.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/domain/ui-sketch/appearance.ts"
         },
         {
           "role": "adapter",
@@ -1495,27 +1774,113 @@
         {
           "role": "current",
           "path": "skills/human2ai/references/ui-layout.md"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/session-preview-service.ts",
+          "consumer": "session-preview-service"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.tsx",
+          "consumer": "ui-sketch-editor"
         }
       ],
       "consumers": [
+        "session-preview-service",
         "ui-layout-cli",
         "ui-sketch-editor"
       ],
       "variationPoints": [
         "图元及状态属于 UI 领域，构图和 3D 使用各自的领域渲染器；不抽象跨领域绘制框架",
         "浏览器 PNG 使用 Canvas/剪贴板，CLI 使用现有 sharp 栅格化；SVG 几何、顺序及输出范围共用领域实现，字体栅格化随运行环境变化",
-        "图片读取复用构图 CLI 的 sessionImageSources 与既有受限图片 API，UI 只读取所选状态可见图片；不新增图片存储或预览路由"
+        "图片读取复用构图 CLI 的 sessionImageSources 与既有受限图片 API，UI 只读取所选状态可见图片；不新增图片存储",
+        "会话预览服务复用明确状态的领域渲染器与已保存图片资产；构图嵌入采用既有复制预览的 renderCompositionReferenceSvg，CLI 检查预览保持原绘制范围。"
       ],
       "contractTests": [
         "test/unit/ui-sketch-export.test.ts",
         "test/integration/ui-layout-render-cli.test.ts",
-        "test/unit/canvas-layer-adapters.test.ts"
+        "test/unit/canvas-layer-adapters.test.ts",
+        "test/unit/ui-sketch-preview-appearance.test.ts"
       ],
       "reviewEvidence": [
-        "README.md"
+        "README.md",
+        "design-system/surfaces/human2ai-web/governance/session-preview.md",
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx"
       ],
       "exceptions": [],
       "reviewTrigger": "新增格式、改变状态默认选择、范围裁切、字体布局或静态检查的浏览器依赖之前"
+    },
+    {
+      "id": "ui-sketch.session-preview",
+      "category": "ui-sketch",
+      "contractVersion": 7,
+      "status": "local",
+      "responsibility": "在 UI 会话内嵌同项目其他会话的指定状态或摄像机预览，并用有限更新批次支持交叉引用。",
+      "invariants": [
+        "来源按稳定会话和状态/摄像机 ID 绑定，不跟随源编辑器当前标签；禁止自身引用，允许跨会话循环。",
+        "预览输出保存为目标会话不可变图片资产，刷新保持节点位置、尺寸、裁剪和其他状态几何；缺失或移出项目的来源保留最后画面。",
+        "主动保存启动有限批次；发起会话不再被反向刷新，每个受影响会话最多处理一次；循环组固定源版本，汇合分支先处理来源；派生保存不启动新批次。",
+        "相同绘制输出不追加目标版本；同来源的引用合并生成；接收端无变化查询不更新状态。",
+        "本地编辑与仅包含引用图片变化的远端版本合并，真实外部编辑仍执行既有冲突处理；临时选择器状态不进入页面草稿。",
+        "会话预览不绘制节点备注，保留文字节点正文与原始备注数据；仅修改备注不改变预览像素或追加目标版本。",
+        "项目树会话拖入 UI 画布时使用来源已保存顺序中的第一个状态或摄像机；以画布世界坐标落点为中心新建预览。异步读取不覆盖后续编辑，切换会话、状态或恢复历史后丢弃旧插入结果。",
+        "新建会话预览从来源输出原始尺寸开始等比缩小，宽、高分别不超过目标 UI 画框对应尺寸的 50%，不放大小图。拖动预览与插入复用同一尺寸规则；松手保留已经显示的尺寸，尚未显示时按松手时的画框尺寸计算，异步完成不改变放置尺寸。",
+        "UI 和构图来源保留自包含 SVG 并由浏览器绘制，避免字体栅格化及缩放差异；摄像机保留 PNG。原生预览接口与不可变素材使用相同字节，旧 preview.png 接口继续显式返回 PNG。服务启动时仅为仍使用旧 PNG 的二维会话引用按来源合并排入既有有限刷新批次，已使用 SVG 或缺失来源不迁移；不改写历史素材，后续保存继续使用同一刷新流程。",
+        "构图来源按源会话的 previewMode 输出，缺省 precise；保存模式变化通过既有有限批次刷新引用，保持目标节点几何与历史快照。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/session/preview.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/domain/ui-sketch/session-preview.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/database/session-preview-validation.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/session-preview-service.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/session-previews.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/components/UiSessionPreviews.tsx",
+          "consumer": "ui-sketch-editor"
+        },
+        {
+          "role": "adapter",
+          "path": "web/lib/session-preview-drop.ts",
+          "consumer": "ui-sketch-editor"
+        }
+      ],
+      "consumers": [
+        "agent-cli",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "复用 shared capture.draft-versioning、capture.canvas-edit-history、asset.image-validation 与各领域预览渲染器。",
+        "旧构图摄像机引用继续保留原有跨项目与浏览器轮询语义；新 UI 同项目引用由服务端调度，两者没有相同生命周期，不合并调度器。",
+        "实时指保存后推送，未保存的逐帧手势不广播。"
+      ],
+      "contractTests": [
+        "test/unit/session-preview.test.ts",
+        "test/integration/session-preview.test.ts",
+        "web/lib/session-preview-drop.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/governance/session-preview.md",
+        "design-system/surfaces/human2ai-web/src/local/SessionPreviewDrop.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "新增引用目标类型、跨项目引用、未保存预览流、持久后台队列或改变循环传播截止规则之前"
     },
     {
       "id": "ui-sketch.state-management",

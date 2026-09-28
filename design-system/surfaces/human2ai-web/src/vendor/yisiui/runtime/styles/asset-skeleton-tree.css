@@ -312,9 +312,12 @@
   box-shadow: 0 0 0 1px var(--yisiui-color-surface-panel);
 }
 
-.yisi-asset-skeleton-tree-item-new,
 .yisi-asset-skeleton-tree-item-moved {
   animation: yisi-asset-skeleton-tree-node-attention 720ms ease-out;
+}
+
+.yisi-asset-skeleton-tree-control [data-yisi-tree-phase="exit"] {
+  pointer-events: none;
 }
 
 @keyframes yisi-asset-skeleton-tree-node-attention {
@@ -491,7 +494,6 @@
     transition: none;
   }
 
-  .yisi-asset-skeleton-tree-item-new,
   .yisi-asset-skeleton-tree-item-moved {
     animation: none;
   }

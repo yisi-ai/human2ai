@@ -1,3 +1,7 @@
+.human2ai-composition-canvas__item[data-composition-visible="false"] {
+  opacity: 0.3;
+}
+
 .human2ai-composition-canvas {
   position: relative;
   box-sizing: border-box;
@@ -52,11 +56,6 @@
   pointer-events: none;
 }
 
-.human2ai-composition-canvas__frame[role="button"] {
-  cursor: move;
-  outline: none;
-}
-
 .human2ai-composition-canvas__item[role="button"] {
   cursor: grab;
   outline: none;
@@ -69,8 +68,8 @@
 .human2ai-composition-canvas__shape {
   fill: currentColor;
   fill-opacity: 0.82;
-  stroke: transparent;
-  stroke-width: var(--yisiui-component-focus-outline-width);
+  stroke: none;
+  stroke-width: 6;
   vector-effect: non-scaling-stroke;
   transition:
     fill-opacity var(--yisiui-motion-fast) ease,
@@ -79,6 +78,10 @@
 
 .human2ai-composition-canvas__area--tone-0 {
   color: var(--yisiui-color-paper-sage);
+}
+
+.human2ai-composition-canvas__shape[data-inner-stroke="true"] {
+  stroke: color-mix(in srgb, currentColor 25%, var(--yisiui-color-text-primary));
 }
 
 .human2ai-composition-canvas__area--tone-1 {

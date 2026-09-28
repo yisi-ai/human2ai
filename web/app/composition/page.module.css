@@ -202,11 +202,7 @@
   gap: var(--yisiui-space-1);
 }
 
-.aspectRatioSelector {
-  display: flex;
-  justify-content: center;
-  --yisiui-color-brand-primary: var(--yisiui-color-selection-text);
-}
+
 
 .metrics {
   display: grid;

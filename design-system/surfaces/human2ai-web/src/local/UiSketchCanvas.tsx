@@ -1,5 +1,9 @@
 "use client";
 
+import { useCanvasNodeActions, useCanvasNodeCache } from "./useCanvasNodeCache";
+import { createCanvasShapeOverlap } from "./canvasShapeOverlap";
+import { canvasNodeTone } from "./canvasNodeTone";
+
 import {
   BorderOutlined,
   CopyOutlined,
@@ -19,18 +23,26 @@ import {
   TextMarkEditorTextArea,
 } from "@human2ai/ui/yisiui/text-mark-editor";
 import { Dropdown, Input, Popover, Select, Switch, Tooltip } from "antd";
+import { withOptimisticInput } from "./optimisticInput";
 import { createPortal } from "react-dom";
-import { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type {
   CSSProperties,
+  ReactNode,
   PointerEvent as ReactPointerEvent,
 } from "react";
+import { addUiSessionPreview, uiSessionPreviewSize, type MaterializedSessionPreview } from "../../../../../src/domain/ui-sketch/session-preview";
+import { UI_SKETCH_TEXT_LINE_HEIGHT, uiSketchRectangleOverlapShapes, uiSketchTextBaseline } from "../../../../../src/domain/ui-sketch/appearance";
+import zh from "../../../../../locales/zh-CN/common.json";
+import { WORKSPACE_SESSION_DRAG_TYPE } from "./workspaceSessionDrag";
+import { useSessionPreviewDrag } from "./useSessionPreviewDrag";
+import { uiSketchLayerOrder } from "../../../../../src/domain/ui-sketch/layers";
 
 import { useCanvasContextMenu, DEFAULT_CANVAS_LAYER_LABELS, type CanvasLayerLabels } from "./useCanvasContextMenu";
 import { CANVAS_LAYER_ACTIONS, sortCanvasLayers } from "../../../../../src/domain/canvas-layer-order.ts";
 import { reorderUiSketchLayers } from "./uiSketchDraft";
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
-import { CanvasFrame, type CanvasFrameMoveChange } from "./CanvasFrame";
+import { CanvasFrame } from "./CanvasFrame";
 import { CanvasImage } from "./CanvasImage";
 import {
   CanvasImageEditorFields,
@@ -44,6 +56,8 @@ import {
   type CanvasNodeTooltip,
 } from "./CanvasNode";
 import { CanvasScene } from "./CanvasScene";
+import { CanvasPreviewHover } from "./CanvasPreviewHover";
+import { CanvasOnionSkin } from "./CanvasDisplayControls";
 import { CanvasShape } from "./CanvasShape";
 import { CanvasText, type CanvasTextBounds } from "./CanvasText";
 import { InfiniteCanvasViewport } from "./InfiniteCanvasViewport";
@@ -52,6 +66,7 @@ import {
   buildAllUiSketchStagesPrompt,
   buildUiSketchPrompt,
   copyUiSketchPng,
+  renderUiSketchSvg,
   type SketchCopyResult,
   type UiSketchPromptTranslator,
   uiSketchTextBounds,
@@ -86,8 +101,6 @@ import "./UiSketchCanvas.css";
 import "./Human2AiCanvasNodeEditor.css";
 
 const FRAME_KEY = "frame:ui";
-const MINIMUM_FRAME_WIDTH = 10;
-const MINIMUM_FRAME_HEIGHT = 10;
 const MINIMUM_TEXT_FONT_SIZE = 8;
 const DEFAULT_TEXT_FONT_SIZE = 14;
 const NOTICE_DURATION_MS = 2_000;
@@ -172,6 +185,7 @@ export interface UiSketchCanvasLabels extends CanvasLayerLabels {
   copyGroup: string;
   copyPrompt: string;
   copySketch: string;
+  previewImage: string;
   copyAllStages: string;
   overallNoteTitle: string;
   overallNotePlaceholder: string;
@@ -251,6 +265,7 @@ const DEFAULT_LABELS: UiSketchCanvasLabels = {
   copyGroup: "复制",
   copyPrompt: "复制提示词",
   copySketch: "复制预览图",
+  previewImage: zh.clipboard.previewImage,
   copyAllStages: "动效",
   overallNoteTitle: "对整个界面的要求",
   overallNotePlaceholder: "例如：整体保持安静，突出当前任务和主要操作",
@@ -308,6 +323,17 @@ const DEFAULT_LABELS: UiSketchCanvasLabels = {
   noSelection: "未选择元素",
 };
 
+export interface UiSketchSessionPreviewEditorProps {
+  image: UiSketchImage;
+  title: ReactNode;
+  actions: ReactNode;
+  deleteAction: ReactNode;
+  preview: ReactNode;
+  onReplace(preview: MaterializedSessionPreview): void;
+  onSnapshot(): void;
+  onCancel(): void;
+}
+
 export interface UiSketchCanvasProps {
   interactionResetKey?: number;
   draft: UiSketchDraft;
@@ -319,6 +345,8 @@ export interface UiSketchCanvasProps {
   resolveStylePrompt?: () => Promise<string | undefined>;
   toolHost?: HTMLElement | null;
   clearActionHost?: HTMLElement | null;
+  showHiddenNodes?: boolean;
+  onionSkin?: boolean;
   showCanvasTools?: boolean;
   canvasSideActionPanelDefaultCollapsed?: boolean;
   interfaceFrameLocked?: boolean;
@@ -327,6 +355,12 @@ export interface UiSketchCanvasProps {
   resolveImageSource?: (assetId: string) => string | undefined;
   onImageUpload?: (file: File) => Promise<string>;
   onReadImageFile?: (src: string) => Promise<File>;
+  sessionPreviewLabel?: string;
+  sessionPreviewFailedLabel?: string;
+  onSessionPreviewDrop?: (sessionId: string) => Promise<MaterializedSessionPreview>;
+  loadSessionPreviewDragImage?: (sessionId: string) => Promise<string>;
+  renderSessionPreviewTool?: (insert: (preview: MaterializedSessionPreview) => void) => ReactNode;
+  renderSessionPreviewEditor?: (props: UiSketchSessionPreviewEditorProps) => ReactNode;
   className?: string;
   style?: CSSProperties;
   "aria-label"?: string;
@@ -334,7 +368,17 @@ export interface UiSketchCanvasProps {
 
 type Notice = { type: "success" | "warning" | "error"; message: string } | null;
 
+const ImmediateInput = withOptimisticInput(Input);
+const ImmediateTextArea = withOptimisticInput(Input.TextArea);
+const ImmediateNoteInput = withOptimisticInput(TextMarkEditorTextArea);
+
 export function UiSketchCanvas({
+  sessionPreviewLabel,
+  sessionPreviewFailedLabel = zh.sessionPreview.failed,
+  onSessionPreviewDrop,
+  loadSessionPreviewDragImage,
+  renderSessionPreviewTool,
+  renderSessionPreviewEditor,
   interactionResetKey,
   draft,
   activeStageId = UI_SKETCH_START_STAGE_ID,
@@ -345,6 +389,8 @@ export function UiSketchCanvas({
   resolveStylePrompt,
   toolHost = null,
   clearActionHost = null,
+  showHiddenNodes = false,
+  onionSkin = false,
   showCanvasTools = true,
   canvasSideActionPanelDefaultCollapsed = false,
   interfaceFrameLocked = false,
@@ -389,6 +435,13 @@ export function UiSketchCanvas({
     () => uiSketchDraftForStage(draft, activeStageId),
     [activeStageId, draft],
   );
+  const renderPreviewSvg = useCallback(() => renderUiSketchSvg(state, resolveImageSource), [state, resolveImageSource]);
+  const latestDraftRef = useRef(draft);
+  useLayoutEffect(() => { latestDraftRef.current = draft; }, [draft]);
+  const previewDropGeneration = useRef(0);
+  const currentPreviewInsert = useRef(insertSessionPreview);
+  useLayoutEffect(() => { currentPreviewInsert.current = insertSessionPreview; });
+  useLayoutEffect(() => () => { previewDropGeneration.current++; }, [activeStageId, interactionResetKey, onSessionPreviewDrop]);
   const [placementTool, setPlacementTool] = useState<UiSketchItemKind | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<UiSketchLayerKey[]>([]);
   const [editingKey, setEditingKey] = useState<UiSketchItemKey | null>(null);
@@ -411,6 +464,17 @@ export function UiSketchCanvas({
   const clipboardTokenRef = useRef("");
   const pasteCountRef = useRef(0);
   const stateTabs = uiSketchStateTabs(draft);
+  const previousStageId = stateTabs[stateTabs.findIndex((tab) => tab.id === activeStageId) - 1]?.id;
+  const previousState = useMemo(
+    () => onionSkin && previousStageId ? uiSketchDraftForStage(draft, previousStageId) : null,
+    [draft, onionSkin, previousStageId],
+  );
+  const displayedState = useMemo(() => showHiddenNodes ? state : {
+    ...state,
+    rectangles: state.rectangles.filter((item) => item.visible),
+    texts: state.texts.filter((item) => item.visible),
+    images: state.images.filter((item) => item.visible),
+  }, [showHiddenNodes, state]);
   const motionSketchEnabled = stateTabs.length > 1;
   const visualWeightOptions: Array<{
     value: UiSketchVisualWeight;
@@ -424,8 +488,9 @@ export function UiSketchCanvas({
   ];
   const selectedItemKeys = selectedKeys.filter(isItemKey);
   const selectedItemKeySet = new Set(selectedItemKeys);
-  const multiSelectionBounds = selectedItemKeys.length > 1
-    ? boundsForItems(state, selectedItemKeys, textMeasurements)
+  const displayedSelectedKeys = selectedItemKeys.filter((key) => itemForKey(displayedState, key));
+  const multiSelectionBounds = displayedSelectedKeys.length > 1
+    ? boundsForItems(displayedState, displayedSelectedKeys, textMeasurements)
     : null;
   const editingItem = editingKey ? itemForKey(state, editingKey) : null;
   const latestImageUpdateRef = useRef({ updateImage, interactionResetKey });
@@ -442,6 +507,12 @@ export function UiSketchCanvas({
     onCopy: handleCanvasCopy,
     onPasteFallback: handleCanvasPaste,
   });
+  const sessionPreviewDrag = useSessionPreviewDrag(
+    onDraftChange && onSessionPreviewDrop ? loadSessionPreviewDragImage : undefined,
+    `${interactionResetKey}:${activeStageId}`,
+    Boolean(onDraftChange && onSessionPreviewDrop),
+    state.frame,
+  );
   const selectedIds = selectedItemKeys.map(keyId);
   const selectedGroups = state.groups.filter((group) => (
     group.itemIds.some((id) => selectedIds.includes(id))
@@ -477,7 +548,23 @@ export function UiSketchCanvas({
   useLayoutEffect(() => {
     setPlacementTool(null);
     dismissContextMenu();
-  }, [activeStageId]);
+  }, [activeStageId, showHiddenNodes]);
+
+  useLayoutEffect(() => {
+    setSelectedKeys((current) => {
+      const visibleKeys = current.filter(isItemKey).filter((key) => itemForKey(displayedState, key));
+      const next: UiSketchLayerKey[] = [
+        ...current.filter((key) => key === FRAME_KEY),
+        ...selectionWithGroups(state, visibleKeys),
+      ];
+      return current.length === next.length && current.every((key, index) => key === next[index])
+        ? current : next;
+    });
+    if (editingKey && !itemForKey(displayedState, editingKey)) {
+      setEditingKey(null);
+      setEditorDraft(null);
+    }
+  }, [displayedState, state, editingKey]);
 
   useLayoutEffect(() => () => {
     const interaction = interactionRef.current;
@@ -485,20 +572,52 @@ export function UiSketchCanvas({
       clearMovePreview(interaction);
       interactionRef.current = null;
     }
-  }, [activeStageId]);
+  }, [activeStageId, showHiddenNodes]);
 
   function updateDraft(
     update: UiSketchDraft | ((current: UiSketchDraft) => UiSketchDraft),
   ): void {
     if (!onDraftChange) return;
-    const nextStageDraft = typeof update === "function" ? update(state) : update;
-    onDraftChange(updateUiSketchStageDraft(draft, activeStageId, nextStageDraft));
+    // A subsequent edit may arrive before a note's background render commits.
+    const currentDraft = latestDraftRef.current;
+    const currentState = currentDraft === draft ? state : uiSketchDraftForStage(currentDraft, activeStageId);
+    const nextStageDraft = typeof update === "function" ? update(currentState) : update;
+    const nextDraft = updateUiSketchStageDraft(currentDraft, activeStageId, nextStageDraft);
+    commitDraft(nextDraft);
+  }
+
+  function commitDraft(nextDraft: UiSketchDraft): void {
+    if (!onDraftChange) return;
+    latestDraftRef.current = nextDraft;
+    onDraftChange(nextDraft);
   }
 
   function armPlacement(tool: UiSketchItemKind): void {
     closeEditor();
     setOverallNoteOpen(false);
     setPlacementTool((current) => current === tool ? null : tool);
+  }
+
+  function insertSessionPreview(preview: MaterializedSessionPreview, center?: { x: number; y: number }, size?: { width: number; height: number }): void {
+    const id = createId("image");
+    updateDraft(current => addUiSessionPreview(current, preview, id, center, size));
+    setSelectedKeys([itemKey("image", id)]);
+  }
+
+  async function dropSessionPreview(sessionId: string, center: { x: number; y: number }, displayedSize?: { width: number; height: number }): Promise<void> {
+    if (!onSessionPreviewDrop) return;
+    const generation = previewDropGeneration.current;
+    const frameAtDrop = { width: state.frame.width, height: state.frame.height };
+    setPlacementTool(null);
+    try {
+      const preview = await onSessionPreviewDrop(sessionId);
+      if (previewDropGeneration.current === generation) {
+        const size = uiSessionPreviewSize(displayedSize ?? preview, frameAtDrop);
+        currentPreviewInsert.current(preview, center, size);
+      }
+    } catch {
+      if (previewDropGeneration.current === generation) setNotice({ type: "error", message: sessionPreviewFailedLabel });
+    }
   }
 
   function placeNode({ bounds }: CanvasPlacementResult): void {
@@ -638,7 +757,7 @@ export function UiSketchCanvas({
     event.preventDefault();
     event.stopPropagation();
     const pasteCount = pasteCountRef.current + 1;
-    const pasted = pasteUiSketchItems(draft, clipboardRef.current, {
+    const pasted = pasteUiSketchItems(latestDraftRef.current, clipboardRef.current, {
       x: CLIPBOARD_PASTE_OFFSET * pasteCount,
       y: CLIPBOARD_PASTE_OFFSET * pasteCount,
     }, activeStageId);
@@ -646,7 +765,7 @@ export function UiSketchCanvas({
     pasteCountRef.current = pasteCount;
     closeEditor();
     setPlacementTool(null);
-    onDraftChange(pasted.draft);
+    commitDraft(pasted.draft);
     const ids = new Set(pasted.ids);
     setSelectedKeys([
       ...pasted.draft.rectangles.filter((item) => ids.has(item.id)).map((item) => itemKey("rectangle", item.id)),
@@ -669,27 +788,8 @@ export function UiSketchCanvas({
     setEditorDraft(null);
   }
 
-  function updateFrame(change: CanvasNodeResizeChange): void {
-    updateDraft((current) => ({
-      ...current,
-      frame: {
-        x: Math.round(change.sourcePosition.x + change.bounds.x),
-        y: Math.round(change.sourcePosition.y + change.bounds.y),
-        width: Math.max(MINIMUM_FRAME_WIDTH, Math.round(change.bounds.width)),
-        height: Math.max(MINIMUM_FRAME_HEIGHT, Math.round(change.bounds.height)),
-      },
-    }));
-  }
-
-  function moveFrame(change: CanvasFrameMoveChange): void {
-    updateDraft((current) => ({
-      ...current,
-      frame: {
-        ...current.frame,
-        x: Math.round(change.bounds.x),
-        y: Math.round(change.bounds.y),
-      },
-    }));
+  function updateFrame(frame: CanvasNodeBounds): void {
+    updateDraft((current) => ({ ...current, frame }));
   }
 
   function clearCanvas(): void {
@@ -966,7 +1066,7 @@ export function UiSketchCanvas({
     if (interaction.type === "marquee") {
       const hitKeys = interaction.moved
         ? selectionWithGroups(state, itemsIntersectingBounds(
-            state,
+            displayedState,
             rectangleFromPoints(
               interaction.start,
               worldPoint(event, event.currentTarget),
@@ -1073,10 +1173,34 @@ export function UiSketchCanvas({
     }
   }
 
+  const overlapTracker = useRef(createCanvasShapeOverlap());
+  const previousOverlapTracker = useRef(createCanvasShapeOverlap());
+  const borderedRectangles = overlapTracker.current(uiSketchRectangleOverlapShapes(state.rectangles));
+  const previousBorders = previousOverlapTracker.current(uiSketchRectangleOverlapShapes(previousState?.rectangles ?? []));
+  const nodeActions = useCanvasNodeActions({
+    selectItem, nudgeItem, resizeImage, resizeRectangle, openEditor, deleteItem,
+    resizeText: (id: string, change: CanvasNodeResizeChange) => {
+      const text = state.texts.find((item) => item.id === id);
+      if (text) resizeText(id, text, change);
+    },
+    selectFrame: () => { setSelectedKeys([FRAME_KEY]); closeEditor(); },
+    updateFrame,
+  });
+  const renderViewportNode = useCanvasNodeCache([FRAME_KEY,
+    ...state.images.map(({ id }) => itemKey("image", id)),
+    ...state.rectangles.map(({ id }) => itemKey("rectangle", id)),
+    ...state.texts.map(({ id }) => itemKey("text", id)),
+  ], [controlsHost, Boolean(state.layerOrder), labels.image, labels.region, labels.missingRegionNote,
+    labels.text, labels.emptyText, labels.nodeDescription, labels.textContent, labels.note, sessionPreviewLabel]);
+  const nodeInputs = (item: UiSketchRectangle | UiSketchText | UiSketchImage, key: UiSketchItemKey) => [
+    item.x, item.y, item.note, item.annotation, item.visible,
+    selectedItemKeySet.has(key), Boolean(multiSelectionBounds && selectedItemKeySet.has(key)),
+  ];
+
   const overallNoteEditor = (
     <label className="human2ai-ui-sketch-canvas__overall-editor">
       <span>{labels.overallNoteTitle}</span>
-      <Input.TextArea
+      <ImmediateTextArea
         name="overallNote"
         autoFocus
         autoSize={{ minRows: 4, maxRows: 8 }}
@@ -1134,6 +1258,9 @@ export function UiSketchCanvas({
           disabled={!onDraftChange}
           onClick={() => armPlacement("image")}
         />
+        <Fragment key={`session-preview:${activeStageId}:${interactionResetKey}`}>
+          {renderSessionPreviewTool?.(insertSessionPreview)}
+        </Fragment>
       </div>
 
       <div
@@ -1201,43 +1328,237 @@ export function UiSketchCanvas({
             />
           </span>
         )}
-        {motionSketchEnabled ? (
-          <Dropdown
-            trigger={["click"]}
-            open={openCopyMenu === "sketch"}
-            destroyOnHidden
-            onOpenChange={(open) => setOpenCopyMenu((current) => (
-              open ? "sketch" : current === "sketch" ? null : current
-            ))}
-            menu={{
-              items: stageMenuItems,
-              onClick: ({ key }) => {
-                setOpenCopyMenu(null);
-                void copySketchFromSidebar(key);
-              },
-            }}
-          >
+        <CanvasPreviewHover renderSvg={renderPreviewSvg} label={labels.previewImage}
+          disabled={copyingSketch || openCopyMenu === "sketch"}>
+          {motionSketchEnabled ? (
+            <Dropdown
+              trigger={["click"]}
+              open={openCopyMenu === "sketch"}
+              destroyOnHidden
+              onOpenChange={(open) => setOpenCopyMenu((current) => (
+                open ? "sketch" : current === "sketch" ? null : current
+              ))}
+              menu={{
+                items: stageMenuItems,
+                onClick: ({ key }) => {
+                  setOpenCopyMenu(null);
+                  void copySketchFromSidebar(key);
+                },
+              }}
+            >
+              <span className="human2ai-ui-sketch-canvas__side-action">
+                <CompositeButton
+                  icon={<PictureOutlined aria-hidden="true" />}
+                  label={labels.copySketch}
+                  loading={copyingSketch}
+                />
+              </span>
+            </Dropdown>
+          ) : (
             <span className="human2ai-ui-sketch-canvas__side-action">
               <CompositeButton
                 icon={<PictureOutlined aria-hidden="true" />}
                 label={labels.copySketch}
                 loading={copyingSketch}
+                onClick={() => void copySketchFromSidebar(stateTabs[0].id)}
               />
             </span>
-          </Dropdown>
-        ) : (
-          <span className="human2ai-ui-sketch-canvas__side-action">
-            <CompositeButton
-              icon={<PictureOutlined aria-hidden="true" />}
-              label={labels.copySketch}
-              loading={copyingSketch}
-              onClick={() => void copySketchFromSidebar(stateTabs[0].id)}
-            />
-          </span>
-        )}
+          )}
+        </CanvasPreviewHover>
       </div>
     </div>
   );
+
+  const editorTitle = editorDraft ? (
+    <div className="human2ai-canvas-node-editor__title">
+      <span className="human2ai-canvas-node-editor__heading">
+        <span className="human2ai-canvas-node-editor__origin" data-ui-sketch-origin={editorDraft.item.origin}>
+          {nodeOriginLabel(editorDraft.item.origin, labels)}
+        </span>
+        <span>
+          {editorDraft.kind === "rectangle"
+            ? labels.editRegionNote
+            : editorDraft.kind === "text"
+              ? labels.editText
+              : editorDraft.item.previewReference ? sessionPreviewLabel ?? labels.image : labels.image}
+        </span>
+      </span>
+      <Switch checked={editorDraft.item.visible} checkedChildren={labels.visible} unCheckedChildren={labels.hidden}
+        aria-label={labels.visibility} onChange={visible => updateEditorMetadata({ visible })} />
+    </div>
+  ) : null;
+
+  const editorFields = editorDraft ? (
+    <div className="human2ai-ui-sketch-canvas__editor-primary-fields">
+      {editorDraft.item.annotation.trim() ? (
+        <TextMarkEditorField label={labels.nodeDescription}>
+          <p
+            className="human2ai-ui-sketch-canvas__node-description"
+            data-ui-sketch-node-description
+          >
+            {editorDraft.item.annotation}
+          </p>
+        </TextMarkEditorField>
+      ) : null}
+
+      {editorDraft.kind === "text" ? (
+        <TextMarkEditorField label={labels.textContent}>
+          <ImmediateInput
+            autoFocus
+            name="textContent"
+            value={editorDraft.item.text}
+            placeholder={labels.textPlaceholder}
+            aria-label={labels.textContent}
+            onChange={(event) => updateEditorText({ text: event.target.value })}
+          />
+        </TextMarkEditorField>
+      ) : null}
+
+      <TextMarkEditorField label={labels.note}>
+        <ImmediateNoteInput
+          autoFocus={editorDraft.kind !== "text"}
+          name="nodeNote"
+          value={editorDraft.item.note}
+          placeholder={editorDraft.kind === "rectangle"
+            ? labels.regionPlaceholder
+            : editorDraft.kind === "text"
+              ? labels.textNotePlaceholder
+              : labels.imageNotePlaceholder}
+          aria-label={labels.note}
+          onChange={(event) => updateEditorMetadata({ note: event.target.value })}
+        />
+      </TextMarkEditorField>
+
+      <div className="human2ai-ui-sketch-canvas__editor-properties">
+        <TextMarkEditorField label={labels.visualWeight}>
+          <Select
+            className="human2ai-ui-sketch-canvas__visual-weight-select"
+            value={editorDraft.item.weight}
+            options={visualWeightOptions}
+            aria-label={labels.visualWeight}
+            onChange={(weight: UiSketchVisualWeight) => updateEditorMetadata({ weight })}
+          />
+        </TextMarkEditorField>
+
+        {editorDraft.kind === "text" ? (
+          <div className="human2ai-ui-sketch-canvas__editor-field">
+            <span
+              id={fontSizeLabelId}
+              className="human2ai-ui-sketch-canvas__editor-field-label"
+            >
+              {labels.fontSize}
+            </span>
+            <div
+              className="human2ai-ui-sketch-canvas__font-size-control"
+              role="group"
+              aria-labelledby={fontSizeLabelId}
+            >
+              <BasicButton
+                mode="icon-only"
+                size="small"
+                icon={<MinusOutlined aria-hidden="true" />}
+                iconLabel={labels.decreaseFontSize}
+                disabled={editorDraft.item.fontSize <= MINIMUM_TEXT_FONT_SIZE}
+                onClick={() => updateEditorText({
+                  fontSize: Math.max(
+                    MINIMUM_TEXT_FONT_SIZE,
+                    Math.round(editorDraft.item.fontSize) - 1,
+                  ),
+                })}
+              />
+              <output aria-live="polite">
+                {Math.round(editorDraft.item.fontSize)}px
+              </output>
+              <BasicButton
+                mode="icon-only"
+                size="small"
+                icon={<PlusOutlined aria-hidden="true" />}
+                iconLabel={labels.increaseFontSize}
+                onClick={() => updateEditorText({
+                  fontSize: Math.round(editorDraft.item.fontSize) + 1,
+                })}
+              />
+            </div>
+          </div>
+        ) : null}
+      </div>
+    </div>
+  ) : null;
+
+  const imageEditor = editorDraft?.kind === "image" && editingItem?.kind === "image" ? (
+    <CanvasImageEditorFields
+      key={editorDraft.item.previewReference ? `${activeStageId}:${interactionResetKey}:${editorDraft.item.id}` : editorDraft.item.id}
+      src={
+        editingItem.kind === "image" && editingItem.item.assetId
+          ? resolveImageSource?.(editingItem.item.assetId)
+          : undefined
+      }
+      crop={editorDraft.item.crop}
+      aspectRatio={editorDraft.item.width / editorDraft.item.height}
+      labels={imageEditorLabels}
+      onReadFile={editorDraft.item.previewReference ? undefined : onReadImageFile}
+      disabled={!onDraftChange || !onImageUpload}
+      sourceLocked={Boolean(editorDraft.item.previewReference)}
+      renderLayout={editingItem.item.previewReference && renderSessionPreviewEditor ? (_controls, preview) => renderSessionPreviewEditor({
+        image: editingItem.item,
+        title: editorTitle,
+        actions: <><span hidden data-ui-sketch-mark-editor data-human2ai-auto-save-node-editor />{editorFields}</>,
+        deleteAction: <ConfirmAction type="text" size="small" icon={<DeleteOutlined aria-hidden="true" />}
+          title={labels.confirmDeleteNode} confirmLabel={labels.deleteNode} cancelLabel={labels.cancelDelete}
+          onConfirm={() => deleteItems([`image:${editingItem.item.id}`])}>{labels.deleteNode}</ConfirmAction>,
+        preview,
+        onCancel: closeEditor,
+        onReplace: value => {
+          const latest = latestImageUpdateRef.current;
+          if (latest.interactionResetKey !== interactionResetKey) return;
+          latest.updateImage(editingItem.item.id, { assetId: value.assetId, previewReference: value.reference });
+          setEditorDraft(current => current?.kind === "image" && current.item.id === editingItem.item.id
+            ? { ...current, item: { ...current.item, assetId: value.assetId, previewReference: value.reference } } : current);
+        },
+        onSnapshot: () => {
+          const id = createId("image");
+          updateDraft(current => {
+            const source = current.images.find(item => item.id === editingItem.item.id);
+            if (!source) return current;
+            const { previewReference: _reference, ...snapshot } = source;
+            return { ...current, images: [...current.images, { ...snapshot, id, x: source.x + 24, y: source.y + 24 }], layerOrder: [...uiSketchLayerOrder(current), id] };
+          });
+        },
+      }) : undefined}
+      onUpload={async (file) => {
+        if (!onImageUpload) return;
+        const assetId = await onImageUpload(file);
+        const latest = latestImageUpdateRef.current;
+        if (latest.interactionResetKey !== interactionResetKey) return;
+        setEditorDraft((current) => current?.kind === "image" && current.item.id === editorDraft.item.id
+          ? { ...current, item: { ...current.item, assetId, crop: null } }
+          : current);
+        latest.updateImage(editorDraft.item.id, { assetId, crop: null });
+      }}
+      onCropChange={(crop, cropAspectRatio) => {
+        setEditorDraft((current) => current?.kind === "image"
+          ? {
+              ...current,
+              item: {
+                ...current.item,
+                crop,
+                y: current.item.y + (
+                  current.item.height
+                  - current.item.width / cropAspectRatio
+                ) / 2,
+                height: current.item.width / cropAspectRatio,
+              },
+            }
+          : current);
+        commitDraft(updateUiSketchImageCrop(
+          latestDraftRef.current,
+          editorDraft.item.id,
+          crop,
+          cropAspectRatio,
+        ));
+      }}
+    />
+  ) : null;
 
   const classes = ["human2ai-ui-sketch-canvas", className].filter(Boolean).join(" ");
 
@@ -1330,6 +1651,31 @@ export function UiSketchCanvas({
                 aria-label={labels.scene}
                 aria-keyshortcuts={onDraftChange ? "Control+C Meta+C Control+V Meta+V" : undefined}
                 data-ui-sketch-scene
+                onDragOver={event => {
+                  if (!event.dataTransfer.types.includes(WORKSPACE_SESSION_DRAG_TYPE)) return;
+                  event.preventDefault(); event.stopPropagation();
+                  event.dataTransfer.dropEffect = sessionPreviewDrag.show(event) ? "copy" : "none";
+                }}
+                onDragLeave={event => {
+                  const target = event.relatedTarget instanceof Node ? event.relatedTarget : document.elementFromPoint(event.clientX, event.clientY);
+                  if (!target || !event.currentTarget.contains(target)) sessionPreviewDrag.clear();
+                }}
+                onDrop={event => {
+                  const sessionId = event.dataTransfer.getData(WORKSPACE_SESSION_DRAG_TYPE);
+                  if (!sessionId) return;
+                  event.preventDefault(); event.stopPropagation();
+                  const allowed = sessionPreviewDrag.canDrop(sessionId);
+                  const displayedSize = sessionPreviewDrag.getSize(sessionId);
+                  sessionPreviewDrag.clear();
+                  if (!allowed || !onDraftChange || !onSessionPreviewDrop) return;
+                  const scene = event.currentTarget;
+                  const transform = scene.getScreenCTM();
+                  if (!transform) return;
+                  const point = scene.createSVGPoint();
+                  point.x = event.clientX; point.y = event.clientY;
+                  const center = point.matrixTransform(transform.inverse());
+                  void dropSessionPreview(sessionId, { x: center.x, y: center.y }, displayedSize);
+                }}
                 tabIndex={-1}
                 onPointerDownCapture={(event) => event.currentTarget.focus()}
                 onKeyDown={(event) => {
@@ -1381,50 +1727,84 @@ export function UiSketchCanvas({
                   aria-hidden="true"
                 />
 
-                <CanvasFrame
+                {renderViewportNode(FRAME_KEY, viewport.zoom,
+                  [state.frame.x, state.frame.y, state.frame.width, state.frame.height,
+                    selectedKeys.includes(FRAME_KEY), interfaceFrameLocked, labels.frameAction, labels.frameRange, activeStageId, interactionResetKey], () => <CanvasFrame
                   controlsHost={state.layerOrder ? controlsHost : undefined}
                   id="ui-frame"
                   label={labels.frameAction}
+                  name={labels.frameRange}
+                  interactionResetKey={`${activeStageId}:${interactionResetKey ?? ""}`}
                   bounds={state.frame}
                   selected={selectedKeys.includes(FRAME_KEY)}
-                  resizeMode="free"
-                  resizeCenter={{ x: 0, y: 0 }}
-                  minimumWidth={MINIMUM_FRAME_WIDTH}
-                  minimumHeight={MINIMUM_FRAME_HEIGHT}
                   screenScale={viewport.zoom}
-                  resizeHitSize={32}
                   locked={interfaceFrameLocked}
-                  onSelect={() => {
-                    setSelectedKeys([FRAME_KEY]);
-                    closeEditor();
-                  }}
-                  onMove={moveFrame}
-                  onResize={updateFrame}
+                  onSelect={nodeActions.selectFrame}
+                  onBoundsChange={nodeActions.updateFrame}
                   className="human2ai-ui-sketch-canvas__frame"
-                />
+                />)}
 
-                <g
-                  className="human2ai-ui-sketch-canvas__frame-label"
-                  transform={`translate(${state.frame.x} ${state.frame.y - 12})`}
-                  aria-hidden="true"
-                >
-                  <text>
-                    {labels.frameRange} · {Math.round(state.frame.width)} × {Math.round(state.frame.height)}
-                  </text>
-                </g>
+                {previousState ? (
+                  <CanvasOnionSkin stateId={previousStageId!}>
+                    {sortCanvasLayers([
+                      ...previousState.images.filter((item) => item.visible).map((image) => {
+                        const center = boundsCenter(image);
+                        const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
+                        return (
+                          <g key={image.id} transform={`translate(${center.x} ${center.y})`}>
+                            <CanvasImage
+                              src={src}
+                              alt={image.note || labels.image}
+                              width={image.width}
+                              height={image.height}
+                              fit="cover"
+                              crop={image.crop}
+                              status={src ? "ready" : "empty"}
+                              emptyLabel={labels.image}
+                            />
+                          </g>
+                        );
+                      }),
+                      ...previousState.rectangles.map((rectangle) => {
+                        if (!rectangle.visible) return null;
+                        const center = boundsCenter(rectangle);
+                        return (
+                          <g key={rectangle.id} transform={`translate(${center.x} ${center.y})`}
+                            className={`human2ai-ui-sketch-canvas__rectangle--tone-${canvasNodeTone(rectangle.id)}`}>
+                            <CanvasShape type="rectangle" width={rectangle.width} height={rectangle.height}
+                              className="human2ai-ui-sketch-canvas__rectangle-surface"
+                              innerStroke={previousBorders.has(rectangle.id)} />
+                          </g>
+                        );
+                      }),
+                      ...previousState.texts.filter((item) => item.visible).map((text) => (
+                        <g key={text.id} transform={`translate(${text.x} ${text.y})`}>
+                          <CanvasText text={text.text || labels.emptyText} fontSize={text.fontSize}
+                            baseline={uiSketchTextBaseline(text.fontSize)} lineHeight={UI_SKETCH_TEXT_LINE_HEIGHT}
+                            className={[
+                              "human2ai-ui-sketch-canvas__text-content",
+                              text.text.length === 0 ? "human2ai-ui-sketch-canvas__text-content--empty" : null,
+                            ].filter(Boolean).join(" ")} />
+                        </g>
+                      )),
+                    ].filter((node) => node !== null), previousState.layerOrder, (node) => String(node.key))}
+                  </CanvasOnionSkin>
+                ) : null}
 
                 {sortCanvasLayers([
                   ...state.images.map((image) => {
+                  if (!showHiddenNodes && !image.visible) return null;
                   const key = itemKey("image", image.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(image);
                   const src = image.assetId ? resolveImageSource?.(image.assetId) : undefined;
-                  return (
+                  const imageLabel = image.previewReference ? sessionPreviewLabel ?? labels.image : labels.image;
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(image, key), image.width, image.height, src, imageLabel, Boolean(image.previewReference), image.crop?.x, image.crop?.y, image.crop?.width, image.crop?.height], () => (
                     <g key={image.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
                         id={image.id}
-                        label={`${labels.image}：${image.note.trim() || labels.image}`}
+                        label={`${imageLabel}：${image.note.trim() || imageLabel}`}
                         tooltip={itemTooltip(image)}
                         x={center.x}
                         y={center.y}
@@ -1438,17 +1818,18 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeImage(image.id, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeImage(image.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className="human2ai-ui-sketch-canvas__item human2ai-ui-sketch-canvas__image"
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="image"
                         data-ui-sketch-visible={image.visible}
                       >
                         <CanvasImage
+                          retainPreviousSource={Boolean(image.previewReference)}
                           src={src}
                           alt={image.note || labels.image}
                           width={image.width}
@@ -1460,13 +1841,14 @@ export function UiSketchCanvas({
                         />
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
-                  ...state.rectangles.map((rectangle, index) => {
+                  ...state.rectangles.map((rectangle) => {
+                  if (!showHiddenNodes && !rectangle.visible) return null;
                   const key = itemKey("rectangle", rectangle.id);
                   const selected = selectedItemKeySet.has(key);
                   const center = boundsCenter(rectangle);
-                  return (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(rectangle, key), rectangle.width, rectangle.height, borderedRectangles.has(rectangle.id)], () => (
                     <g key={rectangle.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1485,15 +1867,15 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeRectangle(rectangle.id, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeRectangle(rectangle.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className={[
                           "human2ai-ui-sketch-canvas__item",
                           "human2ai-ui-sketch-canvas__rectangle",
-                          `human2ai-ui-sketch-canvas__rectangle--tone-${index % 6}`,
+                          `human2ai-ui-sketch-canvas__rectangle--tone-${canvasNodeTone(rectangle.id)}`,
                         ].join(" ")}
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="rectangle"
@@ -1504,19 +1886,21 @@ export function UiSketchCanvas({
                           width={rectangle.width}
                           height={rectangle.height}
                           className="human2ai-ui-sketch-canvas__rectangle-surface"
+                          innerStroke={borderedRectangles.has(rectangle.id)}
                         />
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
                   ...state.texts.map((text) => {
+                  if (!showHiddenNodes && !text.visible) return null;
                   const key = itemKey("text", text.id);
                   const selected = selectedItemKeySet.has(key);
                   const bounds = textBounds(text, textMeasurements);
                   const center = boundsCenter(bounds);
                   const empty = text.text.length === 0;
                   const displayedText = empty ? labels.emptyText : text.text;
-                  return (
+                  return renderViewportNode(key, selected ? viewport.zoom : 1, [...nodeInputs(text, key), text.text, text.fontSize, bounds.width, bounds.height], () => (
                     <g key={text.id} data-ui-sketch-preview={key}>
                       <CanvasNode
                         controlsHost={state.layerOrder ? controlsHost : undefined}
@@ -1535,11 +1919,11 @@ export function UiSketchCanvas({
                         minimumWidth={8}
                         minimumHeight={8}
                         showRotationHandle={false}
-                        onSelect={(_id, event) => selectItem(key, event)}
-                        onNudge={(delta) => nudgeItem(key, delta)}
-                        onResize={(change) => resizeText(text.id, text, change)}
-                        onDoubleClick={() => openEditor(key)}
-                        onDelete={() => deleteItem(key)}
+                        onSelect={(_id, event) => nodeActions.selectItem(key, event)}
+                        onNudge={(delta) => nodeActions.nudgeItem(key, delta)}
+                        onResize={(change) => nodeActions.resizeText(text.id, change)}
+                        onDoubleClick={() => nodeActions.openEditor(key)}
+                        onDelete={() => nodeActions.deleteItem(key)}
                         className="human2ai-ui-sketch-canvas__item human2ai-ui-sketch-canvas__text"
                         data-ui-sketch-item={key}
                         data-ui-sketch-kind="text"
@@ -1549,6 +1933,8 @@ export function UiSketchCanvas({
                           <CanvasText
                             text={displayedText}
                             fontSize={text.fontSize}
+                            baseline={uiSketchTextBaseline(text.fontSize)}
+                            lineHeight={UI_SKETCH_TEXT_LINE_HEIGHT}
                             onBoundsChange={(measured) => {
                               recordTextMeasurement(text, measured);
                             }}
@@ -1560,10 +1946,11 @@ export function UiSketchCanvas({
                         </g>
                       </CanvasNode>
                     </g>
-                  );
+                  ));
                 }),
-                ], state.layerOrder, (node) => String(node.key))}
+                ].filter((node) => node !== null), state.layerOrder, (node) => String(node.key))}
 
+                {sessionPreviewDrag.preview}
                 {multiSelectionBounds ? (
                   <rect
                     className="human2ai-ui-sketch-canvas__multi-selection"
@@ -1609,13 +1996,9 @@ export function UiSketchCanvas({
         </InfiniteCanvasViewport>
 
         {editingKey && editingItem && editorDraft ? (
-          <TextMarkEditor
+          editingItem.kind === "image" && editingItem.item.previewReference && renderSessionPreviewEditor ? imageEditor : <TextMarkEditor
             open
-            title={editorDraft.kind === "rectangle"
-              ? labels.editRegionNote
-              : editorDraft.kind === "text"
-                ? labels.editText
-                : labels.image}
+            title={editorTitle}
             selectedText={editingItem.kind === "rectangle"
               ? editingItem.item.note.trim() || labels.missingRegionNote
               : editingItem.kind === "text"
@@ -1662,167 +2045,11 @@ export function UiSketchCanvas({
                 editorDraft.kind === "image" ? "true" : undefined
               }
             >
-              <div className="human2ai-ui-sketch-canvas__editor-primary-fields">
-                <div className="human2ai-ui-sketch-canvas__editor-origin-row">
-                  <span
-                    className="human2ai-ui-sketch-canvas__editor-origin"
-                    data-ui-sketch-origin={editorDraft.item.origin}
-                  >
-                    {nodeOriginLabel(editorDraft.item.origin, labels)}
-                  </span>
-                </div>
-
-                {editorDraft.item.annotation.trim() ? (
-                  <TextMarkEditorField label={labels.nodeDescription}>
-                    <p
-                      className="human2ai-ui-sketch-canvas__node-description"
-                      data-ui-sketch-node-description
-                    >
-                      {editorDraft.item.annotation}
-                    </p>
-                  </TextMarkEditorField>
-                ) : null}
-
-                {editorDraft.kind === "text" ? (
-                  <TextMarkEditorField label={labels.textContent}>
-                    <Input
-                      autoFocus
-                      name="textContent"
-                      value={editorDraft.item.text}
-                      placeholder={labels.textPlaceholder}
-                      aria-label={labels.textContent}
-                      onChange={(event) => updateEditorText({ text: event.target.value })}
-                    />
-                  </TextMarkEditorField>
-                ) : null}
-
-                <TextMarkEditorField label={labels.note}>
-                  <TextMarkEditorTextArea
-                    autoFocus={editorDraft.kind !== "text"}
-                    name="nodeNote"
-                    value={editorDraft.item.note}
-                    placeholder={editorDraft.kind === "rectangle"
-                      ? labels.regionPlaceholder
-                      : editorDraft.kind === "text"
-                        ? labels.textNotePlaceholder
-                        : labels.imageNotePlaceholder}
-                    aria-label={labels.note}
-                    onChange={(event) => updateEditorMetadata({ note: event.target.value })}
-                  />
-                </TextMarkEditorField>
-
-                <div className="human2ai-ui-sketch-canvas__editor-properties">
-                  <TextMarkEditorField label={labels.visualWeight}>
-                    <Select
-                      className="human2ai-ui-sketch-canvas__visual-weight-select"
-                      value={editorDraft.item.weight}
-                      options={visualWeightOptions}
-                      aria-label={labels.visualWeight}
-                      onChange={(weight: UiSketchVisualWeight) => updateEditorMetadata({ weight })}
-                    />
-                  </TextMarkEditorField>
-
-                  <TextMarkEditorField label={labels.visibility}>
-                    <Switch
-                      checked={editorDraft.item.visible}
-                      checkedChildren={labels.visible}
-                      unCheckedChildren={labels.hidden}
-                      aria-label={labels.visibility}
-                      onChange={(visible) => updateEditorMetadata({ visible })}
-                    />
-                  </TextMarkEditorField>
-
-                  {editorDraft.kind === "text" ? (
-                    <div className="human2ai-ui-sketch-canvas__editor-field">
-                      <span
-                        id={fontSizeLabelId}
-                        className="human2ai-ui-sketch-canvas__editor-field-label"
-                      >
-                        {labels.fontSize}
-                      </span>
-                      <div
-                        className="human2ai-ui-sketch-canvas__font-size-control"
-                        role="group"
-                        aria-labelledby={fontSizeLabelId}
-                      >
-                        <BasicButton
-                          mode="icon-only"
-                          size="small"
-                          icon={<MinusOutlined aria-hidden="true" />}
-                          iconLabel={labels.decreaseFontSize}
-                          disabled={editorDraft.item.fontSize <= MINIMUM_TEXT_FONT_SIZE}
-                          onClick={() => updateEditorText({
-                            fontSize: Math.max(
-                              MINIMUM_TEXT_FONT_SIZE,
-                              Math.round(editorDraft.item.fontSize) - 1,
-                            ),
-                          })}
-                        />
-                        <output aria-live="polite">
-                          {Math.round(editorDraft.item.fontSize)}px
-                        </output>
-                        <BasicButton
-                          mode="icon-only"
-                          size="small"
-                          icon={<PlusOutlined aria-hidden="true" />}
-                          iconLabel={labels.increaseFontSize}
-                          onClick={() => updateEditorText({
-                            fontSize: Math.round(editorDraft.item.fontSize) + 1,
-                          })}
-                        />
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
-              </div>
+              {editorFields}
 
               {editorDraft.kind === "image" ? (
                 <aside className="human2ai-ui-sketch-canvas__editor-side-fields">
-                  <CanvasImageEditorFields
-                    key={editorDraft.item.id}
-                    src={
-                      editorDraft.item.assetId
-                        ? resolveImageSource?.(editorDraft.item.assetId)
-                        : undefined
-                    }
-                    crop={editorDraft.item.crop}
-                    aspectRatio={editorDraft.item.width / editorDraft.item.height}
-                    labels={imageEditorLabels}
-                    onReadFile={onReadImageFile}
-                    disabled={!onDraftChange || !onImageUpload}
-                    onUpload={async (file) => {
-                      if (!onImageUpload) return;
-                      const assetId = await onImageUpload(file);
-                      const latest = latestImageUpdateRef.current;
-                      if (latest.interactionResetKey !== interactionResetKey) return;
-                      setEditorDraft((current) => current?.kind === "image" && current.item.id === editorDraft.item.id
-                        ? { ...current, item: { ...current.item, assetId, crop: null } }
-                        : current);
-                      latest.updateImage(editorDraft.item.id, { assetId, crop: null });
-                    }}
-                    onCropChange={(crop, cropAspectRatio) => {
-                      setEditorDraft((current) => current?.kind === "image"
-                        ? {
-                            ...current,
-                            item: {
-                              ...current.item,
-                              crop,
-                              y: current.item.y + (
-                                current.item.height
-                                - current.item.width / cropAspectRatio
-                              ) / 2,
-                              height: current.item.width / cropAspectRatio,
-                            },
-                          }
-                        : current);
-                      onDraftChange?.(updateUiSketchImageCrop(
-                        draft,
-                        editorDraft.item.id,
-                        crop,
-                        cropAspectRatio,
-                      ));
-                    }}
-                  />
+                  {imageEditor}
                 </aside>
               ) : null}
             </div>

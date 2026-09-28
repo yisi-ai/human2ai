@@ -1,4 +1,5 @@
 import { uiSketchLayerOrder } from "./layers.ts";
+import { DEFAULT_CANVAS_FRAME } from "../canvas-frame.ts";
 import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
 import uiSketchDraftSchema from "../../../schemas/ui-sketch-draft.schema.json" with {
   type: "json",
@@ -22,7 +23,7 @@ export const UI_SKETCH_END_STAGE_ID = "end";
 export const EMPTY_UI_SKETCH_DRAFT: UiSketchDraft = {
   version: 1,
   kind: "ui-layout-draft",
-  frame: { x: 0, y: 0, width: 960, height: 560 },
+  frame: { ...DEFAULT_CANVAS_FRAME },
   overallNote: "",
   rectangles: [],
   texts: [],
@@ -180,6 +181,7 @@ export function updateUiSketchStageDraft(
     return {
       ...previous,
       assetId: next.assetId,
+      ...(next.previewReference ? { previewReference: { ...next.previewReference } } : { previewReference: undefined }),
       crop: next.crop ? { ...next.crop } : null,
       note: next.note,
       annotation: next.annotation,

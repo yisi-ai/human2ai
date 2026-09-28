@@ -15,6 +15,77 @@ import type {
   SessionStyleState,
 } from "../../src/domain/style";
 import type { StyleProcessing } from "../../src/domain/session";
+import type { SessionGroup } from "../../src/domain/session";
+import type { SessionPreviewSource } from "../../src/domain/session/preview";
+import type { MaterializedSessionPreview } from "../../src/domain/ui-sketch/session-preview";
+
+export interface SessionPreviewSourceOption {
+  session: Human2AiSession;
+  revision: number;
+  outputs: { id: string; name?: string; number?: number }[];
+}
+
+export async function listSessionPreviewSources(sessionId: string): Promise<SessionPreviewSourceOption[]> {
+  return (await requestJson<{ sources: SessionPreviewSourceOption[] }>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/preview-sources`, {}, globalThis.fetch)).sources;
+}
+
+export function materializeSessionPreview(sessionId: string, source: SessionPreviewSource): Promise<MaterializedSessionPreview> {
+  return requestJson(`/api/v1/sessions/${encodeURIComponent(sessionId)}/previews`, { method: "POST", body: JSON.stringify(source) }, globalThis.fetch);
+}
+
+export function sessionPreviewUrl(sessionId: string, source: SessionPreviewSource): string {
+  return `/api/v1/sessions/${encodeURIComponent(sessionId)}/preview?${new URLSearchParams(source)}`;
+}
+
+export async function getLatestUiSketchDraft(sessionId: string, knownRevision = 0): Promise<UiSketchDraftVersion | null> {
+  return (await requestJson<{ draftVersion: UiSketchDraftVersion | null }>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/ui-sketch/drafts/latest?knownRevision=${knownRevision}`, {}, globalThis.fetch)).draftVersion;
+}
+
+const previewSubscriptions = new Map<string, { events: EventSource; listeners: Set<() => void> }>();
+export function subscribeSessionPreviews(sessionId: string, changed: () => void): () => void {
+  let subscription = previewSubscriptions.get(sessionId);
+  if (!subscription) {
+    const listeners = new Set<() => void>();
+    const events = new EventSource(`/api/v1/sessions/${encodeURIComponent(sessionId)}/preview-events`);
+    events.onmessage = () => listeners.forEach(listener => listener());
+    subscription = { events, listeners }; previewSubscriptions.set(sessionId, subscription);
+  }
+  const current = subscription;
+  current.listeners.add(changed);
+  return () => {
+    current.listeners.delete(changed);
+    if (!current.listeners.size) { current.events.close(); previewSubscriptions.delete(sessionId); }
+  };
+}
+export type { SessionGroup } from "../../src/domain/session";
+
+export async function listSessionGroups(fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup[]> {
+  return (await requestJson<{ groups: SessionGroup[] }>("/api/v1/session-groups", {}, fetcher)).groups;
+}
+
+export function createSessionGroup(projectId: string, name: string, fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup> {
+  return requestJson(`/api/v1/projects/${encodeURIComponent(projectId)}/groups`, {
+    method: "POST", body: JSON.stringify({ name }),
+  }, fetcher);
+}
+
+export function renameSessionGroup(groupId: string, name: string, expectedRevision: number, fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup> {
+  return requestJson(`/api/v1/session-groups/${encodeURIComponent(groupId)}`, {
+    method: "PATCH", body: JSON.stringify({ name, expectedRevision }),
+  }, fetcher);
+}
+
+export async function deleteSessionGroup(groupId: string, expectedRevision: number, fetcher: typeof fetch = globalThis.fetch): Promise<void> {
+  await requestResponse(`/api/v1/session-groups/${encodeURIComponent(groupId)}`, {
+    method: "DELETE", body: JSON.stringify({ expectedRevision }),
+  }, fetcher);
+}
+
+export async function setSessionGroup(projectId: string, sessionId: string, groupId: string | null, fetcher: typeof fetch = globalThis.fetch): Promise<void> {
+  await requestResponse(`/api/v1/projects/${encodeURIComponent(projectId)}/sessions/${encodeURIComponent(sessionId)}/group`, {
+    method: "PUT", body: JSON.stringify({ groupId }),
+  }, fetcher);
+}
 
 export type {
   StyleCategory,
@@ -98,6 +169,7 @@ export function createCompositionSession(
   title: string,
   projectId: string | null = null,
   fetcher: typeof fetch = globalThis.fetch,
+  groupId?: string,
 ): Promise<Human2AiSession> {
   return requestJson(
     "/api/v1/sessions",
@@ -107,6 +179,7 @@ export function createCompositionSession(
         sessionType: "image-composition",
         title,
         ...(projectId ? { projectId } : {}),
+        ...(groupId ? { groupId } : {}),
       }),
     },
     fetcher,
@@ -117,6 +190,7 @@ export function createUiSketchSession(
   title: string,
   projectId: string | null = null,
   fetcher: typeof fetch = globalThis.fetch,
+  groupId?: string,
 ): Promise<Human2AiSession> {
   return requestJson(
     "/api/v1/sessions",
@@ -126,6 +200,7 @@ export function createUiSketchSession(
         sessionType: "ui-layout",
         title,
         ...(projectId ? { projectId } : {}),
+        ...(groupId ? { groupId } : {}),
       }),
     },
     fetcher,
@@ -553,8 +628,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export type SpatialDraftVersion = DraftVersion<SpatialDraft>;
-export function createSpatialSession(title: string, projectId: string | null = null, fetcher: typeof fetch = globalThis.fetch): Promise<Human2AiSession> {
-  return requestJson("/api/v1/sessions", { method: "POST", body: JSON.stringify({ sessionType: "spatial", title, projectId }) }, fetcher);
+export function createSpatialSession(title: string, projectId: string | null = null, fetcher: typeof fetch = globalThis.fetch, groupId?: string): Promise<Human2AiSession> {
+  return requestJson("/api/v1/sessions", { method: "POST", body: JSON.stringify({ sessionType: "spatial", title, projectId, ...(groupId ? { groupId } : {}) }) }, fetcher);
 }
 export function listSpatialDraftVersions(sessionId: string, fetcher: typeof fetch = globalThis.fetch): Promise<SpatialDraftVersion[]> {
   return listDraftVersions(sessionId, "spatial", fetcher);

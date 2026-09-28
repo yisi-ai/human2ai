@@ -42,9 +42,11 @@
     "navigation": "Human2AI application navigation",
     "collapseSidebar": "Collapse application sidebar",
     "expandSidebar": "Expand application sidebar",
+    "resizeSidebar": "Resize application sidebar",
     "rightPanel": "Action panel",
     "collapseRightPanel": "Collapse action panel",
-    "expandRightPanel": "Expand action panel"
+    "expandRightPanel": "Expand action panel",
+    "resizeRightPanel": "Resize action panel"
   },
   "language": {
     "selectorLabel": "Interface language"
@@ -123,6 +125,7 @@
     "updated": "Last updated",
     "nodes": "Nodes",
     "agent": "Agent",
+    "copyId": "Copy ID",
     "copyCommand": "Copy command",
     "copying": "Copying",
     "copyFailed": "Copy failed",
@@ -157,7 +160,18 @@
     "deleteSessionTitle": "Delete session",
     "deleteSessionDescription": "Deleting this session also removes its drafts and refinement records.",
     "loading": "Loading projects",
-    "loadFailed": "Could not load projects"
+    "loadFailed": "Could not load projects",
+    "newSessionGroup": "New group",
+    "sessionGroupName": "Group name",
+    "sessionGroupActions": "Group actions",
+    "renameSessionGroup": "Rename group",
+    "deleteSessionGroup": "Delete group",
+    "deleteSessionGroupDescription": "Sessions in this group will appear directly under the project. They will not be deleted.",
+    "sessionGroupNameConflict": "A group with this name already exists in this project.",
+    "groupSession": "Move to group",
+    "ungroupedSessions": "Ungrouped",
+    "newCompositionInGroup": "New composition in group “{{group}}”",
+    "newUiSketchInGroup": "New interface in group “{{group}}”"
   },
   "actions": {
     "start": "Start",
@@ -214,6 +228,15 @@
       "originUser": "user",
       "originAgent": "agent",
       "originImport": "import"
+    },
+    "display": {
+      "showHiddenNodes": "Show hidden",
+      "onionSkin": "Onion skin"
+    },
+    "nodeVisibility": {
+      "visibility": "Visibility",
+      "visible": "Visible",
+      "hidden": "Hidden"
     }
   },
   "canvasNodeEditor": {
@@ -279,6 +302,9 @@
     "zoomIn": "Zoom in",
     "fitAll": "Fit all",
     "frameRatio": "Frame ratio",
+    "frameLabel": "Frame",
+    "frameReset": "Reset frame",
+    "frameAction": "Move or resize frame",
     "aspectRatioTitle": "Ratio",
     "lockFrame": "Lock frame",
     "unlockFrame": "Unlock frame",
@@ -419,6 +445,14 @@
       "radialUniform": "Uniform",
       "radialFree": "Free",
       "rayHandle": "Ray {{index}} direction"
+    },
+    "previewMode": {
+      "label": "Preview mode",
+      "precise": "Precise",
+      "soft": "Soft",
+      "prompt": "Preview mode: {{mode}}",
+      "preciseGuidance": "- Precise reference: make the generated image closely follow the canvas intent. Preserve basic shapes, placement, proportions, rotation, layering, spacing, negative space and cropping. Interpret shapes as concrete content using the notes without freely restructuring, splitting or merging their arrangement. Compare these relationships with the reference; focal and flow markers are guides, not final artwork. User instructions and node notes take precedence.",
+      "preciseLightGuidance": "- Precise lighting: closely preserve the authored light placement, shape, extent and relative proportions when lighting the subject and space. Pale yellow identifies light sources without specifying color temperature; do not reproduce diagnostic outlines in the final image. User instructions and node notes take precedence."
     }
   },
   "uiSketch": {
@@ -454,9 +488,6 @@
       "editRegionNote": "Edit region details",
       "editText": "Edit text",
       "emptyText": "---No text entered---",
-      "visibility": "Visibility",
-      "visible": "Visible",
-      "hidden": "Hidden",
       "fontSize": "Font size",
       "decreaseFontSize": "Decrease font size",
       "increaseFontSize": "Increase font size",
@@ -528,6 +559,7 @@
     "promptFailed": "Could not copy the prompt.",
     "promptUnsupported": "This browser cannot copy the prompt.",
     "copyPreview": "Copy preview",
+    "previewImage": "Preview image",
     "previewFailed": "Could not copy the preview.",
     "previewDownloaded": "This browser cannot copy images, so the preview was downloaded"
   },
@@ -541,6 +573,7 @@
     "prompt": "- Visual weight: {{weight}}"
   },
   "dimensions": {
+    "frameSize": "Size",
     "width": "Width",
     "height": "Height"
   },
@@ -768,7 +801,8 @@
     "appearance": "Model style",
     "appearanceQuaternius": "Human model",
     "appearanceGeometric": "Geometric mannequin",
-    "editObject": "Edit object"
+    "editObject": "Edit object",
+    "newInGroup": "New 3D space in group “{{group}}”"
   },
   "canvasHistory": {
     "undo": "Undo",
@@ -777,5 +811,24 @@
   },
   "canvasStates": {
     "switch": "Layout states"
+  },
+  "sessionPreview": {
+    "label": "Session preview",
+    "add": "Add session preview",
+    "session": "Source session",
+    "output": "State or camera",
+    "projectRequired": "Move this session into a project first.",
+    "empty": "No session previews available",
+    "unavailable": "Source unavailable. The last preview is retained.",
+    "failed": "Unable to load session preview",
+    "openSource": "Open source session",
+    "group": "Group",
+    "search": "Search groups, sessions or states",
+    "clearSearch": "Clear search",
+    "chooseParent": "Select an item in the previous column",
+    "noChildren": "No options in this branch",
+    "loading": "Loading preview sources",
+    "descendantMatches": "{{count}} matching descendants",
+    "searchResults": "{{count}} matches"
   }
 }

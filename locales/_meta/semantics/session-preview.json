@@ -1,0 +1,434 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "session-preview",
+  "concepts": {
+    "session-preview.label": {
+      "meaning": "A node showing a selected saved state or camera from another session in the same project, excluding node notes from the rendered image while retaining actual text content.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "A node showing a selected saved state or camera from another session in the same project.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.label",
+      "searchTerms": [
+        "会话预览",
+        "Session preview"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.add": {
+      "meaning": "Insert a node referencing a session state or camera.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "Insert a node referencing a session state or camera.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.add",
+      "searchTerms": [
+        "添加会话预览",
+        "Add session preview"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.session": {
+      "meaning": "The same-project session that owns the referenced output.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "The same-project session that owns the referenced output.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.session",
+      "searchTerms": [
+        "来源会话",
+        "Source session"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.output": {
+      "meaning": "The stable output selected within the source session.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "The stable output selected within the source session.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.output",
+      "searchTerms": [
+        "状态或摄像机",
+        "State or camera"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.project-required": {
+      "meaning": "A project membership requirement for selecting preview sources.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "A project membership requirement for selecting preview sources.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.projectRequired",
+      "searchTerms": [
+        "请先将当前会话移入项目。",
+        "Move this session into a project first."
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.empty": {
+      "meaning": "No other same-project session has a saved state or camera output.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "No other same-project session has a saved state or camera output.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.empty",
+      "searchTerms": [
+        "没有可引用的会话预览",
+        "No session previews available"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.unavailable": {
+      "meaning": "A removed or moved source, state, or camera cannot refresh the retained image.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "A removed or moved source, state, or camera cannot refresh the retained image.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.unavailable",
+      "searchTerms": [
+        "来源已不可用，保留最后一次预览。",
+        "Source unavailable. The last preview is retained."
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.failed": {
+      "meaning": "The requested preview could not be loaded or inserted.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "The requested preview could not be loaded or inserted.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.failed",
+      "searchTerms": [
+        "无法读取会话预览",
+        "Unable to load session preview"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.open-source": {
+      "meaning": "Navigate to the exact referenced session and output.",
+      "scope": "UI interface session-preview insertion and image-node properties.",
+      "referent": "Navigate to the exact referenced session and output.",
+      "precedence": "Source content belongs to its session; target layout and retained immutable images belong to the UI session. This is distinct from a spatial-only camera reference.",
+      "canonicalKey": "sessionPreview.openSource",
+      "searchTerms": [
+        "打开来源会话",
+        "Open source session"
+      ],
+      "examples": [
+        "Place the named state of another UI session in a UI layout."
+      ],
+      "nonExamples": [
+        "Upload an unrelated image or embed the editor viewport."
+      ]
+    },
+    "session-preview.source-group": {
+      "meaning": "The project-local display group containing source sessions.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.group",
+      "searchTerms": [
+        "分组",
+        "Group"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.source-search": {
+      "meaning": "Search names across all source groups, sessions, states and cameras.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.search",
+      "searchTerms": [
+        "搜索分组、会话或状态",
+        "Search groups, sessions or states"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.clear-source-search": {
+      "meaning": "Clear the source hierarchy search while keeping the selected source.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.clearSearch",
+      "searchTerms": [
+        "清空搜索",
+        "Clear search"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.choose-source-parent": {
+      "meaning": "A downstream source column needs a selection in the preceding column.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.chooseParent",
+      "searchTerms": [
+        "请先选择上一级",
+        "Select an item in the previous column"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.source-branch-empty": {
+      "meaning": "The selected source group or session has no available descendants.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.noChildren",
+      "searchTerms": [
+        "没有可选的下级内容",
+        "No options in this branch"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.source-options-loading": {
+      "meaning": "Available source groups, sessions and saved outputs are being loaded.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.loading",
+      "searchTerms": [
+        "正在加载预览来源",
+        "Loading preview sources"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.source-descendant-matches": {
+      "meaning": "The count of matching descendants under a source hierarchy option.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.descendantMatches",
+      "searchTerms": [
+        "下级有 {{count}} 项匹配",
+        "{{count}} matching descendants"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    },
+    "session-preview.source-search-results": {
+      "meaning": "The total count of source hierarchy options matching the current search.",
+      "scope": "Unified session-preview creation and editing panel.",
+      "referent": "The same-project source hierarchy, including a virtual Ungrouped branch.",
+      "precedence": "Display groups organize sessions; stable states or cameras identify the output. Search never changes group membership or the committed preview.",
+      "canonicalKey": "sessionPreview.searchResults",
+      "searchTerms": [
+        "匹配 {{count}} 项",
+        "{{count}} matches"
+      ],
+      "examples": [
+        "Choose a saved state from a session in a project group."
+      ],
+      "nonExamples": [
+        "Group canvas nodes or search styles."
+      ]
+    }
+  },
+  "keys": {
+    "sessionPreview.label": {
+      "conceptId": "session-preview.label",
+      "variant": "default",
+      "role": "label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.add": {
+      "conceptId": "session-preview.add",
+      "variant": "default",
+      "role": "action",
+      "grammar": "imperative",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.session": {
+      "conceptId": "session-preview.session",
+      "variant": "default",
+      "role": "label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.output": {
+      "conceptId": "session-preview.output",
+      "variant": "default",
+      "role": "label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.projectRequired": {
+      "conceptId": "session-preview.project-required",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.empty": {
+      "conceptId": "session-preview.empty",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.unavailable": {
+      "conceptId": "session-preview.unavailable",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.failed": {
+      "conceptId": "session-preview.failed",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.openSource": {
+      "conceptId": "session-preview.open-source",
+      "variant": "default",
+      "role": "action",
+      "grammar": "imperative",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.group": {
+      "conceptId": "session-preview.source-group",
+      "variant": "default",
+      "role": "column label",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "English Group names a source-session display group here; uiSketch.canvas.groupItems is an action grouping canvas nodes."
+    },
+    "sessionPreview.search": {
+      "conceptId": "session-preview.source-search",
+      "variant": "default",
+      "role": "search label and placeholder",
+      "grammar": "imperative",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.clearSearch": {
+      "conceptId": "session-preview.clear-source-search",
+      "variant": "default",
+      "role": "action",
+      "grammar": "imperative",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.chooseParent": {
+      "conceptId": "session-preview.choose-source-parent",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.noChildren": {
+      "conceptId": "session-preview.source-branch-empty",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.loading": {
+      "conceptId": "session-preview.source-options-loading",
+      "variant": "default",
+      "role": "status",
+      "grammar": "sentence",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.descendantMatches": {
+      "conceptId": "session-preview.source-descendant-matches",
+      "variant": "default",
+      "role": "accessible count",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "sessionPreview.searchResults": {
+      "conceptId": "session-preview.source-search-results",
+      "variant": "default",
+      "role": "live search status",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    }
+  }
+}

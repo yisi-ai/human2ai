@@ -1,8 +1,10 @@
 import {
   AimOutlined,
+  CopyOutlined,
   DeleteOutlined,
   LineOutlined,
 } from "@ant-design/icons";
+import { ActionButton } from "@human2ai/ui/yisiui/action-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import { ConfirmAction } from "@human2ai/ui/yisiui/confirm-action";
 import { SideActionPanel } from "@human2ai/ui/yisiui/side-action-panel";
@@ -10,6 +12,7 @@ import { Tooltip } from "antd";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import type { ReactNode } from "react";
 import { useState } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import {
   assertStorySelector,
@@ -27,14 +30,17 @@ const labels = {
   navigation: "Human2AI 应用导航",
   collapseSidebar: "收起应用侧栏",
   expandSidebar: "展开应用侧栏",
+  resizeSidebar: zh.shell.resizeSidebar,
   rightPanel: "构图属性",
   collapseRightPanel: "收起构图属性",
   expandRightPanel: "展开构图属性",
+  resizeRightPanel: zh.shell.resizeRightPanel,
 };
 
 function ShellHarness({
   rightPanel,
   title = "工作概览",
+  titleExtra,
   sidebar = <div className="human2ai-app-shell-story-sidebar">侧栏内容</div>,
   children = <div className="human2ai-app-shell-story-content">页面内容</div>,
   rightPanelOpen,
@@ -42,6 +48,7 @@ function ShellHarness({
 }: {
   rightPanel?: ReactNode;
   title?: ReactNode;
+  titleExtra?: ReactNode;
   sidebar?: ReactNode;
   children?: ReactNode;
   rightPanelOpen?: boolean;
@@ -50,6 +57,7 @@ function ShellHarness({
   return (
     <Human2AiAppShell
       title={title}
+      titleExtra={titleExtra}
       brand={(
         <a href="/" className="human2ai-app-shell__brand">
           <img className="human2ai-app-shell__brand-icon" src="/brand/h2a.svg" alt="" width={24} height={24} />
@@ -94,6 +102,17 @@ function CompositionPropertiesHarness() {
   return (
     <ShellHarness
       title="构图编辑器"
+      titleExtra={(
+        <ActionButton
+          size="small"
+          label={zh.sessionDetails.copyId}
+          pendingLabel={zh.sessionDetails.copying}
+          successLabel={zh.clipboard.copied}
+          errorLabel={zh.sessionDetails.copyFailed}
+          idleIcon={<CopyOutlined aria-hidden="true" />}
+          onAction={() => undefined}
+        />
+      )}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(
@@ -169,6 +188,9 @@ export const Default: Story = {
     assertStoryText(canvasElement, "工作概览");
     assertStoryText(canvasElement, "侧栏内容");
     assertStorySelector(canvasElement, 'a.human2ai-app-shell__brand[href="/"]');
+    const resize = findResizeHandle(canvasElement, labels.resizeSidebar);
+    resize.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+    if (resize.getAttribute("aria-valuenow") !== "288") throw new Error("Sidebar keyboard resize must change its width");
   },
 };
 
@@ -176,12 +198,18 @@ export const CollapsedSidebar: Story = {
   name: "侧栏收起与恢复",
   render: () => <ShellHarness />,
   play: async ({ canvasElement }) => {
+    findResizeHandle(canvasElement, labels.resizeSidebar).dispatchEvent(
+      new KeyboardEvent("keydown", { key: "ArrowRight", shiftKey: true, bubbles: true }),
+    );
     findButton(canvasElement, labels.collapseSidebar).click();
     await nextFrame();
     assertStorySelector(canvasElement, '[data-sidebar-state="closed"]');
     findButton(canvasElement, labels.expandSidebar).click();
     await nextFrame();
     assertStorySelector(canvasElement, '[data-sidebar-state="open"]');
+    if (findResizeHandle(canvasElement, labels.resizeSidebar).getAttribute("aria-valuenow") !== "312") {
+      throw new Error("Sidebar width must survive collapse and expansion");
+    }
   },
 };
 
@@ -190,6 +218,10 @@ export const CompositionWithProperties: Story = {
   render: () => <CompositionPropertiesHarness />,
   play: async ({ canvasElement }) => {
     assertStorySelector(canvasElement, '[data-right-panel-state="open"]');
+    findResizeHandle(canvasElement, labels.resizeSidebar);
+    const resize = findResizeHandle(canvasElement, labels.resizeRightPanel);
+    resize.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowLeft", bubbles: true }));
+    if (resize.getAttribute("aria-valuenow") !== "308") throw new Error("Right panel keyboard resize must change its width");
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/composite-button"]');
     assertStorySelector(canvasElement, '[data-icon="line"]');
     assertStoryText(canvasElement, "添加元素");
@@ -232,6 +264,11 @@ export const CompositionWithProperties: Story = {
     if (sidePanel.querySelector('button[aria-label="清空画布"]')) {
       throw new Error("清空画布不应出现在画布侧栏");
     }
+    findButton(canvasElement, labels.expandRightPanel).click();
+    await nextFrame();
+    if (findResizeHandle(canvasElement, labels.resizeRightPanel).getAttribute("aria-valuenow") !== "308") {
+      throw new Error("Right panel width must survive collapse and expansion");
+    }
   },
 };
 
@@ -261,6 +298,12 @@ export const DesktopMinimum: Story = {
     />
   ),
 };
+
+function findResizeHandle(root: HTMLElement, label: string): HTMLElement {
+  const handle = root.querySelector<HTMLElement>(`[role="separator"][aria-label="${label}"]`);
+  if (!handle) throw new Error(`Story interaction contract missing resize handle: ${label}`);
+  return handle;
+}
 
 function findButton(root: HTMLElement, label: string): HTMLButtonElement {
   const normalizedLabel = label.replaceAll(" ", "");

@@ -1,14 +1,22 @@
 .frame {
   box-sizing: border-box;
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: 100dvh;
   min-height: 0;
   overflow: hidden;
 }
 
+.toolbar {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--yisiui-space-2);
+  padding: var(--yisiui-space-2);
+}
+
 .frame > :global(.yisi-asset-skeleton-tree) {
   flex: 1 1 auto;
   min-height: 0;
 }
-

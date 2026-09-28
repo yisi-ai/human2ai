@@ -4,6 +4,7 @@ import type {
   Human2AiCanvasNodeOrigin,
 } from "../canvas-node-metadata.ts";
 import type { DraftVersion } from "../session/index.ts";
+import type { SessionPreviewReference } from "../session/preview.ts";
 
 export interface UiSketchBounds {
   x: number;
@@ -45,6 +46,7 @@ export interface UiSketchImage
   origin: UiSketchNodeOrigin;
   visible: boolean;
   weight: UiSketchVisualWeight;
+  previewReference?: SessionPreviewReference;
 }
 
 export interface UiSketchStageRectangleState extends UiSketchBounds {

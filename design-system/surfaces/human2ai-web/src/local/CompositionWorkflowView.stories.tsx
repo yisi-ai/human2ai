@@ -1,9 +1,12 @@
+import { assertReferenceShapes } from "./compositionPreviewStoryChecks";
 import { AimOutlined } from "@ant-design/icons";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
 import { createAppI18n } from "../../../../../web/i18n/createI18n";
 import { UiSketchStateTabs } from "./UiSketchStateTabs";
+import { CanvasDisplayControls } from "./CanvasDisplayControls";
+import { Human2AiAppShell } from "./Human2AiAppShell";
 
 import {
   addArea,
@@ -22,6 +25,7 @@ import {
   receiveCompositionRefinement,
   rotateDirectionLine,
   updateCompositionWorkflowDraft,
+  updateItemMetadata,
   type CompositionDraft,
   type CompositionRefinementResult,
   type CompositionWorkflowStatus,
@@ -115,13 +119,19 @@ function LayoutStatesHarness() {
     next = createCompositionState(next, "state-1", "portrait");
     next = changeFrame(next, { width: 900, height: 1600 });
     next = moveItem(next, "area-1", { x: 0.7, y: 0.6 });
+    next = updateItemMetadata(next, "area-2", { visible: false });
     return selectCompositionState(renameCompositionState(next, "portrait", "竖版"), "state-1");
   });
   const states = compositionStates(draft);
+  const [display, setDisplay] = useState({ showHiddenNodes: false, onionSkin: false });
+  const [selected, setSelected] = useState<string[]>([]);
   return (
-    <main className="composition-workflow-story" data-layout-state={draft.activeStateId}>
+    <Human2AiAppShell title={t("composition.session.untitled")} sidebar={<div />} rightPanel={<div />}
+      headerExtra={<CanvasDisplayControls value={display} onChange={setDisplay} hasMultipleStates={states.length > 1}
+        hasPreviousState={states.findIndex((state) => state.id === draft.activeStateId) > 0} />}>
       <CompositionWorkflowView
         draft={draft} status="waiting" activeView="draft" onViewChange={() => undefined}
+        {...display} selectedIds={selected} onSelectionChange={setSelected}
         onDraftChange={(next) => setDraft(validateDraft(next))}
         canvasViewportAction={{ id: 1, type: "fit-frame" }}
         stateControls={(
@@ -144,7 +154,7 @@ function LayoutStatesHarness() {
             />
         )}
       />
-    </main>
+    </Human2AiAppShell>
   );
 }
 
@@ -167,6 +177,38 @@ export const LayoutStates: Story = {
     tab("state-1").click();
     await nextFrame();
     if (frame() !== originalFrame || area() !== originalArea) throw new Error("Original state layout changed");
+    const onion = canvasElement.querySelector<HTMLButtonElement>('[aria-label="洋葱皮"]')!;
+    const hidden = canvasElement.querySelector<HTMLButtonElement>('[aria-label="显示隐藏"]')!;
+    if (!onion.disabled) throw new Error("First state must disable onion skin");
+    tab("portrait").click();
+    await nextFrame();
+    if (canvasElement.querySelector('[data-composition-item="area-2"]')) throw new Error("Hidden nodes must start concealed");
+    onion.click();
+    await nextFrame();
+    hidden.click();
+    await nextFrame();
+    const ghost = canvasElement.querySelector<SVGGElement>('[data-canvas-onion-skin="state-1"]');
+    if (!ghost || ghost.querySelector('[data-composition-item], [tabindex], [role="button"]')
+      || [...ghost.querySelectorAll("*")].some((node) => getComputedStyle(node).pointerEvents !== "none")) {
+      throw new Error("Previous layout must be a noninteractive reference");
+    }
+    const revealed = canvasElement.querySelector<SVGGElement>('[data-composition-item="area-2"]')!;
+    if (!revealed || getComputedStyle(revealed).opacity !== "0.3") throw new Error("Hidden node must have a faded editable outline");
+    revealed.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    await nextFrame();
+    const visibility = document.querySelector<HTMLButtonElement>('[role="switch"][aria-label="显示状态"]')!;
+    if (!visibility || visibility.getAttribute("aria-checked") !== "false") throw new Error("Node editor must expose state visibility");
+    visibility.click();
+    await nextFrame();
+    document.body.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    hidden.click();
+    await nextFrame();
+    if (!canvasElement.querySelector('[data-composition-item="area-2"][data-composition-visible="true"]')) throw new Error("Revealing a node must persist independently from display controls");
+    tab("state-1").click();
+    await nextFrame();
+    tab("portrait").click();
+    await nextFrame();
+    if (!canvasElement.querySelector('[data-canvas-onion-skin="state-1"]')) throw new Error("Onion skin preference must survive state canvas remounts");
     canvasElement.dataset.layoutStatesPassed = "true";
   },
 };
@@ -226,6 +268,8 @@ export const Ready: Story = {
     }
     assertReadOnlyPreview(canvasElement);
 
+    assertReferenceShapes(canvasElement, fixture.refinement.refinedDraft);
+
     findRadio(canvasElement, "构图").click();
     await nextFrame();
     assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
@@ -283,6 +327,7 @@ export const Waiting: Story = {
       throw new Error("Preview without refinement must render the current draft");
     }
     assertReadOnlyPreview(canvasElement);
+    assertReferenceShapes(canvasElement, fixture.draft);
   },
 };
 
@@ -429,6 +474,7 @@ function assertReadOnlyPreview(root: HTMLElement): void {
     }
   }
 }
+
 
 function assertPreviewLayout(root: HTMLElement): void {
   const stage = root.querySelector<HTMLElement>(

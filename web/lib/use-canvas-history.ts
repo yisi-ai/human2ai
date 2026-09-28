@@ -46,6 +46,7 @@ export function useCanvasHistory<T, Context = undefined>(
     };
     return {
       current: () => history.current,
+      synchronize(next: T) { history.synchronize(next); },
       record(next: T, beforeContext?: Context, afterContext = beforeContext) {
         const group = groups.current.pointer ?? groups.current.text ?? groups.current.key;
         const changed = history.record(next, beforeContext, afterContext, group);

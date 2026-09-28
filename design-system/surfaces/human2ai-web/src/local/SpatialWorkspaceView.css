@@ -55,7 +55,7 @@
 .spatial-object-tree .ant-tree-iconEle { flex: none; font-size: var(--yisiui-font-size-sm); }
 .spatial-tree-locks { display: inline-flex; gap: var(--yisiui-space-1); color: var(--yisiui-color-text-secondary); }
 .spatial-viewport { position: relative; flex: 1; min-height: 160px; min-width: 0; overflow: hidden; background: linear-gradient(160deg, #f9fafb, #edf0f3); }
-.spatial-viewport:focus-visible { outline: 2px solid var(--yisiui-color-action-primary, #467bd3); outline-offset: -2px; }
+.spatial-viewport:focus-visible { outline: none; }
 .spatial-viewport > canvas { display: block; width: 100%; height: 100%; touch-action: none; }
 .spatial-viewport__error { padding: var(--yisiui-space-5); }
 .spatial-field { display: flex; flex-direction: column; gap: var(--yisiui-space-2); font-size: var(--yisiui-font-size-sm); min-width: 0; }

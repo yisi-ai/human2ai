@@ -1,9 +1,9 @@
 import { CheckCircleOutlined, ClockCircleOutlined, SyncOutlined, WarningOutlined } from "@ant-design/icons";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import type { TreeProps } from "antd";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 
-import { StatusBadge } from "@human2ai/ui/yisiui";
+import { BasicButton, StatusBadge } from "@human2ai/ui/yisiui";
 import {
   AssetSkeletonTree,
   assetSkeletonTreeCanDrop,
@@ -330,6 +330,33 @@ function EditorFixture() {
     })),
   );
   const [selectedKeys, setSelectedKeys] = useState<string[]>(["item:palette"]);
+  const sequence = useRef(0);
+  const selected = nodes.find((node) => node.key === selectedKeys[0]);
+
+  function addNode() {
+    const number = ++sequence.current;
+    const parentKey = selected?.nodeKind === "container" ? selected.key : selected?.parentKey ?? "group:base";
+    const siblings = nodes.filter((node) => node.parentKey === parentKey).sort((a, b) => a.order - b.order);
+    const index = selected?.nodeKind === "content" ? siblings.findIndex((node) => node.key === selected.key) + 1 : siblings.length;
+    const key = `example:new:${number}`;
+    siblings.splice(index, 0, { key, parentKey, order: index, nodeKind: "content", title: `新增资源 ${number}`, isNew: true });
+    const orders = new Map(siblings.map((node, i) => [node.key, i]));
+    setNodes((current) => [...current, siblings[index]].map((node) => orders.has(node.key) ? { ...node, order: orders.get(node.key)! } : node));
+    setSelectedKeys([key]);
+  }
+
+  function removeNode() {
+    if (!selected) return;
+    const removed = new Set([selected.key]);
+    // Fixture owns the business decision to remove a whole subtree.
+    let count = 0;
+    while (count !== removed.size) {
+      count = removed.size;
+      for (const node of nodes) if (node.parentKey && removed.has(node.parentKey)) removed.add(node.key);
+    }
+    setNodes((current) => current.filter((node) => !removed.has(node.key)));
+    setSelectedKeys(selected.parentKey ? [selected.parentKey] : []);
+  }
 
   const handleDrop: TreeProps["onDrop"] = (info) => {
     setNodes((current) => moveNode(current, info));
@@ -337,6 +364,14 @@ function EditorFixture() {
 
   return (
     <TreeStoryFrame>
+      <div className={styles.toolbar}>
+        <BasicButton mode="without-icon" onClick={addNode}>新增节点</BasicButton>
+        <BasicButton mode="without-icon" disabled={!selected || selected.locked} onClick={() => {
+          const number = ++sequence.current;
+          setNodes((current) => current.map((node) => node.key === selected?.key ? { ...node, title: `更新后的资源名称 ${number}` } : node));
+        }}>修改名称</BasicButton>
+        <BasicButton mode="without-icon" disabled={!selected || selected.locked} onClick={removeNode}>删除节点</BasicButton>
+      </div>
       <AssetSkeletonTree
         mode="edit"
         nodes={nodes}

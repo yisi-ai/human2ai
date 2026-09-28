@@ -27,6 +27,10 @@ export interface SessionDetailsProps {
     label: string;
     value: ReactNode;
   };
+  secondaryItem?: {
+    label: string;
+    value: ReactNode;
+  };
   createdAt: string | null;
   updatedAt: string | null;
   nodeCount: number;
@@ -61,6 +65,7 @@ function formatTimestamp(
 
 export function SessionDetails({
   primaryItem,
+  secondaryItem,
   createdAt,
   updatedAt,
   nodeCount,
@@ -94,6 +99,12 @@ export function SessionDetails({
           <div className="human2ai-session-details__row">
             <dt>{primaryItem.label}</dt>
             <dd>{primaryItem.value}</dd>
+          </div>
+        ) : null}
+        {secondaryItem ? (
+          <div className="human2ai-session-details__row">
+            <dt>{secondaryItem.label}</dt>
+            <dd>{secondaryItem.value}</dd>
           </div>
         ) : null}
         <div className="human2ai-session-details__row">

@@ -1,5 +1,5 @@
 import type { RestoreDraftVersionInput } from "../domain/session/index.ts";
-import { DraftVersionStore } from "./draft-version-store.ts";
+import { DraftVersionStore, type DraftSavedEvent } from "./draft-version-store.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 import type { CreateDraftVersionInput, UndoDraftVersionInput } from "../domain/session/index.ts";
 import { applySpatialOperations, createSpatialDraft, spatialDraftFingerprint, validateSpatialDraft, validateSpatialTransition, type SpatialDraft, type SpatialOperation } from "../domain/spatial/index.ts";
@@ -16,6 +16,7 @@ export class SpatialSessionRepository {
     });
   }
   listDraftVersions(sessionId: string) { return this.draftVersions.listDraftVersions(sessionId); }
+  onDraftSaved(listener: (event: DraftSavedEvent<SpatialDraft>) => void) { return this.draftVersions.onSaved(listener); }
   getLatestDraftVersion(sessionId: string, knownRevision?: number) { return this.draftVersions.getLatestDraftVersion(sessionId, knownRevision); }
   getDraftVersion(sessionId: string, revision: number) { return this.draftVersions.getDraftVersion(sessionId, revision); }
   createDraftVersion(sessionId: string, input: CreateDraftVersionInput) { return this.draftVersions.createDraftVersion(sessionId, input); }

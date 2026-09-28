@@ -69,8 +69,8 @@ describe("semantic migration reuse boundaries", () => {
     ["sessionDetails.emptyValue", "—", "—"],
     ["canvas.tools.label", "操作工具", "Tools"],
     ["uiSketch.canvas", "UI 界面画布", "Interface canvas"],
-    ["uiSketch.canvasLabels.visible", "显示", "Visible"],
-    ["uiSketch.canvasLabels.hidden", "隐藏", "Hidden"],
+    ["canvas.nodeVisibility.visible", "显示", "Visible"],
+    ["canvas.nodeVisibility.hidden", "隐藏", "Hidden"],
     ["uiSketch.canvasLabels.fontSize", "字号", "Font size"],
     ["composition.depth.label", "景别", "Depth"],
     ["composition.depth.auto", "自动", "Auto"],
@@ -88,8 +88,8 @@ describe("semantic migration reuse boundaries", () => {
     ["composition", "background", "composition.depth.background", "背景", "Background"],
     ["composition", "sceneComposition", "composition.mode.scene", "场景构图", "Scene"],
     ["composition", "editorialLayout", "composition.mode.editorial", "版式编排", "Editorial"],
-    ["uiSketch", "visible", "uiSketch.canvasLabels.visible", "显示", "Visible"],
-    ["uiSketch", "hidden", "uiSketch.canvasLabels.hidden", "隐藏", "Hidden"],
+    ["uiSketch", "visible", "canvas.nodeVisibility.visible", "显示", "Visible"],
+    ["uiSketch", "hidden", "canvas.nodeVisibility.hidden", "隐藏", "Hidden"],
   ] as const)("reuses %s prompt value %s", (domain, role, key, zh, en) => {
     expect(promptTranslationKey(domain, role)).toBe(key);
     expect(createAppI18n("zh-CN").t(key)).toBe(zh);
@@ -119,7 +119,7 @@ describe("semantic migration reuse boundaries", () => {
     for (const locale of ["zh-CN", "en"] as const) {
       const i18n = createAppI18n(locale);
       expect(promptTranslationKey("uiSketch", "changeVisible")).toBe("uiSketch.prompt.changeVisible");
-      expect(i18n.t("uiSketch.prompt.changeVisible")).not.toBe(i18n.t("uiSketch.canvasLabels.visible"));
+      expect(i18n.t("uiSketch.prompt.changeVisible")).not.toBe(i18n.t("canvas.nodeVisibility.visible"));
       expect(i18n.t(promptTranslationKey("composition", "shotScale"), {
         shotScale: i18n.t("composition.depth.foreground"),
       })).toBe(locale === "zh-CN" ? "- 景别：前景" : "- Depth: Foreground");

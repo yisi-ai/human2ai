@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   COMPOSITION_CANVAS, addArea, addTextRegion, areaGeometry, copyCompositionItems,
-  createCompositionState, createDraft, draftFingerprint, moveItem, moveTextRegionCorner,
+  createCompositionState, createDraft, draftFingerprint, moveItem, moveTextRegionCorner, moveTextRegionAreaCorner,
   pasteCompositionItems, renderCompositionReferenceSvg, resizeArea, resizeFreeArea,
   rotateArea, selectCompositionState, setAreaAspect, validateDraft,
   type CompositionDraft,
@@ -24,6 +24,7 @@ describe("composition text outlines", () => {
       const before = points(original);
       const target = { x: (before[0].x + 60) / 1200, y: (before[0].y + 30) / 800 };
       const edited = moveTextRegionCorner(original, "area-1", 0, target);
+      expect(moveTextRegionAreaCorner(original.areas[0], 0, target)).toEqual(edited.areas[0]);
       points(edited).forEach((point, index) => {
         expect(point.x).toBeCloseTo(index === 0 ? target.x * 1200 : before[index].x, 8);
         expect(point.y).toBeCloseTo(index === 0 ? target.y * 800 : before[index].y, 8);

@@ -8,6 +8,33 @@
 
 Human2AI is a local creative workspace for people and AI agents. Edit compositions, UI sketches, and 3D spaces in a desktop browser. Agents use the CLI to connect to the same sessions, read versions, make changes, and export results.
 
+## Quick install
+
+Requires Node.js 22+. Install Human2AI globally, then install its skill in each project where you want to use it.
+
+### Ask an agent to install it
+
+Open Codex in the target project and copy this instruction to the agent:
+
+```text
+Install Human2AI globally with npm install -g human2ai, then run human2ai integration install --agent codex --mode copy from the current project root to install the Human2AI skill in this project.
+Read the installed .agents/skills/human2ai/SKILL.md, start the service, check the integration and service status, and verify that it works. Then tell me the browser URL and the command to start it next time.
+If this project already has .human2ai/integration.json, check and reuse its runner and service configuration first, preserving any project changes to the skill.
+```
+
+### Install with the CLI
+
+Run these commands in the target project root:
+
+```bash
+npm install -g human2ai
+human2ai integration install --agent codex --mode copy
+human2ai integration doctor
+human2ai web
+```
+
+Keep the service terminal running and open <http://127.0.0.1:4179> in your browser. The skill is installed in `.agents/skills/human2ai/` within the current project. See [Installation and usage](#installation-and-usage) for details.
+
 ## Features
 
 ### Composition
@@ -44,45 +71,41 @@ Agents can also build and arrange models themselves and create complex poses for
 
 ## Installation and usage
 
-### Ask an agent to install it
+### Agent installation workflow
 
-Open Codex in the target project and give the agent this instruction:
+Agents can read the public installation instructions with `npm view human2ai readme`. After installation, they can also read `human2ai/README.md` under the directory returned by `npm root -g`. The agent completes the following steps:
 
-> Install human2ai in this project. Follow the npm package's README to set up the Human2AI skill, start the service, and verify that it works. Then tell me the browser URL.
-
-Agents can read the public installation instructions with `npm view human2ai readme`, or read `node_modules/human2ai/README.en.md` after installation. The agent completes the following steps:
-
-1. Confirm the target project directory and the availability of Node.js 22+ and npm. Run `npm init -y` first if the project has no `package.json`.
-2. Check for an existing `.human2ai/integration.json`. If present, use its recorded runner to check and retain the project's version and service URLs. For a new integration, follow the commands under “Install the npm package” and “Install the agent skill” below.
+1. Confirm the target project directory and the availability of Node.js 22+ and npm. The project does not need a `package.json`.
+2. Check for an existing `.human2ai/integration.json`. If present, use its recorded runner to check and retain the project's version and service URLs. For a new integration, install globally with `npm install -g human2ai`, then run the commands under “Install the agent skill” below from the target project root.
 3. Read the installed `.agents/skills/human2ai/SKILL.md`, then run `integration doctor` and `service status`. Let the CLI generate integration files, and preserve project changes if synchronization reports a conflict.
 4. If the service is not running, execute the configured `service.start` command in a persistent terminal, wait for the service to become available, and retry the checks. Follow any existing project startup convention. A first-time npm installation defaults to port `4179` and the `~/.human2ai/` data directory.
-5. Confirm that both integration and service checks return `ready`, the browser URL is accessible, and `session list` can read sessions through the configured runner. Review the installation's security audit results and report any affected dependencies and their fix status.
+5. Confirm that both integration and service checks return `ready`, the browser URL is accessible, and `session list` can read sessions through the configured runner. If installation reports warnings or vulnerabilities, explain their impact and how they were handled.
 6. Report the installed version, project path, skill path, browser URL, and command to start the service next time. The user should not need to install the skill separately.
 
 The automatic integration command currently supports Codex. Users can also perform the same installation themselves with the commands below.
 
 ### Install with commands
 
-#### 1. Install the npm package
+#### 1. Install the npm package globally
 
-Run this in the root of the project where you want to use Human2AI. In an empty directory without a `package.json`, run `npm init -y` first. Keep the configuration of an existing project.
+Install once globally to use the `human2ai` command across projects. Consuming projects do not need a `package.json`.
 
 ```bash
-npm install --save-dev human2ai
+npm install -g human2ai
 ```
 
-The package includes prebuilt Web pages, the CLI, database migrations, schemas, and the Human2AI skill. `npm install` places these files in `node_modules/human2ai/`. Complete the next step to make the skill available to your agent.
+The package includes prebuilt Web pages, the CLI, database migrations, schemas, and the Human2AI skill. Use `npm root -g` to find the installation directory. Complete the next step to make the skill available to your agent in the current project.
 
 #### 2. Install the agent skill (Codex)
 
-Run these commands in the same project root. If the npm package is already installed, you can start here:
+Run these commands in the root of the project where you want to use Human2AI. If the npm package is already installed globally, you can start here:
 
 ```bash
-npx --no-install human2ai integration install --agent codex --mode copy
-npx --no-install human2ai integration doctor
+human2ai integration install --agent codex --mode copy
+human2ai integration doctor
 ```
 
-The integration command copies the complete skill from the project's installed npm package and creates these files:
+The integration command copies the complete skill from the globally installed npm package and creates these files in the current project:
 
 | Path | Purpose |
 | --- | --- |
@@ -98,7 +121,7 @@ Open Codex in the consuming project and find Human2AI in the skill picker. In th
 #### 3. Start and verify
 
 ```bash
-npx --no-install human2ai web
+human2ai web
 ```
 
 This command starts one service that provides both Web pages and the backend API at <http://127.0.0.1:4179>. Other consuming projects using the default configuration connect to this same service. Repeated startup commands reuse a compatible running service.
@@ -106,15 +129,15 @@ This command starts one service that provides both Web pages and the backend API
 Keep the service terminal running and open the URL in your browser. In another terminal, run these commands from the same consuming project:
 
 ```bash
-npx --no-install human2ai service status
-npx --no-install human2ai session list
+human2ai service status
+human2ai session list
 ```
 
 Basic installation verification is complete when the service check returns `status: "ready"` and the session list can be read. An empty list is normal for a new data directory. Agents invoke the CLI through the runner in `.human2ai/integration.json`.
 
 ### Installation notes and upgrade checks
 
-If npm warns that the install script for `better-sqlite3` has not been recorded in `allowScripts`, inspect the scripts first. After reviewing this database dependency's native build script, record your approval:
+For an existing project-local installation, if npm warns that the install script for `better-sqlite3` has not been recorded in `allowScripts`, inspect the scripts first. After reviewing this database dependency's native build script, record your approval:
 
 ```bash
 npm install-scripts ls
@@ -128,8 +151,8 @@ If an existing integration reports `update-available` after an upgrade, synchron
 ### Connect to and use sessions
 
 ```bash
-npx --no-install human2ai session connect --session <session-id>
-npx --no-install human2ai session open --session <session-id>
+human2ai session connect --session <session-id>
+human2ai session open --session <session-id>
 ```
 
 `session connect` returns the browser URL, the latest Capture version, and the commands supported by the current session. `capture get` reads a specific version, `capture save` saves a new version, and `capture undo` appends a restored version. Project IDs and session IDs organize work from different projects within the same local service.
@@ -194,12 +217,12 @@ Run Storybook with `npm run storybook`; its default URL is <http://localhost:600
 
 ## Upgrade an installed package
 
-Run these commands in the consuming project:
+Update the global package, then synchronize the skill from the root of each integrated project:
 
 ```bash
-npm install --save-dev human2ai@latest
-npx --no-install human2ai integration sync --check
-npx --no-install human2ai integration sync
+npm install -g human2ai@latest
+human2ai integration sync --check
+human2ai integration sync
 ```
 
 Stop the service and back up its data directory before upgrading. Run `human2ai web` again after the upgrade. Database migrations run at startup. If you roll back the software, restore a data backup compatible with that version.
@@ -223,7 +246,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-In that separate project, run `npm install --save-dev /absolute/path/to/human2ai-0.1.5.tgz`, then follow the integration and startup steps above. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
+Run `npm install -g /absolute/path/to/human2ai-0.1.6.tgz`, then follow the integration and startup steps above in a separate project. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
 
 ## License
 

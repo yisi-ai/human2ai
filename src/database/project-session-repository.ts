@@ -4,6 +4,7 @@ import {
   SESSION_TYPES,
   type Project,
   type Session,
+  type SessionGroup,
   type SessionLifecycleStage,
   type SessionType,
 } from "../domain/session/index.ts";
@@ -81,8 +82,97 @@ export class InvalidRecordError extends Error {
   readonly code = "INVALID_RECORD";
 }
 
+export class SessionGroupNotFoundError extends Error {
+  readonly code = "SESSION_GROUP_NOT_FOUND";
+  constructor(groupId: string) { super(`Session group not found: ${groupId}`); }
+}
+
+export class SessionGroupNameConflictError extends Error {
+  readonly code = "SESSION_GROUP_NAME_CONFLICT";
+  constructor(name: string) { super(`Session group name already exists: ${name}`); }
+}
+
 export class ProjectSessionRepository {
   constructor(private readonly database: DatabaseConnection) {}
+
+  listSessionGroups(): SessionGroup[] {
+    const groups = this.database.prepare<[], Omit<SessionGroup, "sessionIds">>(
+      "SELECT id, project_id AS projectId, name, revision FROM session_groups ORDER BY rowid",
+    ).all();
+    const members = this.database.prepare<[], { sessionId: string; groupId: string }>(
+      "SELECT session_id AS sessionId, group_id AS groupId FROM session_group_members ORDER BY session_id",
+    ).all();
+    const byGroup = new Map<string, string[]>();
+    for (const member of members) {
+      const ids = byGroup.get(member.groupId) ?? [];
+      ids.push(member.sessionId);
+      byGroup.set(member.groupId, ids);
+    }
+    return groups.map(group => ({ ...group, sessionIds: byGroup.get(group.id) ?? [] }));
+  }
+
+  private getSessionGroup(groupId: string): SessionGroup {
+    const group = this.database.prepare<[string], Omit<SessionGroup, "sessionIds">>(
+      "SELECT id, project_id AS projectId, name, revision FROM session_groups WHERE id = ?",
+    ).get(groupId);
+    if (!group) throw new SessionGroupNotFoundError(groupId);
+    const members = this.database.prepare<[string], { id: string }>(
+      "SELECT session_id AS id FROM session_group_members WHERE group_id = ? ORDER BY session_id",
+    ).all(groupId);
+    return { ...group, sessionIds: members.map(member => member.id) };
+  }
+
+  private sessionGroupName(projectId: string, value: string, excludedId = ""): string {
+    const name = requiredText(value, "Session group name");
+    if (name.length > 200) throw new InvalidRecordError("Session group name is too long");
+    if (this.database.prepare("SELECT id FROM session_groups WHERE project_id = ? AND name = ? AND id <> ?").get(projectId, name, excludedId)) {
+      throw new SessionGroupNameConflictError(name);
+    }
+    return name;
+  }
+
+  createSessionGroup(projectId: string, input: { name: string }): SessionGroup {
+    return this.database.transaction(() => {
+      this.getProject(projectId);
+      const name = this.sessionGroupName(projectId, input.name);
+      const id = randomUUID();
+      this.database.prepare("INSERT INTO session_groups (id, project_id, name) VALUES (?, ?, ?)").run(id, projectId, name);
+      return this.getSessionGroup(id);
+    })();
+  }
+
+  renameSessionGroup(groupId: string, input: { name: string; expectedRevision: number }): SessionGroup {
+    return this.database.transaction(() => {
+      const group = this.getSessionGroup(groupId);
+      assertRevision(input.expectedRevision, group.revision);
+      const name = this.sessionGroupName(group.projectId, input.name, groupId);
+      this.database.prepare("UPDATE session_groups SET name = ?, revision = revision + 1 WHERE id = ?").run(name, groupId);
+      return this.getSessionGroup(groupId);
+    })();
+  }
+
+  deleteSessionGroup(groupId: string, input: { expectedRevision: number }): void {
+    this.database.transaction(() => {
+      assertRevision(input.expectedRevision, this.getSessionGroup(groupId).revision);
+      this.database.prepare("DELETE FROM session_groups WHERE id = ?").run(groupId);
+    })();
+  }
+
+  setSessionGroup(projectId: string, sessionId: string, groupId: string | null): void {
+    this.database.transaction(() => {
+      this.getProject(projectId);
+      const session = this.getSession(sessionId);
+      if (session.projectId !== projectId || (groupId !== null && this.getSessionGroup(groupId).projectId !== projectId)) {
+        throw new InvalidRecordError("Session and group must belong to the same project");
+      }
+      if (groupId === null) {
+        this.database.prepare("DELETE FROM session_group_members WHERE session_id = ?").run(sessionId);
+      } else {
+        this.database.prepare(`INSERT INTO session_group_members (session_id, group_id) VALUES (?, ?)
+          ON CONFLICT(session_id) DO UPDATE SET group_id = excluded.group_id`).run(sessionId, groupId);
+      }
+    })();
+  }
 
   listProjects(): Project[] {
     const rows = this.database
@@ -210,6 +300,7 @@ export class ProjectSessionRepository {
     sessionType: SessionType;
     title: string;
     projectId?: string | null;
+    groupId?: string;
   }): Session {
     if (!SESSION_TYPES.includes(input.sessionType)) {
       throw new InvalidRecordError(`Unsupported session type: ${input.sessionType}`);
@@ -236,6 +327,10 @@ export class ProjectSessionRepository {
         this.database.prepare("INSERT INTO spatial_sessions (session_id) VALUES (?)").run(id);
       } else {
         this.database.prepare("INSERT INTO ui_sessions (session_id) VALUES (?)").run(id);
+      }
+      if (input.groupId !== undefined) {
+        if (!projectId) throw new InvalidRecordError("Session and group must belong to the same project");
+        this.setSessionGroup(projectId, id, input.groupId);
       }
     })();
 

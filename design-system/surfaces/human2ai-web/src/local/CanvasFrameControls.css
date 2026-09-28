@@ -1,0 +1,15 @@
+.human2ai-canvas-frame-controls__heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-3);
+  margin-bottom: var(--yisiui-space-3);
+}
+
+.human2ai-canvas-frame-controls__heading h2 { margin: 0; }
+.human2ai-canvas-frame-controls__actions { display: flex; align-items: center; gap: var(--yisiui-space-1); }
+.human2ai-canvas-frame-controls__size {
+  display: flex;
+  justify-content: center;
+  --yisiui-color-brand-primary: var(--yisiui-color-selection-text);
+}

@@ -1,5 +1,7 @@
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
+import { Switch } from "antd";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import type { CompositionNodeMetadata } from "../../../../../src/domain/composition";
 import {
@@ -32,6 +34,7 @@ function EditorHarness({
 }) {
   const [metadata, setMetadata] = useState(initialMetadata);
   const [open, setOpen] = useState(true);
+  const [visible, setVisible] = useState(true);
   const [deleted, setDeleted] = useState(false);
   return (
     <main
@@ -45,6 +48,8 @@ function EditorHarness({
       {open ? (
         <Human2AiCanvasNodeEditor
           {...props}
+          titleExtra={props.titleExtra ?? <Switch checked={visible} onChange={setVisible} disabled={props.disabled}
+            aria-label={zh.canvas.nodeVisibility.visibility} checkedChildren={zh.canvas.nodeVisibility.visible} unCheckedChildren={zh.canvas.nodeVisibility.hidden} />}
           metadata={metadata}
           onMetadataChange={(patch) => setMetadata((current) => ({ ...current, ...patch }))}
           onRequestClose={() => setOpen(false)}

@@ -8,6 +8,7 @@ import styles from "./MessageComposer.stories.module.css";
 
 const EXAMPLE_QUICK_PROMPTS = [
   {
+    key: "explain",
     icon: <QuestionCircleOutlined aria-hidden="true" />,
     label: "什么意思",
     message: "解释一下这一段是什么意思?",

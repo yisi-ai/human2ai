@@ -2,6 +2,15 @@ import { describe, expect, it } from "vitest";
 import { CanvasEditHistory } from "../../src/domain/session/canvas-edit-history.ts";
 
 describe("canvas operation history", () => {
+  it("adopts a derived preview without adding undo entries or changing historical snapshots", () => {
+    const history = new CanvasEditHistory({ note: "", asset: "old" });
+    history.record({ note: "typing", asset: "old" });
+    history.synchronize({ note: "typing", asset: "new" });
+    expect(history.current.asset).toBe("new");
+    expect(history.undo()?.draft).toEqual({ note: "", asset: "old" });
+    expect(history.canUndo).toBe(false);
+    expect(history.redo()?.draft).toEqual({ note: "typing", asset: "old" });
+  });
   it("undoes and redoes complete operations, discarding redo after a new edit", () => {
     const history = new CanvasEditHistory({ x: 0 });
     for (const x of [10, 20, 30]) history.record({ x });

@@ -5,15 +5,15 @@
   display: grid;
   grid-template-columns: var(
     --yisi-app-shell-sidebar-grid-width,
-    var(--yisi-app-shell-sidebar-width, var(--yisiui-surface-desktop-web-sidebar-width))
-  ) minmax(0, 1fr) var(
+    var(--yisiui-app-shell-sidebar-resized-width, var(--yisi-app-shell-sidebar-width, var(--yisiui-surface-desktop-web-sidebar-width)))
+  ) minmax(var(--yisiui-app-shell-content-min-width, 320px), 1fr) var(
     --yisi-app-shell-right-panel-grid-width,
-    var(--yisi-app-shell-right-panel-width, var(--yisiui-surface-desktop-web-sidebar-width))
+    var(--yisiui-app-shell-right-panel-resized-width, var(--yisi-app-shell-right-panel-width, var(--yisiui-surface-desktop-web-sidebar-width)))
   );
   width: 100%;
   height: 100dvh;
   min-height: 100vh;
-  overflow: hidden;
+  overflow: auto hidden;
   color: var(--yisiui-color-text-primary);
   background: var(--yisiui-color-surface-page);
 }
@@ -37,6 +37,7 @@
 .yisi-app-shell-sidebar {
   position: relative;
   grid-column: 1;
+  grid-row: 1;
   min-width: 0;
   min-height: 0;
 }
@@ -98,6 +99,7 @@
 .yisi-app-shell-content {
   display: grid;
   grid-column: 2;
+  grid-row: 1;
   grid-template-rows:
     calc(var(--yisiui-component-button-height) + 2 * var(--yisi-app-shell-header-padding-y))
     minmax(0, 1fr);
@@ -168,6 +170,7 @@
 .yisi-app-shell-right-panel {
   box-sizing: border-box;
   grid-column: 3;
+  grid-row: 1;
   min-width: 0;
   min-height: 0;
   height: 100%;
@@ -182,4 +185,79 @@
   flex: 0 0 auto;
   width: var(--yisiui-component-button-height);
   height: var(--yisiui-component-button-height);
+}
+
+.yisi-app-shell-resize-handle {
+  position: relative;
+  z-index: 2;
+  grid-row: 1;
+  align-self: stretch;
+  width: 10px;
+  touch-action: none;
+  cursor: col-resize;
+  outline: none;
+}
+
+.yisi-app-shell-resize-handle--sidebar {
+  grid-column: 1;
+  justify-self: end;
+  margin-right: -5px;
+}
+
+.yisi-app-shell-resize-handle--right-panel {
+  grid-column: 3;
+  justify-self: start;
+  margin-left: -5px;
+}
+
+.yisi-app-shell-resize-handle::after {
+  position: absolute;
+  inset: 0 4px;
+  border-radius: var(--yisiui-radius-full);
+  background: var(--yisiui-color-border-focus);
+  opacity: 0;
+  content: "";
+}
+
+.yisi-app-shell-resize-handle:hover::after {
+  opacity: 1;
+}
+
+.yisi-app-shell-resize-handle:focus-visible::before {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 8px;
+  border: 2px solid var(--yisiui-color-border-focus);
+  border-radius: var(--yisiui-radius-full);
+  background: var(--yisiui-color-surface-panel);
+  transform: translate(-50%, -50%);
+  content: "";
+}
+
+.yisi-app-shell-resize-handle[aria-disabled="true"] {
+  cursor: default;
+}
+
+.yisi-app-shell-resize-shield {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483647;
+  cursor: col-resize;
+  touch-action: none;
+  user-select: none;
+}
+
+.yisi-app-shell-frame[data-resizing],
+.yisi-app-shell-frame[data-resizing] * {
+  cursor: col-resize;
+  user-select: none;
+}
+
+@media (forced-colors: active) {
+  .yisi-app-shell-resize-handle::after {
+    background: Highlight;
+    forced-color-adjust: none;
+  }
 }

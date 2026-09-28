@@ -307,6 +307,14 @@
       "source": "apps/storybook/stories/ExpandingSwitch.stories.tsx"
     },
     {
+      "id": "modules-cascadeselector--default",
+      "title": "yisiui-Modules/CascadeSelector",
+      "kind": "experimental",
+      "assetKey": "yisiui/cascade-selector",
+      "description": "需要在固定宽高内通过两栏及以上的等高列表逐级选择路径，并按比例分配栏宽",
+      "source": "apps/storybook/stories/CascadeSelector.stories.tsx"
+    },
+    {
       "id": "system-architecture-status--migration-candidate",
       "title": "yisiui-System/Architecture Status",
       "kind": "supporting",

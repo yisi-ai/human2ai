@@ -42,18 +42,21 @@
       ]
     },
     "spatial.new-in-project": {
-      "meaning": "Action creating a spatial session in the named project.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
+      "meaning": "Action creating a spatial session in the named project. The group-row variant also assigns the new session to a named group within that project.",
+      "scope": "Spatial workspace and composition camera-reference integration. Includes project and group row creation icons in the workspace sidebar.",
       "referent": "Action creating a spatial session in the named project.",
       "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
       "canonicalKey": "spatial.newInProject",
       "searchTerms": [
         "在“{{project}}”中新建 3D 空间",
         "New 3D space in {{project}}",
-        "newInProject"
+        "newInProject",
+        "分组中新建 3D 空间",
+        "create 3D space in group"
       ],
       "examples": [
-        "Action creating a spatial session in the named project."
+        "Action creating a spatial session in the named project.",
+        "Create a 3D space directly inside the References group."
       ],
       "nonExamples": [
         "An ordinary uploaded image or the 2D composition viewport."
@@ -726,24 +729,6 @@
       ],
       "examples": [
         "Navigate from a live camera node to its original editable spatial session."
-      ],
-      "nonExamples": [
-        "An ordinary uploaded image or the 2D composition viewport."
-      ]
-    },
-    "spatial.snapshot": {
-      "meaning": "Keep the live camera node and add an independent PNG image node showing its current camera output.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
-      "referent": "Keep the live camera node and add an independent PNG image node showing its current camera output.",
-      "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
-      "canonicalKey": "spatial.snapshot",
-      "searchTerms": [
-        "另存为图片节点",
-        "Save as image node",
-        "snapshot"
-      ],
-      "examples": [
-        "Keep the live camera node and add an independent PNG image node showing its current camera output."
       ],
       "nonExamples": [
         "An ordinary uploaded image or the 2D composition viewport."
@@ -3764,15 +3749,6 @@
       "reusePolicy": "canonical",
       "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
     },
-    "spatial.snapshot": {
-      "conceptId": "spatial.snapshot",
-      "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
-      "tone": "concise and neutral",
-      "reusePolicy": "canonical",
-      "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
-    },
     "spatial.sourceMissing": {
       "conceptId": "spatial.source-missing",
       "variant": "default",
@@ -5142,6 +5118,14 @@
       "grammar": "sentence",
       "tone": "concise and neutral",
       "reusePolicy": "canonical"
+    },
+    "spatial.newInGroup": {
+      "conceptId": "spatial.new-in-project",
+      "variant": "group-icon-action-label",
+      "role": "tooltip and accessible name for an icon-only action creating a 3D space in the named group and its owning project",
+      "grammar": "imperative verb phrase with a group-name placeholder",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
     }
   }
 }

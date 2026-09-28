@@ -51,10 +51,11 @@ describe("composition draft v1", () => {
       version: 1,
       kind: "composition-draft",
       processingSemantic: "scene-composition",
+      previewMode: "soft",
       frame: {
-        width: 1600,
-        height: 900,
-        bounds: { x: 0.08, y: 0.145625, width: 0.84, height: 0.70875 },
+        width: 960,
+        height: 560,
+        bounds: { x: 0, y: 0, width: 0.8, height: 0.7 },
       },
       overallNote: "",
       focusPoints: [],
@@ -64,8 +65,8 @@ describe("composition draft v1", () => {
       plans: [{ id: "plan-1", type: "thirds", axes: "both", visible: true }],
     });
 
-    expect(() => createDraft({ width: 4096, height: 256 })).toThrow(/aspect ratio/i);
-    expect(() => changeFrame(createDraft(), { width: 255, height: 256 })).toThrow(/256 to 4096/i);
+    expect(createDraft({ width: 9000, height: 10 }).frame).toMatchObject({ width: 9000, height: 10 });
+    expect(() => createDraft({ width: 0, height: 256 })).toThrow();
   });
 
   it("stores an optional overall note and normalizes legacy drafts", () => {
@@ -502,6 +503,8 @@ describe("composition draft v1", () => {
     };
     delete legacy.directionLine;
     const legacyArea = legacy.areas[0].area;
+    legacy.frame.width = 1600;
+    legacy.frame.height = 900;
     delete (legacy.frame as Partial<CompositionDraft["frame"]>).bounds;
     legacy.areas[0].rotation = 81;
     legacy.areas[1].aspect = "portrait";
@@ -510,7 +513,7 @@ describe("composition draft v1", () => {
 
     const normalized = validateDraft(legacy);
     expect(normalized.directionLine).toBeNull();
-    expect(normalized.frame.bounds).toEqual(createDraft().frame.bounds);
+    expect(normalized.frame.bounds).toEqual({ x: 0.08, y: 0.145625, width: 0.84, height: 0.70875 });
     expect(normalized.areas[0].x).toBeCloseTo(0.08 + 0.25 * 0.84);
     expect(normalized.areas[0].y).toBeCloseTo(0.145625 + 0.3 * 0.70875);
     expect(normalized.areas[0].area).toBeCloseTo(legacyArea * 0.84 * 0.70875);
@@ -568,7 +571,7 @@ describe("composition draft v1", () => {
       const geometry = frameBoundsInCanvas(resized.frame);
 
       expect(resized.areas[0]).toEqual(sourceItem);
-      expect(geometry.width / geometry.height).toBeCloseTo(16 / 9);
+      expect(geometry.width / geometry.height).toBeCloseTo(source.width / source.height);
       expect(geometry.x).toBeGreaterThanOrEqual(0);
       expect(geometry.y).toBeGreaterThanOrEqual(0);
       expect(geometry.x + geometry.width).toBeLessThanOrEqual(COMPOSITION_CANVAS.width);

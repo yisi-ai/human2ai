@@ -59,7 +59,7 @@ For this repository:
 
 Do not push directly to `main`.
 Do not use a plain `git push` when publishing work.
-Publish feature branches explicitly with `git push skill-apps HEAD:refs/heads/<branch-name>`.
+Publish feature branches explicitly with `git push h2i-github HEAD:refs/heads/<branch-name>`.
 Create Pull Requests from feature branches into `main`.
 Treat `main` as the production deployment branch and inspect the configured GitHub Actions before merging.
 Use Chinese commit messages unless the user asks otherwise.
@@ -93,3 +93,37 @@ Continue to handle long content, constrained panels, and internal scrolling with
 
 Keep internal documents in ignored `docs/`. Store development databases, service images, exported previews, prompts, and backups under ignored `.human2ai-data/`; use `.human2ai-data/output/` for new CLI `--output` and `--preview` paths. Tests may use temporary directories. The npm-installed service keeps its separate data under `~/.human2ai/`.
 Do not force-add ignored documents or generated data. Public builds and governance checks must work without these local files. Runtime source assets, schemas, migrations, public README, Skills, and license notices remain distributable source files.
+
+10. Rendering Scope Gate
+    Define and verify the affected scope of interactive updates.
+
+Apply this gate when adding or changing interactive UI state, shared subscriptions, polling, canvas rendering, DOM measurement, or GPU resource updates. Before implementation, state the trigger, state owner, expected update frequency, and components or resources allowed to update. A local edit must not invalidate unrelated expensive subtrees or resources. Distinguish React component execution, DOM mutation/layout/paint, and GPU drawing/resource creation; evidence for one does not prove the others are bounded.
+
+Use these default boundaries:
+
+| Trigger | Allowed work | Work that requires correction or an explicit dependency explanation |
+| --- | --- | --- |
+| Node note or other nonvisual metadata edit | Input, affected metadata consumers, existing save flow | Unrelated node visuals, sidebar tree, text geometry, or GPU resources |
+| Local dialog input | Dialog and its actual dependents | Rebuilding the project/session tree or canvas |
+| Poll response with unchanged data | Comparison with current data | Publishing a new state identity or notifying unchanged subscribers |
+| Canvas pan/zoom, drag preview, or 3D view gesture | Viewport transforms, affected overlays, necessary scene draws | Page/sidebar updates, unrelated node reconstruction, or geometry recreation |
+| One node's visual property or selection changes | That node, previous/new selection, and actual dependents | Recomputing all nodes or rebuilding the whole scene |
+
+Implementation requirements:
+
+- Keep transient input and gesture state with the smallest owner that needs it. Do not lift per-keystroke or per-frame state to a page/shared context solely for convenience. Separate metadata, geometry, selection, and viewing dependencies where they invalidate different work.
+- Preserve identities for unchanged data and props across expensive boundaries. Subscribe to the needed slice, skip unchanged poll results, and retain unaffected nodes/resources. When updating a collection immutably, preserve unchanged entries instead of cloning or rebuilding every entry.
+- Coalesce pointer/wheel-driven visual updates to at most one scheduled update per animation frame and preserve the final value. Keep existing save, undo, cancellation, and session-switch semantics; performance work must not discard edits or overwrite concurrent changes.
+- Cache only with complete dependencies, explicit invalidation, and resource cleanup. Do not hide changing callbacks from memo comparisons or retain stale drafts in cached handlers. Do not add blanket memoization or repeated deep comparisons without showing which work they avoid.
+- Separate layout reads from writes. Do not feed unchanged or transform-only measurement results back into document state. Reuse GPU resources when their geometry/material inputs have not changed.
+- Debounce, transitions, and deferred rendering change scheduling; they do not establish bounded rendering scope. Measure the eventual work as well as immediate input response.
+
+Verification requirements:
+
+- For a changed high-frequency path or invalidation boundary, exercise it in a browser with a representative desktop fixture. Record fixture size, build mode, interaction, expected scope, and observed scope. When the path scales with node/session count, compare at least two fixture sizes to expose work proportional to unrelated items.
+- Assert structural outcomes where practical: unrelated expensive components execute zero times, unchanged polling publishes zero updates, and metadata-only edits allocate/rebuild zero geometry resources. A parent commit or a DOM screenshot alone does not establish which children executed. Use timings and long tasks as supporting evidence, not a universal millisecond threshold.
+- Add or extend a focused regression for a corrected performance defect. Exercise the actual UI path when asserting render scope; pure data tests and Storybook builds do not substitute for browser execution. If scope measurement is manual, identify it as manual and retain the evidence under ignored `.human2ai-data/output/`.
+- Verify relevant correctness edges: rapid typing/IME composition, the final edit followed immediately by another action, save round trips, gesture completion/cancellation, and switching sessions or stages. Do not claim native IME coverage from synthetic typing alone.
+- In the change summary or PR, report `trigger -> allowed scope -> observed scope`, the regression checks, and any remaining broad work. Necessary broad invalidation (for example document replacement, theme changes, or a scene draw after camera movement) must identify its real dependencies and measured cost. It must not be silently treated as a local-update exception.
+
+Type checks, functional unit tests, and successful builds alone do not pass this gate. Do not claim automated rendering-regression protection unless CI actually runs the browser assertions.

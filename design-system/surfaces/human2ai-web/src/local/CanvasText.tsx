@@ -16,6 +16,7 @@ export interface CanvasTextProps {
   text: string;
   fontSize: number;
   lineHeight?: number;
+  baseline?: number;
   fontFamily?: string;
   fontWeight?: number | string;
   fill?: string;
@@ -31,6 +32,7 @@ export function CanvasText({
   text,
   fontSize,
   lineHeight = 1.4,
+  baseline,
   fontFamily,
   fontWeight,
   fill,
@@ -71,17 +73,17 @@ export function CanvasText({
     }
 
     measure();
-    const observer = typeof ResizeObserver === "undefined"
-      ? null
-      : new ResizeObserver(measure);
-    observer?.observe(textElement);
+    // SVG zoom can change hinted glyph bounds by fractions of a pixel. Those
+    // viewport-only changes must not become edits to every text node's bounds.
+    document.fonts?.addEventListener("loadingdone", measure);
     void document.fonts?.ready.then(measure);
     return () => {
       active = false;
-      observer?.disconnect();
+      document.fonts?.removeEventListener("loadingdone", measure);
     };
   }, [
     className,
+    baseline,
     fontFamily,
     fontSize,
     fontWeight,
@@ -106,21 +108,22 @@ export function CanvasText({
       className={classes}
       data-line-count={lines.length}
       x={0}
-      y={0}
+      y={baseline ?? 0}
       fontSize={fontSize}
       fontFamily={fontFamily}
       fontWeight={fontWeight}
       fill={fill}
       opacity={opacity}
       textAnchor={textAnchor}
-      dominantBaseline="text-before-edge"
+      dominantBaseline={baseline === undefined ? "text-before-edge" : "alphabetic"}
       xmlSpace="preserve"
       style={style}
       role="img"
       aria-label={ariaLabel}
     >
       {lines.map((line, index) => (
-        <tspan key={index} x={0} dy={index === 0 ? 0 : `${lineHeight}em`}>
+        <tspan key={index} x={0} y={baseline === undefined ? undefined : baseline + index * fontSize * lineHeight}
+          dy={baseline === undefined ? index === 0 ? 0 : `${lineHeight}em` : undefined}>
           {line || "\u00a0"}
         </tspan>
       ))}

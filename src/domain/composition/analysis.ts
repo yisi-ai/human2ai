@@ -1,4 +1,4 @@
-import { validateDraft, visibleAreaMetrics } from "./draft.ts";
+import { validateDraft, visibleAreaMetrics, visibleCompositionDraft } from "./draft.ts";
 import {
   COMPOSITION_CANVAS,
   canvasPointToFrame,
@@ -66,6 +66,7 @@ export interface CompositionInspection {
   kind: "composition-inspection";
   sourceFingerprint: string;
   processingSemantic: CompositionDraft["processingSemantic"];
+  previewMode: NonNullable<CompositionDraft["previewMode"]>;
   frame: CompositionDraft["frame"];
   overallNote: string;
   focusPoints: CompositionDraft["focusPoints"];
@@ -128,7 +129,7 @@ export function draftFingerprint(input: CompositionDraft): string {
 }
 
 export function inspectComposition(input: CompositionDraft): CompositionInspection {
-  const draft = validateDraft(input);
+  const draft = visibleCompositionDraft(validateDraft(input));
   const metrics = visibleAreaMetrics(draft);
   const inspectedAreas = draft.areas.map((area, index) => {
     const bounds = geometryBounds(areaGeometry(area, COMPOSITION_CANVAS));
@@ -189,8 +190,9 @@ export function inspectComposition(input: CompositionDraft): CompositionInspecti
     kind: "composition-inspection",
     ...(draft.plans ? { plans: structuredClone(draft.plans) } : {}),
     planningIntersections: compositionPlanningIntersections(draft),
-    sourceFingerprint: draftFingerprint(draft),
+    sourceFingerprint: draftFingerprint(input),
     processingSemantic: draft.processingSemantic,
+    previewMode: draft.previewMode ?? "precise",
     frame: structuredClone(draft.frame),
     overallNote: draft.overallNote,
     focusPoints: draft.focusPoints.map((focus) => ({
@@ -434,6 +436,7 @@ function canonicalDraftJson(draft: CompositionDraft): string {
     version: draft.version,
     kind: draft.kind,
     processingSemantic: draft.processingSemantic,
+    ...(draft.previewMode === "soft" ? { previewMode: draft.previewMode } : {}),
     frame: {
       width: draft.frame.width,
       height: draft.frame.height,
@@ -503,8 +506,10 @@ function nonEmptyMetadata(metadata: {
   annotation: string;
   semanticType: string;
   shotScale: CompositionArea["shotScale"];
-}): Record<string, string> {
+  visible?: boolean;
+}): Record<string, string | boolean> {
   return {
+    ...(metadata.visible === false ? { visible: false } : {}),
     ...(metadata.note === "" ? {} : { note: metadata.note }),
     ...(metadata.annotation === "" ? {} : { annotation: metadata.annotation }),
     ...(metadata.semanticType === "" ? {} : { semanticType: metadata.semanticType }),

@@ -114,7 +114,7 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
   const [boxView, setBoxView] = useState<SpatialBoxView>("sheet");
   const [observationBoxId, setObservationBoxId] = useState<string>();
   const [referencePass, setReferencePass] = useState<SpatialRenderPass>("color");
-  const [view, setView] = useState<{ position: Vec3; target: Vec3 }>({ position: [3, 2.2, 5], target: [0, 0.9, 0] });
+  const view = useRef<{ position: Vec3; target: Vec3 }>({ position: [3, 2.2, 5], target: [0, 0.9, 0] });
   const actor = selection && "characterId" in selection ? draft.characters.find(c => c.id === selection.characterId) : undefined;
   const joint = actor && selection && "characterId" in selection ? actor.joints.find(j => j.id === selection.jointId) : undefined;
   const bone = actor && selection && "characterId" in selection ? actor.bones.find(b => b.id === selection.boneId) : undefined;
@@ -385,7 +385,7 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
           <label className="spatial-field"><span>{labels.cameraBoxResolution}</span><Select aria-label={labels.cameraBoxResolution} value={cameraBox.resolution} disabled={disabled} options={[...new Set([128,256,512,1024,cameraBox.resolution])].sort((a,b)=>a-b).map(value => ({value,label:`${value} × ${value}`}))} onChange={resolution => updateSelected({ resolution })} /></label>
         </>}
         {editingCamera && <>
-          <BasicButton size="small" disabled={disabled} onClick={() => updateSelected(view)}>{labels.useView}</BasicButton>
+          <BasicButton size="small" disabled={disabled} onClick={() => updateSelected(view.current)}>{labels.useView}</BasicButton>
           <label className="spatial-field"><span>{labels.projection}</span><Select aria-label={labels.projection} value={editingCamera.projection} disabled={disabled} options={[{ value: "perspective", label: labels.perspective }, { value: "orthographic", label: labels.orthographic }]} onChange={projection => updateSelected({ projection })} /></label>
           <label className="spatial-field"><span>{editingCamera.projection === "perspective" ? labels.fov : labels.span}</span><ConfirmedNumberInput controls={false} aria-label={editingCamera.projection === "perspective" ? labels.fov : labels.span} value={editingCamera.projection === "perspective" ? editingCamera.fov : editingCamera.span} min={editingCamera.projection === "perspective" ? 10 : 0.1} max={editingCamera.projection === "perspective" ? 120 : 1000} disabled={disabled} onChange={v => v !== null && updateSelected(editingCamera.projection === "perspective" ? { fov: v } : { span: v })} /></label>
           <div className="spatial-output-size">{(["width", "height"] as const).map(axis => <label className="spatial-field" key={axis}><span>{axis === "width" ? labels.outputWidth : labels.outputHeight}</span><ConfirmedNumberInput controls={false} aria-label={axis === "width" ? labels.outputWidth : labels.outputHeight} min={128} max={2048} step={16} precision={0} disabled={disabled} value={editingCamera[axis]} onChange={value => value !== null && updateSelected({ [axis]: value })} /></label>)}</div>
@@ -433,7 +433,7 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
         {loading ? <LoadingState label={labels.title} rows={6} /> : <>
           <div className="spatial-space" hidden={workspaceView !== "space"}>
             {historyControls}
-            <SpatialViewport interactionResetKey={interactionResetKey} interacting={Boolean(activeHandPreview)} showRig={showRig} showCameras={showCameras} draft={activeHandPreview?.draft ?? draft} selection={selection} mode={mode} onSelect={choose} onEdit={openEditor} onOperation={perform} onViewChange={setView} label={labels.viewport} errorLabel={labels.webglFailed} disabled={disabled} />
+            <SpatialViewport interactionResetKey={interactionResetKey} interacting={Boolean(activeHandPreview)} showRig={showRig} showCameras={showCameras} draft={activeHandPreview?.draft ?? draft} selection={selection} mode={mode} onSelect={choose} onEdit={openEditor} onOperation={perform} onViewChange={next => { view.current = next; }} label={labels.viewport} errorLabel={labels.webglFailed} disabled={disabled} />
           </div>
           {workspaceView === "cameras" && <section className="spatial-camera-gallery" aria-label={labels.cameras}>
             {draft.cameras.map(item => {

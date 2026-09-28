@@ -1,4 +1,5 @@
-import { Tooltip } from "antd";
+import { CanvasNodeTooltipOverlay } from "./CanvasNodeTooltipOverlay";
+import { recordCanvasNodeExecution } from "./canvasNodeRenderTrace";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
 import type {
@@ -99,6 +100,7 @@ export interface CanvasNodeProps
   onSelect?: (id: string, event: CanvasNodeSelectEvent) => void;
   onNudge?: (delta: CanvasNodePoint) => void;
   onResize?: (change: CanvasNodeResizeChange) => void;
+  onResizeEnd?: () => void;
   onRotate?: (change: CanvasNodeRotateChange) => void;
   onDoubleClick?: (id: string, event: MouseEvent<SVGGElement>) => void;
   onDelete?: (id: string, event: KeyboardEvent<SVGGElement>) => void;
@@ -147,6 +149,7 @@ export function CanvasNode({
   onSelect,
   onNudge,
   onResize,
+  onResizeEnd,
   onRotate,
   onDoubleClick,
   onDelete,
@@ -154,6 +157,7 @@ export function CanvasNode({
   className,
   ...groupProps
 }: CanvasNodeProps) {
+  if (process.env.NODE_ENV === "development") recordCanvasNodeExecution(id);
   const resizeInteractionRef = useRef<ResizeInteraction | null>(null);
   const rotateInteractionRef = useRef<RotateInteraction | null>(null);
   const interactive =
@@ -273,7 +277,9 @@ export function CanvasNode({
 
   function finishResize(event: PointerEvent<SVGRectElement>): void {
     if (resizeInteractionRef.current?.pointerId !== event.pointerId) return;
+    if (onResizeEnd && event.type === "pointerup") resize(event);
     resizeInteractionRef.current = null;
+    onResizeEnd?.();
     releasePointer(event.currentTarget, event.pointerId);
   }
 
@@ -355,7 +361,9 @@ export function CanvasNode({
                 onPointerUp={finishResize}
                 onPointerCancel={finishResize}
                 onLostPointerCapture={() => {
+                  if (!resizeInteractionRef.current) return;
                   resizeInteractionRef.current = null;
+                  onResizeEnd?.();
                 }}
               />
             );
@@ -451,7 +459,7 @@ export function CanvasNode({
   ].filter(([, value]) => value?.trim()) : [];
 
   return tooltipFields.length > 0 ? (
-    <Tooltip
+    <CanvasNodeTooltipOverlay
       title={(
         <dl className="human2ai-canvas-node__tooltip">
           {tooltipFields.map(([fieldLabel, value]) => (
@@ -462,12 +470,9 @@ export function CanvasNode({
           ))}
         </dl>
       )}
-      mouseEnterDelay={0}
-      mouseLeaveDelay={0}
-      trigger={["hover", "focus"]}
     >
       {node}
-    </Tooltip>
+    </CanvasNodeTooltipOverlay>
   ) : node;
 }
 

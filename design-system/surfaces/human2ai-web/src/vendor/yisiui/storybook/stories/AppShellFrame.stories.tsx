@@ -19,6 +19,8 @@ const labels = {
   rightPanel: "Document details",
   collapseRightPanel: "Collapse document details",
   expandRightPanel: "Expand document details",
+  resizeSidebar: "调整左侧栏宽度",
+  resizeRightPanel: "调整右侧栏宽度",
 };
 
 const meta = {
@@ -29,7 +31,7 @@ const meta = {
     layout: "fullscreen",
     docs: {
       description: {
-        component: "左侧标题与中间标题使用一致的顶部留白和行高。左右侧栏开关复用 AnimatedIcon 的镜像侧栏图标，悬停或键盘聚焦时播放一次，点击展开或收起。headerExtra 可在右侧栏开关左边插入切换项、按钮组或说明文字，未提供右侧栏时也可使用。",
+        component: "左右侧栏支持独立拖动调宽，边缘悬停时显示竖条与调整光标；收起后保留宽度。左右方向键移动边界，Shift 加速，Home / End 到达范围端点，Esc 取消拖动。最小和最大宽度分别配置，中间区域保留 contentMinWidth；空间不足时壳层横向滚动。宽度回调在拖动结束或键盘调整后触发。headerExtra 可在右侧栏开关左边插入业务组件，未提供右侧栏时也可使用。",
       },
     },
   },
@@ -39,10 +41,17 @@ const meta = {
     collapsible: true,
     defaultSidebarOpen: true,
     sidebarWidth: 280,
+    sidebarResizable: true,
+    sidebarMinWidth: 180,
+    sidebarMaxWidth: 480,
     rightPanel: null,
     rightPanelCollapsible: true,
     defaultRightPanelOpen: true,
     rightPanelWidth: 320,
+    rightPanelResizable: true,
+    rightPanelMinWidth: 240,
+    rightPanelMaxWidth: 560,
+    contentMinWidth: 320,
   },
   argTypes: {
     sidebar: { control: false },
@@ -58,6 +67,13 @@ const meta = {
     rightPanelOpen: { control: false },
     onSidebarOpenChange: { action: "sidebar visibility changed" },
     onRightPanelOpenChange: { action: "right panel visibility changed" },
+    onSidebarWidthChange: { action: "sidebar width committed" },
+    onRightPanelWidthChange: { action: "right panel width committed" },
+    sidebarMinWidth: { control: { type: "number", min: 0 } },
+    sidebarMaxWidth: { control: { type: "number", min: 0 } },
+    rightPanelMinWidth: { control: { type: "number", min: 0 } },
+    rightPanelMaxWidth: { control: { type: "number", min: 0 } },
+    contentMinWidth: { control: { type: "number", min: 0 } },
     labels: { control: false },
     style: { control: false },
   },
@@ -90,7 +106,7 @@ function HeaderReviewActions() {
 }
 
 export const Default: Story = {
-  name: "双侧栏与顶部对齐",
+  name: "双侧栏拖动调宽",
   render: (args) => (
     <AppShellFrame
       {...args}
@@ -105,7 +121,7 @@ export const Default: Story = {
       )}
       sidebar={(
         <div style={{ padding: 20 }}>
-          <Typography.Text type="secondary">左侧栏可独立收起，工作区会随之展开。</Typography.Text>
+          <Typography.Text type="secondary">拖动右边缘调整宽度，也可独立收起。</Typography.Text>
         </div>
       )}
       title="项目概览"
@@ -127,7 +143,7 @@ export const Default: Story = {
         <div style={{ padding: 24 }}>
           <Typography.Text strong>文档详情</Typography.Text>
           <Typography.Paragraph>
-            在这里查看文档信息和辅助工具。右上角的侧栏按钮可展开或收起此区域。
+            拖动左边缘调整宽度。右上角的侧栏按钮可展开或收起此区域。
           </Typography.Paragraph>
         </div>
       )}
@@ -135,7 +151,7 @@ export const Default: Story = {
       <article style={{ maxWidth: 760, padding: 32 }}>
         <Typography.Title level={4}>双侧栏工作区</Typography.Title>
         <Typography.Paragraph>
-          左上角“工作台”与顶部“项目概览”的留白高度一致。将鼠标移到左右侧栏开关上，或用 Tab 聚焦按钮，即可查看图标动效。
+          将鼠标移到侧栏与内容区的边缘，竖条出现后即可左右拖动。也可以用 Tab 聚焦边缘，通过方向键调整宽度。
         </Typography.Paragraph>
         <Typography.Paragraph>
           标题栏右侧的“概览 / 正文”演示消费项目注入的视图切换，位于右侧栏开关左边。
@@ -148,6 +164,22 @@ export const Default: Story = {
     assertStorySelector(canvasElement, '[aria-label="Workspace navigation"]');
     assertStorySelector(canvasElement, '[aria-label="Document details"]');
     assertStoryText(canvasElement, "项目概览");
+
+    const handles = canvasElement.querySelectorAll<HTMLElement>('[role="separator"]');
+    for (const handle of handles) {
+      const initial = Number(handle.getAttribute("aria-valuenow"));
+      const maximum = Number(handle.getAttribute("aria-valuemax"));
+      const expandKey = handle.getAttribute("aria-label") === labels.resizeSidebar ? "ArrowRight" : "ArrowLeft";
+      const shrinkKey = expandKey === "ArrowRight" ? "ArrowLeft" : "ArrowRight";
+      if (maximum - initial >= 8) {
+        handle.dispatchEvent(new KeyboardEvent("keydown", { key: expandKey, bubbles: true }));
+        if (Number(handle.getAttribute("aria-valuenow")) !== initial + 8) throw new Error("Keyboard resizing failed");
+        handle.dispatchEvent(new KeyboardEvent("keydown", { key: shrinkKey, bubbles: true }));
+        if (Number(handle.getAttribute("aria-valuenow")) !== initial) throw new Error("Keyboard resizing failed to restore width");
+      }
+    }
+    const sidebarBeforeCollapse = canvasElement.querySelector(".yisi-app-shell-sidebar")!;
+    const sidebarWidthBeforeCollapse = sidebarBeforeCollapse.getBoundingClientRect().width;
 
     const collapseRightPanel = canvasElement.querySelector<HTMLButtonElement>(
       '[aria-label="Collapse document details"]',
@@ -186,6 +218,9 @@ export const Default: Story = {
     canvasElement.querySelector<HTMLButtonElement>('[aria-label="Expand workspace sidebar"]')?.click();
     await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     assertStorySelector(canvasElement, '[data-yisiui-asset="yisiui/app-shell-frame"][data-sidebar-state="open"]');
+    if (Math.abs(sidebarBeforeCollapse.getBoundingClientRect().width - sidebarWidthBeforeCollapse) > 1) {
+      throw new Error("AppShellFrame lost the resized sidebar width after collapse");
+    }
   },
 };
 

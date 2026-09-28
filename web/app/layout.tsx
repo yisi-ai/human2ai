@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { YisiUiInspectorHost } from "../components/dev/YisiUiInspectorHost";
 import { AppI18nProvider } from "../i18n/I18nProvider";
+import { Human2AiShellLayout } from "../components/Human2AiShell";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -10,5 +11,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  return <html lang="zh-CN"><body><AppI18nProvider>{children}</AppI18nProvider><YisiUiInspectorHost /></body></html>;
+  return <html lang="zh-CN"><body><AppI18nProvider><Human2AiShellLayout>{children}</Human2AiShellLayout></AppI18nProvider><YisiUiInspectorHost /></body></html>;
 }

@@ -75,6 +75,7 @@ describe("Human2AI server runtime", () => {
           "image-assets",
           "style-library",
           "session-styles",
+          "session-previews",
         ],
       });
     } finally {
@@ -172,6 +173,7 @@ describe("Human2AI server runtime", () => {
           "image-assets",
           "style-library",
           "session-styles",
+          "session-previews",
         ],
       });
     } finally {
@@ -195,6 +197,7 @@ describe("Human2AI server runtime", () => {
           "image-assets",
           "style-library",
           "session-styles",
+          "session-previews",
         ],
       }),
     ) as typeof fetch;

@@ -158,6 +158,8 @@ export function InfiniteCanvasViewport({
   const panInteractionRef = useRef<PanInteraction | null>(null);
   const suppressClickRef = useRef(false);
   const lastFitRequestIdRef = useRef<number | null>(null);
+  const viewFrame = useRef(0);
+  const pendingView = useRef<{ center: InfiniteCanvasPoint; zoom: number } | null>(null);
   const labels = { ...DEFAULT_LABELS, ...labelOverrides };
   const resolvedMinimumZoom = Math.min(minimumZoom, maximumZoom);
   const resolvedMaximumZoom = Math.max(minimumZoom, maximumZoom);
@@ -212,28 +214,34 @@ export function InfiniteCanvasViewport({
 
     const handleWheel = (event: WheelEvent): void => {
       event.preventDefault();
+      const currentZoom = pendingView.current?.zoom ?? resolvedZoom;
+      const currentCenter = pendingView.current?.center ?? resolvedCameraCenter;
       const nextZoom = clampZoom(
-        resolvedZoom * Math.exp(-event.deltaY * WHEEL_ZOOM_RATE),
+        currentZoom * Math.exp(-event.deltaY * WHEEL_ZOOM_RATE),
         resolvedMinimumZoom,
         resolvedMaximumZoom,
       );
-      if (nextZoom === resolvedZoom) return;
+      if (nextZoom === currentZoom) return;
       const bounds = viewport.getBoundingClientRect();
       const pointer = {
         x: event.clientX - bounds.left,
         y: event.clientY - bounds.top,
       };
-      const anchor = screenToWorld(pointer);
-      updateCameraCenter({
+      const anchor = {
+        x: currentCenter.x + (pointer.x - bounds.width / 2) / currentZoom,
+        y: currentCenter.y + (pointer.y - bounds.height / 2) / currentZoom,
+      };
+      scheduleView({
         x: anchor.x + (bounds.width / 2 - pointer.x) / nextZoom,
         y: anchor.y + (bounds.height / 2 - pointer.y) / nextZoom,
-      });
-      updateZoom(nextZoom);
+      }, nextZoom);
     };
 
     viewport.addEventListener("wheel", handleWheel, { passive: false });
     return () => viewport.removeEventListener("wheel", handleWheel);
   });
+
+  useEffect(() => () => { cancelAnimationFrame(viewFrame.current); }, []);
 
   useEffect(() => {
     if (
@@ -290,6 +298,21 @@ export function InfiniteCanvasViewport({
     onCameraCenterChange?.(nextCenter);
   }
 
+  function flushView(): void {
+    cancelAnimationFrame(viewFrame.current);
+    viewFrame.current = 0;
+    const next = pendingView.current;
+    pendingView.current = null;
+    if (!next) return;
+    updateCameraCenter(next.center);
+    if (next.zoom !== resolvedZoom) updateZoom(next.zoom);
+  }
+
+  function scheduleView(center: InfiniteCanvasPoint, nextZoom = resolvedZoom): void {
+    pendingView.current = { center, zoom: nextZoom };
+    if (!viewFrame.current) viewFrame.current = requestAnimationFrame(flushView);
+  }
+
   function updateZoom(nextZoom: number): void {
     const next = clampZoom(nextZoom, resolvedMinimumZoom, resolvedMaximumZoom);
     if (zoom === undefined) setInternalZoom(next);
@@ -297,6 +320,7 @@ export function InfiniteCanvasViewport({
   }
 
   function fitBounds(bounds: InfiniteCanvasBounds, padding = DEFAULT_FIT_PADDING): void {
+    cancelAnimationFrame(viewFrame.current); viewFrame.current = 0; pendingView.current = null;
     const resolvedPadding = Math.max(0, padding);
     const availableWidth = Math.max(1, viewportSize.width - resolvedPadding * 2);
     const availableHeight = Math.max(1, viewportSize.height - resolvedPadding * 2);
@@ -333,9 +357,11 @@ export function InfiniteCanvasViewport({
     if (isCanvasUiTarget(event.target)) return;
     const panRequested = event.button === 2 || (event.button === 0 && spacePressedRef.current);
     if (!panRequested) return;
+    const sourceView = pendingView.current;
+    flushView();
     panInteractionRef.current = {
       pointerId: event.pointerId,
-      sourceCameraCenter: resolvedCameraCenter,
+      sourceCameraCenter: sourceView?.center ?? resolvedCameraCenter,
       startClient: { x: event.clientX, y: event.clientY },
       contextTarget: event.target,
       rightButton: event.button === 2,
@@ -362,7 +388,7 @@ export function InfiniteCanvasViewport({
     event.stopPropagation();
     suppressClickRef.current = true;
     if (onContextMenuRequest && interaction.rightButton && !interaction.moved) return;
-    updateCameraCenter({
+    scheduleView({
       x: interaction.sourceCameraCenter.x - (event.clientX - interaction.startClient.x) / resolvedZoom,
       y: interaction.sourceCameraCenter.y - (event.clientY - interaction.startClient.y) / resolvedZoom,
     });
@@ -371,6 +397,7 @@ export function InfiniteCanvasViewport({
   function finishPointerInteraction(event: ReactPointerEvent<HTMLDivElement>): void {
     const interaction = panInteractionRef.current;
     if (!interaction || interaction.pointerId !== event.pointerId) return;
+    flushView();
     panInteractionRef.current = null;
     setPanning(false);
     event.preventDefault();

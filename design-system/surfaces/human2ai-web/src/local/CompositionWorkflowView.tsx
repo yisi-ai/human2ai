@@ -18,6 +18,7 @@ import {
   type CompositionAreaEditorLabels,
   type CompositionPlacementTool,
   type CompositionCanvasViewportAction,
+  type CompositionCanvasProps,
 } from "./CompositionCanvas";
 import type { CanvasImageEditorLabels } from "./CanvasImageEditorFields";
 import type { Human2AiCanvasNodeEditorLabels } from "./Human2AiCanvasNodeEditor";
@@ -88,7 +89,11 @@ interface CompositionWorkflowCanvasProps {
   onSelectionChange?: (ids: string[]) => void;
   onItemDoubleClick?: (id: string) => void;
   showPlanning?: boolean;
+  showHiddenNodes?: boolean;
+  onionSkin?: boolean;
+  visibilityLabels?: { visibility: string; visible: string; hidden: string };
   frameLocked?: boolean;
+  frameLabels?: CompositionCanvasProps["frameLabels"];
   canvasZoom?: number;
   canvasViewportAction?: CompositionCanvasViewportAction;
   onCanvasZoomChange?: (zoom: number) => void;
@@ -210,6 +215,9 @@ function CompositionWorkflowCanvasView({
   planningLocked = false,
   onPlanSelectionChange,
   planningLabels,
+  showHiddenNodes,
+  onionSkin,
+  visibilityLabels,
   draft,
   status,
   refinement = null,
@@ -223,6 +231,7 @@ function CompositionWorkflowCanvasView({
   onItemDoubleClick,
   showPlanning = true,
   frameLocked = false,
+  frameLabels,
   canvasZoom,
   canvasViewportAction,
   onCanvasZoomChange,
@@ -293,7 +302,11 @@ function CompositionWorkflowCanvasView({
             planningLabels={planningLabels}
             draft={draft}
             showPlanning={showPlanning}
+            showHiddenNodes={showHiddenNodes}
+            onionSkin={onionSkin}
+            visibilityLabels={visibilityLabels}
             frameLocked={frameLocked}
+            frameLabels={frameLabels}
             zoom={canvasZoom}
             viewportAction={canvasViewportAction}
             backgroundPattern={canvasBackgroundPattern}
@@ -327,6 +340,7 @@ function CompositionWorkflowCanvasView({
           <>
             <CompositionCanvas
               draft={refinement.refinedDraft}
+              frameLabels={frameLabels}
               showPlanning={showPlanning}
               zoom={canvasZoom}
               viewportAction={canvasViewportAction}

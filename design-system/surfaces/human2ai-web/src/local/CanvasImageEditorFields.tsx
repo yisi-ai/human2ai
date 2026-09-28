@@ -4,6 +4,7 @@ import { CodeOutlined, CopyOutlined, DownloadOutlined, UploadOutlined } from "@a
 import { ActionButton } from "@human2ai/ui/yisiui/action-button";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import {
+  type ReactNode,
   type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
@@ -52,6 +53,8 @@ export interface CanvasImageEditorFieldsProps {
   aspectRatio: number;
   labels: CanvasImageEditorLabels;
   disabled?: boolean;
+  sourceLocked?: boolean;
+  renderLayout?: (controls: ReactNode, preview: ReactNode) => ReactNode;
   onUpload: (file: File) => Promise<void>;
   onReadFile?: (src: string) => Promise<File>;
   onCropChange: (crop: Human2AiCanvasImageCrop, aspectRatio: number) => void;
@@ -82,6 +85,8 @@ export function CanvasImageEditorFields({
   aspectRatio,
   labels,
   disabled = false,
+  sourceLocked = false,
+  renderLayout,
   onUpload,
   onReadFile,
   onCropChange,
@@ -94,6 +99,8 @@ export function CanvasImageEditorFields({
   const previewRef = useRef<HTMLDivElement | null>(null);
   const cropRef = useRef<Human2AiCanvasImageCrop | null>(null);
   const gestureRef = useRef<CropGesture | null>(null);
+  const [previewSource, setPreviewSource] = useState(src);
+  const cropSource = sourceLocked ? previewSource : src;
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState(false);
   const [imageSize, setImageSize] = useState<ImageSize | null>(null);
@@ -109,6 +116,10 @@ export function CanvasImageEditorFields({
   const [svgInputOpen, setSvgInputOpen] = useState(false);
   const [svgInput, setSvgInput] = useState("");
   const sourceId = `${contentLabelId}-source`;
+
+  useLayoutEffect(() => {
+    if (sourceLocked && !gestureRef.current) setPreviewSource(src);
+  }, [sourceLocked, src]);
 
   useLayoutEffect(() => {
     setSvgInputOpen(false);
@@ -142,14 +153,14 @@ export function CanvasImageEditorFields({
     setDraftCrop(null);
     cropRef.current = null;
     gestureRef.current = null;
-  }, [src]);
+  }, [cropSource]);
 
   useEffect(() => {
-    if (!src || !imageSize) return;
+    if (!cropSource || !imageSize) return;
     const next = crop ? { ...crop } : centeredCrop(baseCrop(imageSize, aspectRatio));
     cropRef.current = next;
     setDraftCrop(next);
-  }, [aspectRatio, crop, imageSize, src]);
+  }, [aspectRatio, crop, imageSize, cropSource]);
 
   useEffect(() => {
     const root = rootRef.current;
@@ -157,7 +168,7 @@ export function CanvasImageEditorFields({
     const scope = root.closest('[role="dialog"]') ?? root;
     const document = root.ownerDocument;
     function handlePaste(paste: ClipboardEvent): void {
-      if (paste.defaultPrevented || !paste.clipboardData || disabled) return;
+      if (paste.defaultPrevented || !paste.clipboardData || disabled || sourceLocked) return;
       const target = paste.target === document.body ? document.activeElement : paste.target;
       if (!(target instanceof Node) || !scope.contains(target)) return;
       const file = getClipboardImage(paste.clipboardData);
@@ -171,7 +182,7 @@ export function CanvasImageEditorFields({
   });
 
   async function handleFile(file: File): Promise<boolean> {
-    if (disabled || uploadingRef.current) return false;
+    if (disabled || sourceLocked || uploadingRef.current) return false;
     uploadingRef.current = true;
     setUploading(true);
     setUploadError(false);
@@ -273,6 +284,7 @@ export function CanvasImageEditorFields({
     gestureRef.current = null;
     const next = cropRef.current;
     if (next && imageSize) onCropChange(next, cropAspectRatio(next, imageSize));
+    if (sourceLocked) setPreviewSource(src);
   }
 
   function handleCropKeyDown(event: ReactKeyboardEvent<HTMLDivElement>): void {
@@ -291,7 +303,76 @@ export function CanvasImageEditorFields({
     ? `min(100%, ${Math.round(360 * imageSize.width / imageSize.height)}px)`
     : "100%";
 
-  return (
+  const preview = (
+    <div className="human2ai-canvas-image-editor-fields__preview-shell">
+      {!src ? (
+        <div
+          className="human2ai-canvas-image-editor-fields__preview-status"
+          aria-label={labels.content}
+        >
+          <UploadOutlined aria-hidden="true" />
+        </div>
+      ) : imageLoadFailed ? (
+        <div className="human2ai-canvas-image-editor-fields__preview-status" role="alert">
+          {labels.cropLoadFailed}
+        </div>
+      ) : (
+        <div
+          ref={previewRef}
+          className="human2ai-canvas-image-editor-fields__preview"
+          style={{
+            aspectRatio: imageSize ? `${imageSize.width} / ${imageSize.height}` : undefined,
+            visibility: imageSize ? "visible" : "hidden",
+            width: previewWidth,
+          }}
+          onPointerDown={beginPreviewGesture}
+          onPointerMove={moveGesture}
+          onPointerUp={finishGesture}
+          onPointerCancel={finishGesture}
+        >
+          <img
+            src={cropSource}
+            alt=""
+            draggable={false}
+            onLoad={(event) => {
+              const image = event.currentTarget;
+              setImageSize({ width: image.naturalWidth, height: image.naturalHeight });
+              setImageLoadFailed(false);
+            }}
+            onError={() => {
+              setImageSize(null);
+              setImageLoadFailed(true);
+            }}
+          />
+          {draftCrop ? (
+            <div
+              className="human2ai-canvas-image-editor-fields__crop-selection"
+              style={cropStyle(draftCrop)}
+              role="group"
+              aria-label={labels.cropTitle}
+              aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
+              tabIndex={disabled ? -1 : 0}
+              data-crop-selection
+              onPointerDown={(event) => beginGesture(event, "move")}
+              onKeyDown={handleCropKeyDown}
+            >
+              {CROP_HANDLES.map((handle) => (
+                <span
+                  key={handle}
+                  className="human2ai-canvas-image-editor-fields__crop-handle"
+                  data-crop-handle={handle}
+                  aria-hidden="true"
+                  onPointerDown={(event) => beginGesture(event, "resize", handle)}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+
+  const controls = (
     <section
       ref={rootRef}
       {...uiAssetAttributes({
@@ -312,26 +393,28 @@ export function CanvasImageEditorFields({
       </div>
 
       <div className="human2ai-canvas-image-editor-fields__actions">
-        <input
-          ref={inputRef}
-          className="human2ai-canvas-image-editor-fields__input"
-          type="file"
-          accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"
-          disabled={disabled || uploading}
-          onChange={(event) => {
-            const file = event.target.files?.[0];
-            if (file) void handleFile(file);
-          }}
-        />
-        <BasicButton
-          mode="with-icon"
-          icon={<UploadOutlined />}
-          loading={uploading}
-          disabled={disabled || uploading}
-          onClick={() => inputRef.current?.click()}
-        >
-          {uploading ? labels.uploading : src ? labels.replace : labels.upload}
-        </BasicButton>
+        {!sourceLocked && <>
+          <input
+            ref={inputRef}
+            className="human2ai-canvas-image-editor-fields__input"
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/svg+xml,.svg"
+            disabled={disabled || uploading}
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void handleFile(file);
+            }}
+          />
+          <BasicButton
+            mode="with-icon"
+            icon={<UploadOutlined />}
+            loading={uploading}
+            disabled={disabled || uploading}
+            onClick={() => inputRef.current?.click()}
+          >
+            {uploading ? labels.uploading : src ? labels.replace : labels.upload}
+          </BasicButton>
+        </>}
         {src && onReadFile && (
           <BasicButton
             mode="with-icon"
@@ -343,7 +426,7 @@ export function CanvasImageEditorFields({
             {downloading ? labels.downloading : labels.download}
           </BasicButton>
         )}
-        <BasicButton
+        {!sourceLocked && <BasicButton
           mode="with-icon"
           icon={<CodeOutlined aria-hidden="true" />}
           disabled={disabled || uploading}
@@ -356,7 +439,7 @@ export function CanvasImageEditorFields({
           }}
         >
           {labels.svgPaste}
-        </BasicButton>
+        </BasicButton>}
         {svgSource !== null && (
           <ActionButton
             key={src}
@@ -371,9 +454,9 @@ export function CanvasImageEditorFields({
         )}
       </div>
 
-      <span className="human2ai-canvas-image-editor-fields__hint" role={uploadError ? "alert" : undefined}>
+      {!sourceLocked && <span className="human2ai-canvas-image-editor-fields__hint" role={uploadError ? "alert" : undefined}>
         {uploadError ? (svgInputOpen ? labels.svgSaveFailed : labels.uploadFailed) : labels.fileTypes}
-      </span>
+      </span>}
 
       {sourceLoading && <span role="status">{labels.sourceLoading}</span>}
       {downloadError === src && <span role="alert">{labels.downloadFailed}</span>}
@@ -392,7 +475,7 @@ export function CanvasImageEditorFields({
             aria-label={labels.svgSource}
             value={svgInput}
             onChange={(event) => setSvgInput(event.target.value)}
-            disabled={disabled || uploading}
+            disabled={disabled || sourceLocked || uploading}
             rows={10}
             spellCheck={false}
             autoFocus
@@ -400,7 +483,7 @@ export function CanvasImageEditorFields({
           <div className="human2ai-canvas-image-editor-fields__actions">
             <BasicButton
               loading={uploading}
-              disabled={disabled || uploading || !svgInput.trim()}
+              disabled={disabled || sourceLocked || uploading || !svgInput.trim()}
               onClick={async () => {
                 if (await handleFile(new File([svgInput], "image.svg", { type: "image/svg+xml" }))) {
                   setSvgInputOpen(false);
@@ -415,74 +498,10 @@ export function CanvasImageEditorFields({
           </div>
         </div>
       )}
-      <div className="human2ai-canvas-image-editor-fields__preview-shell">
-        {!src ? (
-          <div
-            className="human2ai-canvas-image-editor-fields__preview-status"
-            aria-label={labels.content}
-          >
-            <UploadOutlined aria-hidden="true" />
-          </div>
-        ) : imageLoadFailed ? (
-          <div className="human2ai-canvas-image-editor-fields__preview-status" role="alert">
-            {labels.cropLoadFailed}
-          </div>
-        ) : (
-          <div
-            ref={previewRef}
-            className="human2ai-canvas-image-editor-fields__preview"
-            style={{
-              aspectRatio: imageSize ? `${imageSize.width} / ${imageSize.height}` : undefined,
-              visibility: imageSize ? "visible" : "hidden",
-              width: previewWidth,
-            }}
-            onPointerDown={beginPreviewGesture}
-            onPointerMove={moveGesture}
-            onPointerUp={finishGesture}
-            onPointerCancel={finishGesture}
-          >
-            <img
-              src={src}
-              alt=""
-              draggable={false}
-              onLoad={(event) => {
-                const image = event.currentTarget;
-                setImageSize({ width: image.naturalWidth, height: image.naturalHeight });
-                setImageLoadFailed(false);
-              }}
-              onError={() => {
-                setImageSize(null);
-                setImageLoadFailed(true);
-              }}
-            />
-            {draftCrop ? (
-              <div
-                className="human2ai-canvas-image-editor-fields__crop-selection"
-                style={cropStyle(draftCrop)}
-                role="group"
-                aria-label={labels.cropTitle}
-                aria-keyshortcuts="ArrowLeft ArrowRight ArrowUp ArrowDown"
-                tabIndex={disabled ? -1 : 0}
-                data-crop-selection
-                onPointerDown={(event) => beginGesture(event, "move")}
-                onKeyDown={handleCropKeyDown}
-              >
-                {CROP_HANDLES.map((handle) => (
-                  <span
-                    key={handle}
-                    className="human2ai-canvas-image-editor-fields__crop-handle"
-                    data-crop-handle={handle}
-                    aria-hidden="true"
-                    onPointerDown={(event) => beginGesture(event, "resize", handle)}
-                  />
-                ))}
-              </div>
-            ) : null}
-          </div>
-        )}
-      </div>
+      {!renderLayout && preview}
     </section>
   );
+  return renderLayout ? renderLayout(controls, preview) : controls;
 }
 
 const CROP_HANDLES: CropHandle[] = [

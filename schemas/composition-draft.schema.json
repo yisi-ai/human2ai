@@ -17,13 +17,14 @@
     "version": { "const": 1 },
     "kind": { "const": "composition-draft" },
     "processingSemantic": { "enum": [null, "scene-composition", "editorial-layout"] },
+    "previewMode": { "enum": ["precise", "soft"] },
     "frame": {
       "type": "object",
       "additionalProperties": false,
       "required": ["width", "height"],
       "properties": {
-        "width": { "type": "integer", "minimum": 256, "maximum": 4096 },
-        "height": { "type": "integer", "minimum": 256, "maximum": 4096 },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
         "bounds": {
           "type": "object",
           "additionalProperties": false,
@@ -55,6 +56,7 @@
             "x": { "type": "number" },
             "y": { "type": "number" },
             "rotation": { "type": "number" },
+            "visible": { "type": "boolean" },
             "origin": { "enum": ["user", "agent", "import"] },
             "note": { "type": "string" },
             "annotation": { "type": "string" },
@@ -84,6 +86,7 @@
           "rotation": { "type": "number" },
           "width": { "type": "number", "exclusiveMinimum": 0 },
           "height": { "type": "number", "exclusiveMinimum": 0 },
+          "visible": { "type": "boolean" },
           "origin": { "enum": ["user", "agent", "import"] },
           "note": { "type": "string" },
           "annotation": { "type": "string" },
@@ -143,6 +146,7 @@
               { "$ref": "#/$defs/imageCrop" }
             ]
           },
+          "visible": { "type": "boolean" },
           "origin": { "enum": ["user", "agent", "import"] },
           "note": { "type": "string" },
           "annotation": { "type": "string" },
@@ -633,6 +637,7 @@
     "layoutPoint": {
       "type": "object", "additionalProperties": false, "required": ["id", "x", "y"],
       "properties": {
+        "visible": { "type": "boolean" },
         "id": { "type": "string", "pattern": "^focus-[0-9]+$" },
         "x": { "type": "number" }, "y": { "type": "number" }
       }
@@ -640,6 +645,7 @@
     "layoutDirection": {
       "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "rotation"],
       "properties": {
+        "visible": { "type": "boolean" },
         "id": { "const": "direction-1" }, "x": { "type": "number" }, "y": { "type": "number" },
         "rotation": { "type": "number" }
       }
@@ -657,6 +663,7 @@
     "layoutArea": {
       "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "area", "aspect"],
       "properties": {
+        "visible": { "type": "boolean" },
         "id": { "type": "string", "pattern": "^area-[0-9]+$" },
         "x": { "type": "number" }, "y": { "type": "number" },
         "area": { "type": "number", "exclusiveMinimum": 0 },
@@ -671,6 +678,7 @@
     "layoutImage": {
       "type": "object", "additionalProperties": false, "required": ["id", "x", "y", "width", "height", "rotation"],
       "properties": {
+        "visible": { "type": "boolean" },
         "id": { "type": "string", "pattern": "^image-[0-9]+$" },
         "x": { "type": "number" }, "y": { "type": "number" },
         "width": { "type": "number", "exclusiveMinimum": 0 },
@@ -696,6 +704,7 @@
         "id": { "type": "string", "pattern": "^focus-[0-9]+$" },
         "x": { "type": "number" },
         "y": { "type": "number" },
+        "visible": { "type": "boolean" },
         "origin": { "enum": ["user", "agent", "import"] },
         "note": { "type": "string" },
         "annotation": { "type": "string" },

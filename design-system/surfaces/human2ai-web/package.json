@@ -41,7 +41,8 @@
     "./yisiui/adaptive-accordion": "./src/vendor/yisiui/runtime/src/patterns/AdaptiveAccordion.tsx",
     "./yisiui/resizable-collapse-group": "./src/vendor/yisiui/runtime/src/patterns/ResizableCollapseGroup.tsx",
     "./yisiui/dot-scrollbar": "./src/vendor/yisiui/runtime/src/components/DotScrollbar.tsx",
-    "./yisiui/expanding-switch": "./src/vendor/yisiui/runtime/src/components/ExpandingSwitch.tsx"
+    "./yisiui/expanding-switch": "./src/vendor/yisiui/runtime/src/components/ExpandingSwitch.tsx",
+    "./yisiui/cascade-selector": "./src/vendor/yisiui/runtime/src/patterns/CascadeSelector.tsx"
   },
   "devDependencies": {
     "storybook": "10.6.0",

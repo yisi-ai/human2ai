@@ -2,17 +2,14 @@
 
 import { promptTranslationKey } from "../../../locales/promptKeys";
 import {
-  LockOutlined,
-  ReloadOutlined,
-  UnlockOutlined,
-} from "@ant-design/icons";
-import {
   EMPTY_UI_SKETCH_DRAFT,
   UI_SKETCH_START_STAGE_ID,
   SessionDetails,
   CanvasHistoryControls,
+  CanvasDisplayControls,
   CompositionWorkflowView,
   UiSketchCanvas,
+  CanvasFrameControls,
   cloneUiSketchDraft,
   insertUiSketchStage,
   UiSketchStateTabs,
@@ -23,11 +20,6 @@ import {
   type UiSketchDraft,
   type UiSketchPromptTranslator,
 } from "@human2ai/ui";
-import {
-  AspectRatioSelector,
-  type AspectRatioOption,
-  type AspectRatioValue,
-} from "@human2ai/ui/yisiui/aspect-ratio-selector";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { LoadingState } from "@human2ai/ui/yisiui/loading-state";
 import type { TFunction } from "i18next";
@@ -44,12 +36,17 @@ import { useTranslation } from "react-i18next";
 
 import type { StyleProcessing } from "../../../src/domain/session";
 import { SessionStyleControl } from "../../components/SessionStyleControl";
+import { SessionPreviewAction, SessionPreviewProperties } from "../../components/UiSessionPreviews";
+import { mergeUiPreviewRefresh } from "../../../src/domain/ui-sketch/session-preview";
+import { droppedSessionPreviewUrl, materializeDroppedSessionPreview } from "../../lib/session-preview-drop";
 import { useSessionStyle } from "../../lib/use-session-style";
 import { Human2AiShell } from "../../components/Human2AiShell";
 import {
   Human2AiApiError,
   createUiSketchSession,
   getSession,
+  getLatestUiSketchDraft,
+  subscribeSessionPreviews,
   imageAssetContentUrl,
   readImageFile,
   listUiSketchDrafts,
@@ -63,7 +60,6 @@ import styles from "./page.module.css";
 
 const AUTO_SAVE_DELAY_MS = 800;
 const EXTERNAL_DRAFT_REFRESH_MS = 3_000;
-const MINIMUM_INTERFACE_FRAME_SIZE = 10;
 
 interface UiSketchSessionSnapshot {
   session: Human2AiSession;
@@ -133,6 +129,7 @@ function UiSketchPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSessionId = searchParams.get("session");
+  const requestedStateId = searchParams.get("state");
   const { t, i18n } = useTranslation();
   const translatePrompt = useCallback<UiSketchPromptTranslator>(
     (key, values) => t(
@@ -145,6 +142,10 @@ function UiSketchPageContent() {
     cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT),
   );
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const loadDroppedSessionPreview = useCallback((sourceSessionId: string) =>
+    materializeDroppedSessionPreview(sessionId!, sourceSessionId), [sessionId]);
+  const loadSessionPreviewDragImage = useCallback((sourceSessionId: string) =>
+    droppedSessionPreviewUrl(sessionId!, sourceSessionId), [sessionId]);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const [sessionMetadata, setSessionMetadata] = useState<Human2AiSession | null>(null);
   const [lastModifiedAt, setLastModifiedAt] = useState<string | null>(null);
@@ -161,8 +162,9 @@ function UiSketchPageContent() {
   const [interfaceFrameLocked, setInterfaceFrameLocked] = useState(false);
   const [toolHost, setToolHost] = useState<HTMLDivElement | null>(null);
   const [clearActionHost, setClearActionHost] = useState<HTMLDivElement | null>(null);
-  const presetRatioChangeRef = useRef(false);
+  const [displayOptions, setDisplayOptions] = useState({ showHiddenNodes: false, onionSkin: false });
   const draftChangeVersionRef = useRef(0);
+  const savedDraftRef = useRef<UiSketchDraft>(draft);
   const saveContextVersionRef = useRef(0);
   const blockedAutoSaveVersionRef = useRef<number | null>(null);
   const revisionConflictRef = useRef(false);
@@ -224,6 +226,7 @@ function UiSketchPageContent() {
       .then((snapshot) => {
         if (cancelled) return;
         history.reset(snapshot.draft);
+        savedDraftRef.current = snapshot.draft;
         setDraft(snapshot.draft);
         setSessionId(snapshot.session.id);
         setSessionTitle(snapshot.session.title);
@@ -231,7 +234,7 @@ function UiSketchPageContent() {
         setLastModifiedAt(snapshot.lastModifiedAt);
         setLatestRevision(snapshot.revision);
         setStyleProcessing(snapshot.styleProcessing);
-        setActiveStageId(UI_SKETCH_START_STAGE_ID);
+        setActiveStageId(uiSketchStateTabs(snapshot.draft).find(state => state.id === requestedStateId)?.id ?? uiSketchStateTabs(snapshot.draft)[0].id);
         setDirty(false);
         setServiceError(null);
       })
@@ -247,7 +250,7 @@ function UiSketchPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [loadAttempt, requestedSessionId, t]);
+  }, [loadAttempt, requestedSessionId, requestedStateId, t]);
 
   useEffect(() => {
     const draftChangeVersion = draftChangeVersionRef.current;
@@ -283,6 +286,7 @@ function UiSketchPageContent() {
 
           blockedAutoSaveVersionRef.current = null;
           setLatestRevision(saved.revision);
+          savedDraftRef.current = saved.draft;
           setStyleProcessing(saved.styleProcessing);
           setLastModifiedAt(saved.createdAt);
           if (draftChangeVersionRef.current === draftChangeVersion) {
@@ -300,6 +304,16 @@ function UiSketchPageContent() {
             typeof actualLatestRevision === "number"
             && Number.isInteger(actualLatestRevision)
           ) {
+            const latest = sessionId ? await getLatestUiSketchDraft(sessionId).catch(() => null) : null;
+            if (saveContextVersion !== saveContextVersionRef.current) return;
+            const merged = latest && mergeUiPreviewRefresh(history.current(), savedDraftRef.current, latest.draft);
+            if (latest && merged) {
+              savedDraftRef.current = latest.draft;
+              history.synchronize(merged);
+              setDraft(merged); setLatestRevision(latest.revision);
+              setLastModifiedAt(latest.createdAt);
+              return;
+            }
             revisionConflictRef.current = true;
             history.reset(history.current());
             setLatestRevision(actualLatestRevision);
@@ -316,36 +330,47 @@ function UiSketchPageContent() {
   }, [dirty, draft, latestRevision, loading, router, saving, sessionId, t]);
 
   useEffect(() => {
-    if (!sessionId || loading || dirty || saving) return;
+    if (!sessionId || loading || saving) return;
     let cancelled = false;
+    let refreshing = false;
 
     const observedChangeVersion = draftChangeVersionRef.current;
     const refreshDraft = async () => {
+      if (refreshing) return;
+      refreshing = true;
       try {
-        const versions = await listUiSketchDrafts(sessionId);
-        const latest = versions.at(-1);
-        if (!cancelled && observedChangeVersion === draftChangeVersionRef.current && latest && latest.revision > latestRevision) {
-          history.reset(latest.draft);
-          setDraft(latest.draft);
+        const latest = await getLatestUiSketchDraft(sessionId, latestRevision);
+        if (!cancelled && latest && latest.revision > latestRevision) {
+          const base = savedDraftRef.current;
+          const merged = mergeUiPreviewRefresh(history.current(), base, latest.draft);
+          if (merged) {
+            history.synchronize(merged);
+            setDraft(current => mergeUiPreviewRefresh(current, base, latest.draft) ?? current);
+          } else if (!dirty && observedChangeVersion === draftChangeVersionRef.current) {
+            history.reset(latest.draft); setDraft(latest.draft);
+            setActiveStageId(uiSketchStateTabs(latest.draft)[0].id);
+          } else return;
+          savedDraftRef.current = latest.draft;
           setLatestRevision(latest.revision);
           setStyleProcessing(latest.styleProcessing);
           setLastModifiedAt(latest.createdAt);
-          setActiveStageId(UI_SKETCH_START_STAGE_ID);
           blockedAutoSaveVersionRef.current = null;
           setServiceError(null);
         }
       } catch (error) {
         if (!cancelled) setServiceError(formatServiceError(error, t));
-      }
+      } finally { refreshing = false; }
     };
 
     void refreshDraft();
+    const unsubscribe = subscribeSessionPreviews(sessionId, () => void refreshDraft());
     const timer = window.setInterval(
       () => void refreshDraft(),
       EXTERNAL_DRAFT_REFRESH_MS,
     );
     return () => {
       cancelled = true;
+      unsubscribe();
       window.clearInterval(timer);
     };
   }, [dirty, latestRevision, loading, saving, sessionId, t]);
@@ -400,45 +425,6 @@ function UiSketchPageContent() {
     updateDraft((current) => deleteUiSketchState(current, id), nextStageId);
   }
 
-  function resizeInterfaceFrame(nextSize: AspectRatioValue): void {
-    const width = Math.round(nextSize.width);
-    const height = Math.round(nextSize.height);
-    if (
-      width < MINIMUM_INTERFACE_FRAME_SIZE
-      || height < MINIMUM_INTERFACE_FRAME_SIZE
-    ) {
-      return;
-    }
-    updateDraft((current) => {
-      const centerX = current.frame.x + current.frame.width / 2;
-      const centerY = current.frame.y + current.frame.height / 2;
-      return {
-        ...current,
-        frame: {
-          x: centerX - width / 2,
-          y: centerY - height / 2,
-          width,
-          height,
-        },
-      };
-    });
-  }
-
-  function selectInterfaceFrameRatio(option: AspectRatioOption): void {
-    presetRatioChangeRef.current = true;
-    resizeInterfaceFrame({
-      width: draft.frame.width,
-      height: draft.frame.width * option.height / option.width,
-    });
-  }
-
-  function resetInterfaceFrame(): void {
-    updateDraft((current) => ({
-      ...current,
-      frame: { ...EMPTY_UI_SKETCH_DRAFT.frame },
-    }));
-  }
-
   const stateTabs = uiSketchStateTabs(draft);
   const stageItems = stateTabs.map((tab) => ({
     id: tab.id,
@@ -452,6 +438,11 @@ function UiSketchPageContent() {
       currentSessionId={requestedSessionId}
       onCurrentSessionRename={setSessionTitle}
       title={sessionTitle ?? t("uiSketch.session.new")}
+      headerExtra={<CanvasDisplayControls value={displayOptions} onChange={setDisplayOptions}
+        hasMultipleStates={stateTabs.length > 1}
+        hasPreviousState={stateTabs.findIndex((tab) => tab.id === selectedStageId) > 0}
+        disabled={loading || sessionLoadFailed}
+        labels={{ showHiddenNodes: t("canvas.display.showHiddenNodes"), onionSkin: t("canvas.display.onionSkin") }} />}
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(
@@ -497,69 +488,14 @@ function UiSketchPageContent() {
                 </div>
                 <div ref={setToolHost} />
               </section>
-              <section>
-                <div className={styles.sectionHeading}>
-                  <h2>{t("uiSketch.canvasLabels.frameRange")}</h2>
-                  <div className={styles.sectionHeadingActions}>
-                    <BasicButton
-                      mode="icon-only"
-                      size="small"
-                      icon={<ReloadOutlined />}
-                      iconLabel={t("uiSketch.canvasLabels.resetFrame")}
-                      title={t("uiSketch.canvasLabels.resetFrame")}
-                      backgroundColor="none"
-                      textColor="color.text.secondary"
-                      disabled={sessionLoadFailed || interfaceFrameLocked}
-                      onClick={resetInterfaceFrame}
-                    />
-                    <BasicButton
-                      mode="icon-only"
-                      size="small"
-                      icon={interfaceFrameLocked ? <LockOutlined /> : <UnlockOutlined />}
-                      iconLabel={
-                        interfaceFrameLocked
-                          ? t("uiSketch.canvasLabels.unlockFrame")
-                          : t("uiSketch.canvasLabels.lockFrame")
-                      }
-                      title={
-                        interfaceFrameLocked
-                          ? t("uiSketch.canvasLabels.unlockFrame")
-                          : t("uiSketch.canvasLabels.lockFrame")
-                      }
-                      aria-pressed={interfaceFrameLocked}
-                      backgroundColor={
-                        interfaceFrameLocked ? "color.action.primaryActive" : "none"
-                      }
-                      textColor={
-                        interfaceFrameLocked ? "color.text.onPrimary" : "color.text.secondary"
-                      }
-                      disabled={sessionLoadFailed}
-                      onClick={() => setInterfaceFrameLocked((locked) => !locked)}
-                    />
-                  </div>
-                </div>
-                <div className={styles.aspectRatioSelector}>
-                  <AspectRatioSelector
-                    ratio={{
-                      width: draft.frame.width,
-                      height: draft.frame.height,
-                    }}
-                    disabled={sessionLoadFailed || interfaceFrameLocked}
-                    onChange={(_key, option) => selectInterfaceFrameRatio(option)}
-                    onRatioChange={(ratio) => {
-                      if (presetRatioChangeRef.current) {
-                        presetRatioChangeRef.current = false;
-                        return;
-                      }
-                      resizeInterfaceFrame(ratio);
-                    }}
-                    title={t("uiSketch.canvasLabels.rangeTitle")}
-                    widthLabel={t("dimensions.width")}
-                    heightLabel={t("dimensions.height")}
-                    aria-label={t("uiSketch.canvasLabels.frameRange")}
-                  />
-                </div>
-              </section>
+              <CanvasFrameControls
+                frame={draft.frame} name={t("uiSketch.canvasLabels.frameRange")}
+                locked={interfaceFrameLocked} disabled={sessionLoadFailed} onLockedChange={setInterfaceFrameLocked}
+                onChange={(frame) => updateDraft((current) => ({ ...current, frame }))}
+                labels={{ reset: t("uiSketch.canvasLabels.resetFrame"), lock: t("uiSketch.canvasLabels.lockFrame"),
+                  unlock: t("uiSketch.canvasLabels.unlockFrame"), size: t("dimensions.frameSize"),
+                  width: t("dimensions.width"), height: t("dimensions.height") }}
+              />
             </>
           ) : null}
         </div>
@@ -612,6 +548,12 @@ function UiSketchPageContent() {
           >
               <CanvasHistoryControls {...history} labels={{ undo: t("canvasHistory.undo"), redo: t("canvasHistory.redo"), label: t("canvasHistory.label") }} />
               <UiSketchCanvas
+                sessionPreviewLabel={t("sessionPreview.label")}
+                sessionPreviewFailedLabel={t("sessionPreview.failed")}
+                onSessionPreviewDrop={sessionId ? loadDroppedSessionPreview : undefined}
+                loadSessionPreviewDragImage={sessionId ? loadSessionPreviewDragImage : undefined}
+                renderSessionPreviewTool={insert => <SessionPreviewAction sessionId={sessionId} onInsert={insert} disabled={loading || sessionLoadFailed} />}
+                renderSessionPreviewEditor={props => sessionId ? <SessionPreviewProperties key={`${sessionId}:${props.image.id}`} sessionId={sessionId} {...props} /> : null}
                 className={styles.canvas}
                 interactionResetKey={history.restoreToken}
                 draft={draft}
@@ -621,6 +563,7 @@ function UiSketchPageContent() {
                 resolveStylePrompt={sessionStyle.readPromptLine}
                 toolHost={rightPanelOpen ? toolHost : null}
                 clearActionHost={rightPanelOpen ? clearActionHost : null}
+                {...displayOptions}
                 showCanvasTools={!rightPanelOpen}
                 canvasSideActionPanelDefaultCollapsed
                 interfaceFrameLocked={interfaceFrameLocked}
@@ -679,6 +622,7 @@ function UiSketchPageContent() {
                   copyGroup: t("clipboard.group"),
                   copyPrompt: t("clipboard.copyPrompt"),
                   copySketch: t("clipboard.copyPreview"),
+                  previewImage: t("clipboard.previewImage"),
                   copyAllStages: t("uiSketch.motion.copyPrompt"),
                   overallNoteTitle: t("uiSketch.globalNote.title"),
                   overallNotePlaceholder: t("uiSketch.globalNote.placeholder"),
@@ -706,9 +650,9 @@ function UiSketchPageContent() {
                   shapeKind: t("canvasNodeEditor.shapeKind"),
                   emptyText: t("uiSketch.canvasLabels.emptyText"),
                   visualWeight: t("visualWeight.label"),
-                  visibility: t("uiSketch.canvasLabels.visibility"),
-                  visible: t("uiSketch.canvasLabels.visible"),
-                  hidden: t("uiSketch.canvasLabels.hidden"),
+                  visibility: t("canvas.nodeVisibility.visibility"),
+                  visible: t("canvas.nodeVisibility.visible"),
+                  hidden: t("canvas.nodeVisibility.hidden"),
                   weightAuto: t("visualWeight.auto"),
                   weightHigh: t("visualWeight.high"),
                   weightMedium: t("visualWeight.medium"),

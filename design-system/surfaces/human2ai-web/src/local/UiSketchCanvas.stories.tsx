@@ -1,7 +1,15 @@
 import { ConfigProvider } from "antd";
+import { CanvasDisplayControls } from "./CanvasDisplayControls";
+import { Human2AiAppShell } from "./Human2AiAppShell";
+import { CompositionWorkflowView } from "./CompositionWorkflowView";
+import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { checkZoomedNodeTooltip } from "./canvasNodeTooltipStoryChecks";
+import { checkUiSketchPreviewPixels } from "./uiSketchPreviewStoryChecks";
+import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
+import { waitFor } from "storybook/test";
 import { useState } from "react";
 
 import { placeNodeInStory, placementLayer, placementPointer } from "./canvasPlacementStoryChecks";
@@ -14,6 +22,7 @@ import {
 } from "../vendor/yisiui/storybook/interactionChecks";
 import {
   buildUiSketchPrompt,
+  renderUiSketchSvg,
   type UiSketchPromptTranslator,
 } from "./uiSketchExport";
 import {
@@ -22,6 +31,11 @@ import {
 } from "./uiSketchFixtures";
 import {
   cloneUiSketchDraft,
+  insertUiSketchStage,
+  uiSketchStateTabs,
+  reorderUiSketchStates,
+  renameUiSketchState,
+  deleteUiSketchState,
   EMPTY_UI_SKETCH_DRAFT,
   UI_SKETCH_END_STAGE_ID,
   UI_SKETCH_START_STAGE_ID,
@@ -53,6 +67,30 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const previewFixture: UiSketchDraft = {
+  ...cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT), frame: { x: 80, y: 40, width: 480, height: 320 },
+  rectangles: [
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "b", x: 90, y: 50, width: 180, height: 280 },
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "h", x: 110, y: 70, width: 140, height: 220 },
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "hidden", x: 80, y: 40, width: 480, height: 320, visible: false },
+  ],
+  texts: [16, 28, 40].map((fontSize, index) => ({ ...UI_SKETCH_FIXTURE.texts[0], id: `text-${index}`, x: 285, y: 45 + index * 72, fontSize, text: "登录 Ag\n\n中 H" })),
+  images: [{ ...UI_SKETCH_FIXTURE.rectangles[0], id: "nested", x: 120, y: 180, width: 120, height: 80, assetId: "source", crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 } }],
+  layerOrder: ["b", "h", "nested", "text-0", "text-1", "text-2", "hidden"],
+};
+const nestedPreviewSource = `data:image/svg+xml;base64,${btoa(renderUiSketchSvg({
+  ...cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT), frame: { x: 0, y: 0, width: 160, height: 100 },
+  texts: [{ ...UI_SKETCH_FIXTURE.texts[0], id: "nested-text", x: 20, y: 20, text: "Ag", fontSize: 28 }],
+}))}`;
+
+export const PreviewRendering: Story = {
+  args: { draft: previewFixture, resolveImageSource: () => nestedPreviewSource, showCanvasTools: false },
+  play: async ({ canvasElement }) => {
+    await waitForCanvasRender();
+    await checkUiSketchPreviewPixels(canvasElement, previewFixture, () => nestedPreviewSource);
+  },
+};
 
 const stagedFixture = (() => {
   const stage = uiSketchDraftForStage(UI_SKETCH_FIXTURE, UI_SKETCH_END_STAGE_ID);
@@ -182,12 +220,14 @@ export const Default: Story = {
     firstRectangle.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
     await waitForCanvasRender();
     const regionNoteTooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]');
-    if (regionNoteTooltip?.textContent?.trim() !== UI_SKETCH_FIXTURE.rectangles[0]?.note) {
+    if (!regionNoteTooltip?.textContent?.includes(UI_SKETCH_FIXTURE.rectangles[0]!.note)) {
       throw new Error("悬停 UI 区域时必须在 Tooltip 中显示其备注");
     }
     firstRectangle.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
     await waitForCanvasRender();
+    await checkZoomedNodeTooltip(canvasElement, firstRectangle);
     assertStorySelector(canvasElement, '[data-ui-sketch-kind="text"]');
+    checkPreviewGeometry(canvasElement, UI_SKETCH_FIXTURE);
     if (
       canvasElement.textContent?.includes("系统组件")
       || canvasElement.textContent?.includes("占位符")
@@ -253,6 +293,43 @@ export const Default: Story = {
   },
 };
 
+function checkPreviewGeometry(canvas: HTMLElement, draft: UiSketchDraft): void {
+  const documentSvg = new DOMParser().parseFromString(renderUiSketchSvg(draft), "image/svg+xml").documentElement;
+  const exported = document.importNode(documentSvg, true) as unknown as SVGSVGElement;
+  exported.style.cssText = "position:fixed;left:-10000px;top:0;pointer-events:none";
+  document.body.append(exported);
+  try {
+    const scene = canvas.querySelector<SVGSVGElement>("[data-ui-sketch-scene]")!;
+    const actualTexts = [...canvas.querySelectorAll<SVGTextElement>('[data-ui-sketch-kind="text"] text')];
+    const exportedTexts = [...exported.querySelectorAll<SVGTextElement>("text")];
+    for (const saved of draft.texts.filter(item => item.visible)) {
+      const actual = actualTexts.find(text => text.closest("[data-ui-sketch-item]")?.getAttribute("data-ui-sketch-item") === `text:${saved.id}`)!;
+      const preview = exportedTexts.find(text => text.textContent === actual.textContent)!;
+      if (!preview) throw new Error("Preview lost canvas text");
+      const actualPosition = actual.getStartPositionOfChar(0).matrixTransform(scene.getCTM()!.inverse().multiply(actual.getCTM()!));
+      const previewPosition = preview.getStartPositionOfChar(0).matrixTransform(exported.getCTM()!.inverse().multiply(preview.getCTM()!));
+      if (Math.abs(actualPosition.x - draft.frame.x - previewPosition.x) > 0.01
+        || Math.abs(actualPosition.y - draft.frame.y - previewPosition.y) > 0.01
+        || getComputedStyle(actual).fill !== getComputedStyle(preview).fill
+        || getComputedStyle(actual).fontSize !== getComputedStyle(preview).fontSize) {
+        throw new Error("Preview text baseline, position, size and color must match the canvas");
+      }
+    }
+    for (const saved of draft.rectangles.filter(item => item.visible)) {
+      const actual = canvas.querySelector<SVGRectElement>(`[data-ui-sketch-item="rectangle:${saved.id}"] .human2ai-canvas-shape`)!;
+      const preview = [...exported.querySelectorAll<SVGRectElement>("rect")].find(rect =>
+        rect.getAttribute("x") === String(saved.x - draft.frame.x) && rect.getAttribute("y") === String(saved.y - draft.frame.y))!;
+      if (!preview || Number(preview.getAttribute("rx") ?? 0) !== Number(actual.getAttribute("rx") ?? 0)
+        || getComputedStyle(actual).fill !== getComputedStyle(preview).fill
+        || getComputedStyle(actual).fillOpacity !== getComputedStyle(preview).fillOpacity) {
+        throw new Error("Preview rectangle corners, fill and opacity must match the canvas");
+      }
+    }
+  } finally {
+    exported.remove();
+  }
+}
+
 export const ClipboardImage: Story = {
   name: "粘贴图片与编辑替换",
   args: {
@@ -285,7 +362,10 @@ export const StagedVisibilityAndCopy: Story = {
       stagedPrompt = content;
     },
   },
+  render: (args) => <DisplayControlsFixture {...args} />,
   play: async ({ canvasElement }: StoryContext) => {
+    findButton(canvasElement, "显示隐藏").click();
+    await waitForCanvasRender();
     const hiddenRegion = canvasElement.querySelector<SVGGElement>(
       '[data-ui-sketch-kind="rectangle"][data-ui-sketch-visible="false"]',
     );
@@ -295,8 +375,8 @@ export const StagedVisibilityAndCopy: Story = {
 
     findButton(canvasElement, "复制提示词").click();
     await waitForCanvasRender();
-    findMenuItem("开始");
-    findMenuItem("结束");
+    findMenuItem("状态 1");
+    findMenuItem("状态 2");
     findMenuItem("动效").click();
     await waitForCanvasRender();
     const firstRegion = promptElementBlock(stagedPrompt, "区域#1", "区域#2");
@@ -314,11 +394,90 @@ export const StagedVisibilityAndCopy: Story = {
 
     findButton(canvasElement, "复制预览图").click();
     await waitForCanvasRender();
-    findMenuItem("开始");
-    findMenuItem("结束");
+    findMenuItem("状态 1");
+    findMenuItem("状态 2");
     if (findMenuItems("动效").length > 0) {
       throw new Error("复制预览图下拉不能提供动效提示词选项");
     }
+  },
+};
+
+const displayControlsFixture = (() => {
+  const draft = cloneUiSketchDraft(UI_SKETCH_FIXTURE);
+  draft.images = [{
+    ...draft.rectangles[0]!, id: "display-image", x: 600, y: 20, width: 120, height: 80,
+    assetId: null, crop: null,
+  }];
+  const next = insertUiSketchStage(draft, "start", "middle");
+  const middle = uiSketchDraftForStage(next, "middle");
+  middle.rectangles[0].x = 120;
+  middle.rectangles[1].visible = false;
+  middle.texts[0].fontSize = 48;
+  middle.texts[1].visible = false;
+  middle.images[0].visible = false;
+  return insertUiSketchStage(updateUiSketchStageDraft(next, "middle", middle), "middle", "last");
+})();
+
+export const DisplayControls: Story = {
+  name: "隐藏节点与上一状态洋葱皮",
+  args: { draft: displayControlsFixture, activeStageId: "middle", canvasSideActionPanelDefaultCollapsed: true },
+  render: (args) => <DisplayControlsFixture {...args} />,
+  play: async ({ canvasElement }) => {
+    await waitForCanvasRender();
+    const assertNodesUnchanged = captureCanvasNodeExecutions(canvasElement);
+    const resizeHandles = canvasElement.querySelectorAll('[role="separator"][aria-orientation="vertical"]');
+    if (resizeHandles.length !== 2) throw new Error("The application shell must expose both resize handles");
+    for (const handle of resizeHandles) {
+      const width = Number(handle.getAttribute("aria-valuenow"));
+      handle.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await waitForCanvasRender();
+      if (Number(handle.getAttribute("aria-valuenow")) === width) throw new Error("Shell width must change after keyboard resize");
+      assertNodesUnchanged();
+    }
+    const header = canvasElement.querySelector<HTMLElement>('[data-yisiui-slot="header-extra"]')!;
+    const showHidden = findButton(header, "显示隐藏");
+    const onionSkin = findButton(header, "洋葱皮");
+    const ghost = () => canvasElement.querySelector<SVGGElement>("[data-canvas-onion-skin]");
+    const hidden = () => canvasElement.querySelectorAll('[data-ui-sketch-item][data-ui-sketch-visible="false"]');
+    if (hidden().length || ghost()) throw new Error("显示辅助默认应关闭");
+    onionSkin.click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "start" || ghost()?.children.length !== 6) {
+      throw new Error("洋葱皮应显示顺序中前一状态的可见区域、文字和图片");
+    }
+    if (ghost()!.querySelector('[tabindex], [role="button"], [data-ui-sketch-item]')
+      || [...ghost()!.querySelectorAll("*")].some((node) => getComputedStyle(node).pointerEvents !== "none")) {
+      throw new Error("洋葱皮不能接收焦点或指针操作");
+    }
+    showHidden.click();
+    await waitForCanvasRender();
+    if (hidden().length !== 3 || !ghost()) throw new Error("两个开关必须独立工作");
+    hidden()[0].dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    showHidden.click();
+    await waitForCanvasRender();
+    if (hidden().length || canvasElement.querySelector('[data-ui-sketch-multi-selection]')) {
+      throw new Error("关闭隐藏节点后不应遗留选框");
+    }
+    findButton(canvasElement, "状态 3").click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "middle" || ghost()?.children.length !== 3
+      || ghost()?.querySelector("text")?.getAttribute("font-size") !== "48") {
+      throw new Error("洋葱皮必须使用前一状态的可见性和字号");
+    }
+    findButton(canvasElement, "状态 1").click();
+    await waitForCanvasRender();
+    if (ghost() || !onionSkin.disabled) throw new Error("首个状态不能显示洋葱皮");
+    findButton(canvasElement, "状态 3").click();
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "middle") throw new Error("上一状态不应取决于访问历史");
+    if (canvasElement.querySelector('[data-draft-changes="0"]') === null) {
+      throw new Error("辅助显示和状态切换不能修改草稿");
+    }
+    findButton(canvasElement, "状态 3").dispatchEvent(new KeyboardEvent("keydown", {
+      key: "ArrowLeft", ctrlKey: true, shiftKey: true, bubbles: true,
+    }));
+    await waitForCanvasRender();
+    if (ghost()?.dataset.canvasOnionSkin !== "start") throw new Error("洋葱皮必须跟随状态重排");
   },
 };
 
@@ -418,7 +577,7 @@ export const DefaultTextSize: Story = {
 
 export const NearbyRegionEditor: Story = {
   name: "自动保存区域信息",
-  args: { draft: EMPTY_UI_SKETCH_DRAFT },
+  args: { draft: EMPTY_UI_SKETCH_DRAFT, showHiddenNodes: true },
   play: async ({ canvasElement }: StoryContext) => {
     findButton(canvasElement, "区域").click();
     await waitForCanvasRender();
@@ -451,15 +610,30 @@ export const NearbyRegionEditor: Story = {
       throw new Error("自动保存的区域编辑器不应显示保存按钮");
     }
     setTextAreaValue(note, "导航与项目区域");
+    await waitFor(() => {
+      if (!canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域")) {
+        throw new Error("区域备注没有写回草图");
+      }
+    });
+    const visibility = editor.closest('[role="dialog"]')?.querySelector<HTMLButtonElement>('[role="switch"]');
+    if (!visibility) throw new Error("区域编辑器缺少显示开关");
+    // A second field can change before the note's transition has committed.
+    setTextAreaValue(note, "导航与项目区域 · 更新");
+    visibility.click();
+    await waitFor(() => {
+      if (note.value !== "导航与项目区域 · 更新"
+        || !canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域 · 更新")
+        || visibility.getAttribute("aria-checked") !== "false") {
+        throw new Error("输入备注后立即隐藏节点必须保留最新备注和显示状态");
+      }
+    });
+    visibility.click();
     await waitForCanvasRender();
-    if (!region.getAttribute("aria-label")?.includes("导航与项目区域")) {
-      throw new Error("区域备注没有即时写回草图");
-    }
     editor.closest<HTMLElement>('[role="dialog"]')?.dispatchEvent(
       new KeyboardEvent("keydown", { key: "Escape", bubbles: true }),
     );
     await waitForCanvasRender();
-    if (!region.getAttribute("aria-label")?.includes("导航与项目区域")) {
+    if (!canvasElement.querySelector('[data-ui-sketch-kind="rectangle"]')?.getAttribute("aria-label")?.includes("导航与项目区域 · 更新")) {
       throw new Error("关闭自动保存编辑器后不应撤销区域备注");
     }
   },
@@ -502,6 +676,7 @@ export const DeleteFromEditor: Story = {
   name: "TextMarkEditor 删除区域确认",
   args: { draft: UI_SKETCH_FIXTURE },
   play: async ({ canvasElement }: StoryContext) => {
+    const checkAppearance = captureCanvasNodeAppearance(canvasElement, '[data-ui-sketch-kind="rectangle"]');
     const region = canvasElement.querySelector<SVGGElement>(
       '[data-ui-sketch-item="rectangle:rectangle-summary"]',
     );
@@ -519,11 +694,14 @@ export const DeleteFromEditor: Story = {
 
     const confirmButton = findButtons(document.body, "删除区域").at(-1);
     if (!confirmButton) throw new Error("删除确认缺少确认按钮");
+    const checkDeleteExecutions = captureCanvasNodeExecutions(canvasElement);
     confirmButton.click();
     await waitForCanvasRender();
     if (canvasElement.querySelector('[data-ui-sketch-item="rectangle:rectangle-summary"]')) {
       throw new Error("确认删除后区域节点仍然存在");
     }
+    checkAppearance();
+    checkDeleteExecutions();
   },
 };
 
@@ -1037,7 +1215,7 @@ export const ImportedTextEditor: Story = {
     const editor = document.body.querySelector<HTMLElement>(
       '[data-yisiui-asset="yisiui/text-mark-editor"]',
     );
-    const marker = editor?.querySelector<HTMLElement>(
+    const marker = editor?.closest('[role="dialog"]')?.querySelector<HTMLElement>(
       '[data-ui-sketch-origin="import"]',
     );
     const description = editor?.querySelector<HTMLElement>(
@@ -1679,6 +1857,50 @@ function ControlledUiSketchCanvas({
   );
 }
 
+function DisplayControlsFixture({ draft: initialDraft, activeStageId = "start", ...props }: UiSketchCanvasProps) {
+  const [draft, setDraft] = useState(() => cloneUiSketchDraft(initialDraft));
+  const [active, setActive] = useState(activeStageId);
+  const [display, setDisplay] = useState({ showHiddenNodes: false, onionSkin: false });
+  const [changes, setChanges] = useState(0);
+  const tabs = uiSketchStateTabs(draft);
+  const selected = tabs.some((tab) => tab.id === active) ? active : tabs[0].id;
+  return (
+    <ConfigProvider theme={{ token: { motion: false } }}>
+      <Human2AiAppShell title={storyI18n.t("uiSketch.title")} sidebar={<div />} rightPanel={<div />}
+        headerExtra={<CanvasDisplayControls value={display} onChange={setDisplay} hasMultipleStates={tabs.length > 1} hasPreviousState={tabs.findIndex((tab) => tab.id === selected) > 0} />}>
+        <div style={{ height: "100%" }} data-draft-changes={changes}>
+          <CompositionWorkflowView stateControls={(
+            <UiSketchStateTabs
+              items={tabs.map((tab) => ({ id: tab.id, label: tab.name ?? storyI18n.t("uiSketch.states.defaultName", { number: tab.number }) }))}
+              value={selected}
+              labels={{
+                switch: storyI18n.t("uiSketch.views.switch"), add: storyI18n.t("uiSketch.views.enableMotion"),
+                rename: storyI18n.t("actions.rename"), name: storyI18n.t("uiSketch.states.name"),
+                new: storyI18n.t("uiSketch.states.new"), delete: storyI18n.t("uiSketch.states.delete"),
+                cancel: storyI18n.t("actions.cancel"), reorderHint: storyI18n.t("uiSketch.states.reorderHint"),
+                actions: (name) => storyI18n.t("uiSketch.states.actions", { name }),
+                deleteTitle: (name) => storyI18n.t("uiSketch.states.deleteTitle", { name }),
+              }}
+              onChange={setActive}
+              onReorder={(ids) => setDraft(reorderUiSketchStates(draft, ids))}
+              onRename={(id, name) => setDraft(renameUiSketchState(draft, id, name))}
+              onDelete={(id) => setDraft(deleteUiSketchState(draft, id))}
+              onCreate={(id) => {
+                const nextId = `state-${tabs.length + 1}`;
+                setDraft(insertUiSketchStage(draft, id, nextId));
+                setActive(nextId);
+              }}
+            />
+          )}>
+            <UiSketchCanvas {...props} draft={draft} activeStageId={selected} {...display}
+              onDraftChange={(next) => { setDraft(next); setChanges((count) => count + 1); props.onDraftChange?.(next); }} />
+          </CompositionWorkflowView>
+        </div>
+      </Human2AiAppShell>
+    </ConfigProvider>
+  );
+}
+
 function ExternalToolHostFixture(props: UiSketchCanvasProps) {
   const [toolHost, setToolHost] = useState<HTMLDivElement | null>(null);
   const [clearActionHost, setClearActionHost] = useState<HTMLDivElement | null>(null);
@@ -1791,3 +2013,52 @@ function waitForCanvasRender(): Promise<void> {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
 }
+
+function SessionPreviewRefreshFixture() {
+  const [draft, setDraft] = useState<UiSketchDraft>(() => ({
+    ...cloneUiSketchDraft(UI_SKETCH_FIXTURE),
+    images: [{ ...UI_SKETCH_FIXTURE.rectangles[0], id: "session-preview", width: 240, height: 140, assetId: "before", crop: null,
+      previewReference: { sessionId: "source", sessionType: "ui-layout", stateId: "start", renderedRevision: 1 } }],
+  }));
+  return <div style={{ height: "100vh" }}>
+    <button data-preview-refresh onClick={() => setDraft(current => ({ ...current, images: current.images.map(image => ({
+      ...image, assetId: image.assetId === "before" ? "after" : "before", previewReference: { ...image.previewReference!, renderedRevision: image.previewReference!.renderedRevision + 1 },
+    })) }))}>模拟来源保存</button>
+    <output data-preview-crop>{JSON.stringify(draft.images[0].crop)}</output>
+    <UiSketchCanvas draft={draft} onDraftChange={setDraft} translatePrompt={translatePrompt}
+      onImageUpload={async () => "unused"}
+      resolveImageSource={id => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="140"><rect width="240" height="140" fill="${id === "before" ? '#c5d9ef' : '#afcfbc'}"/></svg>`)}`} />
+  </div>;
+}
+
+export const SessionPreviewRefresh: Story = {
+  name: "来源刷新只更新关联节点",
+  args: { draft: UI_SKETCH_FIXTURE },
+  render: () => <SessionPreviewRefreshFixture />,
+  play: async ({ canvasElement }) => {
+    const image = canvasElement.querySelector('[data-canvas-node="session-preview"] image')!;
+    const before = image.getAttribute("href");
+    const checkExecutions = captureCanvasNodeExecutions(canvasElement, ["session-preview"]);
+    canvasElement.querySelector<HTMLButtonElement>('[data-preview-refresh]')!.click();
+    await waitFor(() => { if (image.getAttribute("href") === before) throw new Error("Preview has not refreshed"); });
+    checkExecutions();
+    image.closest('[data-canvas-node]')!.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const doc = canvasElement.ownerDocument;
+    await waitFor(() => { if (!doc.querySelector('[data-crop-handle="south-east"]')) throw new Error("Crop editor has not loaded"); });
+    const handle = doc.querySelector<HTMLElement>('[data-crop-handle="south-east"]')!;
+    const preview = handle.closest('[data-crop-selection]')!.parentElement!;
+    const src = preview.querySelector("img")!.src, bounds = handle.getBoundingClientRect();
+    const pointer = { bubbles: true, pointerId: 44, clientX: bounds.x, clientY: bounds.y };
+    handle.dispatchEvent(new PointerEvent("pointerdown", pointer));
+    preview.dispatchEvent(new PointerEvent("pointermove", { ...pointer, clientX: bounds.x - 60, clientY: bounds.y - 30 }));
+    canvasElement.querySelector<HTMLButtonElement>('[data-preview-refresh]')!.click();
+    await waitForCanvasRender();
+    if (preview.querySelector("img")!.src !== src) throw new Error("Source refresh interrupted the crop gesture");
+    preview.dispatchEvent(new PointerEvent("pointerup", pointer));
+    await waitFor(() => {
+      const crop = JSON.parse(canvasElement.querySelector('[data-preview-crop]')!.textContent!);
+      if (!crop || crop.width >= .95) throw new Error("Final crop was lost during refresh");
+      if (preview.querySelector("img")!.src === src) throw new Error("Pending preview did not display after the gesture");
+    });
+  },
+};

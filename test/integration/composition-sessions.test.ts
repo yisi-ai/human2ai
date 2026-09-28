@@ -25,6 +25,7 @@ import {
   moveTextRegionCorner,
   setProcessingSemantic,
   updateAreaMetadata,
+  updateItemMetadata,
   type CompositionDraft,
   type CompositionRefinementPlan,
 } from "../../src/domain/composition/index.js";
@@ -73,6 +74,7 @@ describe("composition session API", () => {
     let draft = createCompositionState(createRefinableDraft(), "state-1", "portrait");
     draft = changeFrame(draft, { width: 900, height: 1600 });
     draft = moveItem(draft, "area-1", { x: 0.7, y: 0.8 });
+    draft = updateItemMetadata(draft, "area-1", { visible: false });
     draft = renameCompositionState(draft, "portrait", "竖版");
     draft = reorderCompositionStates(draft, ["portrait", "state-1"]);
     const saved = await server.inject({ method: "POST",
@@ -89,7 +91,8 @@ describe("composition session API", () => {
     expect(restored.states?.map(({ id, name }) => ({ id, name })))
       .toEqual([{ id: "portrait", name: "竖版" }, { id: "state-1", name: undefined }]);
     expect(restored.frame).toEqual(draft.frame);
-    expect(restored.areas[0]).toMatchObject({ x: 0.7, y: 0.8 });
+    expect(restored.areas[0]).toMatchObject({ x: 0.7, y: 0.8, visible: false });
+    expect(selectCompositionState(restored, "state-1").areas[0].visible).not.toBe(false);
     expect(selectCompositionState(restored, "state-1").frame).toEqual(createRefinableDraft().frame);
     const removed = deleteCompositionState(restored, "portrait");
     const deletion = await server.inject({ method: "POST",
