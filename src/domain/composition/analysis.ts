@@ -66,6 +66,7 @@ export interface CompositionInspection {
   kind: "composition-inspection";
   sourceFingerprint: string;
   processingSemantic: CompositionDraft["processingSemantic"];
+  previewMode: NonNullable<CompositionDraft["previewMode"]>;
   frame: CompositionDraft["frame"];
   overallNote: string;
   focusPoints: CompositionDraft["focusPoints"];
@@ -191,6 +192,7 @@ export function inspectComposition(input: CompositionDraft): CompositionInspecti
     planningIntersections: compositionPlanningIntersections(draft),
     sourceFingerprint: draftFingerprint(input),
     processingSemantic: draft.processingSemantic,
+    previewMode: draft.previewMode ?? "precise",
     frame: structuredClone(draft.frame),
     overallNote: draft.overallNote,
     focusPoints: draft.focusPoints.map((focus) => ({
@@ -434,6 +436,7 @@ function canonicalDraftJson(draft: CompositionDraft): string {
     version: draft.version,
     kind: draft.kind,
     processingSemantic: draft.processingSemantic,
+    ...(draft.previewMode === "soft" ? { previewMode: draft.previewMode } : {}),
     frame: {
       width: draft.frame.width,
       height: draft.frame.height,

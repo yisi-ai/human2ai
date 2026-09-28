@@ -20,7 +20,8 @@ import {
   changeCompositionFrameSize,
   compositionSymmetryRotations,
   createCompositionFrame,
-  isCompositionFrameRatioSupported,
+  DEFAULT_COMPOSITION_FRAME,
+  legacyCompositionFrame,
   moveCompositionFrame,
   resizeCompositionFrame,
   resizeCompositionFrameToBounds,
@@ -42,6 +43,7 @@ import type {
   CompositionNodeMetadataPatch,
   PasteCompositionItemsResult,
   CompositionProcessingSemantic,
+  CompositionPreviewMode,
   CompositionVisualWeight,
   Point,
   Primitive,
@@ -71,14 +73,16 @@ type DraftInput = Omit<CompositionDraft, "directionLine" | "frame"> &
 
 const ajv = new Ajv2020({ allErrors: true });
 const validateSchema = ajv.compile<DraftInput>(compositionDraftSchema);
+const validateFrameSchema = ajv.compile(compositionDraftSchema.properties.frame);
 
 export function createDraft(
-  frame: CompositionFrameSize = { width: 1600, height: 900 },
+  frame: CompositionFrameSize = DEFAULT_COMPOSITION_FRAME,
 ): CompositionDraft {
   return validateDraft({
     version: 1,
     kind: "composition-draft",
     processingSemantic: "scene-composition",
+    previewMode: "soft",
     frame: createCompositionFrame(frame),
     overallNote: "",
     focusPoints: [],
@@ -100,7 +104,7 @@ export function validateDraft(input: unknown): CompositionDraft {
   const legacyFrame = !validatedInput.frame.bounds;
   const draft = structuredClone(validatedInput) as unknown as CompositionDraft;
   draft.frame = legacyFrame
-    ? createCompositionFrame(validatedInput.frame)
+    ? legacyCompositionFrame(validatedInput.frame)
     : structuredClone(validatedInput.frame as CompositionFrame);
   if (legacyFrame) migrateLegacyDraftCoordinates(draft);
   if (draft.plans && new Set(draft.plans.map((plan) => plan.id)).size !== draft.plans.length) {
@@ -393,10 +397,18 @@ export function moveTextRegionCorner(
 ): CompositionDraft {
   const draft = validateDraft(input);
   const area = findArea(draft, id);
-  if (!isCompositionTextRegion(area) || !Number.isInteger(index) || index < 0 || index > 3) return input;
-  if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return input;
+  const moved = moveTextRegionAreaCorner(area, index, point);
+  if (moved === area) return input;
+  draft.areas[draft.areas.indexOf(area)] = moved;
+  return draft;
+}
+
+/** Corner geometry for an already validated area; also used before scheduling a UI frame. */
+export function moveTextRegionAreaCorner(area: CompositionArea, index: number, point: Point): CompositionArea {
+  if (!isCompositionTextRegion(area) || !Number.isInteger(index) || index < 0 || index > 3) return area;
+  if (!Number.isFinite(point.x) || !Number.isFinite(point.y)) return area;
   const geometry = areaGeometry({ ...area, x: 0, y: 0, rotation: 0 }, COMPOSITION_CANVAS);
-  if (geometry.type !== "polygon") return input;
+  if (geometry.type !== "polygon") return area;
   const angle = (area.rotation ?? 0) * Math.PI / 180;
   const dx = (point.x - area.x) * COMPOSITION_CANVAS.width;
   const dy = (point.y - area.y) * COMPOSITION_CANVAS.height;
@@ -408,20 +420,19 @@ export function moveTextRegionCorner(
   const ys = geometry.points.map((point) => point.y);
   const left = Math.min(...xs), top = Math.min(...ys);
   const width = Math.max(...xs) - left, height = Math.max(...ys) - top;
-  if (width < 8 || height < 8) return input;
+  if (width < 8 || height < 8) return area;
   const corners = geometry.points.map((point) => ({
     x: (point.x - left) / width, y: (point.y - top) / height,
   })) as NonNullable<CompositionArea["corners"]>;
-  if (!isConvexTextOutline(corners)) return input;
+  if (!isConvexTextOutline(corners)) return area;
   const offsetX = left + width / 2, offsetY = top + height / 2;
-  area.x += (offsetX * Math.cos(angle) - offsetY * Math.sin(angle)) / COMPOSITION_CANVAS.width;
-  area.y += (offsetX * Math.sin(angle) + offsetY * Math.cos(angle)) / COMPOSITION_CANVAS.height;
-  area.width = width / COMPOSITION_CANVAS.width;
-  area.height = height / COMPOSITION_CANVAS.height;
-  area.aspect = "free";
-  area.corners = corners;
-  area.area = area.width * area.height * polygonArea(corners);
-  return draft;
+  return {
+    ...area,
+    x: area.x + (offsetX * Math.cos(angle) - offsetY * Math.sin(angle)) / COMPOSITION_CANVAS.width,
+    y: area.y + (offsetX * Math.sin(angle) + offsetY * Math.cos(angle)) / COMPOSITION_CANVAS.height,
+    width: width / COMPOSITION_CANVAS.width, height: height / COMPOSITION_CANVAS.height,
+    aspect: "free", corners, area: (width / COMPOSITION_CANVAS.width) * (height / COMPOSITION_CANVAS.height) * polygonArea(corners),
+  };
 }
 
 export function resizeArea(
@@ -603,6 +614,13 @@ export function updateCompositionImage(
   return draft;
 }
 
+export function setCompositionPreviewMode(
+  draft: CompositionDraft,
+  previewMode: CompositionPreviewMode,
+): CompositionDraft {
+  return (draft.previewMode ?? "precise") === previewMode ? draft : { ...draft, previewMode };
+}
+
 export function setProcessingSemantic(
   input: CompositionDraft,
   processingSemantic: CompositionProcessingSemantic,
@@ -687,19 +705,8 @@ function validateFrame(frame: unknown): asserts frame is CompositionFrame {
   if (unknownFields.length > 0) {
     throw new Error(`draft.frame contains unknown fields: ${unknownFields.join(", ")}.`);
   }
-  for (const key of ["width", "height"] as const) {
-    if (
-      !Number.isInteger(values[key]) ||
-      (values[key] as number) < 256 ||
-      (values[key] as number) > 4096
-    ) {
-      throw new Error(`draft.frame.${key} must be an integer from 256 to 4096.`);
-    }
-  }
+  if (!validateFrameSchema(frame)) throw new Error(formatValidationErrors(validateFrameSchema.errors));
   const ratio = (values.width as number) / (values.height as number);
-  if (!isCompositionFrameRatioSupported(values.width as number, values.height as number)) {
-    throw new Error("Draft aspect ratio must be between 1:2 and 2:1.");
-  }
   if (values.bounds !== undefined) validateFrameBounds(values.bounds, ratio);
 }
 

@@ -18,6 +18,7 @@ import {
   type CompositionAreaEditorLabels,
   type CompositionPlacementTool,
   type CompositionCanvasViewportAction,
+  type CompositionCanvasProps,
 } from "./CompositionCanvas";
 import type { CanvasImageEditorLabels } from "./CanvasImageEditorFields";
 import type { Human2AiCanvasNodeEditorLabels } from "./Human2AiCanvasNodeEditor";
@@ -92,6 +93,7 @@ interface CompositionWorkflowCanvasProps {
   onionSkin?: boolean;
   visibilityLabels?: { visibility: string; visible: string; hidden: string };
   frameLocked?: boolean;
+  frameLabels?: CompositionCanvasProps["frameLabels"];
   canvasZoom?: number;
   canvasViewportAction?: CompositionCanvasViewportAction;
   onCanvasZoomChange?: (zoom: number) => void;
@@ -229,6 +231,7 @@ function CompositionWorkflowCanvasView({
   onItemDoubleClick,
   showPlanning = true,
   frameLocked = false,
+  frameLabels,
   canvasZoom,
   canvasViewportAction,
   onCanvasZoomChange,
@@ -303,6 +306,7 @@ function CompositionWorkflowCanvasView({
             onionSkin={onionSkin}
             visibilityLabels={visibilityLabels}
             frameLocked={frameLocked}
+            frameLabels={frameLabels}
             zoom={canvasZoom}
             viewportAction={canvasViewportAction}
             backgroundPattern={canvasBackgroundPattern}
@@ -336,6 +340,7 @@ function CompositionWorkflowCanvasView({
           <>
             <CompositionCanvas
               draft={refinement.refinedDraft}
+              frameLabels={frameLabels}
               showPlanning={showPlanning}
               zoom={canvasZoom}
               viewportAction={canvasViewportAction}

@@ -92,7 +92,7 @@ describe("composition light sources", () => {
       expect(svg).toContain(`filter="url(#composition-light-${id}-soften)"`);
     }
     const i18n = createAppI18n("zh-CN");
-    const prompt = buildCompositionPrompt(draft, (key, values) => i18n.t(promptTranslationKey("composition", key), values));
+    const prompt = buildCompositionPrompt({ ...draft, previewMode: "soft" }, (key, values) => i18n.t(promptTranslationKey("composition", key), values));
     expect(prompt).toContain("光源 1");
     expect(prompt).toContain("光源 2");
     expect(prompt).toContain("逐个理解多个光源");
@@ -103,7 +103,7 @@ describe("composition light sources", () => {
     const i18n = createAppI18n(locale);
     const translate = (key: string, values?: Record<string, string | number>) => i18n.t(promptTranslationKey("composition", key), values);
     const on = updateAreaMetadata(fixture(), "area-1", { isLightSource: true });
-    const prompt = buildCompositionPrompt(on, translate);
+    const prompt = buildCompositionPrompt({ ...on, previewMode: "soft" }, translate);
     expect(prompt).toContain(translate("lightSourceGuidance"));
     expect(prompt).toContain(translate("lightSourceNumber", { index: 1 }));
     expect(prompt).not.toContain(translate("areaNumber", { index: 1 }));
@@ -121,7 +121,7 @@ describe("composition light sources", () => {
     let draft = updateItemMetadata(updateAreaMetadata(fixture(), "area-1", { isLightSource: true }), "area-1", { note });
     const second = addArea(draft, { primitive: "quadrilateral", x: 0.2, y: 0.2, area: 0.02 });
     draft = updateAreaMetadata(second.draft, second.id, { isLightSource: true });
-    const prompt = buildCompositionPrompt(draft, translate);
+    const prompt = buildCompositionPrompt({ ...draft, previewMode: "soft" }, translate);
     const requirement = translate("lightBandGuidance");
     expect(prompt.split(requirement)).toHaveLength(3);
     expect(prompt).toContain(note);

@@ -1,4 +1,5 @@
-import { useRef } from "react";
+import { useLayoutEffect, useRef } from "react";
+import { canvasFrameAtBounds, MINIMUM_CANVAS_FRAME_SIZE } from "../../../../../src/domain/canvas-frame";
 import type { MouseEvent, PointerEvent } from "react";
 
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
@@ -8,6 +9,7 @@ import {
   type CanvasNodeBounds,
   type CanvasNodePoint,
   type CanvasNodeProps,
+  type CanvasNodeResizeChange,
 } from "./CanvasNode";
 import { CanvasShape } from "./CanvasShape";
 
@@ -45,6 +47,10 @@ export interface CanvasFrameProps
     | "y"
   > {
   bounds: CanvasNodeBounds;
+  caption?: string;
+  name?: string;
+  interactionResetKey?: string | number;
+  onBoundsChange?: (bounds: CanvasNodeBounds) => void;
   onMove?: (change: CanvasFrameMoveChange) => void;
 }
 
@@ -52,6 +58,10 @@ export function CanvasFrame({
   id,
   label,
   bounds,
+  caption,
+  name,
+  interactionResetKey,
+  onBoundsChange,
   selected = false,
   locked = false,
   onMove,
@@ -61,6 +71,33 @@ export function CanvasFrame({
 }: CanvasFrameProps) {
   const moveInteractionRef = useRef<MoveInteraction | null>(null);
   const suppressClickRef = useRef(false);
+  const pendingBounds = useRef<CanvasNodeBounds | null>(null);
+  const scheduledFrame = useRef<number | null>(null);
+  const changeBounds = useRef(onBoundsChange);
+  useLayoutEffect(() => { changeBounds.current = onBoundsChange; });
+  useLayoutEffect(() => () => {
+    if (scheduledFrame.current !== null) cancelAnimationFrame(scheduledFrame.current);
+    scheduledFrame.current = null;
+    pendingBounds.current = null;
+    moveInteractionRef.current = null;
+  }, [interactionResetKey, locked]);
+  function flushBounds(): void {
+    if (scheduledFrame.current !== null) cancelAnimationFrame(scheduledFrame.current);
+    scheduledFrame.current = null;
+    const next = pendingBounds.current;
+    pendingBounds.current = null;
+    if (next) changeBounds.current?.(next);
+  }
+  function queueBounds(next: CanvasNodeBounds): void {
+    pendingBounds.current = next;
+    if (scheduledFrame.current === null) scheduledFrame.current = requestAnimationFrame(flushBounds);
+  }
+  function resizeBounds(change: CanvasNodeResizeChange): void {
+    queueBounds(canvasFrameAtBounds({
+      x: change.sourcePosition.x + change.bounds.x, y: change.sourcePosition.y + change.bounds.y,
+      width: change.bounds.width, height: change.bounds.height,
+    }));
+  }
   const nodeClasses = ["human2ai-canvas-frame__node", className]
     .filter(Boolean)
     .join(" ");
@@ -72,7 +109,7 @@ export function CanvasFrame({
   };
 
   function startMove(event: PointerEvent<SVGRectElement>): void {
-    if (selected || locked || !onMove || event.button !== 0) return;
+    if (selected || locked || (!onMove && !onBoundsChange) || event.button !== 0) return;
     suppressClickRef.current = false;
     const frame = event.currentTarget.closest<SVGGElement>("[data-canvas-frame]");
     const node = frame?.querySelector<SVGGElement>("[data-canvas-node]");
@@ -96,7 +133,7 @@ export function CanvasFrame({
 
   function move(event: PointerEvent<SVGRectElement>): void {
     const interaction = moveInteractionRef.current;
-    if (!interaction || interaction.pointerId !== event.pointerId || !onMove) return;
+    if (!interaction || interaction.pointerId !== event.pointerId || (!onMove && !onBoundsChange)) return;
     event.preventDefault();
     event.stopPropagation();
     if (
@@ -114,7 +151,13 @@ export function CanvasFrame({
       x: pointer.x - interaction.start.x,
       y: pointer.y - interaction.start.y,
     };
-    onMove({
+    const next = {
+      ...interaction.sourceBounds,
+      x: Math.round(interaction.sourceBounds.x + delta.x),
+      y: Math.round(interaction.sourceBounds.y + delta.y),
+    };
+    if (onBoundsChange) queueBounds(next);
+    else onMove?.({
       id,
       sourceBounds: interaction.sourceBounds,
       bounds: {
@@ -129,6 +172,8 @@ export function CanvasFrame({
   function finishMove(event: PointerEvent<SVGRectElement>): void {
     const interaction = moveInteractionRef.current;
     if (interaction?.pointerId !== event.pointerId) return;
+    if (onBoundsChange && event.type === "pointerup") move(event);
+    flushBounds();
     suppressClickRef.current = interaction.moved;
     moveInteractionRef.current = null;
     releasePointer(event.currentTarget, event.pointerId);
@@ -159,6 +204,7 @@ export function CanvasFrame({
     >
       <CanvasNode
         {...nodeProps}
+        key={`${interactionResetKey ?? ""}:${locked}`}
         id={id}
         label={label}
         x={bounds.x + bounds.width / 2}
@@ -169,6 +215,11 @@ export function CanvasFrame({
         onSelect={onSelect}
         resizeHandles={CANVAS_NODE_RESIZE_HANDLES}
         showRotationHandle={false}
+        {...(onBoundsChange ? {
+          resizeMode: "free" as const, resizeCenter: { x: 0, y: 0 }, resizeHitSize: 32,
+          minimumWidth: MINIMUM_CANVAS_FRAME_SIZE, minimumHeight: MINIMUM_CANVAS_FRAME_SIZE,
+          onResize: resizeBounds, onResizeEnd: flushBounds,
+        } : {})}
         className={nodeClasses}
       >
         <CanvasShape
@@ -185,7 +236,7 @@ export function CanvasFrame({
           height={nodeBounds.height}
           data-canvas-frame-hit="true"
           data-frame-edge-mode={selected ? "resize" : "move"}
-          data-frame-movable={!selected && !locked && onMove ? "true" : "false"}
+          data-frame-movable={!selected && !locked && (onMove || onBoundsChange) ? "true" : "false"}
           aria-hidden="true"
           onClick={handleHitClick}
           onPointerDown={startMove}
@@ -197,12 +248,19 @@ export function CanvasFrame({
             if (!interaction) return;
             suppressClickRef.current = interaction.moved;
             moveInteractionRef.current = null;
+            flushBounds();
             window.setTimeout(() => {
               suppressClickRef.current = false;
             }, 0);
           }}
         />
       </CanvasNode>
+      {name || caption ? (
+        <g className="human2ai-canvas-frame__caption"
+          transform={`translate(${bounds.x} ${bounds.y - 12})`} aria-hidden="true">
+          <text>{name ? `${name} · ${Math.round(bounds.width)} × ${Math.round(bounds.height)}` : caption}</text>
+        </g>
+      ) : null}
     </g>
   );
 }

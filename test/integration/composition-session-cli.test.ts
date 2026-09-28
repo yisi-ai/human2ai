@@ -530,6 +530,7 @@ describe("composition session CLI", () => {
       };
       expect(reference).toMatchObject({
         kind: "composition-reference",
+        previewMode: "soft",
         sessionId: session.id,
         refinementRunId: applied.id,
         sourceDraftRevision: 1,

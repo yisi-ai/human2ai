@@ -43,9 +43,20 @@ interface DraftVersionStoreOptions<TDraft> {
   validateDraft(input: unknown): TDraft;
   fingerprint(draft: TDraft): string;
   validateTransition?(before: TDraft, after: TDraft): void;
+  validateSessionDraft?(sessionId: string, draft: TDraft, previous: TDraft | undefined): void;
+}
+
+export interface DraftSavedEvent<TDraft> {
+  version: DraftVersion<TDraft>;
+  previewBatchId?: string;
 }
 
 export class DraftVersionStore<TDraft> {
+  private readonly listeners = new Set<(event: DraftSavedEvent<TDraft>) => void>();
+  onSaved(listener: (event: DraftSavedEvent<TDraft>) => void): () => void {
+    this.listeners.add(listener);
+    return () => { this.listeners.delete(listener); };
+  }
   constructor(
     private readonly database: DatabaseConnection,
     private readonly options: DraftVersionStoreOptions<TDraft>,
@@ -88,19 +99,21 @@ export class DraftVersionStore<TDraft> {
   createDraftVersion(
     sessionId: string,
     input: CreateDraftVersionInput,
+    previewBatchId?: string,
   ): DraftVersion<TDraft> {
-    return this.appendDraftVersion(sessionId, input);
+    return this.appendDraftVersion(sessionId, input, undefined, previewBatchId);
   }
 
   private appendDraftVersion(
     sessionId: string,
     input: CreateDraftVersionInput,
     restoredProcessing?: { value: StyleProcessing | undefined },
+    previewBatchId?: string,
   ): DraftVersion<TDraft> {
     const draft = this.validateInput(input.draft);
     const fingerprint = this.options.fingerprint(draft);
 
-    return this.database.transaction(() => {
+    const version = this.database.transaction(() => {
       this.assertSessionType(sessionId);
       const actualLatestRevision = this.latestDraftRevision(sessionId);
       if (input.expectedLatestRevision !== actualLatestRevision) {
@@ -109,6 +122,8 @@ export class DraftVersionStore<TDraft> {
           actualLatestRevision,
         );
       }
+      this.options.validateSessionDraft?.(sessionId, draft,
+        actualLatestRevision > 0 ? this.getDraftVersion(sessionId, actualLatestRevision).draft : undefined);
 
       if (!restoredProcessing && actualLatestRevision > 0 && this.options.validateTransition) {
         try {
@@ -164,6 +179,14 @@ export class DraftVersionStore<TDraft> {
       }
       return this.getDraftVersion(sessionId, revision);
     })();
+    // Spatial operations may wrap this append in another transaction. Notify only
+    // after that transaction committed, and never publish a rolled-back version.
+    queueMicrotask(() => {
+      if (!this.listeners.size || !this.database.open) return;
+      const row = this.database.prepare(`SELECT id FROM ${this.options.table} WHERE id = ?`).get(version.id);
+      if (row) for (const listener of this.listeners) listener({ version, previewBatchId });
+    });
+    return version;
   }
 
   undoDraftVersion(

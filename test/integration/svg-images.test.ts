@@ -22,6 +22,8 @@ const svg = `<?xml version="1.0" encoding="UTF-8"?>
   <path d="M4 28 Q2 4 20 4 Q22 26 4 28Z" fill="url(#leaf)"/>
 </svg>`;
 
+const embedSvg = (source: string) => `<svg xmlns="http://www.w3.org/2000/svg" width="24" height="32"><image width="24" height="32" href="data:image/svg+xml;base64,${Buffer.from(source).toString("base64")}"/></svg>`;
+
 describe("SVG image content", () => {
   let database: DatabaseConnection;
   let server: FastifyInstance;
@@ -135,6 +137,17 @@ describe("SVG image content", () => {
     expect((await server.inject(`/api/v1/sessions/${other.id}/assets/${asset.id}/content`)).statusCode).toBe(404);
   });
 
+  it("preserves nested static SVG previews without rasterizing their text", async () => {
+    const source = embedSvg(embedSvg(svg));
+    const uploaded = await server.inject({
+      method: "POST", url: `/api/v1/sessions/${sessionId}/assets?filename=preview.svg`,
+      headers: { "content-type": "image/svg+xml" }, payload: Buffer.from(source),
+    });
+    expect(uploaded.statusCode, uploaded.body).toBe(201);
+    expect(uploaded.json()).toMatchObject({ mimeType: "image/svg+xml", width: 24, height: 32 });
+    expect((await server.inject(`/api/v1/sessions/${sessionId}/assets/${uploaded.json().id}/content`)).body).toBe(source);
+  });
+
   it.each([
     '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path></svg>',
     '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><script>alert(1)</script></svg>',
@@ -145,6 +158,10 @@ describe("SVG image content", () => {
     '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><path fill="url(https://example.com/paint.svg#x)"/></svg>',
     '<!DOCTYPE svg [<!ENTITY x SYSTEM "file:///etc/passwd">]><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"><text>&x;</text></svg>',
     '<?xml-stylesheet href="https://example.com/style.css"?><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"/>',
+    embedSvg(embedSvg('<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>')),
+    embedSvg('<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.com/image.png"/></svg>'),
+    embedSvg('<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"/>'),
+    embedSvg('not an SVG'),
   ])("rejects malformed or non-self-contained SVG before storage: %s", async (source) => {
     const uploaded = await server.inject({
       method: "POST",

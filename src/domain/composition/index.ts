@@ -17,6 +17,7 @@ export {
   moveFrame,
   moveItem,
   moveTextRegionCorner,
+  moveTextRegionAreaCorner,
   pasteCompositionItems,
   removeItem,
   resizeArea,
@@ -28,6 +29,7 @@ export {
   rotateDirectionLine,
   rotateCompositionImage,
   setProcessingSemantic,
+  setCompositionPreviewMode,
   setAreaAspect,
   updateAreaMetadata,
   updateCompositionImage,
@@ -39,8 +41,6 @@ export {
 export {
   COMPOSITION_CANVAS,
   DEFAULT_COMPOSITION_FRAME,
-  MAXIMUM_COMPOSITION_FRAME_RATIO,
-  MINIMUM_COMPOSITION_FRAME_RATIO,
   canvasPointToFrame,
   compositionFrameSizeForRatio,
   compositionSymmetryRotations,
@@ -48,7 +48,6 @@ export {
   compositionWorldSize,
   frameBoundsInCanvas,
   framePointToCanvas,
-  isCompositionFrameRatioSupported,
 } from "./frame.ts";
 export {
   areaGeometry,
@@ -65,7 +64,7 @@ export {
   inspectComposition,
 } from "./analysis.ts";
 export { compositionPlanningIntersections, type CompositionPlanIntersection, type CompositionPlanIntersectionSource } from "./planning-intersections.ts";
-export { renderCompositionNodesSvg, renderCompositionLightSourceSvg, renderCompositionReferenceSvg, renderCompositionSvg } from "./render.ts";
+export { renderCompositionNodesSvg, renderCompositionLightSourceSvg, renderCompositionSoftAreaSvg, renderCompositionDisplayTextSvg, renderCompositionReferenceSvg, renderCompositionSvg } from "./render.ts";
 export {
   beginCompositionRefinement,
   createCompositionWorkflowState,

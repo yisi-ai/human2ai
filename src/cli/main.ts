@@ -7,6 +7,7 @@ import path from "node:path";
 import process from "node:process";
 import { fileURLToPath } from "node:url";
 import sharp from "sharp";
+import { compositionSvgForRaster } from "../domain/composition/raster.ts";
 import {
   CliIntegrationError,
   executeIntegrationCommand,
@@ -1162,7 +1163,7 @@ function parseStyleProcessing(input: unknown): StyleProcessing {
 
 async function writeCompositionPreview(previewPath: string, svg: string) {
   if (path.extname(previewPath).toLowerCase() === ".png") {
-    await sharp(Buffer.from(svg)).png().toFile(previewPath);
+    await sharp(Buffer.from(await compositionSvgForRaster(svg))).png().toFile(previewPath);
     return { previewSvg: null, previewPng: previewPath };
   }
   await writeFile(previewPath, svg, "utf8");
@@ -1367,10 +1368,12 @@ async function writeSessionReference(
     ),
   );
   const draft = run.result.refinedDraft;
-  await sharp(Buffer.from(renderCompositionReferenceSvg(draft, await sessionImageSources(draft, sessionId, dependencies)))).png().toFile(outputPath);
+  const svg = renderCompositionReferenceSvg(draft, await sessionImageSources(draft, sessionId, dependencies));
+  await sharp(Buffer.from(await compositionSvgForRaster(svg))).png().toFile(outputPath);
   return {
     version: 1,
     kind: "composition-reference",
+    previewMode: draft.previewMode ?? "precise",
     sessionId: run.sessionId,
     refinementRunId: run.id,
     sourceDraftRevision: run.sourceDraftRevision,

@@ -80,10 +80,12 @@
         "disabled-without-session",
         "localized-labels",
         "narrow-sidebar",
-        "compact-agent-command-copy"
+        "compact-agent-command-copy",
+        "secondary-item-leading-presentation"
       ],
       "slots": [
         "primary-item",
+        "secondary-item",
         "created-at",
         "updated-at",
         "node-count",
@@ -106,7 +108,7 @@
         "需要组件读取会话 API、路由、草稿或管理自动保存状态",
         "需要把信息放入画布 SideActionPanel 或直接执行 Agent 连接"
       ],
-      "differenceSummary": "项目本地的右侧栏基本信息模块，以无卡片边框的定义列表展示可选的首要信息项、调用方注入的创建时间、最近修改时间与节点数，并组合共享实验态 ActionButton 提供紧凑的 Agent 命令复制按钮、执行中/成功/失败反馈、防重复提交及无会话禁用状态；组件自身负责运行时命令解析、空内容校验和剪贴板写入。组件只负责按 locale 格式化时间和展示复制状态；首要信息的具体控件、会话读取、草稿节点统计、最近成功保存时间、包含 CLI 命令的本地化 Agent 连接命令模板均由页面应用层提供。BasicButton 不管理异步动作反馈，StatusCard 表达状态而非只读元数据，SideActionPanel 承载画布操作而不接收本信息模块。",
+      "differenceSummary": "项目本地的右侧栏基本信息模块，以无卡片边框的定义列表展示可选的首要信息项、调用方注入的创建时间、最近修改时间与节点数，并组合共享实验态 ActionButton 提供紧凑的 Agent 命令复制按钮、执行中/成功/失败反馈、防重复提交及无会话禁用状态；组件自身负责运行时命令解析、空内容校验和剪贴板写入。组件只负责按 locale 格式化时间和展示复制状态；首要信息的具体控件、会话读取、草稿节点统计、最近成功保存时间、包含 CLI 命令的本地化 Agent 连接命令模板均由页面应用层提供。BasicButton 不管理异步动作反馈，StatusCard 表达状态而非只读元数据，SideActionPanel 承载画布操作而不接收本信息模块。 可选 secondaryItem 紧接 primaryItem，用于在构图模式下方呈现预览模式。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -353,7 +355,8 @@
         "node-origin-presentation",
         "agent-node-description",
         "imported-node-description",
-        "wide-image-and-camera-editor"
+        "wide-image-and-camera-editor",
+        "origin-before-editor-title"
       ],
       "slots": [
         "node-kind",
@@ -384,7 +387,7 @@
         "需要组件直接持久化草图、读取 API、拥有业务历史或修改系统节点种类",
         "需要普通页面表单而不是画布节点的受控模态编辑"
       ],
-      "differenceSummary": "Human2AI 项目本地受控构图节点编辑器，在共享 TextMarkEditor 模态边界内统一备注与景别字段，景别默认为自动，并以节点种类区分形状、点、线、文字和图像；文字区域同样通过景别表达前后遮挡层次。景别下拉撑满属性列并保留足够宽度，以完整呈现英文选项；图像节点把公共属性保留在左栏，并把 trailing-fields 作为完整右栏，在窄视口恢复单列。字段变更立即上报 patch，底部左侧组合共享删除确认；面板不显示保存或取消动作，也不拥有 Draft、API、页面防抖自动保存或历史。调用方通过 title-extra 在编辑标题右侧组合节点显示/隐藏开关，并可在公共字段前、属性行内或公共字段后组合领域字段；空内容保持可编辑，长内容在单一外边界内滚动，disabled 时字段与删除均退出交互。来源标记与 UI 编辑器共享语义，Agent 与参考画面导入节点显示各自的只读说明，备注继续可编辑。 所有图像种类（含 3D 镜头）的节点编辑器采用 880px 桌面宽度，受视口限制；左侧属性为两列，保证公共属性与右侧内容均有足够空间。 备注使用本地输入调度适配器即时回显，共享 TextMarkEditor 的焦点、尺寸、禁用和输入法行为保持不变。",
+      "differenceSummary": "Human2AI 项目本地受控构图节点编辑器，在共享 TextMarkEditor 模态边界内统一备注与景别字段，景别默认为自动，并以节点种类区分形状、点、线、文字和图像；文字区域同样通过景别表达前后遮挡层次。景别下拉撑满属性列并保留足够宽度，以完整呈现英文选项；图像节点把公共属性保留在左栏，并把 trailing-fields 作为完整右栏，在窄视口恢复单列。字段变更立即上报 patch，底部左侧组合共享删除确认；面板不显示保存或取消动作，也不拥有 Draft、API、页面防抖自动保存或历史。调用方通过 title-extra 在编辑标题右侧组合节点显示/隐藏开关，并可在公共字段前、属性行内或公共字段后组合领域字段；空内容保持可编辑，长内容在单一外边界内滚动，disabled 时字段与删除均退出交互。来源标记与 UI 编辑器共享语义，Agent 与参考画面导入节点显示各自的只读说明，备注继续可编辑。 所有图像种类（含 3D 镜头）的节点编辑器采用 880px 桌面宽度，受视口限制；左侧属性为两列，保证公共属性与右侧内容均有足够空间。 备注使用本地输入调度适配器即时回显，共享 TextMarkEditor 的焦点、尺寸、禁用和输入法行为保持不变。 标题栏统一按来源标记、标题文字、右侧显示/隐藏开关排列，来源标记不再占用字段区；沿用现有标记语义和 title-extra 插槽。 标题与显示/隐藏开关从左连续排列，中间仅保留 8px token 间距，不再两端对齐。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -423,7 +426,12 @@
         "alt-center-resizing",
         "non-rotatable-frame",
         "locked-noninteractive-state",
-        "canvas-only-presentation"
+        "canvas-only-presentation",
+        "top-left-frame-caption",
+        "shared-output-frame-policy",
+        "animation-frame-boundary-updates",
+        "final-pointer-position-commit",
+        "reset-cancels-pending-frame"
       ],
       "slots": [
         "id",
@@ -439,7 +447,11 @@
         "nudge",
         "move",
         "resize",
-        "key-down"
+        "key-down",
+        "caption",
+        "name",
+        "bounds-change",
+        "interaction-reset-key"
       ],
       "aliases": [
         "CanvasBoundary",
@@ -450,10 +462,10 @@
         "human2ai 的构图或 UI 画布需要显示无填充、未选中时四边移动且选中后四边与四角缩放的受控结构边界"
       ],
       "doNotUseWhen": [
-        "需要组件拥有构图比例、UI 草图尺寸、导出、裁剪或持久化等领域规则",
+        "需要组件读取 API、拥有保存、历史或领域存储坐标",
         "需要真正拥有子节点、层级、整体变换或裁剪关系的画布组"
       ],
-      "differenceSummary": "项目本地画布基础组件，组合 CanvasNode 与 rectangle CanvasShape，把世界 bounds 映射为不可旋转的透明画框；未选中时四条边的宽透明描边负责受控移动且拖动不会选中画框，点击后进入选中态，四边立即切换为屏幕尺寸稳定、互不重叠的缩放命中区并与四角组成八向缩放，调用方可选择自由或等比规则。可见框线不填充且不接管内部指针，并沿用 CanvasNode 的点击/键盘选择、键盘微移、锁定和操作外框；组件只移动或调整自身边界，不拥有或连带移动子节点，也不拥有领域数据、导出、裁剪、保存或真正的组层级。",
+      "differenceSummary": "项目本地画布基础组件，组合 CanvasNode 与 rectangle CanvasShape，把世界 bounds 映射为不可旋转的透明画框；未选中时四条边的宽透明描边负责受控移动且拖动不会选中画框，点击后进入选中态，四边立即切换为屏幕尺寸稳定、互不重叠的缩放命中区并与四角组成八向缩放，调用方可选择自由或等比规则。可见框线不填充且不接管内部指针，并沿用 CanvasNode 的点击/键盘选择、键盘微移、锁定和操作外框；组件只移动或调整自身边界，不拥有或连带移动子节点，也不拥有领域数据、导出、裁剪、保存或真正的组层级。 可选 caption 在左上角上方 12 个世界单位显示名称和尺寸，复用原 UI 界面标签的字体与颜色；纯展示且不命中指针，具体名称与尺寸语义由调用方提供。 onBoundsChange 模式作为 UI 与构图共同的输出画框入口，统一 min=10、自由缩放、Shift 等比、Alt 中心缩放、32px 命中区及取整；name 自动组合像素尺寸。指针更新每帧最多提交一次，松手计算最终位置并立即提交，取消/丢失捕获保留最后有效值，锁定、状态/历史重置或卸载取消未完成更新。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -631,7 +643,8 @@
         "canvas-node-optional-rotation",
         "canvas-node-double-click",
         "controlled-line-height",
-        "read-only-presentation"
+        "read-only-presentation",
+        "explicit-alphabetic-baseline"
       ],
       "slots": [
         "text",
@@ -642,7 +655,8 @@
         "fill",
         "text-anchor",
         "bounds-change",
-        "accessible-label"
+        "accessible-label",
+        "baseline"
       ],
       "aliases": [
         "TextElement",
@@ -656,7 +670,7 @@
         "需要自动折行、富文本、固定编辑框宽度或组件内部拥有文字编辑状态",
         "需要通过外层 transform 缩放文字而不修改 fontSize 数据"
       ],
-      "differenceSummary": "项目本地 SVG 纯文字组件，按换行符拆分 tspan 并保留空行，不自动折行，也不保存独立文字框宽高；文字使用 text-before-edge 把数据原点稳定对齐到实际顶部，并可通过 onBoundsChange 上报浏览器按真实字体、字号与多行内容计算的 SVG getBBox 几何。与 CanvasNode 的 font-size 模式组合后，四边或四角缩放统一输出单一比例，由业务更新受控 fontSize 而不是拉伸字形；实际位置、拖动、旋转、双击和业务数据仍由 CanvasNode 与调用方负责。 内容、字体属性与字体加载变化时测量文字；视口缩放引起的字形取整浮动不回写节点尺寸。",
+      "differenceSummary": "项目本地 SVG 纯文字组件，按换行符拆分 tspan 并保留空行，不自动折行，也不保存独立文字框宽高；文字使用 text-before-edge 把数据原点稳定对齐到实际顶部，并可通过 onBoundsChange 上报浏览器按真实字体、字号与多行内容计算的 SVG getBBox 几何。与 CanvasNode 的 font-size 模式组合后，四边或四角缩放统一输出单一比例，由业务更新受控 fontSize 而不是拉伸字形；实际位置、拖动、旋转、双击和业务数据仍由 CanvasNode 与调用方负责。 内容、字体属性与字体加载变化时测量文字；视口缩放引起的字形取整浮动不回写节点尺寸。 可选 baseline 指定局部 alphabetic 基线，每行以绝对 y 定位；未提供时保留原有 text-before-edge 行为。UI 编辑器与服务端导出使用相同基线和行距，baseline 变化进入既有测量依赖。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -688,7 +702,8 @@
         "canvas-node-optional-rotation",
         "canvas-node-double-click",
         "accessible-alt-label",
-        "transparent-image-background"
+        "transparent-image-background",
+        "retain-last-preview-until-decoded"
       ],
       "slots": [
         "source",
@@ -702,7 +717,8 @@
         "loading-label",
         "error-label",
         "load-event",
-        "error-event"
+        "error-event",
+        "retainPreviousSource"
       ],
       "aliases": [
         "ImageElement",
@@ -760,7 +776,9 @@
         "native-save-file-picker",
         "browser-download-fallback",
         "read-only-image-download",
-        "download-progress-error-cancellation"
+        "download-progress-error-cancellation",
+        "locked-source-with-editable-crop",
+        "separate-controls-and-preview-layout"
       ],
       "slots": [
         "source",
@@ -770,7 +788,9 @@
         "disabled",
         "upload",
         "crop-change",
-        "read-file"
+        "read-file",
+        "sourceLocked",
+        "renderLayout"
       ],
       "aliases": [
         "ImageNodeEditorFields",
@@ -784,7 +804,7 @@
         "需要在画布工具点击时立即打开文件选择器，或需要普通页面图片上传",
         "需要组件创建会话、决定资源目录、持久化 assetId 或永久改写源图片"
       ],
-      "differenceSummary": "项目本地受控图片节点编辑面板，组合 BasicButton、源图预览与直接操作的裁剪选择框；仅在调用方把它放入双击节点编辑器后出现并完整占据属性区右栏。未绑定图片时提供上传和空预览，绑定后提供替换；裁剪框直接覆盖源图预览，可拖动位置并通过四个角点独立改变宽高，结束操作后回传归一化非破坏 crop 及其源像素宽高比，不打开二级弹窗或显示滑动条。组件只接收异步上传与 crop-change 回调，不读取会话、API、资源目录或草稿。 SVG 复用同一图片节点及上传回调，额外提供完整源码粘贴与直接复制；图片文件读取通过调用方注入的 read-file 回调完成，支持加载、失败重试与取消过期读取，SVG 复制与下载共用读取结果。源码输入区域内部滚动；所有控件可用键盘操作，粘贴入口将焦点移至文本框。源码复制组合共享 ActionButton 显示 Promise 状态。 图片编辑窗口内粘贴图片复用文件上传与替换回调，普通文本粘贴仍交给输入框；只读时禁用图片上传，上传期间防止重复提交。 已绑定且读取完成的原图可通过 BasicButton 下载，支持系统保存位置选择和浏览器标准下载降级；保留源文件字节及格式，不应用画布裁剪或旋转。只读时仍可下载，保存期间防止重复提交，取消不报错，写入失败给出可重试反馈。",
+      "differenceSummary": "项目本地受控图片节点编辑面板，组合 BasicButton、源图预览与直接操作的裁剪选择框；仅在调用方把它放入双击节点编辑器后出现并完整占据属性区右栏。未绑定图片时提供上传和空预览，绑定后提供替换；裁剪框直接覆盖源图预览，可拖动位置并通过四个角点独立改变宽高，结束操作后回传归一化非破坏 crop 及其源像素宽高比，不打开二级弹窗或显示滑动条。组件只接收异步上传与 crop-change 回调，不读取会话、API、资源目录或草稿。 SVG 复用同一图片节点及上传回调，额外提供完整源码粘贴与直接复制；图片文件读取通过调用方注入的 read-file 回调完成，支持加载、失败重试与取消过期读取，SVG 复制与下载共用读取结果。源码输入区域内部滚动；所有控件可用键盘操作，粘贴入口将焦点移至文本框。源码复制组合共享 ActionButton 显示 Promise 状态。 图片编辑窗口内粘贴图片复用文件上传与替换回调，普通文本粘贴仍交给输入框；只读时禁用图片上传，上传期间防止重复提交。 已绑定且读取完成的原图可通过 BasicButton 下载，支持系统保存位置选择和浏览器标准下载降级；保留源文件字节及格式，不应用画布裁剪或旋转。只读时仍可下载，保存期间防止重复提交，取消不报错，写入失败给出可重试反馈。 会话预览通过 sourceLocked 锁定上传和粘贴，保留下载及裁剪；正在裁剪时固定当前源图，结束后应用最新传入图片，避免预览刷新丢失手势结果。 renderLayout 将操作控件与裁剪预览交给会话预览统一面板排列，保持现有裁剪状态和资源生命周期；锁定来源时隐藏上传与粘贴控件。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -889,7 +909,7 @@
         "unselected-frame-edge-moving",
         "wide-invisible-frame-border-hit-area",
         "selected-frame-edge-and-corner-resizing",
-        "always-proportional-frame-resizing",
+        "free-frame-resizing-with-shift-proportion",
         "alt-center-frame-resizing",
         "invisible-frame-resize-hit-zones",
         "non-rotatable-frame",
@@ -956,7 +976,10 @@
         "passive-thirds-and-golden-section-guides",
         "uniform-and-free-radial-planning",
         "hidden-node-display-toggle",
-        "previous-state-onion-skin"
+        "previous-state-onion-skin",
+        "text-region-fitted-display-text-rendering",
+        "text-region-four-corner-perspective-warp",
+        "frame-name-and-output-size-caption"
       ],
       "slots": [
         "draft",
@@ -991,7 +1014,8 @@
         "planning-labels",
         "planning-lock",
         "showHiddenNodes",
-        "onionSkin"
+        "onionSkin",
+        "frame-labels"
       ],
       "aliases": [
         "CompositionDraftCanvas"
@@ -1003,7 +1027,7 @@
         "需要组件直接读取 API、保存会话或管理业务历史",
         "需要通用图片裁剪或自由绘图画布"
       ],
-      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片复用 CanvasNode 的 tooltip 插槽，悬停或聚焦时按节点说明、显示文字、备注分段显示；显示文字仅适用于文字区域，空字符串及纯空白整段隐藏，全部为空时无提示。标题复用既有中英文编辑字段语义，内容保留换行且按纯文本呈现，每段最多六行，完整内容沿用双击编辑器；不增加常驻画布文案。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形、文字区域或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字区域放置后保持选中并可直接调整宽高，双击打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。 文字区域支持按住 Ctrl 独立拖动四个角点，聚焦后可用方向键微调；只允许凸四边形且交叉或退化时保留最近有效轮廓。普通移动、缩放、旋转和复制保留四点轮廓，参考图和文字占位线同步呈现；角点控件在内容层上方且尺寸不随缩放变化。 节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，移除构图私有提示排版和 CSS，由 CanvasNode 与 CanvasElements.css 统一控制两种画布的展示。 构图规划通过独立覆盖层呈现，复用 CanvasNode 的选择和键盘边界；对称构图、螺旋和三角支持指针与方向键操作，显示与编辑锁定分开，规划改变不联动内容。 三角规划以中心、旋转、底边宽度和高度表达；顶点调整朝向和高度，底角对称缩放，指针、键盘与数值操作始终保持物理等腰。 对称构图锁定画框中心，外端控制点吸附到原有八个方向与随画框比例变化的四角方向，正方形时合并重复点，面板不提供自由坐标或任意角度。黄金螺旋中心点单击或 Enter/空格切换旋向，拖动不触发切换；方向键逐档切换对称方向。操作说明复用面板问号提示。 放射构图复用规划层和参数控件；均匀模式用起始方向、射线数量和展开角度控制扇形或环形，自由模式每条射线有独立方向控制点，隐藏整体旋转和展开角度。两种模式共用汇聚点和射线数量；切到自由保留方向，切回均匀恢复整圈均布；指针和方向键均沿用单条射线的角度变换，数据同步到 CLI、预览和提示词。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。 显示隐藏节点与洋葱皮为外部受控显示选项，默认关闭。隐藏节点不参与直接命中与框选；洋葱皮依据状态列表的前一项，只绘制该状态的可见节点，复用 CanvasOnionSkin，禁用指针与焦点且不进入导出。UI 的整组操作保留原规则。 构图节点编辑器在编辑标题右侧放置显示/隐藏开关，复用显示状态语义与既有 updateItemMetadata，按状态保存 visible；旧草稿缺省可见。 备注和显示文字先回显输入、在同一 action 中同步上报草稿并允许后台渲染；连续字段编辑合并最新草稿。仅视口移动时复用未变化节点的 JSX，选中节点操作柄随缩放更新；缓存随画布数据及交互状态渲染重新创建，避免使用旧回调。",
+      "differenceSummary": "项目本地受控构图适配层，把 composition-draft 的形状、文字区域、焦点、动势线与图片映射到共享 Canvas 资产；页面通过 selectedIds 持有多选状态。形状、文字区域、焦点、动势线和图片复用 CanvasNode 的 tooltip 插槽，悬停或聚焦时按节点说明、显示文字、备注分段显示；显示文字仅适用于文字区域，空字符串及纯空白整段隐藏，全部为空时无提示。标题复用既有中英文编辑字段语义，内容保留换行且按纯文本呈现，每段最多六行，完整内容沿用双击编辑器；不增加常驻画布文案。编辑画布支持 Ctrl/Cmd+C 复制当前选择集的属性快照，并以 Ctrl/Cmd+V 创建新 id、按 24px 阶梯向右下偏移并选中本次实际创建的节点；多项粘贴只跳过会超过三个焦点或一条动势线上限的节点。图片单击放置创建默认比例的空图片节点，不触发文件选择；图片节点与其他区域一样支持选择、移动、八向缩放、旋转、删除、备注、景别与视觉权重，节点缩放与旋转控制以及动势线双点控制均保持屏幕像素尺寸稳定，只有双击后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方以 assetId 解析，实际图片进入编辑画布、只读参考与草图导出；提示词保留图片节点的备注、权重、景别、位置、占用与旋转等布局信息，但不输出 URL、文件名、原始宽高、assetId 或裁剪参数。普通点击替换选择，Shift 点击增减目标，拖动已选中节点按现有单选或多选集合移动；空白单击或未命中框选清空选择，两个及以上目标显示统一组合操作框，画框保持独占选择。reference 外观按画框边界裁切并禁用交互，图片节点仅呈现图片内容而不显示节点边界。字段变更立即上报，不显示保存动作；API、资源目录、页面防抖自动保存、历史和持久化仍由调用方负责。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形、文字区域或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字区域放置后保持选中并可直接调整宽高，双击打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 图形属性复用 Ant Design Switch 标记光源，通过 composition 领域渲染器在编辑中保留图形边界，在参考中呈现无描边的淡黄色柔和照明标识；文字和图片不显示该开关。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 动势线单选时显示两个可独立拖动的线上操作点，另一点保持固定；支持方向键及 Shift 加速微调，点间距属于本地编辑状态，线的位置和角度沿用草稿、保存与撤销边界。 文字区域支持按住 Ctrl 独立拖动四个角点，聚焦后可用方向键微调；只允许凸四边形且交叉或退化时保留最近有效轮廓。普通移动、缩放、旋转和复制保留四点轮廓，参考图和文字占位线同步呈现；角点控件在内容层上方且尺寸不随缩放变化。 节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，移除构图私有提示排版和 CSS，由 CanvasNode 与 CanvasElements.css 统一控制两种画布的展示。 构图规划通过独立覆盖层呈现，复用 CanvasNode 的选择和键盘边界；对称构图、螺旋和三角支持指针与方向键操作，显示与编辑锁定分开，规划改变不联动内容。 三角规划以中心、旋转、底边宽度和高度表达；顶点调整朝向和高度，底角对称缩放，指针、键盘与数值操作始终保持物理等腰。 对称构图锁定画框中心，外端控制点吸附到原有八个方向与随画框比例变化的四角方向，正方形时合并重复点，面板不提供自由坐标或任意角度。黄金螺旋中心点单击或 Enter/空格切换旋向，拖动不触发切换；方向键逐档切换对称方向。操作说明复用面板问号提示。 放射构图复用规划层和参数控件；均匀模式用起始方向、射线数量和展开角度控制扇形或环形，自由模式每条射线有独立方向控制点，隐藏整体旋转和展开角度。两种模式共用汇聚点和射线数量；切到自由保留方向，切回均匀恢复整圈均布；指针和方向键均沿用单条射线的角度变换，数据同步到 CLI、预览和提示词。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。 显示隐藏节点与洋葱皮为外部受控显示选项，默认关闭。隐藏节点不参与直接命中与框选；洋葱皮依据状态列表的前一项，只绘制该状态的可见节点，复用 CanvasOnionSkin，禁用指针与焦点且不进入导出。UI 的整组操作保留原规则。 构图节点编辑器在编辑标题右侧放置显示/隐藏开关，复用显示状态语义与既有 updateItemMetadata，按状态保存 visible；旧草稿缺省可见。 备注和显示文字先回显输入、在同一 action 中同步上报草稿并允许后台渲染；连续字段编辑合并最新草稿。仅视口移动时复用未变化节点的 JSX，选中节点操作柄随缩放更新；缓存随画布数据及交互状态渲染重新创建，避免使用旧回调。 文字区域填写显示文字后直接绘制正文，逐行按区域宽高拉伸并保留回车；自定义四角通过共用有界 SVG 网格对整块字形做透视变形；清空后恢复占位线。复用构图领域的原生 SVG 绘制，使编辑、参考、复制与会话预览一致；不采用 CanvasText 的自然字号布局。文字编辑仅重建当前内容节点和依赖最新草稿的规划处理器，保留无关节点。 拖角仅在每个动画帧提交最后有效位置；松手同步提交最终位置，取消保留已收到的最后有效位置，切换状态或卸载丢弃旧手势。 模糊 reference 外观下文字区域统一使用既有占位图，与是否填写正文无关；编辑外观与精准参考继续显示正文，复用现有 previewMode 缓存依赖。 画框与 UI 共用 CanvasFrame 的像素边界和自由宽高交互，Shift 临时保持手势开始时的比例，Alt 围绕中心缩放；左上角显示本地化名称和当前边界像素尺寸，名称、尺寸和交互重置标识纳入画框自身缓存。 CanvasFrame 的 onBoundsChange/name 接口统一大小、取整、比例与命中区，使用 UI 的最小 10、无比例/最大尺寸限制。右侧面板统一使用 CanvasFrameControls；构图只做归一化坐标适配。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1022,7 +1046,8 @@
         "Ant Design Image",
         "CanvasPlacement",
         "Ant Design Switch",
-        "Ant Design Dropdown"
+        "Ant Design Dropdown",
+        "CanvasText"
       ]
     },
     {
@@ -1154,7 +1179,15 @@
         "repeated-paste-offset",
         "copied-group-and-layer-preservation",
         "hidden-node-display-toggle",
-        "previous-state-onion-skin"
+        "previous-state-onion-skin",
+        "session-preview-image-nodes",
+        "workspace-session-preview-drop",
+        "translucent-session-drag-preview",
+        "bounded-session-drag-preview",
+        "invalid-session-drop-indicator",
+        "unified-session-preview-editor",
+        "copy-preview-hover",
+        "current-stage-hover-preview"
       ],
       "slots": [
         "draft",
@@ -1177,7 +1210,13 @@
         "accessible-label",
         "interactionResetKey",
         "showHiddenNodes",
-        "onionSkin"
+        "onionSkin",
+        "sessionPreviewLabel",
+        "renderSessionPreviewTool",
+        "renderSessionPreviewEditor",
+        "onSessionPreviewDrop",
+        "sessionPreviewFailedLabel",
+        "loadSessionPreviewDragImage"
       ],
       "aliases": [
         "UiLayoutCanvas",
@@ -1191,7 +1230,7 @@
         "需要构图草图、自由绘图或精确视觉设计稿，应使用对应领域组件",
         "需要组件直接读取 API、保存会话、管理 revision 或把区域框解释为系统组件占位符"
       ],
-      "differenceSummary": "项目本地受控 UI 草图适配层，与 CompositionCanvas 同为 Canvas 领域组件。节点持有固定的 user、agent 或 import 来源；编辑面板以小型英文标签展示来源，不提供修改入口，并把 Agent 的 annotation 单独显示为只读节点说明，note 继续作为用户可编辑指令。import 静态文字可直接编辑，删除仍复用现有节点删除语义。区域节点按草稿顺序循环使用与 CompositionCanvas 相同的六个 Paper Token 填充色，避免矩形难以相互分辨；区域备注不再显示在矩形内部，非空备注只在节点 hover/focus 时通过 Tooltip 按需显示。区域、文字和图片节点都支持选择、移动、缩放、显示状态、视觉权重、备注、多选和分阶段几何，节点与界面画框的缩放命中区在画布缩放时保持屏幕像素尺寸稳定且四边不会被四角覆盖；图片单击放置使用 320×180 空图片节点，不打开文件选择器，只有双击节点进入 TextMarkEditor 后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方按 assetId 解析，实际图片进入编辑画布及 PNG 草图；静态和动效提示词以图片#N 保留备注、视觉权重、位置、尺寸和显示变化，但省略 URL、文件名、源图尺寸、assetId、裁剪参数和节点来源。隐藏节点在编辑画布保留淡化轮廓，但静态草图与单阶段提示词不输出。ui-layout-draft 的公共节点内容只保存一次，后续阶段只隔离几何与可见性；清空画布移除区域、文字和图片，保留界面框、总备注和阶段；该动作可通过受控 clear-action-host 插槽传送到页面标题栏，通过 Tooltip 显示名称，并在 ConfirmAction 二次确认后执行，且不进入画布 SideActionPanel。API、资源目录、路由、revision、页面自动保存和活动阶段仍由调用方负责。 节点移动不受界面范围限制，范围外节点仍可拖动、键盘移动、编辑及保存。静态提示词按正面积相交过滤，动效提示词保留任一端进入范围的节点；文字优先使用既有实测边界。 节点拖动只在独立 SVG 预览层按动画帧更新临时位移，不触发其余节点及外围面板的 React 更新；松手以最终指针位置对当前活动阶段草稿提交一次位移。取消、丢失指针捕获、切换阶段和卸载清除预览；键盘微移继续即时提交。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字放置后打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 单层组仅保存成员关系，画布右键菜单提供建组和解组，不加入右侧栏；普通选择、框选、拖动和键盘微移识别整组，双击继续编辑单个成员，清空和删除清理组关系。菜单复用 Ant Design Dropdown，可通过菜单键或 Shift+F10 打开，并在关闭后归还焦点。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 画布通过 useCanvasImagePaste 的原生复制与粘贴扩展点接入 UI 领域节点快照，Ctrl/Cmd+C/V 支持区域、文字、图片、多选和整组；连续粘贴递增偏移并选择副本，保留相对层级、图片资产及裁切，来源为 user。输入编辑和外部图片上传保持既有路径，草稿变更回调接入现有保存与撤销。 区域、文字和图片的节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，字段筛选、段落标题和长文本样式由 CanvasNode 负责，与构图一致。 显示隐藏节点与洋葱皮为外部受控显示选项，默认关闭。隐藏节点不参与直接命中与框选；洋葱皮依据状态列表的前一项，只绘制该状态的可见节点，复用 CanvasOnionSkin，禁用指针与焦点且不进入导出。UI 的整组操作保留原规则。 节点显示/隐藏开关通过 TextMarkEditor 的 title 插槽放在编辑标题右侧，与构图编辑器共用标题布局。 节点备注通过局部乐观输入先响应打字，再以 React Transition 呈现受控草稿；后续节点编辑、粘贴及裁切合并到最近提交的草稿，避免未完成渲染覆盖新备注。回调仍在输入动作内执行，关闭、显示切换及撤销沿用现有边界。 全局备注和显示文字沿用节点备注的即时回显策略；仅视口移动时复用节点 JSX，选中操作柄随缩放更新。",
+      "differenceSummary": "项目本地受控 UI 草图适配层，与 CompositionCanvas 同为 Canvas 领域组件。节点持有固定的 user、agent 或 import 来源；编辑面板以小型英文标签展示来源，不提供修改入口，并把 Agent 的 annotation 单独显示为只读节点说明，note 继续作为用户可编辑指令。import 静态文字可直接编辑，删除仍复用现有节点删除语义。区域节点按草稿顺序循环使用与 CompositionCanvas 相同的六个 Paper Token 填充色，避免矩形难以相互分辨；区域备注不再显示在矩形内部，非空备注只在节点 hover/focus 时通过 Tooltip 按需显示。区域、文字和图片节点都支持选择、移动、缩放、显示状态、视觉权重、备注、多选和分阶段几何，节点与界面画框的缩放命中区在画布缩放时保持屏幕像素尺寸稳定且四边不会被四角覆盖；图片单击放置使用 320×180 空图片节点，不打开文件选择器，只有双击节点进入 TextMarkEditor 后才组合 CanvasImageEditorFields，并以左侧节点属性、右侧完整图片内容的两栏结构显示上传、替换、源图预览和直接操作的非破坏裁剪框，不使用二级裁剪弹窗或滑动条。图片源由调用方按 assetId 解析，实际图片进入编辑画布及 PNG 草图；静态和动效提示词以图片#N 保留备注、视觉权重、位置、尺寸和显示变化，但省略 URL、文件名、源图尺寸、assetId、裁剪参数和节点来源。隐藏节点在编辑画布保留淡化轮廓，但静态草图与单阶段提示词不输出。ui-layout-draft 的公共节点内容只保存一次，后续阶段只隔离几何与可见性；清空画布移除区域、文字和图片，保留界面框、总备注和阶段；该动作可通过受控 clear-action-host 插槽传送到页面标题栏，通过 Tooltip 显示名称，并在 ConfirmAction 二次确认后执行，且不进入画布 SideActionPanel。API、资源目录、路由、revision、页面自动保存和活动阶段仍由调用方负责。 节点移动不受界面范围限制，范围外节点仍可拖动、键盘移动、编辑及保存。静态提示词按正面积相交过滤，动效提示词保留任一端进入范围的节点；文字优先使用既有实测边界。 节点拖动只在独立 SVG 预览层按动画帧更新临时位移，不触发其余节点及外围面板的 React 更新；松手以最终指针位置对当前活动阶段草稿提交一次位移。取消、丢失指针捕获、切换阶段和卸载清除预览；键盘微移继续即时提交。 节点工具进入一次性放置状态，单击画布使用默认尺寸、拖动确定图形或图片宽高，支持已有节点上方及画框外放置；预览不变更草稿，松手只创建一次并选中新节点，然后返回选择状态。文字放置后打开既有编辑器。Esc、取消或丢失捕获清除未完成放置。 单层组仅保存成员关系，画布右键菜单提供建组和解组，不加入右侧栏；普通选择、框选、拖动和键盘微移识别整组，双击继续编辑单个成员，清空和删除清理组关系。菜单复用 Ant Design Dropdown，可通过菜单键或 Shift+F10 打开，并在关闭后归还焦点。 右键菜单提供置顶、前移一层、后移一层和置底；原生右键松开事件不误关闭菜单，拖动继续平移。layerOrder 保存跨类型内容顺序，保留原节点数组和编号；多选保持内部顺序，UI 沿用组扩展。边界、无选择和只读操作禁用，支持键盘打开与 Escape/外部点击关闭并归还焦点。节点控制框独立呈现在内容层之上，预览和导出使用同一内容顺序。 画布通过原生 paste 读取首张剪贴板图片，复用统一上传处理，在粘贴时视野中心按原图比例创建并选中图片节点；上传失败不创建节点，上传期间防止重复提交，会话或历史重置后丢弃旧结果。 画布通过 useCanvasImagePaste 的原生复制与粘贴扩展点接入 UI 领域节点快照，Ctrl/Cmd+C/V 支持区域、文字、图片、多选和整组；连续粘贴递增偏移并选择副本，保留相对层级、图片资产及裁切，来源为 user。输入编辑和外部图片上传保持既有路径，草稿变更回调接入现有保存与撤销。 区域、文字和图片的节点提示统一传递说明、显示文字及备注数据到公共 CanvasNodeTooltip 契约，字段筛选、段落标题和长文本样式由 CanvasNode 负责，与构图一致。 显示隐藏节点与洋葱皮为外部受控显示选项，默认关闭。隐藏节点不参与直接命中与框选；洋葱皮依据状态列表的前一项，只绘制该状态的可见节点，复用 CanvasOnionSkin，禁用指针与焦点且不进入导出。UI 的整组操作保留原规则。 节点显示/隐藏开关通过 TextMarkEditor 的 title 插槽放在编辑标题右侧，与构图编辑器共用标题布局。 节点备注通过局部乐观输入先响应打字，再以 React Transition 呈现受控草稿；后续节点编辑、粘贴及裁切合并到最近提交的草稿，避免未完成渲染覆盖新备注。回调仍在输入动作内执行，关闭、显示切换及撤销沿用现有边界。 全局备注和显示文字沿用节点备注的即时回显策略；仅视口移动时复用节点 JSX，选中操作柄随缩放更新。 会话预览复用图片布局、裁剪与状态几何，通过受控工具和属性插槽连接来源选择；源图替换与普通上传分开，历史快照保留普通图片。 SVG 画布接收项目树会话拖放，以当前缩放和平移换算世界坐标，按落点居中新建并选中预览。应用通过 onSessionPreviewDrop 提供异步预览，回调身份表示目标会话；来源资格、默认输出和 API 留在应用适配器。连续拖过不更新 React，松手读取后合并到最新草稿一次；切换状态、目标回调、历史恢复或卸载取消待完成插入。失败复用会话预览提示，既有工具保留键盘可达的新增方式。 会话拖入画布时，内部 SVG 图层以 50% 不透明度显示实际预览，与落下后的节点共用来源原始尺寸计算，等比缩小至宽、高分别不超过当前 UI 画框的 50%，小图不放大，屏幕显示随画布缩放；松手保留预览世界尺寸，尚未显示时按松手时的画框计算，异步完成不重新改变尺寸。不显示加载轮廓。应用通过 loadSessionPreviewDragImage 提供只读来源 URL，来源不可用、预览读取失败或目标不可编辑时显示固定 24 屏幕像素的红色 CloseCircleFilled，并通过 dropEffect=none 和落下校验阻止插入。鼠标位置和图片尺寸每帧最多写入一次，离开、取消、放下及交互重置清理图片请求与临时资源，预览不写草稿。此增量按用户要求未运行测试或构建，既有渲染计量不代表新增预览层已实测。 会话预览编辑通过 renderSessionPreviewEditor 的属性、图片裁剪与操作插槽接入统一面板；完整来源选择成功仅替换 assetId/previewReference，关闭或切换状态/历史后丢弃旧请求。 普通节点与会话预览共用标题节点，将来源标记置于标题左侧、显示/隐藏开关置于右侧；预览编辑仅提供裁剪视图及节点属性，不显示图片下载控件或读取下载源文件。 标题与显示/隐藏开关从左连续排列，中间仅保留 8px token 间距，不再两端对齐。 UI 文字按字号对应的显式 alphabetic 基线与 1.4 倍行距绘制，与预览共用领域函数；配色 ID 和同色轮廓重叠判断由领域纯函数提供，保留增量缓存及本地 CSS 外观。 复制预览图入口组合 CanvasPreviewHover，悬停或键盘聚焦时按当前状态调用与复制相同的 renderUiSketchSvg；浮层仅打开时生成并独立命名 SVG，按图片比例缩放，宽不超过 420px/45vw，高不超过 360px。复制中或状态菜单打开时收起；菜单仍选择要复制的状态，悬停不修改活动状态或草稿。 悬停图严格裁切到当前状态的界面范围，与 Agent 的 ui-layout render 和复制导出共用显式内容裁剪；界面范围外节点不显示，跨界节点只显示框内部分。 界面范围左上角名称和尺寸移入 CanvasFrame 的 caption 插槽，沿用原标签位置和样式；frameRange 进入画框局部缓存依赖，避免切换语言后保留旧名称。 最终统一为 CanvasFrame 的 onBoundsChange/name 接口，大小、取整、比例与命中区仅由共享组件提供；取消之前构图专有的 1:2–2:1、96 最小边和输出长边保留规则。右侧面板统一使用 CanvasFrameControls；构图只做归一化坐标适配。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1216,7 +1255,8 @@
         "StatusBadge",
         "StyleLibraryView",
         "CanvasPlacement",
-        "Ant Design Dropdown"
+        "Ant Design Dropdown",
+        "CanvasPreviewHover"
       ]
     },
     {
@@ -1297,7 +1337,8 @@
         "data-active-stage",
         "selected-plan-id",
         "plan-selection-change",
-        "planning-labels"
+        "planning-labels",
+        "frame-labels"
       ],
       "aliases": [
         "CompositionRefinementWorkbench"
@@ -1312,7 +1353,7 @@
         "需要组件自行选择构图美学算法或生成加工方案",
         "需要组件直接调用 Agent、API 或持久化会话"
       ],
-      "differenceSummary": "项目本地受控工作流视图，组合 CompositionCanvas 与居中的 TabSwitch，并把业务提供的 selectedIds 多选状态、画布底纹、视图控制、画框锁定、节点编辑器本地化标签、SideActionPanel 首次收起状态及可选双击通知继续传给下层；用户草稿同时沿用 CompositionCanvas 的节点键盘删除与多选复制粘贴规则。工作流状态只控制加工图是否可用。预览始终可切换，有有效加工结果时展示加工图，否则直接展示当前草图；两种情况下都只输出画框内内容，并关闭节点选择、聚焦、拖动、缩放、旋转、双击编辑、删除和复制粘贴。预览阶段隐藏自身溢出，画框边界在全部可用空间内等比自适应，不显示下方提示、缩放或滚动条。用户草图中的 Human2AI 节点信息编辑由 CompositionCanvas 组合公共编辑器并通过 onDraftChange 返回业务层，WorkflowView 不持有编辑内容、弹层位置、历史、剪贴板或保存。Agent 加工图只读显示画框；视图不拥有 Agent 决策和服务状态。 v2 精修展示目标、判断依据、不确定性、保留关系与取舍，以及每条所选关系的目标、原图、精修和偏差。画布仅显示构图内容，不渲染数学规则辅助线或其开关。零操作保留结果可以正常查看。 产品构图页面通过 stateControls 替换固定视图栏；复用 UiSketchStateTabs，状态归页面领域模型管理。切换布局仅重建画布交互，保留状态栏键盘焦点。 构图和 UI 界面共用内部的状态栏与画布区布局；UI 调用方通过 children 插入 UiSketchCanvas 及历史控件，stateControls 包含 UiSketchStateTabs。内容插槽不要求构图草稿，也不执行精修结果判断；UI 状态和保存仍由 UI 页面持有。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。",
+      "differenceSummary": "项目本地受控工作流视图，组合 CompositionCanvas 与居中的 TabSwitch，并把业务提供的 selectedIds 多选状态、画布底纹、视图控制、画框锁定、节点编辑器本地化标签、SideActionPanel 首次收起状态及可选双击通知继续传给下层；用户草稿同时沿用 CompositionCanvas 的节点键盘删除与多选复制粘贴规则。工作流状态只控制加工图是否可用。预览始终可切换，有有效加工结果时展示加工图，否则直接展示当前草图；两种情况下都只输出画框内内容，并关闭节点选择、聚焦、拖动、缩放、旋转、双击编辑、删除和复制粘贴。预览阶段隐藏自身溢出，画框边界在全部可用空间内等比自适应，不显示下方提示、缩放或滚动条。用户草图中的 Human2AI 节点信息编辑由 CompositionCanvas 组合公共编辑器并通过 onDraftChange 返回业务层，WorkflowView 不持有编辑内容、弹层位置、历史、剪贴板或保存。Agent 加工图只读显示画框；视图不拥有 Agent 决策和服务状态。 v2 精修展示目标、判断依据、不确定性、保留关系与取舍，以及每条所选关系的目标、原图、精修和偏差。画布仅显示构图内容，不渲染数学规则辅助线或其开关。零操作保留结果可以正常查看。 产品构图页面通过 stateControls 替换固定视图栏；复用 UiSketchStateTabs，状态归页面领域模型管理。切换布局仅重建画布交互，保留状态栏键盘焦点。 构图和 UI 界面共用内部的状态栏与画布区布局；UI 调用方通过 children 插入 UiSketchCanvas 及历史控件，stateControls 包含 UiSketchStateTabs。内容插槽不要求构图草稿，也不执行精修结果判断；UI 状态和保存仍由 UI 页面持有。 规划未选中为浅灰，Shift 或 Ctrl/Cmd 多选可整组平移，三分、黄金分割线和对称构图保持固定。标题右侧锁定图标仅禁用当前界面的规划操作，Agent 仍可编辑；移除规划备注和采用开关，所有规划均进入构图意图。 三分构图恢复为正式规划并随新建草稿默认显示；三分与黄金分割仅在侧栏选择和编辑，不拦截画布点击。规划标题的总显示图标控制所有规划线和控件，保留单项显示设置，锁定时仍可切换；移除画框标题的独立九宫线入口。 frameLabels 将构图画框的名称和操作无障碍标签传给编辑与只读加工画布。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1344,7 +1385,11 @@
         "desktop-minimum-viewport",
         "brand-home-navigation",
         "header-extra",
-        "title-hover-actions"
+        "title-hover-actions",
+        "resizable-sidebars",
+        "keyboard-resize",
+        "preserved-sidebar-widths",
+        "resize-commit-callbacks"
       ],
       "slots": [
         "workspace-sidebar",
@@ -1355,7 +1400,11 @@
         "right-panel-open",
         "right-panel-open-change",
         "brand",
-        "header-extra"
+        "header-extra",
+        "sidebar-width",
+        "right-panel-width",
+        "sidebar-width-change",
+        "right-panel-width-change"
       ],
       "aliases": [
         "Human2AiShell",
@@ -1368,7 +1417,7 @@
         "需要通用跨项目应用壳层或移动端导航",
         "需要组件读取 Next 路由、调用 API、保存会话或管理业务状态"
       ],
-      "differenceSummary": "项目本地页面族壳层，只把 Human2AI 品牌、产品侧栏、当前页面语义和本地化标签组合进共享 AppShellFrame；项目会话数据、标题、正文、右侧面板及其受控开合状态均由应用层注入。收起与恢复焦点行为沿用 AppShellFrame，不增加自定义快捷键。 品牌 slot 接收应用层注入的首页链接，壳层不读取路由。 title 为空时不渲染页面标题，由首页正文承载唯一 h1；导航和侧栏开关继续沿用 AppShellFrame。 headerExtra 透传共享 AppShellFrame 的中栏标题右侧插槽，供画布显示控件使用。 titleExtra 在中栏标题文字右侧组合操作，悬停标题区域或键盘聚焦时显示，预留宽度避免标题跳动；应用层为当前会话注入复制 ID 的 ActionButton，沿用成功/失败反馈并随会话切换重置。",
+      "differenceSummary": "项目本地页面族壳层，只把 Human2AI 品牌、产品侧栏、当前页面语义和本地化标签组合进共享 AppShellFrame；项目会话数据、标题、正文、右侧面板及其受控开合状态均由应用层注入。收起与恢复焦点行为沿用 AppShellFrame，不增加自定义快捷键。 品牌 slot 接收应用层注入的首页链接，壳层不读取路由。 title 为空时不渲染页面标题，由首页正文承载唯一 h1；导航和侧栏开关继续沿用 AppShellFrame。 headerExtra 透传共享 AppShellFrame 的中栏标题右侧插槽，供画布显示控件使用。 titleExtra 在中栏标题文字右侧组合操作，悬停标题区域或键盘聚焦时显示，预留宽度避免标题跳动；应用层为当前会话注入复制 ID 的 ActionButton，沿用成功/失败反馈并随会话切换重置。 按用户要求开启 AppShellFrame 原生双侧栏调宽，保持初始左侧 280px、右侧 300px，沿用共享宽度边界、键盘调整、取消及折叠保宽；宽度与结束回调透传给应用层；Human2AiShell 通过 useAppShellWidths 在客户端挂载前绘制阶段恢复同源 localStorage 的左右宽度，松手或键盘调整完成时分别保存。默认值只作首次/无效记录回退，取消拖动及窗口压缩不覆盖偏好；不增加页面级拖拽 state。共享 0.17.0 仍逐指针事件写入布局样式，本次按用户明确开启要求保留这一上游限制。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1420,7 +1469,8 @@
         "empty-group-create-rename-delete",
         "same-project-session-drag-drop",
         "keyboard-session-group-assignment",
-        "groups-before-ungrouped-sessions"
+        "groups-before-ungrouped-sessions",
+        "session-preview-drag-source"
       ],
       "slots": [
         "projects",
@@ -1446,7 +1496,7 @@
         "需要通用文件树、应用级路由壳层或页面内构图工具栏",
         "需要组件直接读取 API、决定路由或持久化项目和会话"
       ],
-      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树与弹窗输入状态隔离缓存；输入项目名或会话名不重新生成导航节点，项目数据、语言、选择与待执行操作变化仍刷新树。 项目三点菜单可建立空分组；分组置于项目内未分组会话之前，独立展开收起，并提供重命名、删除确认。复用 AssetSkeletonTree view 模式的 titleRender 插槽，通过原生拖放仅允许项目内会话归入分组或释放到项目标题，支持空分组；不允许拖动分组、跨项目拖放或改动会话顺序。会话菜单同时提供键盘可用的分组选项。删除分组释放其会话，分组、名称与成员由应用适配层独立保存，不改变会话内容、归属或 revision。输入分组名称不使项目树缓存失效，拖动中不写页面或画布状态，落下时提交一次归组。",
+      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树与弹窗输入状态隔离缓存；输入项目名或会话名不重新生成导航节点，项目数据、语言、选择与待执行操作变化仍刷新树。 项目三点菜单可建立空分组；分组置于项目内未分组会话之前，独立展开收起，并提供重命名、删除确认。复用 AssetSkeletonTree view 模式的 titleRender 插槽，通过原生拖放仅允许项目内会话归入分组或释放到项目标题，支持空分组；不允许拖动分组、跨项目拖放或改动会话顺序。会话菜单同时提供键盘可用的分组选项。删除分组释放其会话，分组、名称与成员由应用适配层独立保存，不改变会话内容、归属或 revision。输入分组名称不使项目树缓存失效，拖动中不写页面或画布状态，落下时提交一次归组。 会话原生拖放同时携带专用会话标识，允许 UI 画布复制预览；项目内归组仍为移动操作，不改变会话归属或顺序。拖动无需发布 React 或页面状态。 会话拖动使用透明原生 drag image，避免项目树节点拖影与画布预览叠加；临时透明画布在拖动结束或侧栏卸载时清除，归组仍保留原有落点反馈。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -2009,13 +2059,204 @@
         "播放或导出动画",
         "决定业务状态顺序或保存草稿"
       ],
-      "differenceSummary": "组合已同步的 BasicButton，在 AppShell headerExtra 放置“全部显示”和“洋葱皮”两个独立的图标加文字切换按钮；“全部显示”包含当前状态的隐藏节点。可见文字、可访问名称和 title 共用标签，aria-pressed 表达开关，“全部显示”始终呈现，“洋葱皮”仅在状态数量超过 1 时呈现且首个状态禁用；页面持有选项以跨状态重建画布保持。配套 CanvasOnionSkin 只提供 22% 不透明度、aria-hidden 和指针穿透，几何由各领域传入，不增加业务状态或 API。",
+      "differenceSummary": "组合已同步的 BasicButton，在 AppShell headerExtra 放置“显示隐藏”和“洋葱皮”两个独立的图标加文字切换按钮；“显示隐藏”包含当前状态的隐藏节点。可见文字、可访问名称和 title 共用标签，aria-pressed 表达开关，“显示隐藏”始终呈现，“洋葱皮”仅在状态数量超过 1 时呈现且首个状态禁用；页面持有选项以跨状态重建画布保持。配套 CanvasOnionSkin 只提供 22% 不透明度、aria-hidden 和指针穿透，几何由各领域传入，不增加业务状态或 API。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
         "BasicButton",
         "CanvasHistoryControls",
         "AppShellFrame",
+        "UiSketchCanvas",
+        "CompositionCanvas"
+      ]
+    },
+    {
+      "id": "session-preview-picker",
+      "name": "SessionPreviewPicker",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/SessionPreviewPicker.tsx",
+      "storyId": "human2ai-components-sessionpreviewpicker--default",
+      "capabilities": [
+        "controlled-group-session-output-selection",
+        "unified-create-edit-panel",
+        "create-only-submit-footer",
+        "left-actions-right-preview",
+        "same-project-preview-presentation",
+        "loading-empty-error-disabled-states",
+        "localized-labels",
+        "compact-actions-below-preview",
+        "bottom-left-delete-action"
+      ],
+      "slots": [
+        "open",
+        "mode",
+        "labels",
+        "selectorLabels",
+        "options",
+        "value",
+        "title",
+        "actions",
+        "deleteAction",
+        "preview",
+        "previewActions",
+        "previewUrl",
+        "loading",
+        "saving",
+        "error",
+        "warning",
+        "projectRequired",
+        "onChange",
+        "onRetry",
+        "onCancel",
+        "onInsert",
+        "onPreviewError"
+      ],
+      "aliases": [],
+      "useWhen": [
+        "UI 界面插入或替换同项目会话的状态或摄像机预览"
+      ],
+      "doNotUseWhen": [
+        "上传普通图片",
+        "嵌入可交互编辑器",
+        "在展示组件读取 API 或管理持久化"
+      ],
+      "differenceSummary": "创建与编辑共用一个 Modal：顶部组合 YisiUI 0.17.0 experimental CascadeSelector 按分组/会话/稳定状态或摄像机选择；下方左侧操作与属性插槽、右侧预览插槽。创建模式右下角只有创建按钮，编辑模式仅在面板左下角显示删除确认按钮，不提供提交按钮。应用适配器负责未分组分支、完整路径即时替换、API/SSE 与异步取消，展示组件不持有业务状态。保留 Modal 的焦点约束、Escape/关闭和错误重试；栏内键盘选择、跨栏聚焦、搜索由同步组件负责。用户明确指定此布局并要求自行测试，当前未新增浏览器或构建验证，不宣称 stable。 previewActions 插槽位于右侧预览下方，打开来源和另存图片节点两个内容宽度按钮横向排列；左侧保留属性，删除通过 deleteAction 独立放在面板左下角。此布局沿用创建/编辑共用结构，编辑页脚仅放左对齐的删除操作。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "CascadeSelector",
+        "SessionStylePicker",
+        "CanvasImageEditorFields",
+        "UiSketchCanvas",
+        "BasicButton",
+        "Ant Design Modal",
+        "Ant Design Select"
+      ]
+    },
+    {
+      "id": "canvas-preview-hover",
+      "name": "CanvasPreviewHover",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CanvasPreviewHover.tsx",
+      "storyId": "human2ai-composition-preview-hover--default",
+      "capabilities": [
+        "hover-preview",
+        "keyboard-focus-preview",
+        "lazy-svg-render",
+        "isolated-svg-definitions",
+        "disabled",
+        "bounded-desktop-preview"
+      ],
+      "slots": [
+        "render-svg",
+        "label",
+        "disabled",
+        "trigger"
+      ],
+      "aliases": [
+        "CanvasCopyPreview"
+      ],
+      "useWhen": [
+        "构图或 UI 界面的复制入口需要悬停或键盘聚焦时显示当前画布预览"
+      ],
+      "doNotUseWhen": [
+        "需要加载来源列表、请求 API、保存草稿或执行复制操作"
+      ],
+      "differenceSummary": "提取 CompositionPreviewHover 既有浮层，复用 Ant Design Popover 管理局部悬停/焦点；打开时调用受控 SVG 渲染器，关闭后卸载，独立命名资源并限制桌面大小。复制和状态选择仍由调用方负责。沿用构图悬停 Story 与 UiSketchCanvas 现有单状态/多状态 fixture；本次用户要求不运行测试、构建或浏览器验证。 根 SVG 使用固有比例，在最大宽 420px/45vw、高 360px 内等比缩小，浮层边框贴合图片；尺寸规则只作用于根 SVG，保留内部文字 SVG 的几何。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "CompositionPreviewHover",
+        "CompositeButton",
+        "ExpandingSwitch",
+        "Ant Design Popover",
+        "SessionPreviewPicker"
+      ]
+    },
+    {
+      "id": "composition-preview-hover",
+      "name": "CompositionPreviewHover",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CompositionPreviewHover.tsx",
+      "storyId": "human2ai-composition-preview-hover--default",
+      "capabilities": [
+        "hover-preview",
+        "keyboard-focus-preview",
+        "precise-and-soft-reference",
+        "lazy-reference-render",
+        "disabled",
+        "bounded-desktop-preview"
+      ],
+      "slots": [
+        "draft",
+        "resolve-image-source",
+        "label",
+        "trigger"
+      ],
+      "aliases": [
+        "CompositionCopyPreview"
+      ],
+      "useWhen": [
+        "构图复制预览操作需要在悬停或键盘聚焦时显示与当前模式一致的图片"
+      ],
+      "doNotUseWhen": [
+        "其他领域图片预览、来源选择、API 请求或保存业务状态"
+      ],
+      "differenceSummary": "复用 Ant Design Popover 的悬停、聚焦和浮层定位，组合既有构图参考渲染器；浮层在打开时创建、关闭后卸载，SVG 定义独立命名。CompositeButton 继续负责复制动作，ExpandingSwitch 继续负责受控选择，两者不负责构图绘制。 浮层和 SVG 命名隔离复用 CanvasPreviewHover，本组件只适配构图参考渲染器。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "CompositeButton",
+        "ExpandingSwitch",
+        "Ant Design Popover",
+        "SessionPreviewPicker",
+        "CanvasPreviewHover"
+      ]
+    },
+    {
+      "id": "canvas-frame-controls",
+      "name": "CanvasFrameControls",
+      "category": "module",
+      "status": "candidate",
+      "source": "src/local/CanvasFrameControls.tsx",
+      "storyId": "human2ai-composition-canvas--default",
+      "capabilities": [
+        "pixel-frame-size",
+        "integer-pixel-input",
+        "width-preserving-ratio-presets",
+        "shared-frame-reset",
+        "controlled-frame-lock",
+        "localized-labels",
+        "disabled"
+      ],
+      "slots": [
+        "frame",
+        "name",
+        "labels",
+        "locked",
+        "disabled",
+        "change",
+        "locked-change"
+      ],
+      "aliases": [
+        "OutputFrameControls"
+      ],
+      "useWhen": [
+        "构图或 UI 界面需要相同的像素范围、比例预设、重置与锁定面板"
+      ],
+      "doNotUseWhen": [
+        "需要组件保存会话、修改节点或管理观察视口"
+      ],
+      "differenceSummary": "按用户要求提取既有 UI 界面范围面板，组合 experimental AspectRatioSelector 与 BasicButton；以 UI 原有适配方式将手动输入解释为像素，预设保留宽度并抑制重复回调。共享 canvas-frame 规则处理尺寸，两类调用方仅提供名字和草稿回调。受控宽高取整显示，本地适配层通过公开 widthLabel/heightLabel 对应的输入可访问名称定位键盘和粘贴事件：阻止小数键、方向键每次 1px、粘贴小数取整。取整后尺寸不变时仅刷新控件输入，不写草稿、不重挂载焦点、不修改 vendor DOM 或样式；同步资产提供整数输入契约时应改用该契约。复用 CompositionCanvas 工作台 Story，不新增视觉方向；本次不运行测试。",
+      "distribution": "project-local",
+      "ownerRepository": "human2ai",
+      "similarAssetsChecked": [
+        "CanvasFrame",
+        "AspectRatioSelector",
+        "BasicButton",
         "UiSketchCanvas",
         "CompositionCanvas"
       ]

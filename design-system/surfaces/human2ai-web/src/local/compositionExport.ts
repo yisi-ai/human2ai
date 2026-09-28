@@ -17,6 +17,7 @@ export type CompositionPromptKey =
   | "title"
   | "outputRatio"
   | "processingSemantic"
+  | "previewMode" | "precisePreview" | "softPreview" | "precisePreviewGuidance" | "preciseLightGuidance"
   | "unselected"
   | "sceneComposition"
   | "editorialLayout"
@@ -80,6 +81,7 @@ export function buildCompositionPrompt(
 ): string {
   const draft = validateDraft(input);
   const inspection = inspectComposition(draft);
+  const soft = draft.previewMode === "soft";
   const plans = draft.plans ?? [];
   const planningLines = plans.flatMap((plan) => {
     let description: string;
@@ -126,7 +128,7 @@ export function buildCompositionPrompt(
       { index: index + 1 },
     ),
     ...metadataLines(area, translate),
-    ...(area.isLightSource && area.primitive === "quadrilateral"
+    ...(soft && area.isLightSource && area.primitive === "quadrilateral"
       ? [translate("lightBandGuidance")]
       : []),
     ...(area.displayText?.trim()
@@ -209,6 +211,7 @@ export function buildCompositionPrompt(
       ),
     }),
     "",
+    translate("previewMode", { mode: translate(soft ? "softPreview" : "precisePreview") }),
     translate("layoutHeading"),
     translate(
       draft.processingSemantic === "editorial-layout"
@@ -217,17 +220,16 @@ export function buildCompositionPrompt(
           ? "sceneGuidance"
           : "unselectedGuidance",
     ),
-    translate("regionSemanticsGuidance"),
+    translate(soft ? "regionSemanticsGuidance" : "precisePreviewGuidance"),
     ...(inspection.areas.some((area) => area.isLightSource)
-      ? [translate("lightSourceGuidance")]
+      ? [translate(soft ? "lightSourceGuidance" : "preciseLightGuidance")]
       : []),
     ...(hasTextRegions
       ? [translate("displayTextGuidance")]
       : []),
     translate("coordinateOrigin"),
     translate("referenceValues"),
-    translate("flexibleImplementation"),
-    translate("referenceImageGuidance"),
+    ...(soft ? [translate("flexibleImplementation"), translate("referenceImageGuidance")] : []),
     ...(inspection.overallNote.trim()
       ? ["", translate("globalNoteHeading"), inspection.overallNote.trim()]
       : []),

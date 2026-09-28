@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "release": {
     "surface": "web-react",
-    "version": "0.16.0",
+    "version": "0.17.0",
     "channel": "experimental"
   },
   "compatibility": {
@@ -16,7 +16,7 @@
     "configurableLayout": true,
     "registrySchema": 2,
     "assetMarker": 1,
-    "inspector": "0.16.0",
+    "inspector": "0.17.0",
     "skills": 12
   },
   "managedFiles": {
@@ -71,8 +71,8 @@
     "design-system/surfaces/human2ai-web/package.json": {
       "source": "generated:surface-package.json",
       "group": "integration",
-      "upstreamHash": "sha256:e96c9a2bc018532a389ef5fc932ece31ffac754790b3a3382eda88f8787c8e7f",
-      "installedHash": "sha256:e96c9a2bc018532a389ef5fc932ece31ffac754790b3a3382eda88f8787c8e7f"
+      "upstreamHash": "sha256:18707d7826e7c15dcf697533dfcd0065b651d39c035cf369de4e3982aa3c7bdd",
+      "installedHash": "sha256:18707d7826e7c15dcf697533dfcd0065b651d39c035cf369de4e3982aa3c7bdd"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/contracts/accessibility.json": {
       "source": "design-system/contracts/accessibility.json",
@@ -218,17 +218,35 @@
       "upstreamHash": "sha256:8bee19b066e275a83290b09159697947f2d54d9ee3c357e81271e445a294afe3",
       "installedHash": "sha256:8bee19b066e275a83290b09159697947f2d54d9ee3c357e81271e445a294afe3"
     },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/migrations/2026-09-27-app-shell-frame-resize.md": {
+      "source": "docs/migrations/2026-09-27-app-shell-frame-resize.md",
+      "group": "migrations",
+      "upstreamHash": "sha256:566ab4878b2a8dd03cb65309fd93270b5dc46fce67798c307d50ba278ef9d4fa",
+      "installedHash": "sha256:566ab4878b2a8dd03cb65309fd93270b5dc46fce67798c307d50ba278ef9d4fa"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/migrations/2026-09-27-basic-button-hover-text.md": {
+      "source": "docs/migrations/2026-09-27-basic-button-hover-text.md",
+      "group": "migrations",
+      "upstreamHash": "sha256:e55ef8faf408c850fda3ef34e66ea840156a257ae2c92d16446f4373ed9eac31",
+      "installedHash": "sha256:e55ef8faf408c850fda3ef34e66ea840156a257ae2c92d16446f4373ed9eac31"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/migrations/2026-09-27-cascade-selector.md": {
+      "source": "docs/migrations/2026-09-27-cascade-selector.md",
+      "group": "migrations",
+      "upstreamHash": "sha256:2001bea2a6bf56f0eeb11ba39bb37d94f0d45d070a8083ba450efe199c6667ec",
+      "installedHash": "sha256:2001bea2a6bf56f0eeb11ba39bb37d94f0d45d070a8083ba450efe199c6667ec"
+    },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/migrations/README.md": {
       "source": "docs/migrations/README.md",
       "group": "migrations",
-      "upstreamHash": "sha256:6b4128650851fa4429245c1da26382009263e316d6caacee3b95eecd0ed33777",
-      "installedHash": "sha256:6b4128650851fa4429245c1da26382009263e316d6caacee3b95eecd0ed33777"
+      "upstreamHash": "sha256:b4b670f22a58b1bd57352997c8fc8ec668851dfb7cbadeef292cef759d82845d",
+      "installedHash": "sha256:b4b670f22a58b1bd57352997c8fc8ec668851dfb7cbadeef292cef759d82845d"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/registry/assets.json": {
       "source": "design-system/surfaces/web-react/registry/assets.json",
       "group": "registry",
-      "upstreamHash": "sha256:8c075cc7563a8f786c91946c933ef9c3c9942ffa6312b977ca15518fecf2d815",
-      "installedHash": "sha256:f74f6710a2ca1fa0645d638c07defdf5061de97e62c1206f015c623dcf3a3801"
+      "upstreamHash": "sha256:123339c11f4aadce2055e37b7288b2dd60a32ba64d437e2037263825a38bdb15",
+      "installedHash": "sha256:4269fb94b6290519c746b800f3bd653b6c1985ebecccaa2bf62f73e5c8241c02"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/registry/pages.json": {
       "source": "design-system/surfaces/web-react/registry/pages.json",
@@ -237,10 +255,10 @@
       "installedHash": "sha256:6229e09b7ded415e0a273c8361db5ed9ff013902a7d89bd5ff29d46e5c2c1bfb"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/release.json": {
-      "source": "generated:0.16.0-source-sync.json",
+      "source": "generated:0.17.0-source-sync.json",
       "group": "release",
-      "upstreamHash": "sha256:d1ef1fbb49bde3c45f9beb690310a6c892ef39f5c535443e513bece23a7092b1",
-      "installedHash": "sha256:d1ef1fbb49bde3c45f9beb690310a6c892ef39f5c535443e513bece23a7092b1"
+      "upstreamHash": "sha256:95979bbebeab1f5b37a846a9c87b1693682d26b5b69c822aa243474f0aea4f93",
+      "installedHash": "sha256:95979bbebeab1f5b37a846a9c87b1693682d26b5b69c822aa243474f0aea4f93"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/assetMarker.ts": {
       "source": "packages/react/src/assetMarker.ts",
@@ -269,8 +287,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/components/BasicButton.tsx": {
       "source": "packages/react/src/components/BasicButton.tsx",
       "group": "runtime",
-      "upstreamHash": "sha256:fe390ec5a7a2c24564358ad964b7044af23de85ba24808b3771cb54b6b9eb4a7",
-      "installedHash": "sha256:1f226f02fc02b1a2e5aef0cfd455050bcd0c883e501a20138ad5ab96ed45894c"
+      "upstreamHash": "sha256:6372a49002aedd855f8fe28c02f9495876953e0d201045a0b9985ea5c7591177",
+      "installedHash": "sha256:00cc3c9f7d1eef02172ad82433aa7a2c0663dae484122186f3ce52b0dff78997"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/components/BorderScan.tsx": {
       "source": "packages/react/src/components/BorderScan.tsx",
@@ -377,8 +395,14 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/index.ts": {
       "source": "packages/react/src/index.ts",
       "group": "runtime",
-      "upstreamHash": "sha256:030137360e7ea520deb12b3f50a41be3dce36dafe1180d81d7fb865da1e9316c",
-      "installedHash": "sha256:3bbd456ae5a4df8f8791330e3478ab2d9957cbeb95f83e8783731a78ac30d070"
+      "upstreamHash": "sha256:120cce952defd2bf32de15a18b082baa775f8cf8a9369c3e124c8916ada03cc1",
+      "installedHash": "sha256:9422c32676eee4ee81f19e1fe7dacc9252ece259d8d608ce4f4028890a54e6a0"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/cascadeSelectorStore.ts": {
+      "source": "packages/react/src/internal/cascadeSelectorStore.ts",
+      "group": "runtime",
+      "upstreamHash": "sha256:d277874368c6b6f9a73463db68f2d65cb7ce38518ef07d4ddb2d0db04830b9a6",
+      "installedHash": "sha256:21a1d96287e5879e9a62f421c18b0e4cd0cbd43ed52a00c42bc1f150fde79400"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/MessageComposerStars.tsx": {
       "source": "packages/react/src/internal/MessageComposerStars.tsx",
@@ -395,8 +419,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/uiAssetAttributes.ts": {
       "source": "packages/react/src/internal/uiAssetAttributes.ts",
       "group": "runtime",
-      "upstreamHash": "sha256:8a92c8496022d99fec3d9c06360520d7ac7204682ec6ef53034e7292b8f05924",
-      "installedHash": "sha256:7831e028e692a8c0abf3f4a9a2d52e22b40451e934320cdafb5d43bc682407c3"
+      "upstreamHash": "sha256:8c28b856ddae88741247ff14314963a1e5fba871ac52204d88bc3655ec539197",
+      "installedHash": "sha256:d8ccff5aabdfd298d3091053ed56b02e88879da8601af9ad380f74786025c7bc"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/uiAssetAttributeScope.tsx": {
       "source": "packages/react/src/internal/uiAssetAttributeScope.tsx",
@@ -410,6 +434,12 @@
       "upstreamHash": "sha256:21e0f233c109166f2b693f905ec32e9f9898aa8081ff6f137a738dd9fb4a2937",
       "installedHash": "sha256:21e0f233c109166f2b693f905ec32e9f9898aa8081ff6f137a738dd9fb4a2937"
     },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/useAppShellResize.ts": {
+      "source": "packages/react/src/internal/useAppShellResize.ts",
+      "group": "runtime",
+      "upstreamHash": "sha256:cb9743e2d17ae25a72c5c40a5491d1309af962e642c84366060aba2ab584f8c8",
+      "installedHash": "sha256:3fe10cc9f3583b102c05bba3195dc08cddb715eed442e6376081c491c0eb3f86"
+    },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/internal/useDotScrollbar.ts": {
       "source": "packages/react/src/internal/useDotScrollbar.ts",
       "group": "runtime",
@@ -419,8 +449,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/layouts/AppShellFrame.tsx": {
       "source": "packages/react/src/layouts/AppShellFrame.tsx",
       "group": "runtime",
-      "upstreamHash": "sha256:78cf776609a1a1792614037d2f4903c2396339952c88f0209fcabd51b8a9d83c",
-      "installedHash": "sha256:e3b0fb02968714f3c5357409f25ba043863478395c2a53c6622cd400eefcb383"
+      "upstreamHash": "sha256:be4fc7cb258fdb4d982692d0993b21e4e19dc4c51103912700276aea9bf653c5",
+      "installedHash": "sha256:913a31612c53aa2bd8ccf99a90507b724e5d62917b980dbd08d388bf7d4df31d"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/motion/textMotion.ts": {
       "source": "packages/react/src/motion/textMotion.ts",
@@ -445,6 +475,12 @@
       "group": "runtime",
       "upstreamHash": "sha256:63d2d37b4e52b60dfc2d040804dbf0b464d4497686760cb68d5bd849e953de70",
       "installedHash": "sha256:729c9389e3aa9269e8b98e44f112a4e1761a9d490ec66cffa6ce05aaa2712dfd"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/patterns/CascadeSelector.tsx": {
+      "source": "packages/react/src/patterns/CascadeSelector.tsx",
+      "group": "runtime",
+      "upstreamHash": "sha256:30e3592afb19fcd8350e6802aded39726b537c1e5f0bbf91527be4060881e446",
+      "installedHash": "sha256:e49da15a9c23390f9e0efef04aeaa0cbb29396498c0f4bf696b14f9ce697c64c"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/src/patterns/ConfirmAction.tsx": {
       "source": "packages/react/src/patterns/ConfirmAction.tsx",
@@ -533,8 +569,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/app-shell-frame.css": {
       "source": "packages/react/styles/app-shell-frame.css",
       "group": "runtime",
-      "upstreamHash": "sha256:74eea9cfdd039a682a817ee4d89c5d70762b45707de3dbdfc2f35df5183833d8",
-      "installedHash": "sha256:74eea9cfdd039a682a817ee4d89c5d70762b45707de3dbdfc2f35df5183833d8"
+      "upstreamHash": "sha256:e9e1a61a669d391b63902acdb39225891fe1452afe4bde67957c1581a3421ccc",
+      "installedHash": "sha256:e9e1a61a669d391b63902acdb39225891fe1452afe4bde67957c1581a3421ccc"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/aspect-ratio-selector.css": {
       "source": "packages/react/styles/aspect-ratio-selector.css",
@@ -548,11 +584,23 @@
       "upstreamHash": "sha256:d4de135b9b7896aa99108c84a43f06b869efa311825f585f7e5c8e099b140762",
       "installedHash": "sha256:d4de135b9b7896aa99108c84a43f06b869efa311825f585f7e5c8e099b140762"
     },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/basic-button.css": {
+      "source": "packages/react/styles/basic-button.css",
+      "group": "runtime",
+      "upstreamHash": "sha256:cdbea6557597e6ca7e450f464deba023a00d95e61064b30350bb72f8ff018aa0",
+      "installedHash": "sha256:cdbea6557597e6ca7e450f464deba023a00d95e61064b30350bb72f8ff018aa0"
+    },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/border-scan.css": {
       "source": "packages/react/styles/border-scan.css",
       "group": "runtime",
       "upstreamHash": "sha256:6cd2b7202f2e94f2ae2b80a860b9c935b1f8d8bf8d3aad55ec474b0c268b15c5",
       "installedHash": "sha256:6cd2b7202f2e94f2ae2b80a860b9c935b1f8d8bf8d3aad55ec474b0c268b15c5"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/cascade-selector.css": {
+      "source": "packages/react/styles/cascade-selector.css",
+      "group": "runtime",
+      "upstreamHash": "sha256:8292f74fd94fd899e10f0d303e56b6363c9e434bf0abc077be78308ebf56a2d4",
+      "installedHash": "sha256:8292f74fd94fd899e10f0d303e56b6363c9e434bf0abc077be78308ebf56a2d4"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/runtime/styles/composite-button.css": {
       "source": "packages/react/styles/composite-button.css",
@@ -695,8 +743,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/catalog.json": {
       "source": "design-system/surfaces/web-react/storybook/catalog.json",
       "group": "storybook",
-      "upstreamHash": "sha256:8c7b53b9d5c50f98eb3125c6a2a4b54efea01d3a2bc40b1297fceefa1fab2970",
-      "installedHash": "sha256:8c7b53b9d5c50f98eb3125c6a2a4b54efea01d3a2bc40b1297fceefa1fab2970"
+      "upstreamHash": "sha256:259c6cd947d8eeab6246b2ea48023baa3112e4edf209eca37bda44885003c823",
+      "installedHash": "sha256:259c6cd947d8eeab6246b2ea48023baa3112e4edf209eca37bda44885003c823"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/interactionChecks.ts": {
       "source": "apps/storybook/interactionChecks.ts",
@@ -743,8 +791,8 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/AppShellFrame.stories.tsx": {
       "source": "apps/storybook/stories/AppShellFrame.stories.tsx",
       "group": "storybook",
-      "upstreamHash": "sha256:44249697b3d279607bf11a41e5411061b880d57d725f70f436fa0d70d76171ff",
-      "installedHash": "sha256:f6501471816f197115a1c23b5bd585bed3379c9072affda0a09369119b94bbf6"
+      "upstreamHash": "sha256:653bbdf39f62bb03700edbf4450cc98ce678656a576f369de22d6317bcd57365",
+      "installedHash": "sha256:66285aa4d3fa33f483cded2f59e8ec5c5afe60c2495b1db39ce530ba5d609cf8"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/AspectRatioSelector.stories.tsx": {
       "source": "apps/storybook/stories/AspectRatioSelector.stories.tsx",
@@ -767,14 +815,20 @@
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/BasicButton.stories.tsx": {
       "source": "apps/storybook/stories/BasicButton.stories.tsx",
       "group": "storybook",
-      "upstreamHash": "sha256:aff8640d4c3f7f36217437bac82c8e1ea421613bdba59affed5903fbc6dd8791",
-      "installedHash": "sha256:3a4be8067a3b223f10741cdcd71059263965425d3758d7fa416b67cf7e857834"
+      "upstreamHash": "sha256:de0844c34425d2bd09573c598f5fb777ef57b5657cf859f41045fff0b8dab64b",
+      "installedHash": "sha256:2f7deb022e54b4154b5ff2ed2893060aef5f8d712cdc06c95426493ba0f7f5a9"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/BorderScan.stories.tsx": {
       "source": "apps/storybook/stories/BorderScan.stories.tsx",
       "group": "storybook",
       "upstreamHash": "sha256:cf828054c16a94ec5c0cdc87a953b9559ac6f614371bd0fa648cd6ff65e3d22d",
       "installedHash": "sha256:498d4e6740bc9aa012de65405863450e99fb64868b25518672202b4ed4fd66f0"
+    },
+    "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/CascadeSelector.stories.tsx": {
+      "source": "apps/storybook/stories/CascadeSelector.stories.tsx",
+      "group": "storybook",
+      "upstreamHash": "sha256:b2dbcc820e126fa9e55beced29cf61ad3e95e73a4ba58be132205170afd38164",
+      "installedHash": "sha256:9c0c516fe8f3bed19745e160ec5546bec591125ea64c88e557cb63357ab73aa8"
     },
     "design-system/surfaces/human2ai-web/src/vendor/yisiui/storybook/stories/ComponentStatus.stories.tsx": {
       "source": "apps/storybook/stories/ComponentStatus.stories.tsx",

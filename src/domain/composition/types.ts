@@ -8,6 +8,7 @@ export type Primitive = "circle" | "triangle" | "quadrilateral";
 export type AreaAspect = "square" | "free" | "landscape" | "portrait";
 export type CompositionShotScale = "auto" | "foreground" | "midground" | "background";
 export type CompositionProcessingSemantic = "scene-composition" | "editorial-layout";
+export type CompositionPreviewMode = "precise" | "soft";
 export type CompositionVisualWeight =
   | "auto"
   | "high"
@@ -116,6 +117,8 @@ export interface CompositionDraft {
   version: 1;
   kind: "composition-draft";
   processingSemantic: CompositionProcessingSemantic | null;
+  /** Session-wide reference fidelity. New drafts use soft; legacy omissions mean precise. */
+  previewMode?: CompositionPreviewMode;
   frame: CompositionFrame;
   overallNote: string;
   focusPoints: FocusPoint[];

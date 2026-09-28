@@ -28,3 +28,9 @@ Storybook 共享与本地分组规则见 [2026-09-13 分组归属](2026-09-13-st
 - 消费项目的类型检查、交互测试、Storybook、生产构建及引用归零证据。
 
 推荐发布顺序：先发布保留兼容适配器的 deprecated minor candidate，完成真实消费项目迁移，再由用户明确批准 removed major candidate。Registry tombstone 在移除后继续保留迁移事实，但不得继续声明 live source 或 Story。
+
+- [CascadeSelector 多栏级联选择器](2026-09-27-cascade-selector.md)：0.17.0 新增 experimental 资产、全层级搜索与局部更新契约。
+
+- [BasicButton 悬停文字模式](2026-09-27-basic-button-hover-text.md)：静止图标、悬停动画展开到纯文字的兼容新增模式。
+
+- [AppShellFrame 双侧栏调宽](2026-09-27-app-shell-frame-resize.md)：独立宽度范围、指针与键盘调宽、收起保宽和局部布局更新。

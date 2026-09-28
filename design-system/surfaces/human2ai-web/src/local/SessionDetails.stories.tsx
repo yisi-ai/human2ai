@@ -65,6 +65,17 @@ function modeItem(labels: typeof zh.composition.mode) {
   };
 }
 
+function previewModeItem(labels: typeof zh.composition.previewMode) {
+  return {
+    label: labels.label,
+    value: <ExpandingSwitch aria-label={labels.label} defaultValue="soft"
+      colors={{ mode: "multicolor" }} items={[
+        { key: "precise", label: labels.precise, icon: <LayoutOutlined aria-hidden="true" /> },
+        { key: "soft", label: labels.soft, icon: <PictureOutlined aria-hidden="true" /> },
+      ]} />,
+  };
+}
+
 const meta = {
   id: "human2ai-session-details",
   title: "human2ai/SessionDetails",
@@ -72,6 +83,7 @@ const meta = {
   parameters: { layout: "centered" },
   args: {
     primaryItem: modeItem(zh.composition.mode),
+    secondaryItem: previewModeItem(zh.composition.previewMode),
     createdAt: "2026-08-26T09:30:00.000Z",
     updatedAt: "2026-08-26T10:45:00.000Z",
     nodeCount: 12,
@@ -111,6 +123,9 @@ export const Default: Story = {
     const firstLabel = canvasElement.querySelector("dt");
     if (firstLabel?.textContent !== "构图模式") {
       throw new Error("SessionDetails must render the primary item first");
+    }
+    if (canvasElement.querySelectorAll("dt")[1]?.textContent !== "预览模式") {
+      throw new Error("Preview mode must follow composition mode");
     }
     assertStoryText(canvasElement, "基本信息");
     assertStoryText(canvasElement, "节点数");
@@ -170,6 +185,7 @@ export const English: Story = {
     locale: "en",
     labels: enLabels,
     primaryItem: modeItem(en.composition.mode),
+    secondaryItem: previewModeItem(en.composition.previewMode),
   },
   play: ({ canvasElement }) => {
     assertStoryText(canvasElement, "Session details");

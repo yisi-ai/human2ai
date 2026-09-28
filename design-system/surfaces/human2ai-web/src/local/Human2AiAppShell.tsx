@@ -3,6 +3,7 @@
 import {
   AppShellFrame,
   type AppShellFrameLabels,
+  type AppShellFrameProps,
 } from "@human2ai/ui/yisiui/app-shell-frame";
 import type { ReactNode } from "react";
 
@@ -14,7 +15,9 @@ export interface Human2AiAppShellLabels extends AppShellFrameLabels {
   productName: string;
 }
 
-export interface Human2AiAppShellProps {
+export interface Human2AiAppShellProps extends Pick<AppShellFrameProps,
+  "sidebarWidth" | "rightPanelWidth" | "onSidebarWidthChange" | "onRightPanelWidthChange"
+> {
   title: ReactNode;
   titleExtra?: ReactNode;
   headerExtra?: ReactNode;
@@ -34,9 +37,11 @@ const DEFAULT_LABELS: Human2AiAppShellLabels = {
   navigation: "Human2AI 应用导航",
   collapseSidebar: "收起应用侧栏",
   expandSidebar: "展开应用侧栏",
+  resizeSidebar: "调整应用侧栏宽度",
   rightPanel: "页面属性",
   collapseRightPanel: "收起页面属性",
   expandRightPanel: "展开页面属性",
+  resizeRightPanel: "调整操作面板宽度",
 };
 
 export function Human2AiAppShell({
@@ -49,6 +54,10 @@ export function Human2AiAppShell({
   rightPanel,
   rightPanelOpen,
   onRightPanelOpenChange,
+  sidebarWidth = 280,
+  rightPanelWidth = 300,
+  onSidebarWidthChange,
+  onRightPanelWidthChange,
   labels: labelOverrides,
   className,
 }: Human2AiAppShellProps) {
@@ -81,8 +90,12 @@ export function Human2AiAppShell({
         rightPanel={rightPanel}
         rightPanelOpen={rightPanelOpen}
         onRightPanelOpenChange={onRightPanelOpenChange}
-        sidebarWidth={280}
-        rightPanelWidth={300}
+        sidebarWidth={sidebarWidth}
+        rightPanelWidth={rightPanelWidth}
+        onSidebarWidthChange={onSidebarWidthChange}
+        onRightPanelWidthChange={onRightPanelWidthChange}
+        sidebarResizable
+        rightPanelResizable
         labels={labels}
       >
         {children}

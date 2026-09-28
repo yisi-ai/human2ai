@@ -237,6 +237,7 @@ export function auditRefinement(
     ? { ...draft.directionLine, rotation: 0 } : draft.directionLine;
   const preserved = {
     processingSemantic: source.processingSemantic === refined.processingSemantic,
+    previewMode: (source.previewMode ?? "precise") === (refined.previewMode ?? "precise"),
     frame: equal(source.frame, refined.frame),
     focusIdentity: equal(
       source.focusPoints.map(({ id }) => id),

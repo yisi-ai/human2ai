@@ -13,7 +13,7 @@ import {
   type CompositionRefinementResult,
   type CompositionRefinementRun,
 } from "../domain/composition/index.ts";
-import { DraftVersionStore } from "./draft-version-store.ts";
+import { DraftVersionStore, type DraftSavedEvent } from "./draft-version-store.ts";
 import type { CreateDraftVersionInput } from "../domain/session/index.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 import {
@@ -75,6 +75,8 @@ export class CompositionSessionRepository {
   listDraftVersions(sessionId: string): CompositionDraftVersion[] {
     return this.draftVersions.listDraftVersions(sessionId);
   }
+
+  onDraftSaved(listener: (event: DraftSavedEvent<CompositionDraft>) => void) { return this.draftVersions.onSaved(listener); }
 
   getDraftVersion(sessionId: string, revision: number): CompositionDraftVersion {
     return this.draftVersions.getDraftVersion(sessionId, revision);

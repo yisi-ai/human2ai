@@ -162,6 +162,7 @@ describe("agent-authored composition refinement", () => {
     expect(result.audit.passed).toBe(true);
     expect(result.audit.preserved).toEqual({
       processingSemantic: true,
+      previewMode: true,
       frame: true,
       focusIdentity: true,
       areaIdentity: true,

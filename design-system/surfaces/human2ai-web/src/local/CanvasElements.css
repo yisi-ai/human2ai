@@ -154,6 +154,14 @@
   cursor: grabbing;
 }
 
+.human2ai-canvas-frame__caption {
+  fill: var(--yisiui-color-text-secondary);
+  font-family: var(--yisiui-font-family-mono);
+  font-size: var(--yisiui-font-size-sm);
+  font-weight: var(--yisiui-font-weight-medium);
+  pointer-events: none;
+}
+
 .human2ai-canvas-shape {
   fill: var(--yisiui-color-paper-sky);
   stroke: var(--yisiui-color-border-hover);

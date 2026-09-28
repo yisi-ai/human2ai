@@ -13,6 +13,7 @@ import { registerUiSketchSessionRoutes } from "./routes/ui-sketch-sessions.ts";
 import { registerImageContentTypeParser } from "./image-content-type-parser.ts";
 import type { SpatialSessionRepository } from "../database/spatial-session-repository.ts";
 import { registerSpatialSessionRoutes } from "./routes/spatial-sessions.ts";
+import { registerSessionPreviewRoutes } from "./routes/session-previews.ts";
 
 const healthResponseSchema = {
   type: "object",
@@ -38,6 +39,7 @@ export const HUMAN2AI_SERVICE_CAPABILITIES = [
   "image-assets",
   "style-library",
   "session-styles",
+  "session-previews",
 ] as const;
 
 export interface ServerDependencies {
@@ -55,6 +57,8 @@ export function buildServer(
   dependencies: ServerDependencies = {},
 ): FastifyInstance {
   const server = Fastify(options);
+  const { projectSessions, compositionSessions, uiSketchSessions, spatialSessions, imageAssets } = dependencies;
+  const previews = projectSessions && compositionSessions && uiSketchSessions && spatialSessions && imageAssets;
   const serviceCapabilities = [
     ...(dependencies.projectSessions ? ["typed-sessions"] : []),
     ...(dependencies.compositionSessions
@@ -67,6 +71,7 @@ export function buildServer(
       : []),
     ...(dependencies.imageAssets ? ["image-assets"] : []),
     ...(dependencies.styleLibrary ? ["style-library", "session-styles"] : []),
+    ...(previews ? ["session-previews"] : []),
   ];
 
   server.setErrorHandler((error, _request, reply) => {
@@ -105,6 +110,9 @@ export function buildServer(
     registerUiSketchSessionRoutes(server, dependencies.uiSketchSessions);
   }
   if (dependencies.spatialSessions) registerSpatialSessionRoutes(server, dependencies.spatialSessions);
+  if (projectSessions && compositionSessions && uiSketchSessions && spatialSessions && imageAssets) {
+    registerSessionPreviewRoutes(server, { projectSessions, compositionSessions, uiSketchSessions, spatialSessions, imageAssets });
+  }
   if (dependencies.imageAssets || dependencies.styleLibrary) {
     registerImageContentTypeParser(server);
   }

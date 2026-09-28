@@ -49,9 +49,19 @@
       "referent": "The current session ID supplied by the page.",
       "precedence": "Copies only the identifier, without a CLI command, URL, title, or connection instruction. Unavailable without a current session ID.",
       "canonicalKey": "sessionDetails.copyId",
-      "searchTerms": ["复制ID", "复制会话ID", "Copy ID", "Copy session ID"],
-      "examples": ["Copy session-123 to tell a connected Agent which session to edit."],
-      "nonExamples": ["Copy the Agent connection command.", "Copy a node, capture, or project identifier."]
+      "searchTerms": [
+        "复制ID",
+        "复制会话ID",
+        "Copy ID",
+        "Copy session ID"
+      ],
+      "examples": [
+        "Copy session-123 to tell a connected Agent which session to edit."
+      ],
+      "nonExamples": [
+        "Copy the Agent connection command.",
+        "Copy a node, capture, or project identifier."
+      ]
     },
     "session.copy-feedback": {
       "meaning": "Pending or failure feedback for copying either the current session ID or its Agent connection instruction.",
@@ -59,9 +69,20 @@
       "referent": "The clipboard action identified by the initiating button.",
       "precedence": "Describes the copy operation, not Agent connection or session persistence. Successful copying uses clipboard.copied.",
       "canonicalKey": "sessionDetails.copying",
-      "searchTerms": ["复制中", "复制失败", "Copying", "Copy failed"],
-      "examples": ["Show pending while writing a session ID to the clipboard.", "Show failure when the connection instruction cannot be copied."],
-      "nonExamples": ["Report that the Agent connected.", "Report a failed session save."]
+      "searchTerms": [
+        "复制中",
+        "复制失败",
+        "Copying",
+        "Copy failed"
+      ],
+      "examples": [
+        "Show pending while writing a session ID to the clipboard.",
+        "Show failure when the connection instruction cannot be copied."
+      ],
+      "nonExamples": [
+        "Report that the Agent connected.",
+        "Report a failed session save."
+      ]
     },
     "actions.delete": {
       "meaning": "A destructive command that removes the target identified by the surrounding interface, after confirmation when confirmation is required.",
@@ -186,8 +207,8 @@
       ]
     },
     "clipboard.preview": {
-      "meaning": "Copy a PNG preview rendered from the authored artifact; download it if image clipboard access is unavailable.",
-      "scope": "Composition and selected UI-sketch stage copy tools.",
+      "meaning": "Copy a PNG preview rendered from the authored artifact, excluding node notes and following its preview fidelity; download it if image clipboard access is unavailable.",
+      "scope": "Composition and selected UI-sketch stage copy tools and their hover/focus image previews. Hover shows the current stage; the existing copy menu selects the stage to copy.",
       "referent": "The current authored composition or selected UI stage preview.",
       "precedence": "Same user-facing operation across renderers; excludes uploaded images and Agent-refined references.",
       "canonicalKey": "clipboard.copyPreview",
@@ -573,13 +594,15 @@
       "meaning": "The application-level sidebar containing workspace navigation and feature-entry controls.",
       "scope": "Shared application shell across product pages.",
       "referent": "The left application sidebar, not a canvas-local tool panel.",
-      "precedence": "Contains navigation; collapsing it changes shell presentation without deleting sessions or hiding draft elements.",
+      "precedence": "Contains navigation; collapsing or resizing it changes shell presentation without deleting sessions or hiding draft elements.",
       "canonicalKey": "shell.sidebar",
       "searchTerms": [
         "应用侧栏",
         "application sidebar",
         "收起应用侧栏",
-        "展开应用侧栏"
+        "展开应用侧栏",
+        "调整应用侧栏宽度",
+        "Resize application sidebar"
       ],
       "examples": [
         "Name the application sidebar landmark.",
@@ -613,14 +636,16 @@
       "meaning": "The page-level panel containing session information and controls for the current editor.",
       "scope": "The shared shell right-side panel used by composition and UI-sketch pages.",
       "referent": "The supplied page-level rightPanel content.",
-      "precedence": "Contains more than canvas tools; expanding or collapsing changes the panel presentation, not session persistence or element visibility. Distinct from the left workspace sidebar.",
+      "precedence": "Contains more than canvas tools; expanding, collapsing or resizing changes the panel presentation, not session persistence or element visibility. Distinct from the left workspace sidebar.",
       "canonicalKey": "shell.rightPanel",
       "searchTerms": [
         "操作面板",
         "Action panel",
         "收起操作面板",
         "展开操作面板",
-        "rightPanel"
+        "rightPanel",
+        "调整操作面板宽度",
+        "Resize action panel"
       ],
       "examples": [
         "Show session details and editing controls beside the composition canvas."
@@ -1205,10 +1230,12 @@
     "canvas.show-hidden-nodes": {
       "meaning": "An editor-only toggle that displays all nodes in the active canvas state, including nodes marked invisible, which appear faded and remain editable.",
       "scope": "Composition and UI-sketch canvas display controls in the AppShell header extra slot, shown for both single-state and multi-state canvases.",
-      "referent": "The canvas display preference, not a node visibility value.",
+      "referent": "The canvas display preference for revealing hidden nodes, labeled 显示隐藏 / Show hidden; not a node visibility value.",
       "precedence": "Does not change saved visibility, state snapshots, export, or grouped editing rules. Independent from onion skin.",
       "canonicalKey": "canvas.display.showHiddenNodes",
       "searchTerms": [
+        "显示隐藏",
+        "Show hidden",
         "全部显示",
         "Show all",
         "显示隐藏节点",
@@ -1262,6 +1289,44 @@
       "nonExamples": [
         "Delete a node.",
         "Collapse editor tools."
+      ]
+    },
+    "canvas.reference-image-snapshot": {
+      "meaning": "Keep a live session-preview or camera-reference node and add an independent image node showing its current retained output.",
+      "scope": "UI session-preview and composition camera-reference editor actions.",
+      "referent": "An additional image node on the current canvas; the original live reference remains.",
+      "precedence": "This creates a canvas node. It neither downloads a file nor replaces or detaches the existing live reference.",
+      "canonicalKey": "spatial.snapshot",
+      "searchTerms": [
+        "另存为图片节点",
+        "Save as image node",
+        "snapshot"
+      ],
+      "examples": [
+        "Save the current session preview as another image node.",
+        "Keep the live camera reference and add an independent image node."
+      ],
+      "nonExamples": [
+        "Download a PNG file to disk.",
+        "Replace the live reference with an image."
+      ]
+    },
+    "dimensions.frame-size": {
+      "meaning": "Pixel width and height of an output frame, shared by the composition and UI editors.",
+      "scope": "The shared frame control title. Presets keep width and derive height; manual input displays integer pixels, steps by 1px and rounds pasted fractions, with a minimum of 10 and no aspect-ratio or maximum-size restriction.",
+      "referent": "Current frame bounds width and height.",
+      "precedence": "Not a reduced ratio, viewport zoom, or node geometry.",
+      "canonicalKey": "dimensions.frameSize",
+      "searchTerms": [
+        "范围",
+        "Size",
+        "frame size"
+      ],
+      "examples": [
+        "Edit a frame to 960 × 560."
+      ],
+      "nonExamples": [
+        "Change viewport zoom."
       ]
     }
   },
@@ -1527,6 +1592,14 @@
       "variant": "failure",
       "role": "Preview copy error notification",
       "grammar": "Failure sentence",
+      "tone": "Concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.previewImage": {
+      "conceptId": "clipboard.preview",
+      "variant": "image",
+      "role": "Accessible name for the image shown by hovering or focusing the copy-preview action",
+      "grammar": "Noun phrase",
       "tone": "Concise and explicit",
       "reusePolicy": "contextual"
     },
@@ -1895,6 +1968,14 @@
       "tone": "neutral",
       "reusePolicy": "canonical"
     },
+    "shell.resizeSidebar": {
+      "conceptId": "shell.sidebar",
+      "variant": "resize-action",
+      "role": "accessible separator label for adjusting the application sidebar width",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
     "shell.rightPanel": {
       "conceptId": "shell.action-panel",
       "variant": "panel-name",
@@ -1915,6 +1996,14 @@
       "conceptId": "shell.action-panel",
       "variant": "expand-action",
       "role": "accessible control label for expanding the page-level action panel",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "shell.resizeRightPanel": {
+      "conceptId": "shell.action-panel",
+      "variant": "resize-action",
+      "role": "accessible separator label for adjusting the page-level action panel width",
       "grammar": "imperative verb phrase",
       "tone": "neutral",
       "reusePolicy": "contextual"
@@ -2403,6 +2492,23 @@
       "grammar": "imperative verb phrase",
       "tone": "neutral",
       "reusePolicy": "contextual"
+    },
+    "spatial.snapshot": {
+      "conceptId": "canvas.reference-image-snapshot",
+      "variant": "default",
+      "role": "action creating an independent image node",
+      "grammar": "imperative",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "dimensions.frameSize": {
+      "conceptId": "dimensions.frame-size",
+      "variant": "control-title",
+      "role": "Shared frame size control title",
+      "grammar": "Noun",
+      "tone": "Neutral",
+      "reusePolicy": "canonical",
+      "duplicateReason": "uiSketch.canvasLabels.rangeTitle is the old UI-specific control title; runtime frame controls now share this key."
     }
   }
 }

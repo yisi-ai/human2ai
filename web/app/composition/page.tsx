@@ -12,13 +12,13 @@ import {
   FontSizeOutlined,
   LayoutOutlined,
   LineOutlined,
-  LockOutlined,
   PictureOutlined,
-  UnlockOutlined,
 } from "@ant-design/icons";
 import {
   COMPOSITION_FRAME_ID,
   CompositionWorkflowView,
+  CanvasFrameControls,
+  CompositionPreviewHover,
   CompositionPlanningPanel,
   type CompositionPlanningLabels,
   UiSketchStateTabs,
@@ -31,10 +31,6 @@ import {
   type CompositionCanvasViewportAction,
   type CompositionPlacementTool,
 } from "@human2ai/ui";
-import {
-  AspectRatioSelector,
-  type AspectRatioValue,
-} from "@human2ai/ui/yisiui/aspect-ratio-selector";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import { ConfirmAction } from "@human2ai/ui/yisiui/confirm-action";
@@ -54,11 +50,11 @@ import {
 import { useTranslation } from "react-i18next";
 
 import {
-  changeFrame,
-  compositionFrameSizeForRatio,
+  resizeFrameToBounds,
+  frameBoundsInCanvas,
   createDraft,
-  isCompositionFrameRatioSupported,
   setProcessingSemantic,
+  setCompositionPreviewMode,
   validateDraft,
   compositionStates,
   createCompositionState,
@@ -118,22 +114,6 @@ async function loadCompositionSession(
   return { session, draftVersion: draftVersions.at(-1) ?? null };
 }
 
-function frameRatioForDraft(draft: CompositionDraft): AspectRatioValue {
-  const divisor = greatestCommonDivisor(draft.frame.width, draft.frame.height);
-  return {
-    width: draft.frame.width / divisor,
-    height: draft.frame.height / divisor,
-  };
-}
-
-function greatestCommonDivisor(left: number, right: number): number {
-  let dividend = Math.abs(left);
-  let divisor = Math.abs(right);
-  while (divisor !== 0) {
-    [dividend, divisor] = [divisor, dividend % divisor];
-  }
-  return dividend || 1;
-}
 
 function formatServiceError(error: unknown, t: TFunction): string {
   if (error instanceof Human2AiApiError) {
@@ -176,6 +156,7 @@ function CompositionPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const requestedSessionId = searchParams.get("session");
+  const requestedStateId = searchParams.get("state");
   const { t, i18n } = useTranslation();
   const translatePrompt = useCallback<CompositionPromptTranslator>(
     (key, values) => t(
@@ -196,8 +177,9 @@ function CompositionPageContent() {
   const [selectedPlanIds, setSelectedPlanIds] = useState<string[]>([]);
   const [planningLocked, setPlanningLocked] = useState(false);
   const planningLabels = t("composition.planning", { returnObjects: true }) as CompositionPlanningLabels;
-  const [frameRatio, setFrameRatio] = useState<AspectRatioValue>({ width: 16, height: 9 });
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const resolvePreviewImageSource = useCallback((assetId: string) =>
+    sessionId ? imageAssetContentUrl(sessionId, assetId) : undefined, [sessionId]);
   const [sessionTitle, setSessionTitle] = useState<string | null>(null);
   const [sessionMetadata, setSessionMetadata] = useState<Human2AiSession | null>(null);
   const [lastModifiedAt, setLastModifiedAt] = useState<string | null>(null);
@@ -227,7 +209,6 @@ function CompositionPageContent() {
     setOverallNoteOpen(false);
     setSelectedIds([]);
     setSelectedPlanIds([]);
-    setFrameRatio(frameRatioForDraft(restored));
   }, loading || revisionConflictRef.current);
   const spatialReferences = useCompositionSpatialReferences({ draft, sessionId, ensureSession: ensureCompositionSession, updateDraft });
   const editing = !loading;
@@ -284,7 +265,6 @@ function CompositionPageContent() {
       requestCanvasViewport("fit-frame");
       setSelectedIds([]);
       setSelectedPlanIds([]);
-      setFrameRatio({ width: 16, height: 9 });
       setSessionId(null);
       setSessionTitle(null);
       setSessionMetadata(null);
@@ -309,7 +289,8 @@ function CompositionPageContent() {
     void loadCompositionSession(requestedSessionId)
       .then((snapshot) => {
         if (cancelled) return;
-        const nextDraft = snapshot.draftVersion?.draft ?? createDraft();
+        let nextDraft = snapshot.draftVersion?.draft ?? createDraft();
+        if (requestedStateId && compositionStates(nextDraft).some(state => state.id === requestedStateId)) nextDraft = selectCompositionState(nextDraft, requestedStateId);
         history.reset(nextDraft);
         setDraft(nextDraft);
         setSessionId(snapshot.session.id);
@@ -320,7 +301,6 @@ function CompositionPageContent() {
         );
         setLatestRevision(snapshot.draftVersion?.revision ?? 0);
         setStyleProcessing(snapshot.draftVersion?.styleProcessing);
-        setFrameRatio(frameRatioForDraft(nextDraft));
         const initialSelection = nextDraft.areas[0]?.id ?? nextDraft.focusPoints[0]?.id;
         setSelectedIds(initialSelection ? [initialSelection] : []);
         setSelectedPlanIds([]);
@@ -338,7 +318,7 @@ function CompositionPageContent() {
     return () => {
       cancelled = true;
     };
-  }, [requestedSessionId, t]);
+  }, [requestedSessionId, requestedStateId, t]);
 
   useEffect(() => {
     const draftChangeVersion = draftChangeVersionRef.current;
@@ -423,7 +403,6 @@ function CompositionPageContent() {
           setLatestRevision(latest.revision);
           setStyleProcessing(latest.styleProcessing);
           setLastModifiedAt(latest.createdAt);
-          setFrameRatio(frameRatioForDraft(latest.draft));
           const initialSelection = latest.draft.areas[0]?.id
             ?? latest.draft.focusPoints[0]?.id;
           setSelectedIds(initialSelection ? [initialSelection] : []);
@@ -485,7 +464,6 @@ function CompositionPageContent() {
     draftChangeVersionRef.current += 1;
     blockedAutoSaveVersionRef.current = null;
     setDraft(nextDraft);
-    setFrameRatio(frameRatioForDraft(nextDraft));
     setDirty(true);
   }
 
@@ -503,7 +481,6 @@ function CompositionPageContent() {
     requestCanvasViewport("fit-frame");
     setSelectedIds([]);
     setSelectedPlanIds([]);
-    setFrameRatio({ width: 16, height: 9 });
     setDirty(true);
     setServiceError(null);
   }
@@ -713,6 +690,9 @@ function CompositionPageContent() {
           disabled={loading}
           onClick={() => void copyPrompt()}
         />
+        <CompositionPreviewHover draft={draft} label={t("composition.views.referenceCanvas")}
+          resolveImageSource={resolvePreviewImageSource}
+          disabled={loading}>
         <CompositeButton
           icon={<PictureOutlined aria-hidden="true" />}
           label={t("clipboard.copyPreview")}
@@ -720,6 +700,7 @@ function CompositionPageContent() {
           disabled={loading}
           onClick={() => void copySketch()}
         />
+        </CompositionPreviewHover>
       </div>
     </div>
   );
@@ -769,6 +750,25 @@ function CompositionPageContent() {
                       }}
                     />
                   ),
+                }}
+                secondaryItem={{
+                  label: t("composition.previewMode.label"),
+                  value: <ExpandingSwitch
+                    className={styles.processingSemanticSwitch}
+                    value={draft.previewMode ?? "precise"}
+                    aria-label={t("composition.previewMode.label")}
+                    disabled={!editing}
+                    colors={{ mode: "multicolor" }}
+                    items={[
+                      { key: "precise", label: t("composition.previewMode.precise"), icon: <AimOutlined aria-hidden="true" /> },
+                      { key: "soft", label: t("composition.previewMode.soft"), icon: <PictureOutlined aria-hidden="true" /> },
+                    ]}
+                    onChange={value => {
+                      if (value === "precise" || value === "soft") {
+                        updateDraft(current => setCompositionPreviewMode(current, value));
+                      }
+                    }}
+                  />,
                 }}
                 createdAt={sessionMetadata?.createdAt ?? null}
                 updatedAt={lastModifiedAt}
@@ -826,53 +826,13 @@ function CompositionPageContent() {
             </>
           ) : null}
 
-          <section>
-            <div className={styles.sectionHeading}>
-              <h2>{t("composition.frameRatio")}</h2>
-              <div className={styles.sectionHeadingActions}>
-                <BasicButton
-                  mode="icon-only"
-                  size="small"
-                  icon={frameLocked ? <LockOutlined /> : <UnlockOutlined />}
-                  iconLabel={
-                    frameLocked
-                      ? t("composition.unlockFrame")
-                      : t("composition.lockFrame")
-                  }
-                  title={
-                    frameLocked
-                      ? t("composition.unlockFrame")
-                      : t("composition.lockFrame")
-                  }
-                  aria-pressed={frameLocked}
-                  backgroundColor={frameLocked ? "color.action.primaryActive" : "none"}
-                  textColor={frameLocked ? "color.text.onPrimary" : "color.text.secondary"}
-                  disabled={!editing}
-                  onClick={() => setFrameLocked((locked) => !locked)}
-                />
-              </div>
-            </div>
-            <div className={styles.aspectRatioSelector}>
-              <AspectRatioSelector
-                ratio={frameRatio}
-                disabled={!editing || frameLocked}
-                onRatioChange={(ratio) => {
-                  if (!isCompositionFrameRatioSupported(ratio.width, ratio.height)) return;
-                  setFrameRatio(ratio);
-                  updateDraft((current) =>
-                    changeFrame(
-                      current,
-                      compositionFrameSizeForRatio(ratio.width, ratio.height),
-                    ),
-                  );
-                }}
-                title={t("composition.aspectRatioTitle")}
-                widthLabel={t("dimensions.width")}
-                heightLabel={t("dimensions.height")}
-                aria-label={t("composition.frameRatio")}
-              />
-            </div>
-          </section>
+          <CanvasFrameControls
+            frame={frameBoundsInCanvas(draft.frame)} name={t("composition.frameLabel")}
+            locked={frameLocked} disabled={!editing} onLockedChange={setFrameLocked}
+            onChange={(frame) => updateDraft((current) => resizeFrameToBounds(current, frame))}
+            labels={{ reset: t("composition.frameReset"), lock: t("composition.lockFrame"), unlock: t("composition.unlockFrame"),
+              size: t("dimensions.frameSize"), width: t("dimensions.width"), height: t("dimensions.height") }}
+          />
 
           <CompositionPlanningPanel draft={draft} selectedIds={selectedPlanIds} onSelect={selectPlan}
             showPlanning={showPlanning} onShowPlanningChange={setShowPlanning}
@@ -973,6 +933,7 @@ function CompositionPageContent() {
               onPlanSelectionChange={selectPlan}
               planningLabels={planningLabels}
               frameLocked={frameLocked}
+              frameLabels={{ name: t("composition.frameLabel"), action: t("composition.frameAction") }}
               canvasViewportAction={canvasViewportAction}
               canvasBackgroundPattern="dots"
               showCanvasViewportControls={!loading}

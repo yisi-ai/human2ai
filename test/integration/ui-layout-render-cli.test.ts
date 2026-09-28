@@ -48,7 +48,7 @@ describe("UI layout CLI preview", () => {
     const draft = validateUiSketchDraft({ ...createUiSketchDraft(),
       frame: { x: 100, y: 200, width: 64, height: 48 },
       rectangles: [
-        { id: "region", x: 110, y: 210, width: 20, height: 20, note: "" },
+        { id: "region", x: 110, y: 210, width: 20, height: 20, note: "Region instruction must not appear in the image" },
         { id: "outside", x: 200, y: 200, width: 20, height: 20 },
       ],
       texts: [{ id: "label", x: 105, y: 235, fontSize: 6, text: "A < B & C" }],
@@ -71,6 +71,7 @@ describe("UI layout CLI preview", () => {
       state: { id: "start", number: 1 }, artifact: { path: svgPath, mimeType: "image/svg+xml", width: 64, height: 48 } });
     const svg = await readFile(svgPath, "utf8");
     expect(svg).toContain("A &lt; B &amp; C");
+    expect(svg).not.toContain(draft.rectangles[0].note);
     expect(svg).toContain("data:image/png;base64,");
     expect(svg).toContain("data:image/svg+xml;base64,");
     expect(svg).not.toContain('href="http');
@@ -83,6 +84,7 @@ describe("UI layout CLI preview", () => {
     expect(pixel(44, 14)).toEqual([0, 0, 255, 255]);
     expect(pixel(60, 4)).toEqual([255, 255, 255, 255]);
     expect(env.uiSketchSessions.listDraftVersions(env.session.id)).toHaveLength(2);
+    expect(env.uiSketchSessions.getDraftVersion(env.session.id, 1).draft.rectangles[0].note).toBe(draft.rectangles[0].note);
     expect(env.dependencies.openUrl).not.toHaveBeenCalled();
   });
 

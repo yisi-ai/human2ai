@@ -17,13 +17,14 @@
     "version": { "const": 1 },
     "kind": { "const": "composition-draft" },
     "processingSemantic": { "enum": [null, "scene-composition", "editorial-layout"] },
+    "previewMode": { "enum": ["precise", "soft"] },
     "frame": {
       "type": "object",
       "additionalProperties": false,
       "required": ["width", "height"],
       "properties": {
-        "width": { "type": "integer", "minimum": 256, "maximum": 4096 },
-        "height": { "type": "integer", "minimum": 256, "maximum": 4096 },
+        "width": { "type": "number", "exclusiveMinimum": 0 },
+        "height": { "type": "number", "exclusiveMinimum": 0 },
         "bounds": {
           "type": "object",
           "additionalProperties": false,

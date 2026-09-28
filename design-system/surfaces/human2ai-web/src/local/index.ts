@@ -23,7 +23,7 @@ export type {
   CompositionSketchCopyResult,
 } from "./compositionExport";
 export { UiSketchCanvas } from "./UiSketchCanvas";
-export type { UiSketchCanvasLabels, UiSketchCanvasProps } from "./UiSketchCanvas";
+export type { UiSketchCanvasLabels, UiSketchCanvasProps, UiSketchSessionPreviewEditorProps } from "./UiSketchCanvas";
 export type { UiSketchPromptKey, UiSketchPromptTranslator } from "./uiSketchExport";
 export {
   cloneUiSketchDraft,
@@ -142,6 +142,9 @@ export type {
   CompactDropdownSelectProps,
 } from "./CompactDropdownSelect";
 export { SessionDetails } from "./SessionDetails";
+export { CompositionPreviewHover } from "./CompositionPreviewHover";
+export { CanvasPreviewHover } from "./CanvasPreviewHover";
+export { CanvasFrameControls, type CanvasFrameControlsProps } from "./CanvasFrameControls";
 export type {
   SessionDetailsLabels,
   SessionDetailsProps,
@@ -161,3 +164,5 @@ export { uiSketchStateTabs, renameUiSketchState, deleteUiSketchState, reorderUiS
 
 export { SpatialWorkspaceView, type SpatialWorkspaceViewProps, type SpatialLabels } from "./SpatialWorkspaceView";
 export { SpatialViewport, type SpatialViewportProps, type SpatialSelection } from "./SpatialViewport";
+export { SessionPreviewPicker } from "./SessionPreviewPicker";
+export type { SessionPreviewPickerProps } from "./SessionPreviewPicker";

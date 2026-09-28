@@ -40,6 +40,7 @@ function promptTranslator(locale: AppLocale): CompositionPromptTranslator {
 
 function exampleDraft(): CompositionDraft {
   let draft = setProcessingSemantic(createDraft(), "editorial-layout");
+  draft.previewMode = "precise";
   draft.overallNote = "突出左侧主体，右侧保留呼吸感";
   const focusPosition = framePointToCanvas({ x: 0.25, y: 0.35 }, draft.frame);
   const focus = addFocus(draft, focusPosition);
@@ -107,17 +108,17 @@ describe("composition draft export", () => {
   it("builds a localized external-AI prompt from the user draft", () => {
     const prompt = buildCompositionPrompt(exampleDraft(), promptTranslator("zh-CN"));
 
-    expect(prompt).toContain("输出比例：16:9");
+    expect(prompt).toContain("输出比例：12:7");
     expect(prompt).toContain("构图模式：版式编排");
     expect(prompt).toContain("按静态平面版式编排处理全部区域");
     expect(prompt).toContain("每个文字区域都必须呈现可见文字");
-    expect(prompt).toContain("每个区域只是视觉影响范围，不是成品对象的固定外形");
-    expect(prompt).toContain("可按真实内容重构、拆分、融合、重叠或延伸至画面之外");
+    expect(prompt).toContain("精准预览：请让生成图尽量贴近画布设想");
+    expect(prompt).not.toContain("可按真实内容重构、拆分、融合、重叠或延伸至画面之外");
     expect(prompt).not.toContain("建议尺寸");
     expect(prompt).not.toContain("1600");
     expect(prompt).toContain("整体要求：\n突出左侧主体，右侧保留呼吸感");
     expect(prompt).toContain("如附有参考图，请将其作为整体布局参考");
-    expect(prompt).toContain("上传的参考图只表达内容的大致占位、重心和视觉分布");
+    expect(prompt).not.toContain("上传的参考图只表达内容的大致占位、重心和视觉分布");
     expect(prompt).toContain("焦点#1");
     expect(prompt).toContain("- 备注：人物面部");
     expect(prompt).toContain("- 景别：前景");
@@ -139,7 +140,7 @@ describe("composition draft export", () => {
   it("omits empty draft sections and supports English", () => {
     const prompt = buildCompositionPrompt(createDraft(), promptTranslator("en"));
 
-    expect(prompt).toContain("Output ratio: 16:9");
+    expect(prompt).toContain("Output ratio: 12:7");
     expect(prompt).toContain("Mode: Scene");
     expect(prompt).not.toContain("Choose Scene or Editorial before continuing");
     expect(prompt).not.toContain("suggested size");
@@ -154,9 +155,9 @@ describe("composition draft export", () => {
     const portrait = changeFrame(createCompositionState(createDraft(), "state-1", "portrait"), { width: 900, height: 1600 });
     const landscape = selectCompositionState(portrait, "state-1");
     expect(buildCompositionPrompt(portrait, promptTranslator("en"))).toContain("Output ratio: 9:16");
-    expect(buildCompositionPrompt(landscape, promptTranslator("en"))).toContain("Output ratio: 16:9");
+    expect(buildCompositionPrompt(landscape, promptTranslator("en"))).toContain("Output ratio: 12:7");
     expect(renderCompositionSketchSvg(portrait)).toContain('width="900" height="1600"');
-    expect(renderCompositionSketchSvg(landscape)).toContain('width="1600" height="900"');
+    expect(renderCompositionSketchSvg(landscape)).toContain('width="960" height="560"');
   });
 
   it("uses external-facing English without internal geometry vocabulary", () => {
@@ -166,8 +167,8 @@ describe("composition draft export", () => {
     expect(prompt).toContain(
       "Overall direction:\n突出左侧主体，右侧保留呼吸感",
     );
-    expect(prompt).toContain("The uploaded reference image expresses only approximate placement");
-    expect(prompt).toContain("Every region is a zone of visual influence, not a fixed final silhouette");
+    expect(prompt).toContain("Precise reference: make the generated image closely follow the canvas intent");
+    expect(prompt).not.toContain("Every region is a zone of visual influence, not a fixed final silhouette");
     expect(prompt).toContain("Flow:");
     expect(prompt).toContain("at an angle of approximately 325°");
     const planningGuidance = promptTranslator("en")("planningGuidance");
@@ -196,10 +197,11 @@ describe("composition draft export", () => {
     expect(svg).toContain(
       `viewBox="${frame.x} ${frame.y} ${frame.width} ${frame.height}"`,
     );
-    expect(svg).not.toContain("<polygon");
-    expect(svg).toContain('id="composition-region-gradient"');
+    expect(svg).toContain("<polygon");
+    expect(svg).not.toContain('id="composition-region-gradient"');
     expect(svg).toContain('data-region-kind="text-region"');
-    expect(svg).toContain('data-reference-role="typography"');
+    expect(svg).toContain('data-reference-role="display-text"');
+    expect(svg).toContain("静观自得</text>");
     expect(svg).toContain("stroke-dasharray");
     expect(svg).toContain("<circle");
     expect(svg).not.toContain("guide-grid");

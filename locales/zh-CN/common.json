@@ -42,9 +42,11 @@
     "navigation": "Human2AI 应用导航",
     "collapseSidebar": "收起应用侧栏",
     "expandSidebar": "展开应用侧栏",
+    "resizeSidebar": "调整应用侧栏宽度",
     "rightPanel": "操作面板",
     "collapseRightPanel": "收起操作面板",
-    "expandRightPanel": "展开操作面板"
+    "expandRightPanel": "展开操作面板",
+    "resizeRightPanel": "调整操作面板宽度"
   },
   "language": {
     "selectorLabel": "界面语言"
@@ -226,7 +228,7 @@
       "originImport": "import"
     },
     "display": {
-      "showHiddenNodes": "全部显示",
+      "showHiddenNodes": "显示隐藏",
       "onionSkin": "洋葱皮"
     },
     "nodeVisibility": {
@@ -298,6 +300,9 @@
     "zoomIn": "放大画布",
     "fitAll": "适应全部",
     "frameRatio": "画框比例",
+    "frameLabel": "画框",
+    "frameReset": "重置画框",
+    "frameAction": "移动或缩放画框",
     "aspectRatioTitle": "比例",
     "lockFrame": "锁定画框",
     "unlockFrame": "解锁画框",
@@ -438,6 +443,14 @@
       "radialUniform": "均匀",
       "radialFree": "自由",
       "rayHandle": "射线 {{index}} 方向"
+    },
+    "previewMode": {
+      "label": "预览模式",
+      "precise": "精准",
+      "soft": "模糊",
+      "prompt": "预览模式：{{mode}}",
+      "preciseGuidance": "- 精准预览：请让生成图尽量贴近画布设想，保留各区域的基本形态、位置、比例、旋转、层级、间距、留白和裁切关系。结合备注将图形表达为具体内容，不随意重构、拆分或合并已安排的形态。以预览图逐项对照这些关系；焦点、动势线等辅助标记不作为最终画面内容。用户指令和节点备注优先。",
+      "preciseLightGuidance": "- 精准光照：尽量保留画布中光源的位置、形态、延展范围及相对比例，并据此安排对主体和空间的照明。淡黄色仅用于识别光源，不限定色温；不要把光源标记描边画进成图。用户指令和节点备注优先。"
     }
   },
   "uiSketch": {
@@ -544,6 +557,7 @@
     "promptFailed": "复制提示词失败。",
     "promptUnsupported": "当前浏览器不支持复制提示词。",
     "copyPreview": "复制预览图",
+    "previewImage": "预览图",
     "previewFailed": "复制预览图失败。",
     "previewDownloaded": "浏览器不支持复制图片，预览图已下载"
   },
@@ -557,6 +571,7 @@
     "prompt": "- 视觉权重：{{weight}}"
   },
   "dimensions": {
+    "frameSize": "范围",
     "width": "宽",
     "height": "高"
   },
@@ -793,5 +808,24 @@
   },
   "canvasStates": {
     "switch": "布局状态"
+  },
+  "sessionPreview": {
+    "label": "会话预览",
+    "add": "添加会话预览",
+    "session": "来源会话",
+    "output": "状态或摄像机",
+    "projectRequired": "请先将当前会话移入项目。",
+    "empty": "没有可引用的会话预览",
+    "unavailable": "来源已不可用，保留最后一次预览。",
+    "failed": "无法读取会话预览",
+    "openSource": "打开来源会话",
+    "group": "分组",
+    "search": "搜索分组、会话或状态",
+    "clearSearch": "清空搜索",
+    "chooseParent": "请先选择上一级",
+    "noChildren": "没有可选的下级内容",
+    "loading": "正在加载预览来源",
+    "descendantMatches": "下级有 {{count}} 项匹配",
+    "searchResults": "匹配 {{count}} 项"
   }
 }

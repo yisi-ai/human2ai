@@ -1,0 +1,80 @@
+/* Scope the added geometry and animation to this opt-in mode. */
+[data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text {
+  position: relative;
+  flex: 0 0 auto;
+  overflow: hidden;
+  width: var(--yisiui-basic-button-collapsed-width, var(--yisiui-component-button-height));
+  min-width: var(--yisiui-basic-button-collapsed-width, var(--yisiui-component-button-height));
+  max-width: 100%;
+  transition:
+    width var(--yisiui-motion-slow) ease-in-out,
+    color var(--yisiui-motion-normal) ease-in-out,
+    background-color var(--yisiui-motion-normal) ease-in-out,
+    border-color var(--yisiui-motion-normal) ease-in-out,
+    box-shadow var(--yisiui-motion-normal) ease-in-out;
+}
+.yisi-basic-button-hover-text .yisi-basic-button-hover-icon,
+.yisi-basic-button-hover-text .yisi-basic-button-hover-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  max-width: none;
+  pointer-events: none;
+  transition: opacity var(--yisiui-motion-normal) ease-in-out, transform var(--yisiui-motion-slow) ease-in-out;
+}
+.yisi-basic-button-hover-text .yisi-basic-button-hover-icon {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+}
+.yisi-basic-button-hover-text .yisi-basic-button-hover-label {
+  /* Opacity keeps the same label accessible even while visually collapsed. */
+  opacity: 0;
+  white-space: nowrap;
+  transform: translate(-50%, -50%) translateY(4px);
+}
+
+@media (hover: hover) {
+  [data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):not(.yisi-basic-button-hover-block):hover {
+    width: var(--yisiui-basic-button-expanded-width, var(--yisiui-component-button-height));
+  }
+  .yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):hover .yisi-basic-button-hover-icon {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  .yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):hover .yisi-basic-button-hover-label {
+    opacity: 1;
+    transform: translate(-50%, -50%) translateY(0);
+  }
+}
+[data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):not(.yisi-basic-button-hover-block):focus-visible {
+  width: var(--yisiui-basic-button-expanded-width, var(--yisiui-component-button-height));
+}
+.yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):focus-visible .yisi-basic-button-hover-icon {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.85);
+}
+.yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):focus-visible .yisi-basic-button-hover-label {
+  opacity: 1;
+  transform: translate(-50%, -50%) translateY(0);
+}
+/* Touch has no hover preview: show the action text and keep single-tap activation. */
+@media (hover: none) {
+  [data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading):not(.yisi-basic-button-hover-block) {
+    width: var(--yisiui-basic-button-expanded-width, var(--yisiui-component-button-height));
+  }
+  .yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading) .yisi-basic-button-hover-icon { opacity: 0; }
+  .yisi-basic-button-hover-text:not(.yisi-basic-button-hover-disabled):not(.yisi-basic-button-hover-loading) .yisi-basic-button-hover-label {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+}
+[data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text.yisi-basic-button-hover-block { width: 100%; }
+@media (prefers-reduced-motion: reduce) {
+  [data-yisiui-asset][data-yisiui-status].yisi-basic-button-hover-text,
+  .yisi-basic-button-hover-text .yisi-basic-button-hover-icon,
+  .yisi-basic-button-hover-text .yisi-basic-button-hover-label { transition: none; }
+}

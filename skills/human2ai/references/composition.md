@@ -14,13 +14,40 @@ Use `.svg` for a vector preview. The same format choice applies to local `compos
 
 Both formats preserve the same visible nodes, planning guides, layer order and outside-frame content. Session previews embed saved image assets. These inspection previews differ from the guide-free generation-reference PNG exported by `composition reference`.
 
+## Preview fidelity
+
+Read and preserve the draft's session-wide `previewMode`, independent of
+`processingSemantic` and shared by every layout state. New drafts start in
+`soft`; an absent value in a legacy draft still means `precise`. Inspection
+and `composition reference` report the effective mode.
+The browser preview, copied image and composition references embedded in UI
+sessions all use this setting. Changing it saves a normal draft revision.
+
+- `precise` (精准): the reference retains the current canvas geometry. Ask the
+  image model to stay as close as possible to the authored composition: basic
+  shape, placement, proportions, rotation, layering, spacing, negative space and
+  cropping. Interpret nodes as real content using their notes, without freely
+  splitting, merging or replacing the arrangement. Check the generated image
+  against those visible relationships. Preserve lighting placement, shape and
+  extent too; diagnostic markers and their outlines are not final artwork.
+- `soft` (模糊): each ordinary shape receives radial shading and softened edges
+  while keeping its basic silhouette recognizable. Use it as a loose spatial map.
+  The image model may reinterpret, split or combine content without matching a
+  fixed shape, provided the broad placement, visual weight and flow correspond.
+
+User instructions and node notes take precedence in both modes. Soft references
+always show text-region placeholders, even when display text is filled; preserve
+that stored wording in the generation instruction. Precise references show the
+supplied text, and imported images retain their original appearance. Do not
+change the user's fidelity merely to make generation or refinement easier.
+
 ## Draw a reference picture on the canvas
 
-Geometric areas may explicitly set `isLightSource: true` (missing or false means ordinary content). Interpret light markers at the same approximate level as ordinary composition shapes: preserve the intended lighting contribution and broad spatial relationships, not a measured light-patch template. Rectangles suggest band-shaped or extended illumination; circles suggest localized illumination. The drawn width, length, contour and gradient are descriptions, not default output constraints. User instructions and node notes take precedence; otherwise the Agent freely adapts width, length, curvature, continuity, softness and strength to the scene.
+Geometric areas may explicitly set `isLightSource: true` (missing or false means ordinary content). In `soft` preview mode, interpret light markers at the same approximate level as ordinary composition shapes: preserve the intended lighting contribution and broad spatial relationships, not a measured light-patch template. Rectangles suggest band-shaped or extended illumination; circles suggest localized illumination. The drawn width, length, contour and gradient are descriptions, not default output constraints. User instructions and node notes take precedence; otherwise the Agent freely adapts width, length, curvature, continuity, softness and strength to the scene.
 
-An authored band should contribute a band-like or extended lighting tendency, but may be narrower or wider, taper, bend with surfaces, break into patches through occlusion, or blend with other illumination. It need not form a separate complete stripe, remain uniformly wide, pass through an exact point or span the frame. Do not add medium-strong contrast, conspicuous thumbnail visibility, exact coverage or a fixed width merely to prove that the band exists. Keep the broad lighting role without ignoring it altogether. Distinguish a source from the area it illuminates; yellow is only an identification convention. Consider multiple sources individually, while their visible effects may split, overlap or blend naturally.
+In Soft mode, an authored band should contribute a band-like or extended lighting tendency, but may be narrower or wider, taper, bend with surfaces, break into patches through occlusion, or blend with other illumination. It need not form a separate complete stripe, remain uniformly wide, pass through an exact point or span the frame. Do not add medium-strong contrast, conspicuous thumbnail visibility, exact coverage or a fixed width merely to prove that the band exists. Keep the broad lighting role without ignoring it altogether. Distinguish a source from the area it illuminates; yellow is only an identification convention. Consider multiple sources individually, while their visible effects may split, overlap or blend naturally.
 
-Generation prompts should describe the lighting intent concisely and leave implementation room, as ordinary regions allow reconstruction, splitting, merging and overlap. Review whether the overall lighting approximately echoes the composition's placement, extension and emphasis, rather than checking every stripe, edge, segment or width. Approximate overall correspondence is sufficient. Tighten only the specific properties explicitly requested by the user. For example, a broad diagonal marker can become a narrower broken wash of light across a face, fabric and background; do not insist on a ruler-like bright rectangle across all three.
+In Soft mode, generation prompts should describe the lighting intent concisely and leave implementation room, as ordinary regions allow reconstruction, splitting, merging and overlap. Review whether the overall lighting approximately echoes the composition's placement, extension and emphasis, rather than checking every stripe, edge, segment or width. Approximate overall correspondence is sufficient. Tighten only the specific properties explicitly requested by the user. For example, a broad diagonal marker can become a narrower broken wash of light across a face, fabric and background; do not insist on a ruler-like bright rectangle across all three.
 Editor and refined canvases retain marker geometry; generation references use borderless falloff with softened edges. Text regions cannot be light sources. Ordinary editing can toggle the property through draft saving; geometric refinement must preserve it. Never infer or overwrite the flag from a note alone.
 
 Requests such as “把这张图的构图画到画布上”, “按参考图画场景构图”, or “把这张海报转成版面构图” ask for an ordinary editable `composition-draft`. Read [composition-projection.md](composition-projection.md) for interpreting the whole-picture effect, selecting geometry by contribution, writing role explanations, and authoring the draft. First understand how attention, visual weight, rhythm and space work together; then abstract those relationships. A layout photo may contribute several important masses, but identifying its objects or tracing their silhouettes is not the goal. Each description explains what the shape contributes and through which relationship. New node notes and the new draft's overall note stay empty. The Agent inspects the image and authors the draft; Human2AI does not call a vision model. Save through `capture.commands.save`, inspect whether the canvas retains the intended structure and experience without excessive detail, and hand it to the user for editing.
@@ -166,7 +193,7 @@ Rules need not all be used, and none is compulsory. Mathematics can describe foc
 
 Version 1 plans and stored results remain readable and executable for compatibility. New Agent work uses version 2 so it records intent and validates final relationships. The legacy `strength: "subtle"` is optional and imposes no amplitude limit. Source fingerprint, mode, valid geometry and protected content are still checked. Displacement, rotation, clipping, overlap and visual-center changes are observations, not aesthetic rejection thresholds.
 
-When downstream image generation is authorized, export the saved run through `composition reference --session <session-id> --run <run-id> --output <reference.png>`. Attach the returned image path as a soft spatial map, not line art, and carry the mode-specific interpretation and required typography into the generation instruction. CLI inspection previews in either PNG or SVG include guides and outside content and must not replace that generation reference.
+When downstream image generation is authorized, export the saved run through `composition reference --session <session-id> --run <run-id> --output <reference.png>`. Read the returned `previewMode`: for `precise`, attach the image as a close composition target; for `soft`, attach it as a loose spatial map. Carry the selected fidelity, Scene/Editorial interpretation and required typography into the generation instruction. CLI inspection previews in either PNG or SVG include guides and outside content and must not replace that generation reference.
 
 ## Shared composition planning
 

@@ -441,7 +441,7 @@
     },
     "workspace.session-group-ungrouped": {
       "meaning": "A session belongs to the project but is not assigned to a display group.",
-      "scope": "Project-local display organization in the workspace sidebar.",
+      "scope": "Project-local display organization in the workspace sidebar and session-preview source selector.",
       "referent": "A display group or its membership within an existing project.",
       "precedence": "Independent from project assignment, canvas node groups, session contents and revision history. A session belongs to at most one display group.",
       "canonicalKey": "workspaceSidebar.ungroupedSessions",

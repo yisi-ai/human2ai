@@ -25,13 +25,13 @@ description: 规范 Human2AI 项目的 GitHub 提交、PR 合并、版本准备�
 1. 从 Git 仓库根目录工作，遵循 `AGENTS.md` 中的分支、提交、数据目录与领域/UI 规则。
 2. 检查 `git status --short --branch`、差异、远端与当前分支的 PR 状态。保留无关改动；已合并分支不继续开发，分叉历史先查明原因，不默认强推。
 3. 从 `package.json`、锁文件和 `.github/workflows/` 读取包名、版本、验证命令及实际自动化行为。当前工作流做验证，npm 手动发布；若后续新增自动发布，先识别触发条件，避免重复发布。
-4. 用 `git remote get-url skill-apps` 确认目标 GitHub 仓库。按实际远端选择 `gh --repo`；不把 npm 账号或 fork 的发布目标写死。
+4. 用 `git remote get-url h2i-github` 确认目标 GitHub 仓库。按实际远端选择 `gh --repo`；不把 npm 账号或 fork 的发布目标写死。
 
 ## 提交与创建 PR
 
 - 新工作从最新的远端 `main` 创建功能分支；已有未合并功能分支可继续使用。工作区有无关改动时保留它们，必要时使用独立 worktree。
 - 审查本次差异，运行与改动相关的验证。只暂存本次文件或对应片段，用中文提交信息，并检查暂存内容。
-- 按用户授权推送：`git push skill-apps HEAD:refs/heads/<branch-name>`。不得直接推送 `main`，不得使用无目标的 `git push`。
+- 按用户授权推送：`git push h2i-github HEAD:refs/heads/<branch-name>`。不得直接推送 `main`，不得使用无目标的 `git push`。
 - PR 目标为 `main`。描述最终改动及验证结果，多行正文使用文件配合 `gh pr create --body-file`；临时正文保存到忽略的 `.human2ai-data/output/`。
 - 返回提交、分支、PR 链接和检查状态；只要求提交或建 PR 时到此完成。
 

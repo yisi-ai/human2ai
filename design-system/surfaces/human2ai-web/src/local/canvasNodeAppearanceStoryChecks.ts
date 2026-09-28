@@ -1,3 +1,5 @@
+import { canvasNodeExecutionCounts } from "./canvasNodeRenderTrace";
+
 export function captureCanvasNodeAppearance(canvas: HTMLElement, selector: string): () => void {
   const nodes = [...canvas.querySelectorAll<SVGElement>(selector)];
   if (nodes.length < 2) throw new Error("Color regression requires multiple nodes");
@@ -21,26 +23,18 @@ export function captureCanvasNodeAppearance(canvas: HTMLElement, selector: strin
   };
 }
 
-// Development React's actualStartTime changes when the component executes.
-// Read both alternates because the DOM's Fiber pointer can reference either.
-// This is browser-only evidence, not a DOM-mutation proxy for React execution.
-export function captureCanvasNodeExecutions(canvas: HTMLElement): () => void {
-  // Production React strips these counters; production Stories still run the
-  // functional/appearance checks above. Render-scope checks run in development.
+// React's actualStartTime also advances during bailouts. Count actual function
+// entries instead; this opt-in diagnostic is compiled out of production nodes.
+export function captureCanvasNodeExecutions(canvas: HTMLElement, allowedIds: readonly string[] = []): () => void {
   if (process.env.NODE_ENV !== "development") return () => {};
-  type Fiber = { type?: { name?: string }; return?: Fiber; alternate?: Fiber; actualStartTime?: number };
-  const started = (node: Element): number => {
-    const key = Object.keys(node).find((key) => key.startsWith("__reactFiber$"));
-    let fiber = key ? (node as unknown as Record<string, Fiber>)[key] : undefined;
-    while (fiber && fiber.type?.name !== "CanvasNode") fiber = fiber.return;
-    if (!fiber || fiber.actualStartTime === undefined) throw new Error("Render scope requires development React profiling");
-    return Math.max(fiber.actualStartTime, fiber.alternate?.actualStartTime ?? -1);
-  };
-  const before = new Map([...canvas.querySelectorAll('[data-canvas-node]')].map((node) => [node, started(node)]));
+  const counts = canvasNodeExecutionCounts();
+  const ids = [...canvas.querySelectorAll('[data-canvas-node]')].map(node => node.getAttribute("data-canvas-node")!);
+  if (!ids.length) throw new Error("Render scope requires mounted canvas nodes");
+  const before = new Map(ids.filter(id => !allowedIds.includes(id)).map(id => [id, counts.get(id) ?? 0]));
   return () => {
-    for (const [node, time] of before) {
-      if (node.isConnected && started(node) > time) {
-        throw new Error(`Unrelated node rendered during deletion: ${node.getAttribute("data-canvas-node")}`);
+    for (const [id, count] of before) {
+      if ((counts.get(id) ?? 0) !== count) {
+        throw new Error(`Unrelated node rendered: ${id}`);
       }
     }
   };

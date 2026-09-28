@@ -23,6 +23,7 @@ const ASSET_CATEGORIES = {
   "loading-state": "status",
   "aspect-ratio-selector": "module",
   "model-selector": "module",
+  "cascade-selector": "module",
   "adaptive-accordion": "module",
   "resizable-collapse-group": "module",
   "asset-skeleton-tree": "module",

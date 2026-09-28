@@ -717,7 +717,8 @@
       "role": "compact title for the interface frame size control",
       "grammar": "noun phrase",
       "tone": "neutral",
-      "reusePolicy": "contextual"
+      "reusePolicy": "contextual",
+      "duplicateReason": "The previous UI-specific title is retained in the catalog; active controls now share dimensions.frameSize across domains."
     },
     "uiSketch.canvasLabels.frameAction": {
       "conceptId": "ui-sketch.interface-frame",
@@ -733,7 +734,8 @@
       "role": "tooltip and accessible name for restoring default frame geometry",
       "grammar": "imperative verb phrase",
       "tone": "neutral",
-      "reusePolicy": "contextual"
+      "reusePolicy": "contextual",
+      "duplicateReason": "English Reset frame is also used for composition.frameReset; each action names a different output frame."
     },
     "uiSketch.title": {
       "conceptId": "ui-sketch.feature",
@@ -773,7 +775,8 @@
       "role": "canvas context menu action",
       "grammar": "imperative verb",
       "tone": "concise and direct",
-      "reusePolicy": "canonical"
+      "reusePolicy": "canonical",
+      "duplicateReason": "English Group is an imperative action joining selected canvas nodes; sessionPreview.group names a source-session group in a selector."
     },
     "uiSketch.canvasLabels.ungroupItems": {
       "conceptId": "ui-sketch.ungroup-items",

@@ -16,6 +16,7 @@ export interface CanvasTextProps {
   text: string;
   fontSize: number;
   lineHeight?: number;
+  baseline?: number;
   fontFamily?: string;
   fontWeight?: number | string;
   fill?: string;
@@ -31,6 +32,7 @@ export function CanvasText({
   text,
   fontSize,
   lineHeight = 1.4,
+  baseline,
   fontFamily,
   fontWeight,
   fill,
@@ -81,6 +83,7 @@ export function CanvasText({
     };
   }, [
     className,
+    baseline,
     fontFamily,
     fontSize,
     fontWeight,
@@ -105,21 +108,22 @@ export function CanvasText({
       className={classes}
       data-line-count={lines.length}
       x={0}
-      y={0}
+      y={baseline ?? 0}
       fontSize={fontSize}
       fontFamily={fontFamily}
       fontWeight={fontWeight}
       fill={fill}
       opacity={opacity}
       textAnchor={textAnchor}
-      dominantBaseline="text-before-edge"
+      dominantBaseline={baseline === undefined ? "text-before-edge" : "alphabetic"}
       xmlSpace="preserve"
       style={style}
       role="img"
       aria-label={ariaLabel}
     >
       {lines.map((line, index) => (
-        <tspan key={index} x={0} dy={index === 0 ? 0 : `${lineHeight}em`}>
+        <tspan key={index} x={0} y={baseline === undefined ? undefined : baseline + index * fontSize * lineHeight}
+          dy={baseline === undefined ? index === 0 ? 0 : `${lineHeight}em` : undefined}>
           {line || "\u00a0"}
         </tspan>
       ))}

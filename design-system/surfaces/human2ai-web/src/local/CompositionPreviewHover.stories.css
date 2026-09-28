@@ -1,0 +1,15 @@
+.composition-preview-hover-story {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: var(--yisiui-space-5);
+  height: 100vh;
+  padding: var(--yisiui-space-5);
+  box-sizing: border-box;
+  background: var(--yisiui-color-surface-page);
+}
+
+.composition-preview-hover-story > aside {
+  display: flex;
+  flex-direction: column;
+  gap: var(--yisiui-space-6);
+}

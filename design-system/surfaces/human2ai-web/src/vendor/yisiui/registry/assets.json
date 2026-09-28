@@ -15,7 +15,12 @@
         "action",
         "icon-mode",
         "token-colors",
-        "size"
+        "size",
+        "hover-text-mode",
+        "animated-width",
+        "keyboard-focus-label",
+        "reduced-motion",
+        "touch-label-fallback"
       ],
       "slots": [
         "icon",
@@ -26,13 +31,14 @@
       ],
       "useWhen": [
         "需要统一的基础操作按钮",
-        "需要在资产层预览 Token 颜色和 Icon 模式"
+        "需要在资产层预览 Token 颜色和 Icon 模式",
+        "需要按钮静止时只显示 Icon，悬停或键盘聚焦时动画展开并仅显示文字"
       ],
       "doNotUseWhen": [
         "复杂异步反馈",
         "危险操作确认"
       ],
-      "differenceSummary": "直接复用 Ant Design Button 的键盘、禁用、加载和尺寸行为，只增加 Token 颜色绑定、带 Icon/不带 Icon/纯 Icon 模式和资产层可视化契约。",
+      "differenceSummary": "直接复用 Ant Design Button 的键盘、禁用、加载和尺寸行为，提供 Token 颜色绑定与带 Icon、不带 Icon、纯 Icon、hover-text 四种模式。hover-text 静止为图标宽度，悬停或键盘聚焦时展开到测得的文字宽度，图标淡出、文字淡入；移出反向收回，无悬停设备显示文字，尊重 reduced-motion。该能力是 BasicButton 的动作呈现变体，不具有 ExpandingSwitch 的选择状态，也不拥有业务状态。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -41,7 +47,9 @@
       "similarAssetsChecked": [
         "Ant Design Button",
         "CopyAction",
-        "FormActions"
+        "FormActions",
+        "ExpandingSwitch",
+        "CompositeButton"
       ]
     },
     {
@@ -1098,7 +1106,14 @@
         "optional-back-action",
         "controlled-state",
         "localized-labels",
-        "long-content"
+        "long-content",
+        "resizable-sidebars",
+        "bounded-widths",
+        "pointer-resize",
+        "keyboard-resize",
+        "preserved-sidebar-widths",
+        "resize-commit-callbacks",
+        "minimum-content-width"
       ],
       "slots": [
         "sidebar-title",
@@ -1121,14 +1136,15 @@
         "调用方需要注入导航、标题和操作，而不让壳层拥有路由或业务状态",
         "侧栏需要受控或非受控地完全收起，并在收起时显示产品注入的恢复期操作",
         "业务需要按需注入可独立控制的右侧面板，并从标题栏右上角统一收起或展开",
-        "需要在右侧栏开关左边注入业务切换项、按钮组或说明文字，且该内容不依赖右侧面板是否存在"
+        "需要在右侧栏开关左边注入业务切换项、按钮组或说明文字，且该内容不依赖右侧面板是否存在",
+        "需要分别拖动左右侧栏边缘调整宽度、设置独立最小/最大范围，且保留中间区域最小宽度和侧栏内容状态"
       ],
       "doNotUseWhen": [
         "已有应用壳层内部只需要页面宽度和垂直节奏",
         "需要页面内双栏编辑器、任意工作台 pane 或内容自然撑高的辅助操作面板",
         "需要移动端导航壳层或组件自行读取路由、API 和持久化状态"
       ],
-      "differenceSummary": "PageShell 只控制页面容器宽度与节奏，WorkspacePanel 只建立工作台内部 pane，SideActionPanel 是内容自然撑高的辅助操作栏；AppShellFrame 独立负责全视口桌面应用的持久/可收起左侧栏、可选且可独立收起的右侧面板、全局上下文标题栏和可滚动内容区。headerExtra 在右侧栏开关左边接收业务组件，无右侧栏时仍可展示；右侧面板只提供容器 slot 与标题栏右上角统一开关，内容、交互和是否存在由业务决定；共享实现不读取路由、API、导航数据或业务状态。",
+      "differenceSummary": "PageShell 只控制页面容器宽度与节奏，WorkspacePanel 只建立工作台内部 pane，SideActionPanel 是内容自然撑高的辅助操作栏；AppShellFrame 独立负责全视口桌面应用的持久/可收起左侧栏、可选且可独立收起的右侧面板、全局上下文标题栏和可滚动内容区。headerExtra 在右侧栏开关左边接收业务组件，无右侧栏时仍可展示；右侧面板只提供容器 slot 与标题栏右上角统一开关，内容、交互和是否存在由业务决定；共享实现不读取路由、API、导航数据或业务状态。 左右侧栏独立支持指针与键盘调宽、宽度边界、收起保宽和结束回调；拖动仅更新布局尺寸，不逐帧渲染业务插槽。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "sourceProposal": "writer-harness/design-system/proposals/app-shell-frame.json",
@@ -1140,7 +1156,9 @@
         "PageShell",
         "WorkspacePanel",
         "SideActionPanel",
-        "Ant Design Layout"
+        "Ant Design Layout",
+        "ResizableCollapseGroup",
+        "Ant Design Splitter"
       ]
     },
     {
@@ -1623,6 +1641,78 @@
       "sourceComponent": "packages/react/src/components/ExpandingSwitch.tsx",
       "distribution": "source-sync",
       "release": "0.16.0",
+      "ownerRepository": "yisiui"
+    },
+    {
+      "id": "cascade-selector",
+      "name": "CascadeSelector",
+      "category": "module",
+      "status": "experimental",
+      "source": "src/patterns/CascadeSelector.tsx",
+      "storyId": "modules-cascadeselector--default",
+      "capabilities": [
+        "hierarchical-single-selection",
+        "two-or-more-columns",
+        "bounded-container",
+        "proportional-column-widths",
+        "independent-scroll",
+        "downstream-reset",
+        "controlled-selection",
+        "row-level-subscriptions",
+        "stable-column-snapshots",
+        "all-level-search",
+        "literal-match-highlighting",
+        "descendant-match-count",
+        "ime-search",
+        "keyboard-selection",
+        "cross-column-focus",
+        "disabled",
+        "loading",
+        "empty",
+        "error",
+        "long-content",
+        "descendant-number-badge",
+        "background-only-selection",
+        "scroll-only-scrollbars",
+        "header-title-slot"
+      ],
+      "slots": [
+        "title",
+        "option-label",
+        "option-icon",
+        "column-error"
+      ],
+      "aliases": [
+        "ColumnCascader",
+        "MultiColumnPicker",
+        "多栏级联选择器"
+      ],
+      "useWhen": [
+        "需要在固定宽高内通过两栏及以上的等高列表逐级选择路径，并按比例分配栏宽",
+        "需要全层级文字搜索、高亮当前匹配项，并通过祖先提示找到未展开分支中的匹配",
+        "需要选择和搜索只更新受影响的栏与选项，保留其他栏的滚动和 DOM"
+      ],
+      "doNotUseWhen": [
+        "需要多选、自动选中下级第一项、下拉弹层或拖拽分隔线",
+        "需要组件请求 API、持久化选择、拥有产品路由或自动加载未提供的数据",
+        "需要虚拟化海量节点或搜索服务端尚未加载的分支"
+      ],
+      "similarAssetsChecked": [
+        "AssetSkeletonTree",
+        "SectionNavigationPanel",
+        "ModelSelector",
+        "TabSwitch",
+        "ResizableCollapseGroup",
+        "Ant Design Cascader",
+        "NumberBadge"
+      ],
+      "differenceSummary": "AssetSkeletonTree 展示树形结构，SectionNavigationPanel 切换分区内容，ModelSelector 提供特定选择流程，TabSwitch 负责同级切换，ResizableCollapseGroup 管理竖向折叠。CascadeSelector 提供常驻展开的多栏级联选择：至少两栏、统一总宽高、按比例分宽、每栏独立滚动，选择变化截断后续路径；全量数据搜索保留当前路径，高亮直接命中并标记后代命中数量。实例内 store 通过 useSyncExternalStore 提供稳定的栏及行快照，独立隔离选择和搜索更新，不拥有 API、路由或持久化。 选中项按用户要求仅通过背景色提示，后代匹配数复用 20px NumberBadge，超过 99 附加 + 并保留完整可访问说明。 横向与各栏纵向滚动条仅在滚动期间显示，静止 600ms 后隐藏，滚动状态不触发 React 行渲染。 搜索栏左侧提供可选 title 插槽，支持自定义内容和窄容器换行。 各栏直接呈现选项列表，无可见层级标题或层级标题插槽，仅保留可访问名称。",
+      "sourceStatus": "candidate",
+      "sourceRepository": "yisiui",
+      "sourceProposal": "design-system/proposals/cascade-selector.json",
+      "sourceComponent": "packages/react/src/patterns/CascadeSelector.tsx",
+      "distribution": "source-sync",
+      "release": "0.17.0",
       "ownerRepository": "yisiui"
     }
   ]

@@ -9,6 +9,7 @@ import "../../styles/tokens.css";
 import "../../styles/app-shell-frame.css";
 
 import { uiAssetAttributes } from "../internal/uiAssetAttributes";
+import { useAppShellResize } from "../internal/useAppShellResize";
 import { AnimatedIcon, type AnimatedIconHandle } from "../components/AnimatedIcon";
 
 export interface AppShellFrameLabels {
@@ -19,6 +20,8 @@ export interface AppShellFrameLabels {
   rightPanel: string;
   collapseRightPanel: string;
   expandRightPanel: string;
+  resizeSidebar?: string;
+  resizeRightPanel?: string;
 }
 
 export interface AppShellFrameBackAction {
@@ -47,12 +50,27 @@ export interface AppShellFrameProps {
   sidebarOpen?: boolean;
   defaultSidebarOpen?: boolean;
   onSidebarOpenChange?: (open: boolean) => void;
+  /** Initial/preferred width. Changing this prop resets the user's resized width. */
   sidebarWidth?: CSSProperties["width"];
+  sidebarResizable?: boolean;
+  /** Width bounds in CSS pixels. Defaults to 180 / 480. */
+  sidebarMinWidth?: number;
+  sidebarMaxWidth?: number;
+  /** Called on drag completion or a keyboard adjustment, in CSS pixels. */
+  onSidebarWidthChange?: (width: number) => void;
   rightPanelCollapsible?: boolean;
   rightPanelOpen?: boolean;
   defaultRightPanelOpen?: boolean;
   onRightPanelOpenChange?: (open: boolean) => void;
+  /** Initial/preferred width. Changing this prop resets the user's resized width. */
   rightPanelWidth?: CSSProperties["width"];
+  rightPanelResizable?: boolean;
+  /** Width bounds in CSS pixels. Defaults to 240 / 560. */
+  rightPanelMinWidth?: number;
+  rightPanelMaxWidth?: number;
+  onRightPanelWidthChange?: (width: number) => void;
+  /** Minimum center width in CSS pixels; defaults to 320. Narrow shells scroll horizontally. */
+  contentMinWidth?: number;
   labels?: Partial<AppShellFrameLabels>;
   className?: string;
   style?: CSSProperties;
@@ -66,6 +84,8 @@ const defaultLabels: AppShellFrameLabels = {
   rightPanel: "Right panel",
   collapseRightPanel: "Collapse right panel",
   expandRightPanel: "Expand right panel",
+  resizeSidebar: "Resize sidebar",
+  resizeRightPanel: "Resize right panel",
 };
 
 function toCssLength(value: CSSProperties["width"]): CSSProperties["width"] {
@@ -87,11 +107,20 @@ export function AppShellFrame({
   defaultSidebarOpen = true,
   onSidebarOpenChange,
   sidebarWidth = "var(--yisiui-surface-desktop-web-sidebar-width)",
+  sidebarResizable = true,
+  sidebarMinWidth = 180,
+  sidebarMaxWidth = 480,
+  onSidebarWidthChange,
   rightPanelCollapsible = true,
   rightPanelOpen,
   defaultRightPanelOpen = true,
   onRightPanelOpenChange,
   rightPanelWidth = "var(--yisiui-surface-desktop-web-sidebar-width)",
+  rightPanelResizable = true,
+  rightPanelMinWidth = 240,
+  rightPanelMaxWidth = 560,
+  onRightPanelWidthChange,
+  contentMinWidth = 320,
   labels,
   className,
   style,
@@ -111,6 +140,11 @@ export function AppShellFrame({
   const isSidebarVisible = !collapsible || resolvedSidebarOpen;
   const isRightPanelVisible = hasRightPanel && (!rightPanelCollapsible || resolvedRightPanelOpen);
   const resolvedLabels = { ...defaultLabels, ...labels };
+  const resize = useAppShellResize({
+    sidebarWidth, sidebarResizable, sidebarMinWidth, sidebarMaxWidth, onSidebarWidthChange,
+    rightPanelWidth, rightPanelResizable, rightPanelMinWidth, rightPanelMaxWidth, onRightPanelWidthChange,
+    contentMinWidth, isSidebarVisible, isRightPanelVisible,
+  });
   const rootStyle = {
     "--yisi-app-shell-sidebar-width": toCssLength(sidebarWidth),
     "--yisi-app-shell-right-panel-width": toCssLength(rightPanelWidth),
@@ -133,6 +167,7 @@ export function AppShellFrame({
 
   return (
     <div
+      ref={resize.rootRef}
       {...uiAssetAttributes("app-shell-frame", "AppShellFrame", "layout")}
       className={[
         "yisi-app-shell-frame",
@@ -147,6 +182,7 @@ export function AppShellFrame({
       style={rootStyle}
     >
       <aside
+        ref={resize.sidebarRef}
         id={sidebarId}
         className="yisi-app-shell-sidebar"
         aria-label={resolvedLabels.sidebar}
@@ -187,6 +223,11 @@ export function AppShellFrame({
           <div className="yisi-app-shell-sidebar-slot">{sidebar}</div>
         </div>
       </aside>
+      {isSidebarVisible && sidebarResizable && (
+        <div ref={resize.sidebarHandleRef} className="yisi-app-shell-resize-handle yisi-app-shell-resize-handle--sidebar"
+          role="separator" aria-orientation="vertical" aria-label={resolvedLabels.resizeSidebar}
+          aria-controls={sidebarId} tabIndex={0} />
+      )}
       <div className="yisi-app-shell-content">
         <header className="yisi-app-shell-content-header">
           <div className="yisi-app-shell-content-leading">
@@ -262,8 +303,14 @@ export function AppShellFrame({
         </header>
         <div className="yisi-app-shell-content-body">{children}</div>
       </div>
+      {isRightPanelVisible && rightPanelResizable && (
+        <div ref={resize.rightPanelHandleRef} className="yisi-app-shell-resize-handle yisi-app-shell-resize-handle--right-panel"
+          role="separator" aria-orientation="vertical" aria-label={resolvedLabels.resizeRightPanel}
+          aria-controls={rightPanelId} tabIndex={0} />
+      )}
       {hasRightPanel ? (
         <aside
+          ref={resize.rightPanelRef}
           id={rightPanelId}
           className="yisi-app-shell-right-panel"
           aria-label={resolvedLabels.rightPanel}

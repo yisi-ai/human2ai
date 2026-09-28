@@ -1,6 +1,7 @@
 import { compositionLayerOrder } from "./layers.ts";
+import { textRegionWarp } from "./text-warp.ts";
 import { compositionPlanGeometry } from "./planning.ts";
-import { validateDraft, visibleCompositionDraft } from "./draft.ts";
+import { isCompositionTextRegion, validateDraft, visibleCompositionDraft } from "./draft.ts";
 import {
   COMPOSITION_CANVAS,
   frameBoundsInCanvas,
@@ -76,6 +77,9 @@ export function renderCompositionNodesSvg(
         `<polygon points="${geometry.points.map((point) => `${format(point.x)},${format(point.y)}`).join(" ")}" fill="#c8c8c8" stroke="#000000" stroke-width="4"/>`,
       );
     }
+    if (isCompositionTextRegion(area) && area.displayText?.trim()) {
+      elements[elements.length - 1] += renderCompositionDisplayTextSvg(area);
+    }
   }
 
   if (draft.directionLine) {
@@ -111,6 +115,12 @@ export function renderCompositionReferenceSvg(
     ...draft.images.map((image) => renderImageElement(image, resolveImageSource)),
     ...draft.areas.map((area) => {
     if (area.isLightSource) return renderCompositionLightSourceSvg(area, undefined, "reference");
+    if (draft.previewMode === "soft" && area.semanticType !== "text-region" && !area.corners) {
+      return renderCompositionSoftAreaSvg(area);
+    }
+    if (draft.previewMode !== "soft" && isCompositionTextRegion(area) && area.displayText?.trim()) {
+      return renderCompositionDisplayTextSvg(area);
+    }
     const geometry = areaGeometry(area, COMPOSITION_CANVAS);
     if (area.corners && geometry.type === "polygon") {
       const points = geometry.points.map((point) => `${format(point.x)},${format(point.y)}`).join(" ");
@@ -119,9 +129,9 @@ export function renderCompositionReferenceSvg(
       );
       return `<g data-region-kind="text-region"><polygon data-reference-role="text-outline" points="${points}" fill="#e3e3e3"/><g data-reference-role="typography">${lines.join("")}</g></g>`;
     }
-    const shape = renderReferenceInfluenceZone(
+    const shape = renderReferenceShape(
       geometry,
-      `data-reference-role="influence-zone" fill="url(#composition-region-gradient)"`,
+      `data-reference-role="influence-zone" fill="#1F292B" fill-opacity="0.12" stroke="#1F292B" stroke-width="2" vector-effect="non-scaling-stroke"${geometry.type === "ellipse" ? ` transform="rotate(${format(area.rotation ?? 0)} ${format(geometry.cx)} ${format(geometry.cy)})"` : ""}`,
     );
     if (area.semanticType !== "text-region") {
       return `<g data-region-kind="content-region">${shape}</g>`;
@@ -161,7 +171,6 @@ export function renderCompositionReferenceSvg(
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${draft.frame.width}" height="${draft.frame.height}" viewBox="${format(frame.x)} ${format(frame.y)} ${format(frame.width)} ${format(frame.height)}">`,
-    `<defs><radialGradient id="composition-region-gradient"><stop offset="0" stop-color="#8f8f8f" stop-opacity="0.32"/><stop offset="0.58" stop-color="#9a9a9a" stop-opacity="0.22"/><stop offset="1" stop-color="#b8b8b8" stop-opacity="0"/></radialGradient></defs>`,
     `<rect x="${format(frame.x)}" y="${format(frame.y)}" width="${format(frame.width)}" height="${format(frame.height)}" fill="#ffffff"/>`,
     ...orderedCompositionElements(draft, elements),
     "</svg>",
@@ -172,6 +181,57 @@ function orderedCompositionElements(draft: CompositionDraft, elements: string[])
   const nodes = [...draft.images, ...draft.areas, ...(draft.directionLine ? [draft.directionLine] : []), ...draft.focusPoints];
   const byId = new Map(nodes.map((node, index) => [node.id, elements[index]!]));
   return compositionLayerOrder(draft).map((id) => byId.get(id)!);
+}
+
+/** A normalized text block stretches with the region, independently on each axis. */
+export function renderCompositionDisplayTextSvg(
+  area: CompositionArea,
+  clipId = `composition-text-${area.id}`,
+): string {
+  if (!area.displayText?.trim()) return "";
+  const geometry = areaGeometry({ ...area, rotation: 0 }, COMPOSITION_CANVAS);
+  if (geometry.type !== "polygon" || geometry.width === undefined) return "";
+  const { width, height, center } = geometry;
+  const lines = area.displayText.replace(/\r\n?/g, "\n").split("\n");
+  const id = escapeAttribute(clipId);
+  // A 1.2em line box leaves room for CJK, accents and Latin descenders.
+  const text = lines.map((line, index) => line.trim()
+    ? `<text x="0" y="${index * 1200 + 950}" textLength="1000" lengthAdjust="spacingAndGlyphs">${escapeAttribute(line)}</text>`
+    : "").join("");
+  const points = geometry.points.map(point => `${format(point.x)},${format(point.y)}`).join(" ");
+  const block = `<svg x="${area.corners ? 0 : format(center.x - width / 2)}" y="${area.corners ? 0 : format(center.y - height / 2)}" width="${format(width)}" height="${format(height)}" viewBox="0 0 1000 ${lines.length * 1200}" preserveAspectRatio="none" overflow="hidden" fill="#1F292B" stroke="none" font-family="Arial, 'Noto Sans CJK SC', 'Microsoft YaHei', sans-serif" font-size="1000" font-weight="400" dominant-baseline="alphabetic" text-anchor="start" style="white-space:pre" xml:space="preserve">${text}</svg>`;
+  let content = block;
+  if (area.corners) {
+    const patches = textRegionWarp(geometry.points, width, height);
+    content = `<defs><g id="${id}-content">${block}</g></defs>` + patches.map((patch, index) => {
+      // Tiny overlap removes antialias seams; the outer outline still bounds the result.
+      const clip = patch.target.map((p, i, vertices) => {
+        const previous = vertices[(i + vertices.length - 1) % vertices.length];
+        const next = vertices[(i + 1) % vertices.length];
+        const before = Math.hypot(p.x - previous.x, p.y - previous.y);
+        const after = Math.hypot(next.x - p.x, next.y - p.y);
+        const nx1 = (p.y - previous.y) / before, ny1 = (previous.x - p.x) / before;
+        const nx2 = (next.y - p.y) / after, ny2 = (p.x - next.x) / after;
+        const overlap = 0.5 / (1 + nx1 * nx2 + ny1 * ny2);
+        return `${format(p.x + (nx1 + nx2) * overlap)},${format(p.y + (ny1 + ny2) * overlap)}`;
+      }).join(" ");
+      return `<clipPath id="${id}-${index}"><polygon points="${clip}"/></clipPath><g clip-path="url(#${id}-${index})"><use data-text-warp-patch="${index}" href="#${id}-content" transform="matrix(${patch.matrix.map(value => Number(value.toFixed(9))).join(" ")})"/></g>`;
+    }).join("");
+  }
+  return `<g data-region-kind="text-region" data-reference-role="display-text" transform="rotate(${format(area.rotation ?? 0)} ${format(center.x)} ${format(center.y)})"><defs><clipPath id="${id}"><polygon points="${points}"/></clipPath></defs><g clip-path="url(#${id})">${content}</g></g>`;
+}
+
+/** Broad falloff follows the authored mass without presenting a hard silhouette. */
+export function renderCompositionSoftAreaSvg(
+  area: CompositionArea,
+  gradientId = `composition-soft-${area.id}`,
+): string {
+  const id = escapeAttribute(gradientId);
+  const geometry = areaGeometry({ ...area, rotation: 0 }, COMPOSITION_CANVAS);
+  const bounds = geometryBounds(geometry);
+  const blur = Math.min(bounds.maximumX - bounds.minimumX, bounds.maximumY - bounds.minimumY) * 0.09;
+  const shape = renderReferenceShape(geometry, `data-reference-role="influence-zone" fill="url(#${id})" stroke="none" filter="url(#${id}-blur)"`);
+  return `<g data-region-kind="content-region" data-preview-mode="soft" transform="rotate(${format(area.rotation ?? 0)} ${format(area.x * COMPOSITION_CANVAS.width)} ${format(area.y * COMPOSITION_CANVAS.height)})"><defs><radialGradient id="${id}" r="70%"><stop offset="0" stop-color="#1F292B" stop-opacity="0.28"/><stop offset="0.55" stop-color="#1F292B" stop-opacity="0.16"/><stop offset="1" stop-color="#1F292B" stop-opacity="0.03"/></radialGradient><filter id="${id}-blur" x="-40%" y="-40%" width="180%" height="180%" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="${format(blur)}"/></filter></defs>${shape}</g>`;
 }
 
 // Editor geometry stays explicit; generation receives a soft lighting cue,
@@ -230,12 +290,17 @@ function renderImageElement(
   return `<g data-region-kind="image"${transform}><defs><clipPath id="${clipId}"><rect x="${format(x)}" y="${format(y)}" width="${format(width)}" height="${format(height)}"/></clipPath></defs><image href="${escapeAttribute(source)}" x="${format(sourceX)}" y="${format(sourceY)}" width="${format(sourceWidth)}" height="${format(sourceHeight)}" preserveAspectRatio="${crop ? "none" : "xMidYMid slice"}" clip-path="url(#${clipId})"/></g>`;
 }
 
-function renderReferenceInfluenceZone(
+function renderReferenceShape(
   geometry: ReturnType<typeof areaGeometry>,
   attributes: string,
 ): string {
-  const bounds = geometryBounds(geometry);
-  return `<ellipse cx="${format((bounds.minimumX + bounds.maximumX) / 2)}" cy="${format((bounds.minimumY + bounds.maximumY) / 2)}" rx="${format((bounds.maximumX - bounds.minimumX) / 2)}" ry="${format((bounds.maximumY - bounds.minimumY) / 2)}" ${attributes}/>`;
+  if (geometry.type === "circle") {
+    return `<circle cx="${format(geometry.cx)}" cy="${format(geometry.cy)}" r="${format(geometry.radius)}" ${attributes}/>`;
+  }
+  if (geometry.type === "ellipse") {
+    return `<ellipse cx="${format(geometry.cx)}" cy="${format(geometry.cy)}" rx="${format(geometry.radiusX)}" ry="${format(geometry.radiusY)}" ${attributes}/>`;
+  }
+  return `<polygon points="${geometry.points.map(point => `${format(point.x)},${format(point.y)}`).join(" ")}" ${attributes}/>`;
 }
 
 function format(value: number): string {

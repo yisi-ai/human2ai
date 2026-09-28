@@ -4,6 +4,7 @@ import { Human2AiAppShell } from "./Human2AiAppShell";
 import { CompositionWorkflowView } from "./CompositionWorkflowView";
 import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { checkUiSketchPreviewPixels } from "./uiSketchPreviewStoryChecks";
 import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
@@ -20,6 +21,7 @@ import {
 } from "../vendor/yisiui/storybook/interactionChecks";
 import {
   buildUiSketchPrompt,
+  renderUiSketchSvg,
   type UiSketchPromptTranslator,
 } from "./uiSketchExport";
 import {
@@ -64,6 +66,30 @@ const meta = {
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const previewFixture: UiSketchDraft = {
+  ...cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT), frame: { x: 80, y: 40, width: 480, height: 320 },
+  rectangles: [
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "b", x: 90, y: 50, width: 180, height: 280 },
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "h", x: 110, y: 70, width: 140, height: 220 },
+    { ...UI_SKETCH_FIXTURE.rectangles[0], id: "hidden", x: 80, y: 40, width: 480, height: 320, visible: false },
+  ],
+  texts: [16, 28, 40].map((fontSize, index) => ({ ...UI_SKETCH_FIXTURE.texts[0], id: `text-${index}`, x: 285, y: 45 + index * 72, fontSize, text: "登录 Ag\n\n中 H" })),
+  images: [{ ...UI_SKETCH_FIXTURE.rectangles[0], id: "nested", x: 120, y: 180, width: 120, height: 80, assetId: "source", crop: { x: 0.1, y: 0.1, width: 0.8, height: 0.8 } }],
+  layerOrder: ["b", "h", "nested", "text-0", "text-1", "text-2", "hidden"],
+};
+const nestedPreviewSource = `data:image/svg+xml;base64,${btoa(renderUiSketchSvg({
+  ...cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT), frame: { x: 0, y: 0, width: 160, height: 100 },
+  texts: [{ ...UI_SKETCH_FIXTURE.texts[0], id: "nested-text", x: 20, y: 20, text: "Ag", fontSize: 28 }],
+}))}`;
+
+export const PreviewRendering: Story = {
+  args: { draft: previewFixture, resolveImageSource: () => nestedPreviewSource, showCanvasTools: false },
+  play: async ({ canvasElement }) => {
+    await waitForCanvasRender();
+    await checkUiSketchPreviewPixels(canvasElement, previewFixture, () => nestedPreviewSource);
+  },
+};
 
 const stagedFixture = (() => {
   const stage = uiSketchDraftForStage(UI_SKETCH_FIXTURE, UI_SKETCH_END_STAGE_ID);
@@ -193,12 +219,13 @@ export const Default: Story = {
     firstRectangle.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
     await waitForCanvasRender();
     const regionNoteTooltip = document.body.querySelector<HTMLElement>('[role="tooltip"]');
-    if (regionNoteTooltip?.textContent?.trim() !== UI_SKETCH_FIXTURE.rectangles[0]?.note) {
+    if (!regionNoteTooltip?.textContent?.includes(UI_SKETCH_FIXTURE.rectangles[0]!.note)) {
       throw new Error("悬停 UI 区域时必须在 Tooltip 中显示其备注");
     }
     firstRectangle.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
     await waitForCanvasRender();
     assertStorySelector(canvasElement, '[data-ui-sketch-kind="text"]');
+    checkPreviewGeometry(canvasElement, UI_SKETCH_FIXTURE);
     if (
       canvasElement.textContent?.includes("系统组件")
       || canvasElement.textContent?.includes("占位符")
@@ -264,6 +291,43 @@ export const Default: Story = {
   },
 };
 
+function checkPreviewGeometry(canvas: HTMLElement, draft: UiSketchDraft): void {
+  const documentSvg = new DOMParser().parseFromString(renderUiSketchSvg(draft), "image/svg+xml").documentElement;
+  const exported = document.importNode(documentSvg, true) as unknown as SVGSVGElement;
+  exported.style.cssText = "position:fixed;left:-10000px;top:0;pointer-events:none";
+  document.body.append(exported);
+  try {
+    const scene = canvas.querySelector<SVGSVGElement>("[data-ui-sketch-scene]")!;
+    const actualTexts = [...canvas.querySelectorAll<SVGTextElement>('[data-ui-sketch-kind="text"] text')];
+    const exportedTexts = [...exported.querySelectorAll<SVGTextElement>("text")];
+    for (const saved of draft.texts.filter(item => item.visible)) {
+      const actual = actualTexts.find(text => text.closest("[data-ui-sketch-item]")?.getAttribute("data-ui-sketch-item") === `text:${saved.id}`)!;
+      const preview = exportedTexts.find(text => text.textContent === actual.textContent)!;
+      if (!preview) throw new Error("Preview lost canvas text");
+      const actualPosition = actual.getStartPositionOfChar(0).matrixTransform(scene.getCTM()!.inverse().multiply(actual.getCTM()!));
+      const previewPosition = preview.getStartPositionOfChar(0).matrixTransform(exported.getCTM()!.inverse().multiply(preview.getCTM()!));
+      if (Math.abs(actualPosition.x - draft.frame.x - previewPosition.x) > 0.01
+        || Math.abs(actualPosition.y - draft.frame.y - previewPosition.y) > 0.01
+        || getComputedStyle(actual).fill !== getComputedStyle(preview).fill
+        || getComputedStyle(actual).fontSize !== getComputedStyle(preview).fontSize) {
+        throw new Error("Preview text baseline, position, size and color must match the canvas");
+      }
+    }
+    for (const saved of draft.rectangles.filter(item => item.visible)) {
+      const actual = canvas.querySelector<SVGRectElement>(`[data-ui-sketch-item="rectangle:${saved.id}"] .human2ai-canvas-shape`)!;
+      const preview = [...exported.querySelectorAll<SVGRectElement>("rect")].find(rect =>
+        rect.getAttribute("x") === String(saved.x - draft.frame.x) && rect.getAttribute("y") === String(saved.y - draft.frame.y))!;
+      if (!preview || Number(preview.getAttribute("rx") ?? 0) !== Number(actual.getAttribute("rx") ?? 0)
+        || getComputedStyle(actual).fill !== getComputedStyle(preview).fill
+        || getComputedStyle(actual).fillOpacity !== getComputedStyle(preview).fillOpacity) {
+        throw new Error("Preview rectangle corners, fill and opacity must match the canvas");
+      }
+    }
+  } finally {
+    exported.remove();
+  }
+}
+
 export const ClipboardImage: Story = {
   name: "粘贴图片与编辑替换",
   args: {
@@ -298,7 +362,7 @@ export const StagedVisibilityAndCopy: Story = {
   },
   render: (args) => <DisplayControlsFixture {...args} />,
   play: async ({ canvasElement }: StoryContext) => {
-    findButton(canvasElement, "全部显示").click();
+    findButton(canvasElement, "显示隐藏").click();
     await waitForCanvasRender();
     const hiddenRegion = canvasElement.querySelector<SVGGElement>(
       '[data-ui-sketch-kind="rectangle"][data-ui-sketch-visible="false"]',
@@ -357,8 +421,19 @@ export const DisplayControls: Story = {
   args: { draft: displayControlsFixture, activeStageId: "middle", canvasSideActionPanelDefaultCollapsed: true },
   render: (args) => <DisplayControlsFixture {...args} />,
   play: async ({ canvasElement }) => {
+    await waitForCanvasRender();
+    const assertNodesUnchanged = captureCanvasNodeExecutions(canvasElement);
+    const resizeHandles = canvasElement.querySelectorAll('[role="separator"][aria-orientation="vertical"]');
+    if (resizeHandles.length !== 2) throw new Error("The application shell must expose both resize handles");
+    for (const handle of resizeHandles) {
+      const width = Number(handle.getAttribute("aria-valuenow"));
+      handle.dispatchEvent(new KeyboardEvent("keydown", { key: "ArrowRight", bubbles: true }));
+      await waitForCanvasRender();
+      if (Number(handle.getAttribute("aria-valuenow")) === width) throw new Error("Shell width must change after keyboard resize");
+      assertNodesUnchanged();
+    }
     const header = canvasElement.querySelector<HTMLElement>('[data-yisiui-slot="header-extra"]')!;
-    const showHidden = findButton(header, "全部显示");
+    const showHidden = findButton(header, "显示隐藏");
     const onionSkin = findButton(header, "洋葱皮");
     const ghost = () => canvasElement.querySelector<SVGGElement>("[data-canvas-onion-skin]");
     const hidden = () => canvasElement.querySelectorAll('[data-ui-sketch-item][data-ui-sketch-visible="false"]');
@@ -1138,7 +1213,7 @@ export const ImportedTextEditor: Story = {
     const editor = document.body.querySelector<HTMLElement>(
       '[data-yisiui-asset="yisiui/text-mark-editor"]',
     );
-    const marker = editor?.querySelector<HTMLElement>(
+    const marker = editor?.closest('[role="dialog"]')?.querySelector<HTMLElement>(
       '[data-ui-sketch-origin="import"]',
     );
     const description = editor?.querySelector<HTMLElement>(
@@ -1936,3 +2011,52 @@ function waitForCanvasRender(): Promise<void> {
     requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
   });
 }
+
+function SessionPreviewRefreshFixture() {
+  const [draft, setDraft] = useState<UiSketchDraft>(() => ({
+    ...cloneUiSketchDraft(UI_SKETCH_FIXTURE),
+    images: [{ ...UI_SKETCH_FIXTURE.rectangles[0], id: "session-preview", width: 240, height: 140, assetId: "before", crop: null,
+      previewReference: { sessionId: "source", sessionType: "ui-layout", stateId: "start", renderedRevision: 1 } }],
+  }));
+  return <div style={{ height: "100vh" }}>
+    <button data-preview-refresh onClick={() => setDraft(current => ({ ...current, images: current.images.map(image => ({
+      ...image, assetId: image.assetId === "before" ? "after" : "before", previewReference: { ...image.previewReference!, renderedRevision: image.previewReference!.renderedRevision + 1 },
+    })) }))}>模拟来源保存</button>
+    <output data-preview-crop>{JSON.stringify(draft.images[0].crop)}</output>
+    <UiSketchCanvas draft={draft} onDraftChange={setDraft} translatePrompt={translatePrompt}
+      onImageUpload={async () => "unused"}
+      resolveImageSource={id => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="240" height="140"><rect width="240" height="140" fill="${id === "before" ? '#c5d9ef' : '#afcfbc'}"/></svg>`)}`} />
+  </div>;
+}
+
+export const SessionPreviewRefresh: Story = {
+  name: "来源刷新只更新关联节点",
+  args: { draft: UI_SKETCH_FIXTURE },
+  render: () => <SessionPreviewRefreshFixture />,
+  play: async ({ canvasElement }) => {
+    const image = canvasElement.querySelector('[data-canvas-node="session-preview"] image')!;
+    const before = image.getAttribute("href");
+    const checkExecutions = captureCanvasNodeExecutions(canvasElement, ["session-preview"]);
+    canvasElement.querySelector<HTMLButtonElement>('[data-preview-refresh]')!.click();
+    await waitFor(() => { if (image.getAttribute("href") === before) throw new Error("Preview has not refreshed"); });
+    checkExecutions();
+    image.closest('[data-canvas-node]')!.dispatchEvent(new MouseEvent("dblclick", { bubbles: true }));
+    const doc = canvasElement.ownerDocument;
+    await waitFor(() => { if (!doc.querySelector('[data-crop-handle="south-east"]')) throw new Error("Crop editor has not loaded"); });
+    const handle = doc.querySelector<HTMLElement>('[data-crop-handle="south-east"]')!;
+    const preview = handle.closest('[data-crop-selection]')!.parentElement!;
+    const src = preview.querySelector("img")!.src, bounds = handle.getBoundingClientRect();
+    const pointer = { bubbles: true, pointerId: 44, clientX: bounds.x, clientY: bounds.y };
+    handle.dispatchEvent(new PointerEvent("pointerdown", pointer));
+    preview.dispatchEvent(new PointerEvent("pointermove", { ...pointer, clientX: bounds.x - 60, clientY: bounds.y - 30 }));
+    canvasElement.querySelector<HTMLButtonElement>('[data-preview-refresh]')!.click();
+    await waitForCanvasRender();
+    if (preview.querySelector("img")!.src !== src) throw new Error("Source refresh interrupted the crop gesture");
+    preview.dispatchEvent(new PointerEvent("pointerup", pointer));
+    await waitFor(() => {
+      const crop = JSON.parse(canvasElement.querySelector('[data-preview-crop]')!.textContent!);
+      if (!crop || crop.width >= .95) throw new Error("Final crop was lost during refresh");
+      if (preview.querySelector("img")!.src === src) throw new Error("Pending preview did not display after the gesture");
+    });
+  },
+};

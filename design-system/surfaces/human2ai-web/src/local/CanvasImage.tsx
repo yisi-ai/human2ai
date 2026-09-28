@@ -1,4 +1,4 @@
-import { useId } from "react";
+import { useEffect, useId, useState } from "react";
 import type { SyntheticEvent } from "react";
 
 import type { Human2AiCanvasImageCrop } from "../../../../../src/domain/canvas-node-metadata";
@@ -12,6 +12,7 @@ export type CanvasImageStatus = "empty" | "ready" | "loading" | "error";
 
 export interface CanvasImageProps {
   src?: string;
+  retainPreviousSource?: boolean;
   alt: string;
   width: number;
   height: number;
@@ -29,6 +30,7 @@ export interface CanvasImageProps {
 
 export function CanvasImage({
   src,
+  retainPreviousSource = false,
   alt,
   width,
   height,
@@ -43,6 +45,15 @@ export function CanvasImage({
   onLoad,
   onError,
 }: CanvasImageProps) {
+  const [loadedSource, setLoadedSource] = useState(src);
+  useEffect(() => {
+    if (!retainPreviousSource || !src) return;
+    let cancelled = false;
+    const image = new Image(); image.src = src;
+    void image.decode().then(() => { if (!cancelled) setLoadedSource(src); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [src, retainPreviousSource]);
+  const displayedSource = retainPreviousSource ? loadedSource ?? src : src;
   const clipPathId = `human2ai-canvas-image-${useId().replaceAll(":", "")}`;
   const classes = ["human2ai-canvas-image", className].filter(Boolean).join(" ");
   const x = -width / 2;
@@ -83,7 +94,7 @@ export function CanvasImage({
           </defs>
           <image
             className="human2ai-canvas-image__content"
-            href={src}
+            href={displayedSource}
             x={crop ? x - (crop.x / crop.width) * width : x}
             y={crop ? y - (crop.y / crop.height) * height : y}
             width={crop ? width / crop.width : width}

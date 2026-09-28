@@ -176,6 +176,7 @@ export interface CompositionRefinementAudit {
   };
   preserved: {
     processingSemantic: boolean;
+    previewMode?: boolean;
     frame: boolean;
     focusIdentity: boolean;
     areaIdentity: boolean;

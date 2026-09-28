@@ -2,12 +2,17 @@ import { describe, expect, it, vi } from "vitest";
 import { createCanvasShapeOverlap, rectangleOutline } from "../../design-system/surfaces/human2ai-web/src/local/canvasShapeOverlap.ts";
 import { compositionOverlapShape } from "../../design-system/surfaces/human2ai-web/src/local/compositionShapeOverlap.ts";
 import { addArea, createDraft } from "../../src/domain/composition/index.ts";
+import { createCanvasShapeOverlap as domainOverlap, rectangleOutline as domainRectangle } from "../../src/domain/canvas-shape-overlap.ts";
 
 function box(id: string, x: number, y: number, width = 100, height = 100, tone = 0) {
   return { id, tone, geometry: [x, y, width, height], outline: vi.fn(() => rectangleOutline(x, y, width, height)) };
 }
 
 describe("same-color inner borders", () => {
+  it("uses the same geometry implementation in the editor and exports", () => {
+    expect(createCanvasShapeOverlap).toBe(domainOverlap);
+    expect(rectangleOutline).toBe(domainRectangle);
+  });
   it("marks both partially intersecting shapes, but not touching or different colors", () => {
     const update = createCanvasShapeOverlap();
     expect([...update([box("a", 0, 0), box("b", 50, 50)])]).toEqual(["a", "b"]);

@@ -15,6 +15,11 @@ const elements = new Set([
 
 // Image nodes accept portable static SVG, without executing or fetching content.
 export function isSelfContainedSvg(data: Buffer): boolean {
+  return validateSvg(data, 0);
+}
+
+function validateSvg(data: Buffer, imageDepth: number): boolean {
+  if (imageDepth > 32) return false;
   try {
     const source = new TextDecoder("utf-8", { fatal: true }).decode(data);
     const parser = new SaxesParser({ xmlns: true });
@@ -40,7 +45,10 @@ export function isSelfContainedSvg(data: Buffer): boolean {
           const localReference = /^#[^\s]+$/.test(value);
           const embeddedBitmap = tag.local === "image"
             && /^data:image\/(?:png|jpeg|webp);base64,[a-z\d+/=\s]+$/i.test(value);
-          if (!localReference && !embeddedBitmap) reject();
+          const embeddedSvg = tag.local === "image"
+            && /^data:image\/svg\+xml;base64,[a-z\d+/=\s]+$/i.test(value)
+            && validateSvg(Buffer.from(value.slice(value.indexOf(",") + 1), "base64"), imageDepth + 1);
+          if (!localReference && !embeddedBitmap && !embeddedSvg) reject();
         }
         if (["style", "fill", "stroke", "filter", "clip-path", "mask", "marker", "marker-start", "marker-mid", "marker-end", "cursor"].includes(attribute.local)
           && !hasLocalStyles(attribute.value)) reject();

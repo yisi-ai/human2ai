@@ -13,6 +13,7 @@ import { memo, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { isAppLocale, resolveAppLocale } from "../i18n/createI18n";
+import { useAppShellWidths } from "../lib/use-app-shell-widths";
 import {
   createCompositionSession,
   createUiSketchSession,
@@ -51,10 +52,12 @@ export function Human2AiShell({
   ...props
 }: Human2AiShellProps) {
   const { t } = useTranslation();
+  const panelWidths = useAppShellWidths();
 
   return (
     <Human2AiAppShell
       {...props}
+      {...panelWidths}
       titleExtra={currentSessionId ? (
         <ActionButton
           key={currentSessionId}
@@ -79,9 +82,11 @@ export function Human2AiShell({
         navigation: t("shell.navigation"),
         collapseSidebar: t("shell.collapseSidebar"),
         expandSidebar: t("shell.expandSidebar"),
+        resizeSidebar: t("shell.resizeSidebar"),
         rightPanel: t("shell.rightPanel"),
         collapseRightPanel: t("shell.collapseRightPanel"),
         expandRightPanel: t("shell.expandRightPanel"),
+        resizeRightPanel: t("shell.resizeRightPanel"),
       }}
       sidebar={(
         <WorkspaceSidebar

@@ -15,6 +15,7 @@ import { Button, Dropdown, Input, Modal, Tooltip } from "antd";
 import type { InputRef, MenuProps } from "antd";
 import { useEffect, useMemo, useRef, useState } from "react";
 import zh from "../../../../../locales/zh-CN/common.json";
+import { setDraggedWorkspaceSession, WORKSPACE_SESSION_DRAG_TYPE } from "./workspaceSessionDrag";
 
 import {
   AssetSkeletonTree,
@@ -249,6 +250,7 @@ export function Human2AiWorkspaceSidebar({
   const [groupName, setGroupName] = useState("");
   const groupNameInput = useRef<InputRef>(null);
   const draggedSession = useRef<string | null>(null);
+  useEffect(() => () => setDraggedWorkspaceSession(null), []);
   const dropHighlight = useRef<HTMLDivElement | null>(null);
   const [deleteGroupTarget, setDeleteGroupTarget] = useState<Human2AiWorkspaceGroup | null>(null);
   const existingGroupNames = useMemo(() => new Set(groups
@@ -355,11 +357,13 @@ export function Human2AiWorkspaceSidebar({
           };
           return <div className="human2ai-workspace-sidebar__tree-node" data-session-tree-key={key}
             aria-label={session?.title ?? targetGroup?.name ?? targetProject?.name ?? labels.unassigned}
-            draggable={Boolean(onGroupSession && session?.projectId && !pendingAction)}
+            draggable={Boolean(session?.projectId && !pendingAction)}
             onDragStart={event => {
               if (!session?.projectId || (event.target as HTMLElement).closest("button")) { event.preventDefault(); return; }
               draggedSession.current = session.id;
-              event.dataTransfer.effectAllowed = "move";
+              setDraggedWorkspaceSession(session.id, event.dataTransfer);
+              event.dataTransfer.effectAllowed = "copyMove";
+              event.dataTransfer.setData(WORKSPACE_SESSION_DRAG_TYPE, session.id);
               event.dataTransfer.setData("text/plain", session.title);
               event.stopPropagation();
             }}
@@ -382,7 +386,7 @@ export function Human2AiWorkspaceSidebar({
               clearDropHighlight();
               void assignGroup(id, targetGroup?.id ?? null);
             }}
-            onDragEnd={() => { draggedSession.current = null; clearDropHighlight(); }}>
+            onDragEnd={() => { draggedSession.current = null; setDraggedWorkspaceSession(null); clearDropHighlight(); }}>
             {typeof node.title === "function" ? node.title(node) : node.title}
           </div>;
         }}

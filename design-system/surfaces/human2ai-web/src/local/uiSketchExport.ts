@@ -447,7 +447,24 @@ export async function renderUiSketchPng(
   state: UiSketchDraft,
   resolveImageSource?: (assetId: string) => string | undefined,
 ): Promise<Blob> {
-  const svg = renderUiSketchSvg(state, resolveImageSource);
+  const sources = new Map<string, string>();
+  await Promise.all([...new Set(state.images.flatMap(image => image.visible && image.assetId ? [image.assetId] : []))].map(async id => {
+    const source = resolveImageSource?.(id);
+    if (!source) return;
+    if (source.startsWith("data:")) { sources.set(id, source); return; }
+    const response = await fetch(source);
+    if (!response.ok) throw response;
+    const blob = await response.blob();
+    const embedded = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(blob);
+    });
+    sources.set(id, embedded);
+  }));
+  await document.fonts.ready;
+  const svg = renderUiSketchSvg(state, id => sources.get(id));
   const svgBlob = new Blob([svg], { type: "image/svg+xml;charset=utf-8" });
   const url = URL.createObjectURL(svgBlob);
   try {

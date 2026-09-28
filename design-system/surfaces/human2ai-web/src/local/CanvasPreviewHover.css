@@ -1,0 +1,21 @@
+.human2ai-composition-preview-hover,
+.human2ai-canvas-preview-hover {
+  display: block;
+  min-width: 0;
+}
+
+.human2ai-canvas-preview-hover__image {
+  width: fit-content;
+  max-width: min(420px, 45vw);
+  overflow: hidden;
+  border: 1px solid var(--yisiui-color-border-subtle);
+  border-radius: var(--yisiui-radius-sm);
+}
+
+.human2ai-canvas-preview-hover__image > svg {
+  display: block;
+  width: auto;
+  height: auto;
+  max-width: min(420px, 45vw);
+  max-height: 360px;
+}

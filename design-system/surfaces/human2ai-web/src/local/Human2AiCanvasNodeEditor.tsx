@@ -117,12 +117,17 @@ export function Human2AiCanvasNodeEditor({
   return (
     <TextMarkEditor
       open
-      title={titleExtra ? (
+      title={(
         <div className="human2ai-canvas-node-editor__title">
-          <span>{`${labels.title} · ${kind}`}</span>
+          <span className="human2ai-canvas-node-editor__heading">
+            <span className="human2ai-canvas-node-editor__origin">
+              {metadata.origin === "agent" ? labels.originAgent : metadata.origin === "import" ? labels.originImport : labels.originUser}
+            </span>
+            <span>{`${labels.title} · ${kind}`}</span>
+          </span>
           {titleExtra}
         </div>
-      ) : `${labels.title} · ${kind}`}
+      )}
       selectedText={kind}
       selectedTextLabel={labels.title}
       saveLabel=""
@@ -154,9 +159,6 @@ export function Human2AiCanvasNodeEditor({
         data-empty={metadata.note || metadata.shotScale !== "auto" ? "false" : "true"}
       >
         <div className="human2ai-canvas-node-editor__primary-fields">
-          <span className="human2ai-canvas-node-editor__origin">
-            {metadata.origin === "agent" ? labels.originAgent : metadata.origin === "import" ? labels.originImport : labels.originUser}
-          </span>
           {metadata.origin !== "user" && metadata.annotation.trim() ? (
             <TextMarkEditorField label={labels.nodeDescription}>
               <p className="human2ai-canvas-node-editor__description">{metadata.annotation}</p>

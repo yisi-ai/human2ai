@@ -1,3 +1,4 @@
+import { assertReferenceShapes } from "./compositionPreviewStoryChecks";
 import { AimOutlined } from "@ant-design/icons";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
@@ -177,7 +178,7 @@ export const LayoutStates: Story = {
     await nextFrame();
     if (frame() !== originalFrame || area() !== originalArea) throw new Error("Original state layout changed");
     const onion = canvasElement.querySelector<HTMLButtonElement>('[aria-label="洋葱皮"]')!;
-    const hidden = canvasElement.querySelector<HTMLButtonElement>('[aria-label="全部显示"]')!;
+    const hidden = canvasElement.querySelector<HTMLButtonElement>('[aria-label="显示隐藏"]')!;
     if (!onion.disabled) throw new Error("First state must disable onion skin");
     tab("portrait").click();
     await nextFrame();
@@ -267,6 +268,8 @@ export const Ready: Story = {
     }
     assertReadOnlyPreview(canvasElement);
 
+    assertReferenceShapes(canvasElement, fixture.refinement.refinedDraft);
+
     findRadio(canvasElement, "构图").click();
     await nextFrame();
     assertStorySelector(canvasElement, '[data-plan-type="thirds"]');
@@ -324,6 +327,7 @@ export const Waiting: Story = {
       throw new Error("Preview without refinement must render the current draft");
     }
     assertReadOnlyPreview(canvasElement);
+    assertReferenceShapes(canvasElement, fixture.draft);
   },
 };
 
@@ -470,6 +474,7 @@ function assertReadOnlyPreview(root: HTMLElement): void {
     }
   }
 }
+
 
 function assertPreviewLayout(root: HTMLElement): void {
   const stage = root.querySelector<HTMLElement>(

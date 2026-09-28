@@ -16,6 +16,47 @@ import type {
 } from "../../src/domain/style";
 import type { StyleProcessing } from "../../src/domain/session";
 import type { SessionGroup } from "../../src/domain/session";
+import type { SessionPreviewSource } from "../../src/domain/session/preview";
+import type { MaterializedSessionPreview } from "../../src/domain/ui-sketch/session-preview";
+
+export interface SessionPreviewSourceOption {
+  session: Human2AiSession;
+  revision: number;
+  outputs: { id: string; name?: string; number?: number }[];
+}
+
+export async function listSessionPreviewSources(sessionId: string): Promise<SessionPreviewSourceOption[]> {
+  return (await requestJson<{ sources: SessionPreviewSourceOption[] }>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/preview-sources`, {}, globalThis.fetch)).sources;
+}
+
+export function materializeSessionPreview(sessionId: string, source: SessionPreviewSource): Promise<MaterializedSessionPreview> {
+  return requestJson(`/api/v1/sessions/${encodeURIComponent(sessionId)}/previews`, { method: "POST", body: JSON.stringify(source) }, globalThis.fetch);
+}
+
+export function sessionPreviewUrl(sessionId: string, source: SessionPreviewSource): string {
+  return `/api/v1/sessions/${encodeURIComponent(sessionId)}/preview?${new URLSearchParams(source)}`;
+}
+
+export async function getLatestUiSketchDraft(sessionId: string, knownRevision = 0): Promise<UiSketchDraftVersion | null> {
+  return (await requestJson<{ draftVersion: UiSketchDraftVersion | null }>(`/api/v1/sessions/${encodeURIComponent(sessionId)}/ui-sketch/drafts/latest?knownRevision=${knownRevision}`, {}, globalThis.fetch)).draftVersion;
+}
+
+const previewSubscriptions = new Map<string, { events: EventSource; listeners: Set<() => void> }>();
+export function subscribeSessionPreviews(sessionId: string, changed: () => void): () => void {
+  let subscription = previewSubscriptions.get(sessionId);
+  if (!subscription) {
+    const listeners = new Set<() => void>();
+    const events = new EventSource(`/api/v1/sessions/${encodeURIComponent(sessionId)}/preview-events`);
+    events.onmessage = () => listeners.forEach(listener => listener());
+    subscription = { events, listeners }; previewSubscriptions.set(sessionId, subscription);
+  }
+  const current = subscription;
+  current.listeners.add(changed);
+  return () => {
+    current.listeners.delete(changed);
+    if (!current.listeners.size) { current.events.close(); previewSubscriptions.delete(sessionId); }
+  };
+}
 export type { SessionGroup } from "../../src/domain/session";
 
 export async function listSessionGroups(fetcher: typeof fetch = globalThis.fetch): Promise<SessionGroup[]> {

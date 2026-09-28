@@ -42,9 +42,11 @@
     "navigation": "Human2AI application navigation",
     "collapseSidebar": "Collapse application sidebar",
     "expandSidebar": "Expand application sidebar",
+    "resizeSidebar": "Resize application sidebar",
     "rightPanel": "Action panel",
     "collapseRightPanel": "Collapse action panel",
-    "expandRightPanel": "Expand action panel"
+    "expandRightPanel": "Expand action panel",
+    "resizeRightPanel": "Resize action panel"
   },
   "language": {
     "selectorLabel": "Interface language"
@@ -226,7 +228,7 @@
       "originImport": "import"
     },
     "display": {
-      "showHiddenNodes": "Show all",
+      "showHiddenNodes": "Show hidden",
       "onionSkin": "Onion skin"
     },
     "nodeVisibility": {
@@ -298,6 +300,9 @@
     "zoomIn": "Zoom in",
     "fitAll": "Fit all",
     "frameRatio": "Frame ratio",
+    "frameLabel": "Frame",
+    "frameReset": "Reset frame",
+    "frameAction": "Move or resize frame",
     "aspectRatioTitle": "Ratio",
     "lockFrame": "Lock frame",
     "unlockFrame": "Unlock frame",
@@ -438,6 +443,14 @@
       "radialUniform": "Uniform",
       "radialFree": "Free",
       "rayHandle": "Ray {{index}} direction"
+    },
+    "previewMode": {
+      "label": "Preview mode",
+      "precise": "Precise",
+      "soft": "Soft",
+      "prompt": "Preview mode: {{mode}}",
+      "preciseGuidance": "- Precise reference: make the generated image closely follow the canvas intent. Preserve basic shapes, placement, proportions, rotation, layering, spacing, negative space and cropping. Interpret shapes as concrete content using the notes without freely restructuring, splitting or merging their arrangement. Compare these relationships with the reference; focal and flow markers are guides, not final artwork. User instructions and node notes take precedence.",
+      "preciseLightGuidance": "- Precise lighting: closely preserve the authored light placement, shape, extent and relative proportions when lighting the subject and space. Pale yellow identifies light sources without specifying color temperature; do not reproduce diagnostic outlines in the final image. User instructions and node notes take precedence."
     }
   },
   "uiSketch": {
@@ -544,6 +557,7 @@
     "promptFailed": "Could not copy the prompt.",
     "promptUnsupported": "This browser cannot copy the prompt.",
     "copyPreview": "Copy preview",
+    "previewImage": "Preview image",
     "previewFailed": "Could not copy the preview.",
     "previewDownloaded": "This browser cannot copy images, so the preview was downloaded"
   },
@@ -557,6 +571,7 @@
     "prompt": "- Visual weight: {{weight}}"
   },
   "dimensions": {
+    "frameSize": "Size",
     "width": "Width",
     "height": "Height"
   },
@@ -793,5 +808,24 @@
   },
   "canvasStates": {
     "switch": "Layout states"
+  },
+  "sessionPreview": {
+    "label": "Session preview",
+    "add": "Add session preview",
+    "session": "Source session",
+    "output": "State or camera",
+    "projectRequired": "Move this session into a project first.",
+    "empty": "No session previews available",
+    "unavailable": "Source unavailable. The last preview is retained.",
+    "failed": "Unable to load session preview",
+    "openSource": "Open source session",
+    "group": "Group",
+    "search": "Search groups, sessions or states",
+    "clearSearch": "Clear search",
+    "chooseParent": "Select an item in the previous column",
+    "noChildren": "No options in this branch",
+    "loading": "Loading preview sources",
+    "descendantMatches": "{{count}} matching descendants",
+    "searchResults": "{{count}} matches"
   }
 }

@@ -731,24 +731,6 @@
         "An ordinary uploaded image or the 2D composition viewport."
       ]
     },
-    "spatial.snapshot": {
-      "meaning": "Keep the live camera node and add an independent PNG image node showing its current camera output.",
-      "scope": "Spatial workspace and composition camera-reference integration.",
-      "referent": "Keep the live camera node and add an independent PNG image node showing its current camera output.",
-      "precedence": "Owned by 3D space; independent of 2D canvas layout and temporary editor navigation.",
-      "canonicalKey": "spatial.snapshot",
-      "searchTerms": [
-        "另存为图片节点",
-        "Save as image node",
-        "snapshot"
-      ],
-      "examples": [
-        "Keep the live camera node and add an independent PNG image node showing its current camera output."
-      ],
-      "nonExamples": [
-        "An ordinary uploaded image or the 2D composition viewport."
-      ]
-    },
     "spatial.source-missing": {
       "meaning": "A live reference cannot resolve its source; its retained preview remains visible.",
       "scope": "Spatial workspace and composition camera-reference integration.",
@@ -3757,15 +3739,6 @@
     },
     "spatial.openSource": {
       "conceptId": "spatial.open-source",
-      "variant": "default",
-      "role": "control or status label",
-      "grammar": "phrase",
-      "tone": "concise and neutral",
-      "reusePolicy": "canonical",
-      "duplicateReason": "Spatial scene coordinates, objects and output cameras have distinct scope from existing 2D canvas controls."
-    },
-    "spatial.snapshot": {
-      "conceptId": "spatial.snapshot",
       "variant": "default",
       "role": "control or status label",
       "grammar": "phrase",

@@ -1,3 +1,4 @@
+import { DEFAULT_CANVAS_FRAME, MINIMUM_CANVAS_FRAME_SIZE, canvasFrameAtBounds, canvasFrameForRatio, resizeCanvasFrame } from "../canvas-frame.ts";
 import type {
   CompositionFrame,
   CompositionFrameBounds,
@@ -7,38 +8,32 @@ import type {
 } from "./types.ts";
 
 export const COMPOSITION_CANVAS = Object.freeze({ width: 1200, height: 800 });
-export const DEFAULT_COMPOSITION_FRAME = Object.freeze({ width: 1600, height: 900 });
+export const DEFAULT_COMPOSITION_FRAME = DEFAULT_CANVAS_FRAME;
 
 const DEFAULT_FRAME_INSET = 0.08;
-const MINIMUM_FRAME_EDGE = 96;
-const TARGET_FRAME_LONG_EDGE = 1600;
-export const MINIMUM_COMPOSITION_FRAME_RATIO = 0.5;
-export const MAXIMUM_COMPOSITION_FRAME_RATIO = 2;
 
 export function createCompositionFrame(
   size: CompositionFrameSize = DEFAULT_COMPOSITION_FRAME,
 ): CompositionFrame {
+  return frameFromBounds({ ...DEFAULT_CANVAS_FRAME, ...size });
+}
+
+/** Only old drafts without explicit bounds use the former fitted coordinate system. */
+export function legacyCompositionFrame(size: CompositionFrameSize): CompositionFrame {
   return { ...size, bounds: fitFrameBounds(size, DEFAULT_FRAME_INSET) };
 }
 
-export function compositionFrameSizeForRatio(
-  width: number,
-  height: number,
-): CompositionFrameSize {
-  const multiplier = Math.max(1, Math.floor(TARGET_FRAME_LONG_EDGE / Math.max(width, height)));
-  return {
-    width: Math.round(width * multiplier),
-    height: Math.round(height * multiplier),
-  };
+export function compositionFrameSizeForRatio(width: number, height: number): CompositionFrameSize {
+  const frame = canvasFrameForRatio(DEFAULT_CANVAS_FRAME, { width, height });
+  return { width: frame.width, height: frame.height };
 }
 
-export function isCompositionFrameRatioSupported(width: number, height: number): boolean {
-  if (!Number.isFinite(width) || width <= 0 || !Number.isFinite(height) || height <= 0) {
-    return false;
-  }
-  const ratio = width / height;
-  return ratio >= MINIMUM_COMPOSITION_FRAME_RATIO
-    && ratio <= MAXIMUM_COMPOSITION_FRAME_RATIO;
+function frameFromBounds(bounds: CompositionFrameBounds): CompositionFrame {
+  return {
+    width: bounds.width, height: bounds.height,
+    bounds: { x: bounds.x / COMPOSITION_CANVAS.width, y: bounds.y / COMPOSITION_CANVAS.height,
+      width: bounds.width / COMPOSITION_CANVAS.width, height: bounds.height / COMPOSITION_CANVAS.height },
+  };
 }
 
 export function frameBoundsInCanvas(frame: CompositionFrame): CompositionFrameBounds {
@@ -122,76 +117,32 @@ export function resizeCompositionFrame(
   const right = geometry.x + geometry.width;
   const bottom = geometry.y + geometry.height;
   const minimumScale = Math.max(
-    MINIMUM_FRAME_EDGE / geometry.width,
-    MINIMUM_FRAME_EDGE / geometry.height,
+    MINIMUM_CANVAS_FRAME_SIZE / geometry.width,
+    MINIMUM_CANVAS_FRAME_SIZE / geometry.height,
   );
   const scale = Math.max(requestedScale, minimumScale);
   const width = geometry.width * scale;
   const height = geometry.height * scale;
   const x = corner.endsWith("left") ? right - width : geometry.x;
   const y = corner.startsWith("top") ? bottom - height : geometry.y;
-  return {
-    ...frame,
-    bounds: {
-      x: x / COMPOSITION_CANVAS.width,
-      y: y / COMPOSITION_CANVAS.height,
-      width: width / COMPOSITION_CANVAS.width,
-      height: height / COMPOSITION_CANVAS.height,
-    },
-  };
+  return frameFromBounds(canvasFrameAtBounds({ x, y, width, height }));
 }
 
+/** The shared frame UI supplies pixel bounds; this adapter only converts storage coordinates. */
 export function resizeCompositionFrameToBounds(
-  frame: CompositionFrame,
+  _frame: CompositionFrame,
   bounds: CompositionFrameBounds,
 ): CompositionFrame {
-  const pixelWidth = bounds.width;
-  const pixelHeight = bounds.height;
-  if (pixelWidth < MINIMUM_FRAME_EDGE || pixelHeight < MINIMUM_FRAME_EDGE) return frame;
-  const ratio = pixelWidth / pixelHeight;
-  if (!isCompositionFrameRatioSupported(pixelWidth, pixelHeight)) return frame;
-
-  const minimumLongEdge = ratio >= 1 ? 256 * ratio : 256 / ratio;
-  const longEdge = Math.min(4096, Math.max(frame.width, frame.height, minimumLongEdge));
-  const size = ratio >= 1
-    ? { width: Math.round(longEdge), height: Math.round(longEdge / ratio) }
-    : { width: Math.round(longEdge * ratio), height: Math.round(longEdge) };
-
-  return {
-    ...size,
-    bounds: {
-      x: bounds.x / COMPOSITION_CANVAS.width,
-      y: bounds.y / COMPOSITION_CANVAS.height,
-      width: bounds.width / COMPOSITION_CANVAS.width,
-      height: bounds.height / COMPOSITION_CANVAS.height,
-    },
-  };
+  return frameFromBounds(bounds);
 }
 
 export function changeCompositionFrameSize(
   frame: CompositionFrame,
   size: CompositionFrameSize,
 ): CompositionFrame {
-  const source = frameBoundsInCanvas(frame);
-  const ratio = size.width / size.height;
-  const center = {
-    x: source.x + source.width / 2,
-    y: source.y + source.height / 2,
-  };
-  const area = source.width * source.height;
-  const width = Math.sqrt(area * ratio);
-  const height = width / ratio;
-  const x = center.x - width / 2;
-  const y = center.y - height / 2;
-  return {
-    ...size,
-    bounds: {
-      x: x / COMPOSITION_CANVAS.width,
-      y: y / COMPOSITION_CANVAS.height,
-      width: width / COMPOSITION_CANVAS.width,
-      height: height / COMPOSITION_CANVAS.height,
-    },
-  };
+  const bounds = frameBoundsInCanvas(frame);
+  const next = resizeCanvasFrame(bounds, size);
+  return next === bounds ? frame : frameFromBounds(next);
 }
 
 function fitFrameBounds(

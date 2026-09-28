@@ -56,11 +56,6 @@
   pointer-events: none;
 }
 
-.human2ai-composition-canvas__frame[role="button"] {
-  cursor: move;
-  outline: none;
-}
-
 .human2ai-composition-canvas__item[role="button"] {
   cursor: grab;
   outline: none;

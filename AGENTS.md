@@ -59,7 +59,7 @@ For this repository:
 
 Do not push directly to `main`.
 Do not use a plain `git push` when publishing work.
-Publish feature branches explicitly with `git push skill-apps HEAD:refs/heads/<branch-name>`.
+Publish feature branches explicitly with `git push h2i-github HEAD:refs/heads/<branch-name>`.
 Create Pull Requests from feature branches into `main`.
 Treat `main` as the production deployment branch and inspect the configured GitHub Actions before merging.
 Use Chinese commit messages unless the user asks otherwise.
