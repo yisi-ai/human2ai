@@ -61,6 +61,7 @@ describe("agent-authored composition refinement", () => {
         "id",
         "kind",
         "processingSemantic",
+        "previewMode",
         "overallNote",
         "primitive",
         "version",

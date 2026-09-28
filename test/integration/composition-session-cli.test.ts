@@ -260,8 +260,15 @@ describe("composition session CLI", () => {
         y: 0.5,
         rotation: 2,
       }).draft;
-      expect(draftFingerprint(draft)).toBe("draft-725f95d9");
+      expect(draftFingerprint(draft)).toBe("draft-a27e6b15");
       const legacyDraft = structuredClone(draft);
+      legacyDraft.frame = {
+        width: 1600,
+        height: 900,
+        bounds: { x: 0.08, y: 0.145625, width: 0.84, height: 0.70875 },
+      };
+      delete legacyDraft.previewMode;
+      expect(draftFingerprint(legacyDraft)).toBe("draft-725f95d9");
       delete legacyDraft.plans;
       expect(draftFingerprint(legacyDraft)).toBe("draft-b797d011");
       const draftPath = path.join(directory, "draft.json");
