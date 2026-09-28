@@ -1,4 +1,4 @@
-import { Tooltip } from "antd";
+import { CanvasNodeTooltipOverlay } from "./CanvasNodeTooltipOverlay";
 import { recordCanvasNodeExecution } from "./canvasNodeRenderTrace";
 import { useRef } from "react";
 import { createPortal } from "react-dom";
@@ -459,7 +459,7 @@ export function CanvasNode({
   ].filter(([, value]) => value?.trim()) : [];
 
   return tooltipFields.length > 0 ? (
-    <Tooltip
+    <CanvasNodeTooltipOverlay
       title={(
         <dl className="human2ai-canvas-node__tooltip">
           {tooltipFields.map(([fieldLabel, value]) => (
@@ -470,12 +470,9 @@ export function CanvasNode({
           ))}
         </dl>
       )}
-      mouseEnterDelay={0}
-      mouseLeaveDelay={0}
-      trigger={["hover", "focus"]}
     >
       {node}
-    </Tooltip>
+    </CanvasNodeTooltipOverlay>
   ) : node;
 }
 

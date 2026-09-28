@@ -4,6 +4,10 @@
 
 AssetSkeletonTree 的通用状态、附加标记和序号颜色接口见 [2026-09-23 层级树通用化](2026-09-23-asset-skeleton-tree.md)。
 
+AssetSkeletonTree 的增删改局部动效与稳定节点接入见 [2026-09-27 层级树局部更新](2026-09-27-asset-skeleton-tree-motion.md)。
+
+快捷消息的稳定 key、模型菜单刷新保留和折叠组局部调高见 [2026-09-27 组件局部更新](2026-09-27-component-local-updates.md)。
+
 独立圆点滚动条及折叠组接入见 [2026-09-20 DotScrollbar 采用说明](2026-09-20-dot-scrollbar.md)。
 
 父容器定高、独立折叠与拖动调整功能面板见 [2026-09-20 ResizableCollapseGroup 采用说明](2026-09-20-resizable-collapse-group.md)。

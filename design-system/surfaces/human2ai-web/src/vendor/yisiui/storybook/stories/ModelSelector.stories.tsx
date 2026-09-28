@@ -43,7 +43,7 @@ const meta = {
   </div>,
   args: { modes, value: initialValue, modeLayout: "vertical", onChange: () => undefined },
   argTypes: {
-    modes: { control: "object", description: "调用方提供的模式、来源、型号及推理档位。" },
+    modes: { control: "object", description: "调用方提供的模式、来源、型号及推理档位。按稳定 key 更新；等价数据刷新和改名保持已打开菜单、焦点与滚动位置。" },
     value: { control: "object", description: "受控选择；回调给出一致的下一组 key。" },
     title: { control: "text", description: "可选标题 slot，null 隐藏。" },
     modeLayout: { control: "inline-radio", options: ["vertical", "horizontal"], description: "竖向位于内容左侧；横向位于标题右侧并等宽占满剩余空间。" },

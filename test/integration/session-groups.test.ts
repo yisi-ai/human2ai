@@ -30,6 +30,37 @@ describe("project display groups", () => {
   }
   async function groups() { return (await server.inject({ method: "GET", url: "/api/v1/session-groups" })).json().groups; }
 
+  it.each(["image-composition", "ui-layout", "spatial"] as const)("creates %s directly in a group and persists membership", async sessionType => {
+    const project = repository.createProject({ name: "项目" });
+    const group = await createGroup(project.id);
+    const response = await server.inject({ method: "POST", url: "/api/v1/sessions", payload: {
+      sessionType, title: "新会话", projectId: project.id, groupId: group.id,
+    } });
+    expect(response.statusCode, response.body).toBe(201);
+    const session = response.json();
+    expect(session).toMatchObject({ projectId: project.id, sessionType, revision: 1 });
+    await server.close(); database.close();
+    database = openDatabase(join(directory, "test.sqlite"), resolve("migrations"));
+    repository = new ProjectSessionRepository(database);
+    server = buildServer({}, { projectSessions: repository });
+    expect(await groups()).toEqual([expect.objectContaining({ id: group.id, revision: 1, sessionIds: [session.id] })]);
+    expect(repository.getSession(session.id)).toEqual(session);
+    expect(repository.getProject(project.id)).toMatchObject({ revision: project.revision, updatedAt: project.updatedAt });
+  });
+
+  it.each(["image-composition", "ui-layout", "spatial"] as const)("rolls back %s creation when its target group is invalid", async sessionType => {
+    const project = repository.createProject({ name: "项目" });
+    const other = repository.createProject({ name: "其他项目" });
+    const group = await createGroup(other.id);
+    for (const [projectId, groupId, status] of [[project.id, "missing", 404], [project.id, group.id, 400], [null, group.id, 400]] as const) {
+      const response = await server.inject({ method: "POST", url: "/api/v1/sessions", payload: { sessionType, title: "新会话", projectId, groupId } });
+      expect(response.statusCode, response.body).toBe(status);
+      for (const table of ["sessions", "composition_sessions", "ui_sessions", "spatial_sessions", "session_group_members"]) {
+        expect(database.prepare(`SELECT count(*) AS count FROM ${table}`).get()).toEqual({ count: 0 });
+      }
+    }
+  });
+
   it("persists empty groups, renames them, and releases members without changing sessions", async () => {
     const project = repository.createProject({ name: "项目" });
     const sessions = (["image-composition", "ui-layout", "spatial"] as const).map(sessionType => repository.createSession({ projectId: project.id, sessionType, title: sessionType }));

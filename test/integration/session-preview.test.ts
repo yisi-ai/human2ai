@@ -21,7 +21,7 @@ it("refreshes embedded composition fidelity and display text while retaining pla
     const project = (await post("/api/v1/projects", { name: "Preview modes" })).json<{ id: string }>();
     const create = async (sessionType: string) => (await post("/api/v1/sessions", { title: sessionType, sessionType, projectId: project.id })).json<{ id: string }>().id;
     const source = await create("image-composition"), target = await create("ui-layout");
-    const draft = addTextRegion(addArea(createDraft(), { primitive: "triangle", rotation: 20 }).draft).draft;
+    const draft = { ...addTextRegion(addArea(createDraft(), { primitive: "triangle", rotation: 20 }).draft).draft, previewMode: "precise" as const };
     const sourceUrl = `/api/v1/sessions/${source}/composition/drafts`;
     const targetUrl = `/api/v1/sessions/${target}/ui-sketch/drafts`;
     const selector = { sessionId: source, sessionType: "image-composition", stateId: "state-1" };

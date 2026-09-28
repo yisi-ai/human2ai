@@ -1083,7 +1083,7 @@
     {
       "id": "project.session-groups",
       "category": "project",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "local",
       "responsibility": "保存项目树的空分组、命名和单一会话归组关系，仅组织显示，不修改会话",
       "invariants": [
@@ -1091,7 +1091,8 @@
         "每个会话最多属于一个分组，分组和会话必须属于同一项目；null 归组表示释放到项目下",
         "创建、重命名、删除分组和调整归组不改变项目或会话 revision、修改时间、草稿和历史",
         "分组重命名和删除校验分组自身 expectedRevision；删除分组仅删除归组关系",
-        "复用既有项目移动和会话删除；跨项目移动自动清除旧分组关系，删除会话或空项目级联清理组织数据"
+        "复用既有项目移动和会话删除；跨项目移动自动清除旧分组关系，删除会话或空项目级联清理组织数据",
+        "创建会话可携带 groupId，与领域会话写入在同一事务内复用 setSessionGroup；分组无效、跨项目或缺少项目时整体回滚，不留下未归组会话"
       ],
       "implementations": [
         {
@@ -1113,10 +1114,12 @@
       ],
       "variationPoints": [
         "已比较 project.session-organization 和画布节点建组；项目归属仍由既有共享能力管理，显示分组独立保存且不复制其 revision 语义",
-        "三类会话共用分组关系，界面把分组置于未分组会话之前；成员顺序沿用会话列表"
+        "三类会话共用分组关系，界面把分组置于未分组会话之前；成员顺序沿用会话列表",
+        "侧栏的项目行与分组行共用三类新建图标；分组行传递所属 projectId 和 groupId，成功后展开分组并打开会话"
       ],
       "contractTests": [
-        "test/integration/session-groups.test.ts"
+        "test/integration/session-groups.test.ts",
+        "test/unit/web-api.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/src/local/Human2AiWorkspaceSidebar.stories.tsx"
@@ -1127,7 +1130,7 @@
     {
       "id": "project.session-organization",
       "category": "project",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "shared",
       "responsibility": "管理构图、UI 和 3D 空间会话的可选项目归属、项目内创建和跨项目移动",
       "invariants": [
@@ -1135,7 +1138,8 @@
         "创建会话时提供 projectId 会立即建立项目归属，省略或传入 null 时创建无项目会话",
         "移动会话必须检查 expectedRevision，并在归属变化时递增 revision",
         "无项目分组只表示 projectId 为 null 的会话，不对应真实项目记录",
-        "包含会话的项目不能删除"
+        "包含会话的项目不能删除",
+        "创建时可指定同项目的 groupId，归组复用 project.session-groups 并在创建事务内完成；失败不保留新会话"
       ],
       "implementations": [
         {
@@ -1172,7 +1176,8 @@
       "contractTests": [
         "test/integration/project-sessions.test.ts",
         "test/unit/web-api.test.ts",
-        "test/integration/spatial-sessions.test.ts"
+        "test/integration/spatial-sessions.test.ts",
+        "test/integration/session-groups.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "修改会话创建时的项目校验、无项目语义、移动 revision 或非空项目删除约束之前",

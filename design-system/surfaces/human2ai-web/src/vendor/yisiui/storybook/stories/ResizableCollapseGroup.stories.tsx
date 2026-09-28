@@ -72,7 +72,7 @@ export const Default: Story = {
     <h1 className={styles.heading}>功能面板</h1>
     <p className={styles.description}>点击标题独立折叠，拖动面板间的空隙调整高度。子项右侧圆点表示滚动位置，悬停拉长，点击跳转。Tab 聚焦拖动区域后，可用上下方向键调整，Shift 加速，Home / End 到达最小或最大位置。</p>
     <div className={styles.panel} style={{ height: 600 }}><ResizableCollapseGroup {...args} /></div>
-    <p className={styles.hint}>下方位置固定：折叠、展开和拖动均不会改变组件的总高度。</p>
+    <p className={styles.hint}>下方位置固定：折叠、展开和拖动均不会改变组件的总高度；拖动仅调整相邻展开面板，输入和滚动位置保持。</p>
   </Frame>,
 };
 

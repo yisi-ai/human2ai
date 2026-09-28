@@ -169,7 +169,9 @@
     "deleteSessionGroupDescription": "分组内的会话将回到项目下，不会被删除。",
     "sessionGroupNameConflict": "该项目中已存在同名分组",
     "groupSession": "移入分组",
-    "ungroupedSessions": "未分组"
+    "ungroupedSessions": "未分组",
+    "newCompositionInGroup": "在“{{group}}”分组中新建构图",
+    "newUiSketchInGroup": "在“{{group}}”分组中新建 UI 界面"
   },
   "actions": {
     "start": "开始",
@@ -799,7 +801,8 @@
     "appearance": "模型样式",
     "appearanceQuaternius": "人体模型",
     "appearanceGeometric": "几何人偶",
-    "editObject": "编辑物件"
+    "editObject": "编辑物件",
+    "newInGroup": "在“{{group}}”分组中新建 3D 空间"
   },
   "canvasHistory": {
     "undo": "撤销",

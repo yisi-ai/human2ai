@@ -75,6 +75,11 @@ function SidebarHarness({
   const [groups, setGroups] = useState(initialGroups);
   const [currentSessionId, setCurrentSessionId] = useState("hero");
 
+  function addToGroup(sessionId: string, groupId?: string): void {
+    if (groupId) setGroups(current => current.map(group => group.id === groupId
+      ? { ...group, sessionIds: [...group.sessionIds, sessionId] } : group));
+  }
+
   return (
     <StoryFrame>
       <Human2AiWorkspaceSidebar
@@ -90,7 +95,7 @@ function SidebarHarness({
         currentSessionId={currentSessionId}
         languageSelector={languageSelector}
         repositoryLink={repositoryLink}
-        onCreateComposition={async (projectId) => {
+        onCreateComposition={async (projectId, groupId) => {
           setSessions((current) => [
             {
               id: "new",
@@ -102,8 +107,9 @@ function SidebarHarness({
             ...current,
           ]);
           setCurrentSessionId("new");
+          addToGroup("new", groupId);
         }}
-        onCreateUiSketch={async (projectId) => {
+        onCreateUiSketch={async (projectId, groupId) => {
           setSessions((current) => [
             {
               id: "new-ui-sketch",
@@ -115,6 +121,15 @@ function SidebarHarness({
             ...current,
           ]);
           setCurrentSessionId("new-ui-sketch");
+          addToGroup("new-ui-sketch", groupId);
+        }}
+        onCreateSpatial={async (projectId, groupId) => {
+          setSessions(current => [{
+            id: "new-spatial", projectId: projectId ?? null, sessionType: "spatial",
+            title: zh.spatial.untitled, revision: 1,
+          }, ...current]);
+          setCurrentSessionId("new-spatial");
+          addToGroup("new-spatial", groupId);
         }}
         onCreateProject={async (name) => {
           setProjects((current) => [{ id: `project-${current.length}`, name }, ...current]);
@@ -229,6 +244,28 @@ export const Default: Story = {
     if (canvasElement.textContent?.includes("当前")) {
       throw new Error("The selected session must not render a current badge");
     }
+    const tree = getRequiredElement(canvasElement, '[data-yisiui-asset="yisiui/asset-skeleton-tree"]');
+    const preserved = getRequiredElement(canvasElement, '[data-session-tree-key="session:poster"]');
+    getRequiredElement(canvasElement, '[data-session-tree-key="session:detail"]').click();
+    await waitFor(() => {
+      if (!getRequiredElement(canvasElement, '[data-session-tree-key="session:detail"]').closest(".ant-tree-treenode-selected")) {
+        throw new Error("Session selection must update in place");
+      }
+    });
+    findButton(canvasElement, "新建构图").click();
+    await waitFor(() => assertStorySelector(canvasElement, '[data-session-tree-key="session:new"]'));
+    findButton(canvasElement, "未命名构图：会话操作").click();
+    await waitFor(() => findMenuItem(canvasElement.ownerDocument, "删除"));
+    findMenuItem(canvasElement.ownerDocument, "删除").click();
+    await waitFor(() => getRequiredElement(canvasElement.ownerDocument.body, ".ant-modal-footer"));
+    findButton(getRequiredElement(canvasElement.ownerDocument.body, ".ant-modal-footer"), "删除").click();
+    await waitFor(() => {
+      if (canvasElement.querySelector('[data-session-tree-key="session:new"]')) throw new Error("Deleted session must leave the tree");
+    });
+    if (tree !== canvasElement.querySelector('[data-yisiui-asset="yisiui/asset-skeleton-tree"]')
+      || preserved !== canvasElement.querySelector('[data-session-tree-key="session:poster"]')) {
+      throw new Error("Selection, insertion and deletion must preserve the tree and unrelated rows");
+    }
   },
 };
 
@@ -293,6 +330,34 @@ export const SessionGroups: Story = {
     await waitFor(() => {
       if (row("设计稿") || depth("首屏主视觉") !== 1 || depth("产品详情页") !== 2) throw new Error("Deleting a group must release only its sessions");
     });
+    for (const [label, title] of [
+      [zh.workspaceSidebar.newCompositionInGroup, "未命名构图"],
+      [zh.workspaceSidebar.newUiSketchInGroup, "未命名 UI 界面"],
+      [zh.spatial.newInGroup, zh.spatial.untitled],
+    ]) {
+      await waitFor(() => {
+        if (canvasElement.querySelector(".ant-tree-treenode-motion")) throw new Error("Wait for tree expansion to finish before toggling it again");
+      });
+      await nextFrame();
+      const groupRow = row("参考")!;
+      if (groupRow.getAttribute("aria-expanded") === "true") {
+        groupRow.querySelector<HTMLElement>(".ant-tree-switcher")!.click();
+        await waitFor(() => {
+          if (row("参考")?.getAttribute("aria-expanded") !== "false") throw new Error("The group must start collapsed");
+        });
+      }
+      findButton(canvasElement, label.replace("{{group}}", "参考")).click();
+      await waitFor(() => {
+        if (depth(title) !== 2 || row("参考")?.getAttribute("aria-expanded") !== "true") {
+          throw new Error("Group creation must expand the group and reveal its new session");
+        }
+        if (row(title)?.getAttribute("aria-selected") !== "true") throw new Error("The newly created session must be selected");
+        if (!(row("参考")!.compareDocumentPosition(row(title)!) & Node.DOCUMENT_POSITION_FOLLOWING)
+          || !(row(title)!.compareDocumentPosition(row("归档")!) & Node.DOCUMENT_POSITION_FOLLOWING)) {
+          throw new Error("The created session must belong to the target group");
+        }
+      });
+    }
   },
 };
 
@@ -450,18 +515,25 @@ export const ProjectCreateActions: Story = {
     }
 
     findButton(canvasElement, "在“品牌升级”中新建构图").click();
-    await nextFrame();
-    assertStoryText(canvasElement, "未命名构图");
+    await waitFor(() => {
+      assertStoryText(canvasElement, "未命名构图");
+      if (findButton(canvasElement, "在“品牌升级”中新建 UI 界面").disabled) throw new Error("Wait for creation to finish");
+    });
     if (canvasElement.textContent?.includes("无项目")) {
       throw new Error("The project action must create the composition inside its project");
     }
 
     findButton(canvasElement, "在“品牌升级”中新建 UI 界面").click();
-    await nextFrame();
-    assertStoryText(canvasElement, "未命名 UI 界面");
+    await waitFor(() => {
+      assertStoryText(canvasElement, "未命名 UI 界面");
+      if (findButton(canvasElement, "在“品牌升级”中新建 3D 空间").disabled) throw new Error("Wait for creation to finish");
+    });
     if (canvasElement.textContent?.includes("无项目")) {
       throw new Error("The project action must create the interface inside its project");
     }
+    findButton(canvasElement, "在“品牌升级”中新建 3D 空间").click();
+    await waitFor(() => assertStoryText(canvasElement, zh.spatial.untitled));
+    if (canvasElement.textContent?.includes("无项目")) throw new Error("The project action must create the 3D space inside its project");
   },
 };
 

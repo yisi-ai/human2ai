@@ -36,6 +36,7 @@ interface CreateSessionBody {
   sessionType: SessionType;
   title: string;
   projectId?: string | null;
+  groupId?: string;
 }
 
 interface MoveSessionBody {
@@ -359,6 +360,7 @@ export function registerProjectSessionRoutes(
             sessionType: { type: "string", enum: SESSION_TYPES },
             title: { type: "string", minLength: 1, maxLength: 200 },
             projectId: nullableStringSchema,
+            groupId: { type: "string", minLength: 1 },
           },
         },
         response: {

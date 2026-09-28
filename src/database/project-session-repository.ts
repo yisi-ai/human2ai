@@ -300,6 +300,7 @@ export class ProjectSessionRepository {
     sessionType: SessionType;
     title: string;
     projectId?: string | null;
+    groupId?: string;
   }): Session {
     if (!SESSION_TYPES.includes(input.sessionType)) {
       throw new InvalidRecordError(`Unsupported session type: ${input.sessionType}`);
@@ -326,6 +327,10 @@ export class ProjectSessionRepository {
         this.database.prepare("INSERT INTO spatial_sessions (session_id) VALUES (?)").run(id);
       } else {
         this.database.prepare("INSERT INTO ui_sessions (session_id) VALUES (?)").run(id);
+      }
+      if (input.groupId !== undefined) {
+        if (!projectId) throw new InvalidRecordError("Session and group must belong to the same project");
+        this.setSessionGroup(projectId, id, input.groupId);
       }
     })();
 

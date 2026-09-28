@@ -4,6 +4,7 @@ import { Human2AiAppShell } from "./Human2AiAppShell";
 import { CompositionWorkflowView } from "./CompositionWorkflowView";
 import { UiSketchStateTabs } from "./UiSketchStateTabs";
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { checkZoomedNodeTooltip } from "./canvasNodeTooltipStoryChecks";
 import { checkUiSketchPreviewPixels } from "./uiSketchPreviewStoryChecks";
 import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
@@ -224,6 +225,7 @@ export const Default: Story = {
     }
     firstRectangle.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
     await waitForCanvasRender();
+    await checkZoomedNodeTooltip(canvasElement, firstRectangle);
     assertStorySelector(canvasElement, '[data-ui-sketch-kind="text"]');
     checkPreviewGeometry(canvasElement, UI_SKETCH_FIXTURE);
     if (

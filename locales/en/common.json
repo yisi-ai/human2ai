@@ -169,7 +169,9 @@
     "deleteSessionGroupDescription": "Sessions in this group will appear directly under the project. They will not be deleted.",
     "sessionGroupNameConflict": "A group with this name already exists in this project.",
     "groupSession": "Move to group",
-    "ungroupedSessions": "Ungrouped"
+    "ungroupedSessions": "Ungrouped",
+    "newCompositionInGroup": "New composition in group “{{group}}”",
+    "newUiSketchInGroup": "New interface in group “{{group}}”"
   },
   "actions": {
     "start": "Start",
@@ -799,7 +801,8 @@
     "appearance": "Model style",
     "appearanceQuaternius": "Human model",
     "appearanceGeometric": "Geometric mannequin",
-    "editObject": "Edit object"
+    "editObject": "Edit object",
+    "newInGroup": "New 3D space in group “{{group}}”"
   },
   "canvasHistory": {
     "undo": "Undo",

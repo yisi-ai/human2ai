@@ -268,6 +268,7 @@
         "operation-outline-replaces-shape-stroke",
         "unified-hover-selected-operation-outline",
         "optional-hover-focus-tooltip",
+        "viewport-bounded-pointer-tooltip",
         "locked-noninteractive-state",
         "pointer-event-forwarding",
         "detached-selected-controls",
@@ -310,7 +311,7 @@
         "需要组件解释构图面积、UI 布局、文字编辑、图片上传或其他领域语义",
         "只需要不可交互的单个 SVG 图元且不需要统一节点契约"
       ],
-      "differenceSummary": "项目本地受控 SVG 节点容器，统一 translate/rotate、稳定元素 id、选择外框、点击或 Enter/Space 明确选择、方向键微移、双击，以及选中状态下的 Delete/Backspace 删除意图；点击选择事件会继续提供 Shift 等修饰键，而缩放和旋转手势不再隐式上报选择。调用方可提供任意 ReactNode 作为 hover/focus Tooltip 内容，CanvasNode 只负责触发和呈现，不解释备注语义。hover、focus 与选中状态统一使用选中态操作外框；操作外框显示时会临时隐藏直接子级 CanvasShape 的自身描边，避免出现双重边框；选中且可缩放时默认提供四角和四边共八个互不重叠的不可见命中区，命中尺寸通过 screenScale 保持屏幕像素稳定，并为小节点保留四边中段，调用方也可限制为指定缩放柄集合。旋转柄的屏幕距离、可见圆和独立透明命中圆同样不随画布缩放。free 模式默认固定对角或对边自由缩放、Shift 等比，proportional 与 font-size 模式始终等比，Alt 改为中心缩放。锁定节点不可删除，组件只上报选择、删除与变换结果，领域数据、备注、保存和历史仍由调用方负责。 可选 controlsHost 将选中节点的外框、缩放与旋转控制呈现在同一 SVG 的顶层宿主，几何仍由原节点及既有回调持有；用于显式内容层级调整后避免控件被内容遮挡。 tooltip 插槽接收公共 CanvasNodeTooltip 数据契约（annotation、displayText、note 与本地化字段标题），由 CanvasNode 统一按说明、显示文字、备注排序，过滤空白字段并在无内容时不显示提示；共用 CanvasElements.css 保留多行并将每段截断为六行。构图和 UI 画布仅映射节点数据，悬停和键盘聚焦共用同一展示。",
+      "differenceSummary": "项目本地受控 SVG 节点容器，统一 translate/rotate、稳定元素 id、选择外框、点击或 Enter/Space 明确选择、方向键微移、双击，以及选中状态下的 Delete/Backspace 删除意图；点击选择事件会继续提供 Shift 等修饰键，而缩放和旋转手势不再隐式上报选择。调用方可提供任意 ReactNode 作为 hover/focus Tooltip 内容，CanvasNode 只负责触发和呈现，不解释备注语义。hover、focus 与选中状态统一使用选中态操作外框；操作外框显示时会临时隐藏直接子级 CanvasShape 的自身描边，避免出现双重边框；选中且可缩放时默认提供四角和四边共八个互不重叠的不可见命中区，命中尺寸通过 screenScale 保持屏幕像素稳定，并为小节点保留四边中段，调用方也可限制为指定缩放柄集合。旋转柄的屏幕距离、可见圆和独立透明命中圆同样不随画布缩放。free 模式默认固定对角或对边自由缩放、Shift 等比，proportional 与 font-size 模式始终等比，Alt 改为中心缩放。锁定节点不可删除，组件只上报选择、删除与变换结果，领域数据、备注、保存和历史仍由调用方负责。 可选 controlsHost 将选中节点的外框、缩放与旋转控制呈现在同一 SVG 的顶层宿主，几何仍由原节点及既有回调持有；用于显式内容层级调整后避免控件被内容遮挡。 tooltip 插槽接收公共 CanvasNodeTooltip 数据契约（annotation、displayText、note 与本地化字段标题），由 CanvasNode 统一按说明、显示文字、备注排序，过滤空白字段并在无内容时不显示提示；共用 CanvasElements.css 保留多行并将每段截断为六行。构图和 UI 画布仅映射节点数据，悬停和键盘聚焦共用同一展示。提示浮层固定定位于窗口内，悬停按鼠标位置、键盘聚焦按节点可见部分定位，避免超出视口的放大节点撑开页面；指针位置在私有浮层内按动画帧合并，不重建节点视觉或更新草稿。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1389,7 +1390,8 @@
         "resizable-sidebars",
         "keyboard-resize",
         "preserved-sidebar-widths",
-        "resize-commit-callbacks"
+        "resize-commit-callbacks",
+        "persistent-route-shell"
       ],
       "slots": [
         "workspace-sidebar",
@@ -1417,7 +1419,7 @@
         "需要通用跨项目应用壳层或移动端导航",
         "需要组件读取 Next 路由、调用 API、保存会话或管理业务状态"
       ],
-      "differenceSummary": "项目本地页面族壳层，只把 Human2AI 品牌、产品侧栏、当前页面语义和本地化标签组合进共享 AppShellFrame；项目会话数据、标题、正文、右侧面板及其受控开合状态均由应用层注入。收起与恢复焦点行为沿用 AppShellFrame，不增加自定义快捷键。 品牌 slot 接收应用层注入的首页链接，壳层不读取路由。 title 为空时不渲染页面标题，由首页正文承载唯一 h1；导航和侧栏开关继续沿用 AppShellFrame。 headerExtra 透传共享 AppShellFrame 的中栏标题右侧插槽，供画布显示控件使用。 titleExtra 在中栏标题文字右侧组合操作，悬停标题区域或键盘聚焦时显示，预留宽度避免标题跳动；应用层为当前会话注入复制 ID 的 ActionButton，沿用成功/失败反馈并随会话切换重置。 按用户要求开启 AppShellFrame 原生双侧栏调宽，保持初始左侧 280px、右侧 300px，沿用共享宽度边界、键盘调整、取消及折叠保宽；宽度与结束回调透传给应用层；Human2AiShell 通过 useAppShellWidths 在客户端挂载前绘制阶段恢复同源 localStorage 的左右宽度，松手或键盘调整完成时分别保存。默认值只作首次/无效记录回退，取消拖动及窗口压缩不覆盖偏好；不增加页面级拖拽 state。共享 0.17.0 仍逐指针事件写入布局样式，本次按用户明确开启要求保留这一上游限制。",
+      "differenceSummary": "项目本地页面族壳层，只把 Human2AI 品牌、产品侧栏、当前页面语义和本地化标签组合进共享 AppShellFrame；项目会话数据、标题、正文、右侧面板及其受控开合状态均由应用层注入。收起与恢复焦点行为沿用 AppShellFrame，不增加自定义快捷键。 品牌 slot 接收应用层注入的首页链接，壳层不读取路由。 title 为空时不渲染页面标题，由首页正文承载唯一 h1；导航和侧栏开关继续沿用 AppShellFrame。 headerExtra 透传共享 AppShellFrame 的中栏标题右侧插槽，供画布显示控件使用。 titleExtra 在中栏标题文字右侧组合操作，悬停标题区域或键盘聚焦时显示，预留宽度避免标题跳动；应用层为当前会话注入复制 ID 的 ActionButton，沿用成功/失败反馈并随会话切换重置。 按用户要求开启 AppShellFrame 原生双侧栏调宽，保持初始左侧 280px、右侧 300px，沿用共享宽度边界、键盘调整、取消及折叠保宽；宽度与结束回调透传给应用层；Human2AiShell 通过 useAppShellWidths 在客户端挂载前绘制阶段恢复同源 localStorage 的左右宽度，松手或键盘调整完成时分别保存。默认值只作首次/无效记录回退，取消拖动及窗口压缩不覆盖偏好；不增加页面级拖拽 state。共享 0.17.0 仍逐指针事件写入布局样式，本次按用户明确开启要求保留这一上游限制。 应用层在根 layout 中持久挂载壳层和侧栏，页面通过插槽挂载标题、工具栏和右侧面板；页面草稿内容仍归页面所有，输入不向根布局发布 React 元素快照。跨构图、UI、3D 及首页导航保留树实例、展开状态和滚动位置。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [
@@ -1470,7 +1472,10 @@
         "same-project-session-drag-drop",
         "keyboard-session-group-assignment",
         "groups-before-ungrouped-sessions",
-        "session-preview-drag-source"
+        "session-preview-drag-source",
+        "group-title-session-create-actions",
+        "incremental-session-tree-updates",
+        "preserved-navigation-state"
       ],
       "slots": [
         "projects",
@@ -1496,7 +1501,7 @@
         "需要通用文件树、应用级路由壳层或页面内构图工具栏",
         "需要组件直接读取 API、决定路由或持久化项目和会话"
       ],
-      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树与弹窗输入状态隔离缓存；输入项目名或会话名不重新生成导航节点，项目数据、语言、选择与待执行操作变化仍刷新树。 项目三点菜单可建立空分组；分组置于项目内未分组会话之前，独立展开收起，并提供重命名、删除确认。复用 AssetSkeletonTree view 模式的 titleRender 插槽，通过原生拖放仅允许项目内会话归入分组或释放到项目标题，支持空分组；不允许拖动分组、跨项目拖放或改动会话顺序。会话菜单同时提供键盘可用的分组选项。删除分组释放其会话，分组、名称与成员由应用适配层独立保存，不改变会话内容、归属或 revision。输入分组名称不使项目树缓存失效，拖动中不写页面或画布状态，落下时提交一次归组。 会话原生拖放同时携带专用会话标识，允许 UI 画布复制预览；项目内归组仍为移动操作，不改变会话归属或顺序。拖动无需发布 React 或页面状态。 会话拖动使用透明原生 drag image，避免项目树节点拖影与画布预览叠加；临时透明画布在拖动结束或侧栏卸载时清除，归组仍保留原有落点反馈。",
+      "differenceSummary": "项目本地受控侧栏组合 CompositeButton、AssetSkeletonTree、Dropdown、Modal 与可选 CompactDropdownSelect；固定以风格库入口、新建构图、新建 UI 草图和新建项目动作在上、项目树居中滚动、语言选择器在底部水平居中的结构组织数据。无项目组仅在存在 projectId 为 null 的会话时显示并始终位于真实项目之后。新建项目使用带自动聚焦、空值与当前列表重名校验的阻塞弹窗；项目节点通过 trailing 插槽在 hover 或 focus-within 时显示直接新建构图、新建 UI 界面的纯图标入口及三点菜单，新会话由应用适配层在创建请求中直接归入对应项目；创建目标分组会自动展开，其余项目保留用户控制的展开状态。会话节点以相同披露方式提供三点菜单。项目支持重命名和删除确认，存在任何会话子项时删除项禁用；会话支持重命名、选择其他项目移动和删除，没有其他项目时移动项禁用。应用 API 仍会重复校验重名、revision、目标项目与空项目边界。会话标题左侧按 image-composition 与 ui-layout 类型显示可访问图标；键盘顺序、树选择、菜单、项目选择和弹窗焦点行为沿用子组件语义。API、风格库及会话路由、i18n、revision 冲突与持久化仍由应用适配层负责。 底部以 BasicButton 的链接和纯图标模式呈现 GitHub 仓库入口，位于语言选择左侧；默认使用次要文字色，hover 与 focus-visible 切换为主题链接色；链接地址与本地化可访问名称由应用注入，新标签页打开，不改变会话和语言状态。 项目树节点数据与选择、展开及弹窗输入分离；保持未变化行的操作元素身份，缓存包含完整的记录、标签和回调依赖，并在提交后更新、删除时清理。切换选择不重新生成节点数据；新增、删除和重命名保留无关标题。待执行状态通过独立上下文更新操作控件的禁用与加载反馈，不使标题缓存失效。应用层保留未变化项目、会话和分组记录身份，普通导航不重新拉取完整列表，页面外新建会话只补取未知的当前会话。 项目三点菜单可建立空分组；分组置于项目内未分组会话之前，独立展开收起，并提供重命名、删除确认。复用 AssetSkeletonTree view 模式的 titleRender 插槽，通过原生拖放仅允许项目内会话归入分组或释放到项目标题，支持空分组；不允许拖动分组、跨项目拖放或改动会话顺序。会话菜单同时提供键盘可用的分组选项。删除分组释放其会话，分组、名称与成员由应用适配层独立保存，不改变会话内容、归属或 revision。输入分组名称不使项目树缓存失效，拖动中不写页面或画布状态，落下时提交一次归组。 会话原生拖放同时携带专用会话标识，允许 UI 画布复制预览；项目内归组仍为移动操作，不改变会话归属或顺序。拖动无需发布 React 或页面状态。 会话拖动使用透明原生 drag image，避免项目树节点拖影与画布预览叠加；临时透明画布在拖动结束或侧栏卸载时清除，归组仍保留原有落点反馈。 分组行与项目行共用构图、UI 界面、3D 空间三个新建图标；分组回调同时携带 projectId 和 groupId，加载反馈仅标记当前创建入口，自动展开项目和目标分组。应用在会话创建事务内保存归组，成功后更新侧栏并打开会话。",
       "distribution": "project-local",
       "ownerRepository": "human2ai",
       "similarAssetsChecked": [

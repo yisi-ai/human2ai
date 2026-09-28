@@ -169,6 +169,7 @@ export function createCompositionSession(
   title: string,
   projectId: string | null = null,
   fetcher: typeof fetch = globalThis.fetch,
+  groupId?: string,
 ): Promise<Human2AiSession> {
   return requestJson(
     "/api/v1/sessions",
@@ -178,6 +179,7 @@ export function createCompositionSession(
         sessionType: "image-composition",
         title,
         ...(projectId ? { projectId } : {}),
+        ...(groupId ? { groupId } : {}),
       }),
     },
     fetcher,
@@ -188,6 +190,7 @@ export function createUiSketchSession(
   title: string,
   projectId: string | null = null,
   fetcher: typeof fetch = globalThis.fetch,
+  groupId?: string,
 ): Promise<Human2AiSession> {
   return requestJson(
     "/api/v1/sessions",
@@ -197,6 +200,7 @@ export function createUiSketchSession(
         sessionType: "ui-layout",
         title,
         ...(projectId ? { projectId } : {}),
+        ...(groupId ? { groupId } : {}),
       }),
     },
     fetcher,
@@ -624,8 +628,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export type SpatialDraftVersion = DraftVersion<SpatialDraft>;
-export function createSpatialSession(title: string, projectId: string | null = null, fetcher: typeof fetch = globalThis.fetch): Promise<Human2AiSession> {
-  return requestJson("/api/v1/sessions", { method: "POST", body: JSON.stringify({ sessionType: "spatial", title, projectId }) }, fetcher);
+export function createSpatialSession(title: string, projectId: string | null = null, fetcher: typeof fetch = globalThis.fetch, groupId?: string): Promise<Human2AiSession> {
+  return requestJson("/api/v1/sessions", { method: "POST", body: JSON.stringify({ sessionType: "spatial", title, projectId, ...(groupId ? { groupId } : {}) }) }, fetcher);
 }
 export function listSpatialDraftVersions(sessionId: string, fetcher: typeof fetch = globalThis.fetch): Promise<SpatialDraftVersion[]> {
   return listDraftVersions(sessionId, "spatial", fetcher);

@@ -3,21 +3,24 @@
   "domain": "workspace-sidebar",
   "concepts": {
     "session.create-image-composition": {
-      "meaning": "Create a new image-composition session, either without a project from the sidebar action area or already assigned to the project named by a project-row action.",
-      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session.",
+      "meaning": "Create a new image-composition session, either without a project from the sidebar action area or already assigned to the project named by a project-row action. A group-row action creates it inside that group and its owning project.",
+      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session. Includes creation from named session-group rows.",
       "referent": "A newly persisted image-composition session and its initial composition draft.",
-      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing composition session or creating a project.",
+      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing composition session or creating a project. The group variant additionally records membership in the named group; this is not moving an existing session.",
       "canonicalKey": "workspaceSidebar.newComposition",
       "searchTerms": [
         "新建构图",
         "在项目中新建构图",
         "New composition",
-        "create composition in project"
+        "create composition in project",
+        "分组中新建",
+        "create session in group"
       ],
       "examples": [
         "Create an unassigned composition from the sidebar action area.",
         "Create a composition already assigned to Brand refresh from that project's row.",
-        "Create and immediately open a fresh session from a home-page card."
+        "Create and immediately open a fresh session from a home-page card.",
+        "Create a new session inside the References group of Brand refresh."
       ],
       "nonExamples": [
         "Open an existing composition session.",
@@ -25,21 +28,24 @@
       ]
     },
     "session.create-ui-layout": {
-      "meaning": "Create a new UI-layout session, either without a project from the sidebar action area or already assigned to the project named by a project-row action.",
-      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session.",
+      "meaning": "Create a new UI-layout session, either without a project from the sidebar action area or already assigned to the project named by a project-row action. A group-row action creates it inside that group and its owning project.",
+      "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session. Includes creation from named session-group rows.",
       "referent": "A newly persisted UI-layout session and its initial UI sketch draft.",
-      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing UI-layout session or creating a project.",
+      "precedence": "The project-row variant additionally establishes the new session's project assignment; both variants are distinct from opening an existing UI-layout session or creating a project. The group variant additionally records membership in the named group; this is not moving an existing session.",
       "canonicalKey": "workspaceSidebar.newUiSketch",
       "searchTerms": [
         "新建 UI 界面",
         "在项目中新建 UI 界面",
         "New interface",
-        "create interface in project"
+        "create interface in project",
+        "分组中新建",
+        "create session in group"
       ],
       "examples": [
         "Create an unassigned interface from the sidebar action area.",
         "Create an interface already assigned to Brand refresh from that project's row.",
-        "Create and immediately open a fresh session from a home-page card."
+        "Create and immediately open a fresh session from a home-page card.",
+        "Create a new session inside the References group of Brand refresh."
       ],
       "nonExamples": [
         "Open an existing interface session.",
@@ -707,6 +713,22 @@
       "grammar": "concise control label",
       "tone": "neutral",
       "reusePolicy": "canonical"
+    },
+    "workspaceSidebar.newCompositionInGroup": {
+      "conceptId": "session.create-image-composition",
+      "variant": "group-icon-action-label",
+      "role": "tooltip and accessible name for an icon-only action creating a composition session in the named group and its owning project",
+      "grammar": "imperative verb phrase with a group-name placeholder",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "workspaceSidebar.newUiSketchInGroup": {
+      "conceptId": "session.create-ui-layout",
+      "variant": "group-icon-action-label",
+      "role": "tooltip and accessible name for an icon-only action creating a UI-layout session in the named group and its owning project",
+      "grammar": "imperative verb phrase with a group-name placeholder",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
     }
   }
 }

@@ -1,4 +1,5 @@
 import { checkCanvasLayerMenu } from "./canvasLayerStoryChecks";
+import { checkZoomedNodeTooltip } from "./canvasNodeTooltipStoryChecks";
 import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { canvasNodeExecutionCounts } from "./canvasNodeRenderTrace";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
@@ -1177,27 +1178,31 @@ export const NodeNoteTooltip: Story = {
       const node = canvasElement.querySelector<SVGGElement>(`[data-composition-item="${id}"]`)!;
       node.dispatchEvent(new MouseEvent("mouseover", { bubbles: true }));
       await nextFrame();
-      const tooltip = [...document.body.querySelectorAll<HTMLElement>('[role="tooltip"]')]
-        .find((item) => !item.closest(".ant-tooltip-hidden"));
-      const actual = tooltip ? [...tooltip.querySelectorAll("dl > div")]
-        .map((item) => [item.querySelector("dt")?.textContent, item.querySelector("dd")?.textContent]) : [];
-      if (JSON.stringify(actual) !== JSON.stringify(fields) || (fields.length === 0 && tooltip)) {
-        throw new Error(`节点 ${id} 必须依序呈现非空说明、显示文字和备注，空内容不显示`);
-      }
-      if (id === "area-4" && tooltip?.querySelector("b")) {
-        throw new Error("显示文字必须按原文显示，不解析 HTML");
-      }
+      await waitFor(() => {
+        const tooltip = [...document.body.querySelectorAll<HTMLElement>('[role="tooltip"]')]
+          .find((item) => !item.closest(".ant-tooltip-hidden"));
+        const actual = tooltip ? [...tooltip.querySelectorAll("dl > div")]
+          .map((item) => [item.querySelector("dt")?.textContent, item.querySelector("dd")?.textContent]) : [];
+        if (JSON.stringify(actual) !== JSON.stringify(fields) || (fields.length === 0 && tooltip)) {
+          throw new Error(`节点 ${id} 必须依序呈现非空说明、显示文字和备注，空内容不显示`);
+        }
+        if (id === "area-4" && tooltip?.querySelector("b")) {
+          throw new Error("显示文字必须按原文显示，不解析 HTML");
+        }
+      });
       node.dispatchEvent(new MouseEvent("mouseout", { bubbles: true }));
       await nextFrame();
     }
     const textNode = canvasElement.querySelector<SVGGElement>('[data-composition-item="area-1"]')!;
     textNode.focus();
-    await nextFrame();
-    const focusedTooltip = document.body.querySelector<HTMLElement>('.ant-tooltip:not(.ant-tooltip-hidden) [role="tooltip"]');
-    if (!focusedTooltip?.textContent?.includes("静观") || !focusedTooltip.textContent.includes("文字引导画面的阅读顺序")) {
-      throw new Error("键盘聚焦节点也必须显示说明及显示文字");
-    }
+    await waitFor(() => {
+      const focusedTooltip = document.body.querySelector<HTMLElement>('.ant-tooltip:not(.ant-tooltip-hidden) [role="tooltip"]');
+      if (!focusedTooltip?.textContent?.includes("静观") || !focusedTooltip.textContent.includes("文字引导画面的阅读顺序")) {
+        throw new Error("键盘聚焦节点也必须显示说明及显示文字");
+      }
+    });
     textNode.blur();
+    await checkZoomedNodeTooltip(canvasElement, textNode);
   },
 };
 

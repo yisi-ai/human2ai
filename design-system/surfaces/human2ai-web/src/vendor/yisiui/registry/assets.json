@@ -821,7 +821,9 @@
         "change-state",
         "selection",
         "drag-reorder",
-        "configurable-status"
+        "configurable-status",
+        "incremental-node-motion",
+        "typewriter-title"
       ],
       "slots": [
         "node-title",
@@ -836,14 +838,15 @@
       "useWhen": [
         "需要查看或编辑通用资源的层级结构",
         "需要按节点配置状态标签、图标、颜色和自定义附加内容",
-        "需要通过受控回调接入层级节点选择与拖拽排序"
+        "需要通过受控回调接入层级节点选择与拖拽排序",
+        "需要新增撑开后逐字显示、删除淡出收高和改名局部更新，并保留稳定节点与展开状态"
       ],
       "doNotUseWhen": [
         "需要把 API、路由、持久化或业务状态机放入树组件",
         "需要在树节点内直接承载完整编辑表单",
         "普通扁平资源列表"
       ],
-      "differenceSummary": "共享层级树 Pattern，表达容器/内容节点、顺序号、锁定和变更标记。节点 status 由调用方提供 label、icon、tone，不内置业务状态；有图标时以带可访问标签的纯图标呈现，否则显示文字，适用于容器与内容节点。附加标记通过 trailing 插槽组合，序号颜色通过 contentOrderTone 配置。保留固定序号列、单行截断、容器说明、内部滚动、选择与拖拽落点反馈；编辑模式禁止拖动锁定、删除和禁用节点，可通过 canDragNode 与 allowDrop 收紧规则；按层级重算内容顺序并跳过删除节点。组件不读取 API、不决定路由、不负责保存或解释产品状态。",
+      "differenceSummary": "共享层级树 Pattern，表达容器/内容节点、顺序号、锁定和变更标记。节点 status 由调用方提供 label、icon、tone，不内置业务状态；有图标时以带可访问标签的纯图标呈现，否则显示文字，适用于容器与内容节点。附加标记通过 trailing 插槽组合，序号颜色通过 contentOrderTone 配置。保留固定序号列、单行截断、容器说明、内部滚动、选择与拖拽落点反馈；编辑模式禁止拖动锁定、删除和禁用节点，可通过 canDragNode 与 allowDrop 收紧规则；按层级重算内容顺序并跳过删除节点。组件不读取 API、不决定路由、不负责保存或解释产品状态。 默认按稳定 key 比较增删改：新增先撑开行高再逐字显示标题，删除保留不可交互的退场行后收起，改名只更新本行文字；首次挂载直接展示，支持 animateChanges 关闭及系统减少动效。标题隔离渲染与计时，滚动状态不再触发 React 整树更新；变更标记与实际增删分离，保留树实例和原有展开、选择状态。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -930,7 +933,8 @@
         "optional-star-background",
         "text-aware-decoration",
         "dot-scrollbar",
-        "configurable-scrollbar"
+        "configurable-scrollbar",
+        "stable-quick-prompt-identity"
       ],
       "slots": [
         "message-input",
@@ -956,7 +960,7 @@
         "需要组件管理消息历史、调用 AI、选择模型、执行附件上传请求或持久化会话",
         "需要编辑长文正文、标记文字范围或决定选区浮层的位置"
       ],
-      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作垂直居中，上下内边距均为 4px，快捷语言文字为 13px、按钮高 32px，上传和发送按钮均为 32px；发送按钮采用主色圆角背景及 24px AnimatedIcon 发送图形，顶部容器默认关闭，topContentEnabled 开启且 topContent 非空时提供 44px 高的横向滚动区，隐藏滚动条，上内边距 4px、下内边距 0、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入，空内容不占位。单行和多行模式均支持默认关闭的 starsEnabled 属性，开启后整个组件使用 theme.dark.panel 近黑灰色背景并适配浅色文字及操作状态，在输入区域及上左右留白呈现随机位置、1.5–2.8 秒淡入淡出的白色无光晕小圆点，按当前背景区域每 1800 CSS px² 约 1 个的密度动态增减数量；按实际排版避开文字和顶部内容，仅判断圆点中心，允许边缘重叠，不覆盖底部操作区，减少动效时保留静态圆点。单行和多行 textarea 上内边距为 0；顶部插槽关闭或为空时，将原有的 6px 上内边距等量移至组件输入背景区顶部，留白不随文字滚动，星星仍可覆盖该区域；顶部插槽有内容时不补留白，使输入栏与顶部内容更贴近。 单行与多行输入区默认组合 DotScrollbar，保留自动增高并在内容溢出时显示圆点导航；scrollbar 可切换 dots/native，maxScrollDots 默认 12。圆点紧凑排列，当前区域实心、其余区域空心且外径相同，悬停或键盘聚焦时拉长；文字预留右侧空间，星星避开可见导航区域，顶部内容及底部操作区不参与滚动。",
+      "differenceSummary": "Ant Design X Sender 提供语音、技能槽和内置动作等通用 AI 输入能力，但 MessageComposer 只需要 Ant Design Input.TextArea 已具备的受控输入与自动增高，因此不再让整个共享包承担 Ant Design X 依赖。MessageComposer 自己管理单行/多行发送快捷键、中文输入法安全、业务注入的快捷语言、统一底部动作区、Token 外观和嵌入浮层边界；BasicButton 负责发送动作，CompositeButton 被组合为快捷语言的 Icon + Label 操作，FormActions 负责编辑页底部提交，TextMarkEditor 负责已有文字标记的字段编辑，LongformTextEditor 只负责正文选区和浮层定位。组件不读取选区、不内置快捷文案、不管理会话历史，也不调用 AI；业务容器继续负责快捷语言配对、请求、响应和持久化。 底部操作垂直居中，上下内边距均为 4px，快捷语言文字为 13px、按钮高 32px，上传和发送按钮均为 32px；发送按钮采用主色圆角背景及 24px AnimatedIcon 发送图形，顶部容器默认关闭，topContentEnabled 开启且 topContent 非空时提供 44px 高的横向滚动区，隐藏滚动条，上内边距 4px、下内边距 0、右内边距 24px；上传入口默认关闭，仅通过 onUpload 请求业务操作，顶部内容由 topContent 注入，空内容不占位。单行和多行模式均支持默认关闭的 starsEnabled 属性，开启后整个组件使用 theme.dark.panel 近黑灰色背景并适配浅色文字及操作状态，在输入区域及上左右留白呈现随机位置、1.5–2.8 秒淡入淡出的白色无光晕小圆点，按当前背景区域每 1800 CSS px² 约 1 个的密度动态增减数量；按实际排版避开文字和顶部内容，仅判断圆点中心，允许边缘重叠，不覆盖底部操作区，减少动效时保留静态圆点。单行和多行 textarea 上内边距为 0；顶部插槽关闭或为空时，将原有的 6px 上内边距等量移至组件输入背景区顶部，留白不随文字滚动，星星仍可覆盖该区域；顶部插槽有内容时不补留白，使输入栏与顶部内容更贴近。 单行与多行输入区默认组合 DotScrollbar，保留自动增高并在内容溢出时显示圆点导航；scrollbar 可切换 dots/native，maxScrollDots 默认 12。圆点紧凑排列，当前区域实心、其余区域空心且外径相同，悬停或键盘聚焦时拉长；文字预留右侧空间，星星避开可见导航区域，顶部内容及底部操作区不参与滚动。 快捷语言支持可选稳定 key；改文案、插入和重排保持同 key 的按钮与焦点，旧调用按消息和同消息出现序号兼容。快捷按钮独立隔离渲染，输入值不改变其提交函数。",
       "sourceStatus": "experimental",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -1356,7 +1360,8 @@
         "empty",
         "error",
         "long-content",
-        "localized-labels"
+        "localized-labels",
+        "preserved-popup-state"
       ],
       "slots": [
         "title",
@@ -1385,7 +1390,7 @@
         "Ant Design Dropdown",
         "Ant Design Slider"
       ],
-      "differenceSummary": "TabSwitch 负责单组同级选择，CompositeButton 负责行级动作，SectionNavigationPanel 承载分区内容，AspectRatioSelector 表达画幅；ModelSelector 组合横竖两种模式排版、可选来源入口、带溢出列表的型号单选和离散推理滑块，复用 Ant Design Dropdown 定位与 Slider，提供浮层的四向避让、窄屏回退、内部滚动和受控一致选择，不拥有产品请求、厂商能力推断或持久化。",
+      "differenceSummary": "TabSwitch 负责单组同级选择，CompositeButton 负责行级动作，SectionNavigationPanel 承载分区内容，AspectRatioSelector 表达画幅；ModelSelector 组合横竖两种模式排版、可选来源入口、带溢出列表的型号单选和离散推理滑块，复用 Ant Design Dropdown 定位与 Slider，提供浮层的四向避让、窄屏回退、内部滚动和受控一致选择，不拥有产品请求、厂商能力推断或持久化。 等价数据刷新、改名和模式重排保持有效菜单、焦点及滚动位置，来源菜单 id 基于稳定 key；只有实际选择、可用性、布局或入口变化才关闭，移除当前聚焦的非选中项时回退到可用选项。",
       "sourceStatus": "candidate",
       "sourceRepository": "yisiui",
       "sourceProposal": "design-system/proposals/model-selector.json",
@@ -1486,7 +1491,8 @@
         "long-content",
         "reduced-motion",
         "dot-scrollbar",
-        "configurable-scrollbar"
+        "configurable-scrollbar",
+        "local-pointer-resize"
       ],
       "slots": [
         "item-title",
@@ -1518,7 +1524,7 @@
         "Ant Design Splitter",
         "DotScrollbar"
       ],
-      "differenceSummary": "AdaptiveAccordion 按自然内容预留单项展开高度，SectionNavigationPanel 切换单个分区，SideActionPanel 收起整个操作栏，AppShellFrame 负责应用壳层；Ant Design Splitter 提供一般分栏。ResizableCollapseGroup 面向固定父高度的竖向功能区，保留统一 40px 标题和左侧三角，各项独立折叠；相邻已展开项可通过指针或键盘交换内容高度，跨过收起项，保留最小高度、比例及内容状态。正文独立滚动，父容器过小时组内滚动，不读取路由、API 或持久化布局。 子项内容区默认组合 DotScrollbar，可切回原生滚动条；圆点随面板高度和内容变化更新，整组溢出时继续保留原生滚动。",
+      "differenceSummary": "AdaptiveAccordion 按自然内容预留单项展开高度，SectionNavigationPanel 切换单个分区，SideActionPanel 收起整个操作栏，AppShellFrame 负责应用壳层；Ant Design Splitter 提供一般分栏。ResizableCollapseGroup 面向固定父高度的竖向功能区，保留统一 40px 标题和左侧三角，各项独立折叠；相邻已展开项可通过指针或键盘交换内容高度，跨过收起项，保留最小高度、比例及内容状态。正文独立滚动，父容器过小时组内滚动，不读取路由、API 或持久化布局。 子项内容区默认组合 DotScrollbar，可切回原生滚动条；圆点随面板高度和内容变化更新，整组溢出时继续保留原生滚动。 非受控指针调高直接更新相关面板高度和分隔条 ARIA，不逐次提交整组 React 状态；正文容器隔离渲染，受控尺寸仍由消费方决定。保留实时 onSizesChange、完成 onResizeEnd、取消回滚、键盘和缩放行为。",
       "sourceStatus": "candidate",
       "sourceRepository": "yisiui",
       "sourceProposal": "design-system/proposals/resizable-collapse-group.json",

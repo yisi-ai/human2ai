@@ -45,6 +45,17 @@ describe("Human2AI Web API client", () => {
     expect(body.projectId ?? null).toBeNull();
   });
 
+  it.each([
+    ["image-composition", createCompositionSession],
+    ["ui-layout", createUiSketchSession],
+    ["spatial", createSpatialSession],
+  ] as const)("creates %s with its project and group in one request", async (sessionType, create) => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ id: "created", sessionType, projectId: "project" }, { status: 201 }));
+    await create("Untitled", "project", fetcher, "group");
+    expect(fetcher).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(String(fetcher.mock.calls[0][1]?.body))).toEqual({ sessionType, title: "Untitled", projectId: "project", groupId: "group" });
+  });
+
   it("checks the known spatial revision without requesting its history", async () => {
     const fetcher = vi.fn()
       .mockResolvedValueOnce(Response.json({ draftVersion: { revision: 702 } }))

@@ -13,7 +13,7 @@ import {
 } from "@ant-design/icons";
 import { Button, Dropdown, Input, Modal, Tooltip } from "antd";
 import type { InputRef, MenuProps } from "antd";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import zh from "../../../../../locales/zh-CN/common.json";
 import { setDraggedWorkspaceSession, WORKSPACE_SESSION_DRAG_TYPE } from "./workspaceSessionDrag";
 
@@ -59,11 +59,14 @@ export interface Human2AiWorkspaceSidebarLabels {
   projectArea: string;
   newComposition: string;
   newCompositionInProject: (projectName: string) => string;
+  newCompositionInGroup: (groupName: string) => string;
   newSpatial: string;
   newSpatialInProject: (projectName: string) => string;
+  newSpatialInGroup: (groupName: string) => string;
   spatialSession: string;
   newUiSketch: string;
   newUiSketchInProject: (projectName: string) => string;
+  newUiSketchInGroup: (groupName: string) => string;
   newProject: string;
   styleLibrary: string;
   projectNamePlaceholder: string;
@@ -119,9 +122,9 @@ export interface Human2AiWorkspaceSidebarProps {
   labels?: Partial<Human2AiWorkspaceSidebarLabels>;
   languageSelector?: CompactDropdownSelectProps;
   repositoryLink?: { href: string; label: string };
-  onCreateComposition: (projectId?: string) => Promise<void>;
-  onCreateSpatial?: (projectId?: string) => Promise<void>;
-  onCreateUiSketch: (projectId?: string) => Promise<void>;
+  onCreateComposition: (projectId?: string, groupId?: string) => Promise<void>;
+  onCreateSpatial?: (projectId?: string, groupId?: string) => Promise<void>;
+  onCreateUiSketch: (projectId?: string, groupId?: string) => Promise<void>;
   onCreateProject: (name: string) => Promise<void>;
   onOpenStyleLibrary: () => void;
   onRenameProject: (projectId: string, name: string) => Promise<void>;
@@ -138,11 +141,14 @@ const DEFAULT_LABELS: Human2AiWorkspaceSidebarLabels = {
   projectArea: "项目",
   newComposition: "新建构图",
   newCompositionInProject: (projectName) => `在“${projectName}”中新建构图`,
+  newCompositionInGroup: (groupName) => zh.workspaceSidebar.newCompositionInGroup.replace("{{group}}", groupName),
   newSpatial: "新建 3D 空间",
   newSpatialInProject: projectName => `在“${projectName}”中新建 3D 空间`,
+  newSpatialInGroup: (groupName) => zh.spatial.newInGroup.replace("{{group}}", groupName),
   spatialSession: "3D 空间",
   newUiSketch: "新建 UI 界面",
   newUiSketchInProject: (projectName) => `在“${projectName}”中新建 UI 界面`,
+  newUiSketchInGroup: (groupName) => zh.workspaceSidebar.newUiSketchInGroup.replace("{{group}}", groupName),
   newProject: "新建项目",
   styleLibrary: "风格库",
   projectNamePlaceholder: "输入项目名称",
@@ -183,6 +189,13 @@ const DEFAULT_LABELS: Human2AiWorkspaceSidebarLabels = {
   retry: "重试",
   actionFailed: "操作失败，请重试。",
 };
+
+type TreeActionPending = { action: string | null; projectId: string | null; groupId: string | null };
+const TreeActionContext = createContext<TreeActionPending>({ action: null, projectId: null, groupId: null });
+
+function WorkspaceTreeActions({ render }: { render: (pending: TreeActionPending) => ReactNode }) {
+  return render(useContext(TreeActionContext));
+}
 
 export function Human2AiWorkspaceSidebar({
   projects,
@@ -234,6 +247,7 @@ export function Human2AiWorkspaceSidebar({
     string | null
   >(null);
   const [expandedProjectKeys, setExpandedProjectKeys] = useState<string[]>([]);
+  const [pendingSessionGroupId, setPendingSessionGroupId] = useState<string | null>(null);
   const knownProjectKeys = useRef<Set<string>>(new Set());
   const [renameProjectTarget, setRenameProjectTarget] =
     useState<Human2AiWorkspaceProject | null>(null);
@@ -282,7 +296,43 @@ export function Human2AiWorkspaceSidebar({
     ]);
   }, [hasUnassignedSessions, projects, groups]);
 
-  const projectTree = useMemo(() => {
+  const assignGroup = useCallback(async (
+    session: Human2AiWorkspaceSession, group: Human2AiWorkspaceGroup | null, busy: boolean,
+  ): Promise<void> => {
+    if (!onGroupSession || busy || !session.projectId || (group && group.projectId !== session.projectId)) return;
+    setPendingAction("group-session");
+    setActionError(null);
+    try {
+      await onGroupSession(session.id, group?.id ?? null);
+      setExpandedProjectKeys(current => [...new Set([...current, projectKey(session.projectId!), ...(group ? [groupKey(group.id)] : [])])]);
+    } catch { setActionError(labels.actionFailed); }
+    finally { setPendingAction(null); }
+  }, [onGroupSession, labels.actionFailed]);
+
+  const pendingTreeAction = useMemo(() => ({ action: pendingAction, projectId: pendingSessionProjectId, groupId: pendingSessionGroupId }),
+    [pendingAction, pendingSessionProjectId, pendingSessionGroupId]);
+  const actionCache = useRef(new Map<string, { dependencies: unknown[]; element: ReactNode }>());
+  const canCreateGroup = Boolean(onCreateGroup);
+  const canRenameGroup = Boolean(onRenameGroup);
+  const canDeleteGroup = Boolean(onDeleteGroup);
+  const canGroupSession = Boolean(onGroupSession);
+
+  const treeData = useMemo(() => {
+    const actions = new Map<string, { dependencies: unknown[]; element: ReactNode }>();
+    function actionElement(key: string, dependencies: unknown[], render: (pending: TreeActionPending) => ReactNode) {
+      const previous = actionCache.current.get(key);
+      const entry = previous && previous.dependencies.length === dependencies.length
+        && dependencies.every((value, index) => Object.is(value, previous.dependencies[index]))
+        ? previous : { dependencies, element: <WorkspaceTreeActions render={render} /> };
+      actions.set(key, entry);
+      return entry.element;
+    }
+    const createDependencies = [labels, onCreateComposition, onCreateUiSketch, onCreateSpatial];
+    const sessionMenu = (session: Human2AiWorkspaceSession) => actionElement(sessionKey(session.id),
+      [session, labels, projects.every(project => project.id === session.projectId), canGroupSession, assignGroup,
+        ...groups.filter(group => group.projectId === session.projectId)
+          .flatMap(group => [group.id, group.name, group.sessionIds.includes(session.id)])],
+      pending => renderSessionMenu(session, pending));
     const projectsByKey = new Map(projects.map(project => [projectKey(project.id), project]));
     const sessionsByKey = new Map(sessions.map((session) => [sessionKey(session.id), session]));
     const groupsByKey = new Map(groups.map(group => [groupKey(group.id), group]));
@@ -295,11 +345,14 @@ export function Human2AiWorkspaceSidebar({
           order: projectIndex,
           nodeKind: "container",
           title: project.name,
-          trailing: renderProjectActions(project),
+          trailing: actionElement(projectKey(project.id),
+            [project, ...createDependencies, canCreateGroup, sessions.some(session => session.projectId === project.id)],
+            pending => renderProjectActions(project, pending)),
         },
         ...groups.filter(group => group.projectId === project.id).map<AssetSkeletonTreeNode>((group, index) => ({
           key: groupKey(group.id), parentKey: projectKey(project.id), order: index,
-          nodeKind: "container", title: group.name, trailing: renderGroupMenu(group),
+          nodeKind: "container", title: group.name, trailing: actionElement(groupKey(group.id),
+            [group, ...createDependencies, canRenameGroup, canDeleteGroup], pending => renderGroupActions(group, pending)),
           extraClassNames: ["human2ai-workspace-sidebar__group"],
         })),
         ...sessions
@@ -311,7 +364,7 @@ export function Human2AiWorkspaceSidebar({
             order: groups.length + sessionIndex,
             nodeKind: "content",
             title: session.title,
-            trailing: renderSessionMenu(session),
+            trailing: sessionMenu(session),
           })),
       ]);
       const unassignedSessions = sessions
@@ -322,7 +375,7 @@ export function Human2AiWorkspaceSidebar({
           order: sessionIndex,
           nodeKind: "content",
           title: session.title,
-          trailing: renderSessionMenu(session),
+          trailing: sessionMenu(session),
         }));
 
       if (unassignedSessions.length === 0) return projectNodes;
@@ -340,6 +393,13 @@ export function Human2AiWorkspaceSidebar({
       ];
     })();
 
+    return { nodes, projectsByKey, sessionsByKey, groupsByKey, groupBySession, actions };
+  }, [projects, sessions, groups, labels, onCreateComposition, onCreateUiSketch, onCreateSpatial,
+    canCreateGroup, canRenameGroup, canDeleteGroup, canGroupSession, assignGroup]);
+  useLayoutEffect(() => { actionCache.current = treeData.actions; }, [treeData]);
+
+  const projectTree = useMemo(() => {
+    const { nodes, projectsByKey, sessionsByKey, groupsByKey, groupBySession } = treeData;
     return (
       <AssetSkeletonTree
         nodes={nodes}
@@ -352,7 +412,7 @@ export function Human2AiWorkspaceSidebar({
           const targetProjectId = targetGroup?.projectId ?? targetProject?.id;
           const canReceive = () => {
             const source = draggedSession.current ? sessionsByKey.get(sessionKey(draggedSession.current)) : undefined;
-            return Boolean(onGroupSession && !pendingAction && source?.projectId && source.projectId === targetProjectId
+            return Boolean(canGroupSession && !pendingAction && source?.projectId && source.projectId === targetProjectId
               && (groupBySession.get(source.id)?.id ?? null) !== (targetGroup?.id ?? null));
           };
           return <div className="human2ai-workspace-sidebar__tree-node" data-session-tree-key={key}
@@ -384,7 +444,8 @@ export function Human2AiWorkspaceSidebar({
               const id = draggedSession.current;
               draggedSession.current = null;
               clearDropHighlight();
-              void assignGroup(id, targetGroup?.id ?? null);
+              const source = sessionsByKey.get(sessionKey(id));
+              if (source) void assignGroup(source, targetGroup ?? null, Boolean(pendingAction));
             }}
             onDragEnd={() => { draggedSession.current = null; setDraggedWorkspaceSession(null); clearDropHighlight(); }}>
             {typeof node.title === "function" ? node.title(node) : node.title}
@@ -410,17 +471,35 @@ export function Human2AiWorkspaceSidebar({
         }}
       />
     );
-  }, [projects, sessions, groups, labels, pendingAction, pendingSessionProjectId,
-    onCreateComposition, onCreateUiSketch, onCreateSpatial, onOpenSession,
-    onCreateGroup, onRenameGroup, onDeleteGroup, onGroupSession,
+  }, [treeData, labels, pendingAction, onOpenSession, canGroupSession, assignGroup,
     currentSessionId, expandedProjectKeys]);
 
-  function renderProjectActions(project: Human2AiWorkspaceProject) {
-    const compositionLabel = labels.newCompositionInProject(project.name);
-    const uiSketchLabel = labels.newUiSketchInProject(project.name);
-
+  function renderProjectActions(project: Human2AiWorkspaceProject, pending: TreeActionPending) {
     return (
       <span className="human2ai-workspace-sidebar__project-actions">
+        {renderSessionCreateActions(project.id, project.name, undefined, pending)}
+        {renderProjectMenu(project, pending)}
+      </span>
+    );
+  }
+
+  function renderGroupActions(group: Human2AiWorkspaceGroup, pending: TreeActionPending) {
+    return (
+      <span className="human2ai-workspace-sidebar__project-actions">
+        {renderSessionCreateActions(group.projectId, group.name, group.id, pending)}
+        {renderGroupMenu(group, pending)}
+      </span>
+    );
+  }
+
+  function renderSessionCreateActions(projectId: string, name: string, groupId: string | undefined, pending: TreeActionPending) {
+    const { action: pendingAction, projectId: pendingSessionProjectId, groupId: pendingSessionGroupId } = pending;
+    const compositionLabel = groupId ? labels.newCompositionInGroup(name) : labels.newCompositionInProject(name);
+    const uiSketchLabel = groupId ? labels.newUiSketchInGroup(name) : labels.newUiSketchInProject(name);
+    const spatialLabel = groupId ? labels.newSpatialInGroup(name) : labels.newSpatialInProject(name);
+    const pendingHere = pendingSessionProjectId === projectId && pendingSessionGroupId === (groupId ?? null);
+    return (
+      <>
         <Tooltip title={compositionLabel}>
           <Button
             className="human2ai-workspace-sidebar__node-action"
@@ -430,18 +509,18 @@ export function Human2AiWorkspaceSidebar({
             aria-label={compositionLabel}
             loading={
               pendingAction === "composition"
-              && pendingSessionProjectId === project.id
+              && pendingHere
             }
             disabled={Boolean(
               pendingAction
               && (
                 pendingAction !== "composition"
-                || pendingSessionProjectId !== project.id
+                || !pendingHere
               )
             )}
             onClick={(event) => {
               event.stopPropagation();
-              void createComposition(project.id);
+              void createComposition(projectId, groupId);
             }}
             onPointerDown={(event) => event.stopPropagation()}
           />
@@ -455,29 +534,29 @@ export function Human2AiWorkspaceSidebar({
             aria-label={uiSketchLabel}
             loading={
               pendingAction === "ui-sketch"
-              && pendingSessionProjectId === project.id
+              && pendingHere
             }
             disabled={Boolean(
               pendingAction
               && (
                 pendingAction !== "ui-sketch"
-                || pendingSessionProjectId !== project.id
+                || !pendingHere
               )
             )}
             onClick={(event) => {
               event.stopPropagation();
-              void createUiSketch(project.id);
+              void createUiSketch(projectId, groupId);
             }}
             onPointerDown={(event) => event.stopPropagation()}
           />
         </Tooltip>
-        {onCreateSpatial && <Tooltip title={labels.newSpatialInProject(project.name)}><Button className="human2ai-workspace-sidebar__node-action" type="text" size="small" icon={<CodeSandboxOutlined />} aria-label={labels.newSpatialInProject(project.name)} disabled={Boolean(pendingAction)} onClick={event => { event.stopPropagation(); void createSpatial(project.id); }} onPointerDown={event => event.stopPropagation()} /></Tooltip>}
-        {renderProjectMenu(project)}
-      </span>
+        {onCreateSpatial && <Tooltip title={spatialLabel}><Button className="human2ai-workspace-sidebar__node-action" type="text" size="small" icon={<CodeSandboxOutlined />} aria-label={spatialLabel} loading={pendingAction === "spatial" && pendingHere} disabled={Boolean(pendingAction && (pendingAction !== "spatial" || !pendingHere))} onClick={event => { event.stopPropagation(); void createSpatial(projectId, groupId); }} onPointerDown={event => event.stopPropagation()} /></Tooltip>}
+      </>
     );
   }
 
-  function renderProjectMenu(project: Human2AiWorkspaceProject) {
+  function renderProjectMenu(project: Human2AiWorkspaceProject, pending: TreeActionPending) {
+    const pendingAction = pending.action;
     const hasChildren = sessions.some((session) => session.projectId === project.id);
     const items: MenuProps["items"] = [
       ...(onCreateGroup ? [{ key: "create-group", label: labels.newSessionGroup, disabled: Boolean(pendingAction) }] : []),
@@ -524,7 +603,8 @@ export function Human2AiWorkspaceSidebar({
     );
   }
 
-  function renderSessionMenu(session: Human2AiWorkspaceSession) {
+  function renderSessionMenu(session: Human2AiWorkspaceSession, pending: TreeActionPending) {
+    const pendingAction = pending.action;
     const moveDisabled = projects.every((project) => project.id === session.projectId);
     const items: MenuProps["items"] = [
       { key: "rename", label: labels.rename },
@@ -554,7 +634,7 @@ export function Human2AiWorkspaceSidebar({
             domEvent.stopPropagation();
             setActionError(null);
             if (key === "ungroup" || key.startsWith("group:")) {
-              void assignGroup(session.id, key === "ungroup" ? null : key.slice("group:".length));
+              void assignGroup(session, key === "ungroup" ? null : groups.find(group => groupKey(group.id) === key) ?? null, Boolean(pendingAction));
             } else if (key === "rename") {
               setRenameTarget(session);
               setRenameTitle(session.title);
@@ -586,7 +666,8 @@ export function Human2AiWorkspaceSidebar({
     dropHighlight.current = null;
   }
 
-  function renderGroupMenu(group: Human2AiWorkspaceGroup) {
+  function renderGroupMenu(group: Human2AiWorkspaceGroup, pending: TreeActionPending) {
+    const pendingAction = pending.action;
     return (
       <Dropdown trigger={["click"]} menu={{
         items: [
@@ -636,19 +717,6 @@ export function Human2AiWorkspaceSidebar({
     finally { setPendingAction(null); }
   }
 
-  async function assignGroup(sessionId: string, groupId: string | null): Promise<void> {
-    if (!onGroupSession || pendingAction) return;
-    const session = sessions.find(item => item.id === sessionId);
-    const group = groups.find(item => item.id === groupId);
-    if (!session?.projectId || (groupId !== null && group?.projectId !== session.projectId)) return;
-    setPendingAction("group-session");
-    setActionError(null);
-    try {
-      await onGroupSession(sessionId, groupId);
-      setExpandedProjectKeys(current => [...new Set([...current, projectKey(session.projectId!), ...(groupId ? [groupKey(groupId)] : [])])]);
-    } catch { setActionError(labels.actionFailed); }
-    finally { setPendingAction(null); }
-  }
 
   function openProjectDialog(): void {
     setActionError(null);
@@ -662,48 +730,54 @@ export function Human2AiWorkspaceSidebar({
     setActionError(null);
   }
 
-  async function createComposition(projectId?: string): Promise<void> {
-    expandProject(projectId);
+  async function createComposition(projectId?: string, groupId?: string): Promise<void> {
+    expandProject(projectId, groupId);
     setPendingAction("composition");
     setPendingSessionProjectId(projectId ?? null);
+    setPendingSessionGroupId(groupId ?? null);
     setActionError(null);
     try {
-      await onCreateComposition(projectId);
+      await onCreateComposition(projectId, groupId);
     } catch {
       setActionError(labels.actionFailed);
     } finally {
       setPendingAction(null);
       setPendingSessionProjectId(null);
+      setPendingSessionGroupId(null);
     }
   }
 
-  async function createUiSketch(projectId?: string): Promise<void> {
-    expandProject(projectId);
+  async function createUiSketch(projectId?: string, groupId?: string): Promise<void> {
+    expandProject(projectId, groupId);
     setPendingAction("ui-sketch");
     setPendingSessionProjectId(projectId ?? null);
+    setPendingSessionGroupId(groupId ?? null);
     setActionError(null);
     try {
-      await onCreateUiSketch(projectId);
+      await onCreateUiSketch(projectId, groupId);
     } catch {
       setActionError(labels.actionFailed);
     } finally {
       setPendingAction(null);
       setPendingSessionProjectId(null);
+      setPendingSessionGroupId(null);
     }
   }
 
-  async function createSpatial(projectId?: string): Promise<void> {
-    expandProject(projectId);
+  async function createSpatial(projectId?: string, groupId?: string): Promise<void> {
+    expandProject(projectId, groupId);
     setPendingAction("spatial");
     setPendingSessionProjectId(projectId ?? null);
+    setPendingSessionGroupId(groupId ?? null);
     setActionError(null);
     try {
-      await onCreateSpatial?.(projectId);
+      await onCreateSpatial?.(projectId, groupId);
     } catch {
       setActionError(labels.actionFailed);
     } finally {
       setPendingAction(null);
       setPendingSessionProjectId(null);
+      setPendingSessionGroupId(null);
     }
   }
 
@@ -723,11 +797,12 @@ export function Human2AiWorkspaceSidebar({
     }
   }
 
-  function expandProject(projectId?: string): void {
-    const key = projectId ? projectKey(projectId) : "project:unassigned";
-    setExpandedProjectKeys((current) => (
-      current.includes(key) ? current : [...current, key]
-    ));
+  function expandProject(projectId?: string, groupId?: string): void {
+    const keys = [projectId ? projectKey(projectId) : "project:unassigned", ...(groupId ? [groupKey(groupId)] : [])];
+    setExpandedProjectKeys((current) => {
+      const added = keys.filter(key => !current.includes(key));
+      return added.length ? [...current, ...added] : current;
+    });
   }
 
   async function submitProjectRename(): Promise<void> {
@@ -899,7 +974,7 @@ export function Human2AiWorkspaceSidebar({
             ) : null}
           </div>
         ) : (
-          projectTree
+          <TreeActionContext.Provider value={pendingTreeAction}>{projectTree}</TreeActionContext.Provider>
         )}
       </section>
 

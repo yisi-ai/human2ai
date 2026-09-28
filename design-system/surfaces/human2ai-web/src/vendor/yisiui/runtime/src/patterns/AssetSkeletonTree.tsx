@@ -3,7 +3,7 @@
 import { CaretRightOutlined } from "@ant-design/icons";
 import { Tree, Typography } from "antd";
 import type { TreeDataNode, TreeProps } from "antd";
-import { useEffect, useRef, useState } from "react";
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import type { CSSProperties, ReactNode } from "react";
 
 import { StatusBadge } from "../components/StatusBadge";
@@ -11,9 +11,15 @@ import type { StatusTone } from "../components/StatusBadge";
 import "../../styles/tokens.css";
 import "../../styles/asset-skeleton-tree.css";
 
+import {
+  groupTreeNodes, sameTreeNode, treeExitDuration, treeInsertDuration, treeTypingDuration,
+  useTreeEntries, useTreeReducedMotion, type TreeEntry,
+} from "../internal/assetTreeMotion";
+
 import { uiAssetAttributes } from "../internal/uiAssetAttributes";
 
 const { Text } = Typography;
+const titleSegmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
 export type AssetSkeletonTreeMode = "view" | "edit";
 export type AssetSkeletonTreeNodeKind = "container" | "content";
@@ -50,7 +56,10 @@ export interface AssetSkeletonTreeNode {
 
 export interface AssetSkeletonTreeProps
   extends Omit<TreeProps, "treeData" | "className" | "draggable"> {
+  /** Stable unique keys; update immutably and keep the tree mounted between requests. */
   nodes: AssetSkeletonTreeNode[];
+  /** Animate incremental changes. Initial data is shown immediately. Default: true. */
+  animateChanges?: boolean;
   mode: AssetSkeletonTreeMode;
   className?: string;
   currentKey?: string | null;
@@ -71,13 +80,46 @@ export type AssetSkeletonTreeDropInfo =
   Parameters<NonNullable<TreeProps["onDrop"]>>[0];
 
 function truncateText(value: string, maxLength: number): string {
-  const characters = Array.from(value.trim());
+  const characters = splitCharacters(value.trim());
   if (characters.length <= maxLength) {
     return value;
   }
 
   return `${characters.slice(0, Math.max(1, maxLength - 1)).join("")}…`;
 }
+
+function splitCharacters(value: string): string[] {
+  return Array.from(titleSegmenter.segment(value), (part) => part.segment);
+}
+
+const TreeTitleText = memo(function TreeTitleText({ text, fullText, phase, revision }: {
+  text: string;
+  fullText: string;
+  phase: TreeEntry["phase"];
+  revision: number;
+}) {
+  const [visible, setVisible] = useState(text);
+  useLayoutEffect(() => {
+    if (phase !== "enter" && phase !== "rename") { setVisible(text); return; }
+    const characters = splitCharacters(text);
+    setVisible("");
+    if (!characters.length) return;
+    let index = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const interval = Math.min(32, treeTypingDuration / characters.length);
+    function tick() {
+      index++;
+      setVisible(characters.slice(0, index).join(""));
+      if (index < characters.length) timer = setTimeout(tick, interval);
+    }
+    timer = setTimeout(tick, (phase === "enter" ? treeInsertDuration : 0) + interval);
+    return () => clearTimeout(timer);
+  }, [text, phase, revision]);
+  return <>
+    <span className="yisi-asset-skeleton-tree-state-announcement">{fullText}</span>
+    <span aria-hidden="true" className="yisi-asset-skeleton-tree-visible-title">{visible || "\u00a0"}</span>
+  </>;
+});
 
 function defaultSwitcherIcon(props: { expanded?: boolean; isLeaf?: boolean }): ReactNode {
   if (props.isLeaf) {
@@ -106,30 +148,8 @@ function itemClassName(node: AssetSkeletonTreeNode): string {
     .join(" ");
 }
 
-function groupAndSortNodes(
-  nodes: AssetSkeletonTreeNode[],
-): Map<string | null, AssetSkeletonTreeNode[]> {
-  const children = new Map<string | null, AssetSkeletonTreeNode[]>();
-  for (const node of nodes) {
-    const siblings = children.get(node.parentKey) ?? [];
-    siblings.push(node);
-    children.set(node.parentKey, siblings);
-  }
-
-  for (const siblings of children.values()) {
-    siblings.sort(
-      (left, right) =>
-        left.order - right.order ||
-        left.title.localeCompare(right.title) ||
-        left.key.localeCompare(right.key),
-    );
-  }
-
-  return children;
-}
-
 function buildContentOrderLabels(nodes: AssetSkeletonTreeNode[]): Map<string, string> {
-  const children = groupAndSortNodes(nodes);
+  const children = groupTreeNodes(nodes);
   const labels = new Map<string, string>();
   let nextOrder = 1;
 
@@ -145,40 +165,6 @@ function buildContentOrderLabels(nodes: AssetSkeletonTreeNode[]): Map<string, st
 
   visit(null);
   return labels;
-}
-
-function buildTreeData(
-  nodes: AssetSkeletonTreeNode[],
-  renderTitle: (node: AssetSkeletonTreeNode) => ReactNode,
-  renderNodeSwitcher: (node: AssetSkeletonTreeNode) => ReactNode | undefined,
-  isNodeDisabled: (node: AssetSkeletonTreeNode) => boolean,
-  isNodeCurrent: (node: AssetSkeletonTreeNode) => boolean,
-  isNodeMoved: (node: AssetSkeletonTreeNode) => boolean,
-): TreeDataNode[] {
-  const children = groupAndSortNodes(nodes);
-
-  function build(parentKey: string | null): TreeDataNode[] {
-    return (children.get(parentKey) ?? []).map((node) => {
-      const childNodes = build(node.key);
-      return {
-        key: node.key,
-        title: renderTitle(node),
-        switcherIcon: renderNodeSwitcher(node),
-        disabled: isNodeDisabled(node),
-        className: [
-          itemClassName(node),
-          isNodeCurrent(node) ? "yisi-asset-skeleton-tree-item-current" : "",
-          isNodeMoved(node) ? "yisi-asset-skeleton-tree-item-moved" : "",
-        ]
-          .filter(Boolean)
-          .join(" "),
-        isLeaf: childNodes.length === 0,
-        children: childNodes.length ? childNodes : undefined,
-      };
-    });
-  }
-
-  return build(null);
 }
 
 function renderDropIndicator(style?: CSSProperties): ReactNode {
@@ -276,8 +262,128 @@ export function assetSkeletonTreeCanDrop(
     (dropPosition === 0 || dragged.parentKey === target.parentKey);
 }
 
+const TreeNodeTitle = memo(function TreeNodeTitle({
+  node, phase, revision, mode, maxTitleLength, isCurrent, shouldShowLock, shouldShowStatus,
+}: {
+  node: AssetSkeletonTreeNode;
+  phase: TreeEntry["phase"];
+  revision: number;
+  mode: AssetSkeletonTreeMode;
+  maxTitleLength: number;
+  isCurrent: boolean;
+  shouldShowLock: boolean;
+  shouldShowStatus: boolean;
+}) {
+  const root = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const row = root.current?.closest<HTMLElement>(".ant-tree-treenode");
+    if (!row) return;
+    if (phase === "exit" && row.contains(document.activeElement)) {
+      row.closest(".ant-tree")?.querySelector<HTMLElement>('[role="tree"]')?.focus({ preventScroll: true });
+    }
+    row.inert = phase === "exit";
+    if ((phase !== "enter" && phase !== "exit") || !row.animate) return;
+    const height = row.getBoundingClientRect().height;
+    const style = getComputedStyle(row);
+    const expanded = { height: `${height}px`, minHeight: "0px", overflow: "hidden", marginTop: style.marginTop, marginBottom: style.marginBottom };
+    const collapsed = { height: "0px", minHeight: "0px", overflow: "hidden", marginTop: "0px", marginBottom: "0px", opacity: 0 };
+    const frames: Keyframe[] = phase === "enter" ? [
+      collapsed,
+      { ...expanded, opacity: 0, offset: 0.75 },
+      { ...expanded, opacity: 1 },
+    ] : [
+      { ...expanded, opacity: 1 },
+      { ...expanded, opacity: 0, offset: 0.4 },
+      collapsed,
+    ];
+    const animation = row.animate(frames, {
+      duration: phase === "enter" ? treeInsertDuration + 60 : treeExitDuration,
+      easing: "ease-in-out", fill: "both",
+    });
+    return () => { animation.cancel(); row.inert = false; };
+  }, [phase]);
+  const shouldShowChangeState = mode === "edit";
+  const title = truncateText(node.title, maxTitleLength);
+  const hasTrailingContent = Boolean(
+    node.trailing || isCurrent || (shouldShowStatus && node.status),
+  );
+
+  return (
+    <div
+      ref={root}
+      className={[
+        "yisi-asset-skeleton-tree-node",
+        `yisi-asset-skeleton-tree-node-${mode}`,
+        `yisi-asset-skeleton-tree-node-${node.nodeKind}`,
+        node.isDeleted ? "yisi-asset-skeleton-tree-node-deleted" : "",
+      ]
+        .filter(Boolean)
+        .join(" ")}
+      title={node.title}
+    >
+      {node.isChanged ? (
+        <span className="yisi-asset-skeleton-tree-state-announcement">已变动</span>
+      ) : null}
+      {shouldShowChangeState && node.isDeleted ? (
+        <StatusBadge label="[del]" tone="danger" mode="text-only" />
+      ) : shouldShowChangeState && node.isNew ? (
+        <StatusBadge label="[new]" tone="success" mode="text-only" />
+      ) : null}
+      {shouldShowLock && node.locked ? (
+        <StatusBadge
+          label="锁定"
+          tone="warning"
+          mode="text-only"
+          tooltip={node.lockedReason || "已锁定"}
+        />
+      ) : null}
+      <div className="yisi-asset-skeleton-tree-copy">
+        <Text
+          strong={node.nodeKind === "container"}
+          ellipsis
+          title={node.title}
+          className="yisi-asset-skeleton-tree-title"
+        >
+          <TreeTitleText text={title} fullText={node.title} phase={phase} revision={revision} />
+        </Text>
+      </div>
+      {node.nodeKind === "container" && node.description ? (
+        <Text
+          ellipsis
+          title={node.description}
+          className="yisi-asset-skeleton-tree-description"
+        >
+          {node.description}
+        </Text>
+      ) : null}
+      {hasTrailingContent ? (
+        <span className="yisi-asset-skeleton-tree-trailing-area">
+          {node.trailing ? (
+            <span className="yisi-asset-skeleton-tree-trailing">{node.trailing}</span>
+          ) : null}
+          {isCurrent ? (
+            <StatusBadge label="当前" tone="success" mode="text-only" />
+          ) : null}
+          {shouldShowStatus && node.status ? (
+            <StatusBadge
+              label={node.status.label}
+              tone={node.status.tone}
+              icon={node.status.icon}
+              mode={node.status.icon ? "icon-only" : "text-only"}
+            />
+          ) : null}
+        </span>
+      ) : null}
+    </div>
+  );
+}, (previous, next) => sameTreeNode(previous.node, next.node, true) &&
+  previous.phase === next.phase && previous.revision === next.revision && previous.mode === next.mode &&
+  previous.maxTitleLength === next.maxTitleLength && previous.isCurrent === next.isCurrent &&
+  previous.shouldShowLock === next.shouldShowLock && previous.shouldShowStatus === next.shouldShowStatus);
+
 export function AssetSkeletonTree({
   nodes,
+  animateChanges = true,
   mode,
   className,
   currentKey = null,
@@ -297,18 +403,19 @@ export function AssetSkeletonTree({
   onDrop: onDropProp,
   ...treeProps
 }: AssetSkeletonTreeProps) {
-  const [isScrolling, setIsScrolling] = useState(false);
+  const root = useRef<HTMLDivElement>(null);
+  const reducedMotion = useTreeReducedMotion();
+  const entries = useTreeEntries(nodes, animateChanges && !reducedMotion);
+  const [activeKey, setActiveKey] = useState<React.Key | null>(null);
+  const navigationDirection = useRef(1);
   const [recentlyMovedKey, setRecentlyMovedKey] = useState<string | null>(null);
   const scrollStopTimer = useRef<number | null>(null);
   const movedNodeTimer = useRef<number | null>(null);
   const shouldShowCurrent = showCurrent ?? mode === "view";
   const shouldShowLock = showLock ?? mode === "edit";
   const shouldShowStatus = showStatus ?? mode === "view";
-  const shouldShowChangeState = mode === "edit";
-  const contentOrderLabels = buildContentOrderLabels(nodes);
-  const isNodeDisabled = (node: AssetSkeletonTreeNode): boolean =>
-    Boolean(node.disabled);
-  const nodeByKey = new Map(nodes.map((node) => [node.key, node]));
+  const contentOrderLabels = useMemo(() => buildContentOrderLabels(nodes), [nodes]);
+  const nodeByKey = useMemo(() => new Map(nodes.map((node) => [node.key, node])), [nodes]);
   const nodeDraggable = (data: TreeDataNode): boolean => {
     const node = nodeByKey.get(String(data.key));
     return Boolean(
@@ -337,12 +444,12 @@ export function AssetSkeletonTree({
   }, []);
 
   function handleScroll(): void {
-    setIsScrolling(true);
+    root.current?.classList.add("yisi-asset-skeleton-tree-scrolling");
     if (scrollStopTimer.current !== null) {
       window.clearTimeout(scrollStopTimer.current);
     }
     scrollStopTimer.current = window.setTimeout(() => {
-      setIsScrolling(false);
+      root.current?.classList.remove("yisi-asset-skeleton-tree-scrolling");
       scrollStopTimer.current = null;
     }, 700);
   }
@@ -383,118 +490,95 @@ export function AssetSkeletonTree({
     onDragOverProp?.(info);
   }
 
-  function renderTitle(node: AssetSkeletonTreeNode): ReactNode {
-    const isCurrent = shouldShowCurrent && currentKey === node.key;
-    const title = truncateText(node.title, maxTitleLength);
-    const hasTrailingContent = Boolean(
-      node.trailing || isCurrent || (shouldShowStatus && node.status),
-    );
+  const treeData = useMemo(() => {
+    function renderNodeSwitcher(node: AssetSkeletonTreeNode): ReactNode | undefined {
+      if (!showContentOrder || node.nodeKind !== "content") {
+        return undefined;
+      }
 
-    return (
-      <div
-        className={[
-          "yisi-asset-skeleton-tree-node",
-          `yisi-asset-skeleton-tree-node-${mode}`,
-          `yisi-asset-skeleton-tree-node-${node.nodeKind}`,
-          node.isDeleted ? "yisi-asset-skeleton-tree-node-deleted" : "",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        title={node.title}
-      >
-        {node.isChanged ? (
-          <span className="yisi-asset-skeleton-tree-state-announcement">已变动</span>
-        ) : null}
-        {shouldShowChangeState && node.isDeleted ? (
-          <StatusBadge label="[del]" tone="danger" mode="text-only" />
-        ) : shouldShowChangeState && node.isNew ? (
-          <StatusBadge label="[new]" tone="success" mode="text-only" />
-        ) : null}
-        {shouldShowLock && node.locked ? (
-          <StatusBadge
-            label="锁定"
-            tone="warning"
-            mode="text-only"
-            tooltip={node.lockedReason || "已锁定"}
-          />
-        ) : null}
-        <div className="yisi-asset-skeleton-tree-copy">
-          <Text
-            strong={node.nodeKind === "container"}
-            ellipsis
-            title={node.title}
-            className="yisi-asset-skeleton-tree-title"
-          >
-            {title}
-          </Text>
-        </div>
-        {node.nodeKind === "container" && node.description ? (
-          <Text
-            ellipsis
-            title={node.description}
-            className="yisi-asset-skeleton-tree-description"
-          >
-            {node.description}
-          </Text>
-        ) : null}
-        {hasTrailingContent ? (
-          <span className="yisi-asset-skeleton-tree-trailing-area">
-            {node.trailing ? (
-              <span className="yisi-asset-skeleton-tree-trailing">{node.trailing}</span>
-            ) : null}
-            {isCurrent ? (
-              <StatusBadge label="当前" tone="success" mode="text-only" />
-            ) : null}
-            {shouldShowStatus && node.status ? (
-              <StatusBadge
-                label={node.status.label}
-                tone={node.status.tone}
-                icon={node.status.icon}
-                mode={node.status.icon ? "icon-only" : "text-only"}
-              />
-            ) : null}
-          </span>
-        ) : null}
-      </div>
-    );
-  }
-
-  function renderNodeSwitcher(node: AssetSkeletonTreeNode): ReactNode | undefined {
-    if (!showContentOrder || node.nodeKind !== "content") {
-      return undefined;
+      const contentOrderLabel = contentOrderLabels.get(node.key);
+      return (
+        <span
+          className={[
+            "yisi-asset-skeleton-tree-content-order",
+            contentOrderLabel ? "" : "yisi-asset-skeleton-tree-content-order-empty",
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          aria-hidden={contentOrderLabel ? undefined : true}
+        >
+          {contentOrderLabel ? (
+            <StatusBadge
+              label={contentOrderLabel}
+              tone={node.contentOrderTone ?? "default"}
+              mode="text-only"
+              tooltip={`内容顺序 ${contentOrderLabel}`}
+            />
+          ) : null}
+        </span>
+      );
     }
 
-    const contentOrderLabel = contentOrderLabels.get(node.key);
-    return (
-      <span
-        className={[
-          "yisi-asset-skeleton-tree-content-order",
-          contentOrderLabel ? "" : "yisi-asset-skeleton-tree-content-order-empty",
-        ]
-          .filter(Boolean)
-          .join(" ")}
-        aria-hidden={contentOrderLabel ? undefined : true}
-      >
-        {contentOrderLabel ? (
-          <StatusBadge
-            label={contentOrderLabel}
-            tone={node.contentOrderTone ?? "default"}
-            mode="text-only"
-            tooltip={`内容顺序 ${contentOrderLabel}`}
-          />
-        ) : null}
-      </span>
-    );
+    const groups = new Map<string | null, TreeEntry[]>();
+    for (const entry of entries) {
+      const siblings = groups.get(entry.node.parentKey) ?? [];
+      siblings.push(entry);
+      groups.set(entry.node.parentKey, siblings);
+    }
+    function build(parent: string | null): TreeDataNode[] {
+      return (groups.get(parent) ?? []).map(({ node, phase, revision }) => {
+        const children = build(node.key);
+        const exiting = phase === "exit";
+        return {
+          key: node.key,
+          title: <TreeNodeTitle node={node} phase={phase} revision={revision} mode={mode}
+            maxTitleLength={maxTitleLength} isCurrent={shouldShowCurrent && currentKey === node.key}
+            shouldShowLock={shouldShowLock} shouldShowStatus={shouldShowStatus} />,
+          switcherIcon: renderNodeSwitcher(node),
+          disabled: Boolean(node.disabled || exiting),
+          ...(exiting ? { selectable: false, checkable: false, "aria-hidden": true } : {}),
+          "data-yisi-tree-key": node.key,
+          "data-yisi-tree-phase": phase,
+          className: [itemClassName(node),
+            node.key === currentKey ? "yisi-asset-skeleton-tree-item-current" : "",
+            node.key === recentlyMovedKey ? "yisi-asset-skeleton-tree-item-moved" : "",
+          ].filter(Boolean).join(" "),
+          isLeaf: children.length === 0,
+          children: children.length ? children : undefined,
+        };
+      });
+    }
+    return build(null);
+  }, [entries, mode, maxTitleLength, shouldShowCurrent, currentKey, shouldShowLock,
+    shouldShowStatus, showContentOrder, contentOrderLabels, recentlyMovedKey]);
+
+  const requestedActiveKey = treeProps.activeKey !== undefined ? treeProps.activeKey : activeKey;
+  const liveActiveKey = requestedActiveKey != null && nodeByKey.has(String(requestedActiveKey)) ? requestedActiveKey : null;
+  function handleActiveChange(key: React.Key | null) {
+    let next = key;
+    if (key != null && !nodeByKey.has(String(key))) {
+      const rows = [...(root.current?.querySelectorAll<HTMLElement>("[data-yisi-tree-key]") ?? [])];
+      const start = rows.findIndex((row) => row.dataset.yisiTreeKey === String(key));
+      next = null;
+      for (let step = 1; step <= rows.length; step++) {
+        const candidate = rows[(start + step * navigationDirection.current + rows.length) % rows.length]?.dataset.yisiTreeKey;
+        if (candidate && nodeByKey.has(candidate)) { next = candidate; break; }
+      }
+    }
+    setActiveKey(next);
+    // rc-tree's public callback type omits null, although it emits null on mouse movement.
+    treeProps.onActiveChange?.(next as React.Key);
   }
 
   return (
     <div
+      ref={root}
+      onKeyDownCapture={(event) => { navigationDirection.current = event.key === "ArrowUp" || event.key === "End" ? -1 : 1; }}
       {...uiAssetAttributes("asset-skeleton-tree", "AssetSkeletonTree", "tree-pattern")}
       className={[
         "yisi-asset-skeleton-tree",
         `yisi-asset-skeleton-tree-${mode}`,
         showContentOrder ? "yisi-asset-skeleton-tree-content-order-layout" : "",
-        isScrolling ? "yisi-asset-skeleton-tree-scrolling" : "",
         className,
       ]
         .filter(Boolean)
@@ -520,14 +604,9 @@ export function AssetSkeletonTree({
         onDragOver={mode === "edit" ? handleDragOver : onDragOverProp}
         onDrop={mode === "edit" ? handleDrop : onDropProp}
         switcherIcon={switcherIcon ?? defaultSwitcherIcon}
-        treeData={buildTreeData(
-          nodes,
-          renderTitle,
-          renderNodeSwitcher,
-          isNodeDisabled,
-          (node) => node.key === currentKey,
-          (node) => node.key === recentlyMovedKey,
-        )}
+        activeKey={liveActiveKey}
+        onActiveChange={handleActiveChange}
+        treeData={treeData}
       />
     </div>
   );
