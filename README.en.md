@@ -246,7 +246,7 @@ mkdir -p .human2ai-data/packages
 npm pack --pack-destination .human2ai-data/packages
 ```
 
-Run `npm install -g /absolute/path/to/human2ai-0.1.6.tgz`, then follow the integration and startup steps above in a separate project. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
+Run `npm install -g /absolute/path/to/human2ai-0.1.7.tgz`, then follow the integration and startup steps above in a separate project. Package checks verify required files and licenses and reject internal documentation, databases, and user-generated files.
 
 ## License
 
