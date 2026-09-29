@@ -88,6 +88,13 @@
     "renderScope": "Hover/focus and prompt resolution -> local Popover and PromptContent; native scrolling -> popup only. Manual development Story checks at 20/200 composition nodes observed zero unrelated canvas-node executions and zero canvas DOM mutations; UI copy Story also retained node execution counts. No page state, polling or GPU resource changes introduced.",
     "evidence": ".human2ai-data/output/prompt-preview/verification.md",
     "browserCoverage": "Manual browser execution of Story interaction checks, not CI protection.",
+    "viewportContainment": {
+      "date": "2026-09-29",
+      "result": "Body-mounted fixed Popover prefers top placement with automatic edge adjustment; text height is bounded by min(360px, 40dvh). The retained long-prompt Story samples document scroll bounds during opening and internal scrolling and asserts viewport containment and unchanged trigger geometry. Manual development and production checks cover supported desktop sizes and edge positions.",
+      "renderScope": "Hover/focus and text resolution -> local popup; internal scrolling -> popup scrollport. Existing 20/200-node development Story assertions observe zero unrelated CanvasNode executions and zero canvas DOM mutations. No new shared state, subscription, measurement loop or GPU work is introduced; GPU allocation was not measured.",
+      "evidence": ".human2ai-data/output/prompt-popover/verification.md",
+      "browserCoverage": "Manual browser execution; CI does not run these Story assertions."
+    },
     "loadingLoopFix": {
       "date": "2026-09-29",
       "cause": "Style prompt reads published page state and repeatedly invalidated the preview reader.",

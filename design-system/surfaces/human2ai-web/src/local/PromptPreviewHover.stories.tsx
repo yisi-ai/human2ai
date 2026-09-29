@@ -27,22 +27,43 @@ export const Default: Story = {
   name: "长提示词预览与滚动",
   play: async ({ canvasElement }) => {
     const button = canvasElement.querySelector('button')!;
-    copied = "";
-    await userEvent.hover(button);
     const doc = canvasElement.ownerDocument;
-    await waitFor(() => expect(doc.querySelector('.human2ai-prompt-preview-hover__content pre')?.textContent).toBe(prompt));
-    const content = doc.querySelector<HTMLElement>('.human2ai-prompt-preview-hover__content')!;
-    await userEvent.unhover(button);
-    await userEvent.hover(content);
-    content.scrollTop = content.scrollHeight;
-    await new Promise(resolve => setTimeout(resolve, 250));
-    expect(content.scrollTop).toBeGreaterThan(0);
-    expect(content.getBoundingClientRect().height).toBeLessThanOrEqual(480);
-    expect(content.closest('.ant-popover')?.classList.contains('ant-popover-hidden')).toBe(false);
-    expect(copied).toBe("");
-    await userEvent.click(button);
-    expect(copied).toBe(prompt);
-    canvasElement.dataset.promptPreviewPassed = 'true';
+    const view = doc.defaultView!;
+    const before = button.getBoundingClientRect().toJSON();
+    const frames: number[][] = [];
+    let frame = 0;
+    const sample = () => {
+      frames.push([doc.documentElement.scrollWidth, doc.documentElement.scrollHeight]);
+      frame = view.requestAnimationFrame(sample);
+    };
+    sample();
+    try {
+      copied = "";
+      await userEvent.hover(button);
+      await waitFor(() => expect(doc.querySelector('.human2ai-prompt-preview-hover__content pre')?.textContent).toBe(prompt));
+      const content = doc.querySelector<HTMLElement>('.human2ai-prompt-preview-hover__content')!;
+      await userEvent.unhover(button);
+      await userEvent.hover(content);
+      content.scrollTop = content.scrollHeight;
+      await new Promise(resolve => setTimeout(resolve, 250));
+      expect(content.scrollTop).toBeGreaterThan(0);
+      expect(content.getBoundingClientRect().height).toBeLessThanOrEqual(360);
+      const popup = content.closest<HTMLElement>('.ant-popover')!;
+      const bounds = popup.getBoundingClientRect();
+      expect(bounds.top).toBeGreaterThanOrEqual(0);
+      expect(bounds.left).toBeGreaterThanOrEqual(0);
+      expect(bounds.bottom).toBeLessThanOrEqual(view.innerHeight);
+      expect(bounds.right).toBeLessThanOrEqual(view.innerWidth);
+      expect(button.getBoundingClientRect().toJSON()).toEqual(before);
+      expect(frames.every(([width, height]) => width <= view.innerWidth && height <= view.innerHeight)).toBe(true);
+      expect(content.closest('.ant-popover')?.classList.contains('ant-popover-hidden')).toBe(false);
+      expect(copied).toBe("");
+      await userEvent.click(button);
+      expect(copied).toBe(prompt);
+      canvasElement.dataset.promptPreviewPassed = 'true';
+    } finally {
+      view.cancelAnimationFrame(frame);
+    }
   },
 };
 export const Loading: Story = { name: "等待提示词", args: { readPrompt: () => new Promise<string>(() => undefined) } };

@@ -35,7 +35,9 @@ function PromptContent({ readPrompt, label, loadingLabel, errorLabel }: PromptPr
 
 /** Reads text only while the local hover/focus popup is mounted. */
 export function PromptPreviewHover(props: PromptPreviewHoverProps) {
-  return <Popover placement="leftTop" trigger={["hover", "focus"]} destroyOnHidden
+  return <Popover placement="top" trigger={["hover", "focus"]} destroyOnHidden
+    getPopupContainer={trigger => trigger.ownerDocument.body}
+    styles={{ root: { position: "fixed" } }}
     title={props.label} open={props.disabled ? false : undefined}
     content={() => <PromptContent {...props} />}>
     <span className="human2ai-prompt-preview-hover" {...uiAssetAttributes({
