@@ -1,5 +1,7 @@
 # 公共资产迁移说明
 
+TabSwitch 的单项状态栏、尾部操作、三点菜单、可取消排序及 BasicButton ref 修复见 [2026-09-28 状态标签栏](2026-09-28-tab-switch-status-bar.md)。
+
 当前鲜绿主色及前景、链接和焦点的语义调整见 [2026-09-23 鲜绿主题](2026-09-23-bright-green-theme.md)。
 
 AssetSkeletonTree 的通用状态、附加标记和序号颜色接口见 [2026-09-23 层级树通用化](2026-09-23-asset-skeleton-tree.md)。

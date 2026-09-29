@@ -20,7 +20,8 @@
         "animated-width",
         "keyboard-focus-label",
         "reduced-motion",
-        "touch-label-fallback"
+        "touch-label-fallback",
+        "forwarded-ref"
       ],
       "slots": [
         "icon",
@@ -38,7 +39,7 @@
         "复杂异步反馈",
         "危险操作确认"
       ],
-      "differenceSummary": "直接复用 Ant Design Button 的键盘、禁用、加载和尺寸行为，提供 Token 颜色绑定与带 Icon、不带 Icon、纯 Icon、hover-text 四种模式。hover-text 静止为图标宽度，悬停或键盘聚焦时展开到测得的文字宽度，图标淡出、文字淡入；移出反向收回，无悬停设备显示文字，尊重 reduced-motion。该能力是 BasicButton 的动作呈现变体，不具有 ExpandingSwitch 的选择状态，也不拥有业务状态。",
+      "differenceSummary": "直接复用 Ant Design Button 的键盘、禁用、加载和尺寸行为，提供 Token 颜色绑定与带 Icon、不带 Icon、纯 Icon、hover-text 四种模式。hover-text 静止为图标宽度，悬停或键盘聚焦时展开到测得的文字宽度，图标淡出、文字淡入；移出反向收回，无悬停设备显示文字，尊重 reduced-motion。该能力是 BasicButton 的动作呈现变体，不具有 ExpandingSwitch 的选择状态，也不拥有业务状态。 转发实际 button/anchor DOM ref，供 Dropdown/Tooltip 定位并保留内部 hover-text 测量。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -353,7 +354,10 @@
         "compact-density",
         "bounded-rows",
         "motion-control",
-        "reduced-motion"
+        "reduced-motion",
+        "image-skeleton",
+        "height-adaptive-rows",
+        "borderless"
       ],
       "slots": [
         "label"
@@ -364,14 +368,14 @@
       ],
       "useWhen": [
         "页面或有界面板等待数据并需要通过骨架保持布局节奏",
-        "调用方需要可访问加载标签、可控骨架行数和紧凑密度"
+        "调用方需要无边框的文字或图像占位、随可用高度增减的文字行数和可访问加载标签"
       ],
       "doNotUseWhen": [
         "按钮或短生命周期提交动作需要反馈",
         "需要精确复刻业务专属内容几何的骨架",
         "需要组件管理请求、重试或业务状态机"
       ],
-      "differenceSummary": "Ant Design Skeleton 只呈现骨架，Spin 和 AsyncActionState 面向短时动作；LoadingState 进一步提供具名 aria-busy 区域、独立加载播报、1–12 行运行时边界、紧凑密度以及 motion=none 和 prefers-reduced-motion 契约，保持页面或有界面板的加载布局稳定，但不拥有请求生命周期或业务状态。",
+      "differenceSummary": "Ant Design Skeleton 提供基础骨架；LoadingState 组合具名 aria-busy 区域和独立加载播报，支持无边框文字与图像占位。文字默认按容器可用高度自适应增减行数，不受 12 行上限限制；显式 rows 保留 1–12 行兼容边界。保留紧凑密度、motion=none 与 prefers-reduced-motion，ResizeObserver 按帧合并尺寸更新并复用已有占位节点，不拥有请求、图片加载或业务状态。",
       "sourceStatus": "candidate",
       "sourceRepository": "writer-harness",
       "sourceComponent": "design-system/surfaces/desktop-web/candidates/loading-state/src/LoadingState.tsx",
@@ -584,29 +588,49 @@
         "selected-background",
         "tab-background",
         "compact",
-        "item-actions"
+        "item-actions",
+        "single-option",
+        "trailing-action",
+        "item-menu",
+        "long-press-reorder",
+        "live-reorder-preview",
+        "cancel-outside",
+        "edge-auto-scroll",
+        "preserved-item-identity",
+        "overflow-scroll-arrows",
+        "hover-hold-scroll",
+        "page-step-scroll",
+        "hidden-native-scrollbar",
+        "hover-menu-trigger",
+        "theme-selected-state",
+        "configurable-scroll-arrows",
+        "configurable-drag-announcements",
+        "sliding-selection-indicator"
       ],
       "slots": [
         "icon",
         "label",
         "item",
-        "rightSlot"
+        "rightSlot",
+        "menu",
+        "trailingAction"
       ],
       "aliases": [
         "SegmentedTabs",
         "ViewSwitcher"
       ],
       "useWhen": [
-        "需要在两个或多个同级视图之间切换",
+        "需要在一个或多个同级状态或视图之间切换",
         "需要统一配置 tab 底色、选中态底色、选中态文字颜色、未选中态文字颜色，并为子项配置 Icon/文字模式或 disabled",
-        "需要紧密模式，或在每项右侧放置独立于选择的按钮操作"
+        "需要紧密模式，或在每项右侧放置独立于选择的按钮操作",
+        "需要通用单项菜单、独立尾部操作，或可取消的长按拖动排序"
       ],
       "doNotUseWhen": [
         "需要由组件同时管理多个 tabpanel 的懒加载或内容缓存",
         "单一布尔开关",
         "需要路由描述和目录项说明的页面导航"
       ],
-      "differenceSummary": "采用分段选择外观和原生 radio 语义，支持默认/紧密密度、跳过禁用项的键盘选择、Icon/文字模式和统一颜色。每项 rightSlot 与选择 label 并列，插槽按钮不触发选择，操作及其禁用状态由调用方控制；组件只负责选择呈现和回调，不读取路由、API 或业务状态。",
+      "differenceSummary": "采用分段选择外观和原生 radio 语义，支持默认/紧密密度、跳过禁用项的键盘选择、Icon/文字模式和统一颜色。每项 rightSlot 与选择 label 并列，插槽按钮不触发选择，操作及其禁用状态由调用方控制；组件只负责选择呈现和回调，不读取路由、API 或业务状态。 支持一个真实选项加 trailingAction；每项 menu 复用 Ant Design Dropdown，位于 rightSlot 之后，hover/focus/open 时显示三点入口，操作回传 actionKey 和 tabKey。reorderable 默认关闭，350ms 长按后以原 DOM 的帧合并 transform 实时预览让位；内部松手且顺序变化才回调完整 key 列表，外部松手、Escape、取消、失焦、卸载和列表实际变化均取消。选择与正式顺序仍由受控 props 决定，新建、重命名、确认和持久化归消费方。 指定宽度溢出时隐藏原生滚动条，固定两侧箭头支持悬停/长按持续滚动与点击大步滚动，边界禁用并清理取消/失焦/卸载状态；仅更新滚动位置与边界状态，复用原标签 DOM。 menu.trigger 提供 button（默认三点）与 hover（悬停标签直接打开）两种模式，保留键盘/触屏入口、上下避让和稳定节点；悬停不改变选择或抢焦点，拖动期间暂停悬停菜单。默认选中态为主题主色底及白字，自定义选中颜色继续有效。 消费方可通过 scrollArrows 配置左右箭头图标与无障碍名称，通过 dragAnnouncements 配置拖动范围内/外的隐藏读屏文案；未配置字段兼容默认值，动态更新文案保留拖动、焦点与滚动。 选中背景使用一个共享色块，在选择被接受后按目标位置与宽度滑动，连续切换从当前动画位置衔接；初次显示、尺寸调整直接对齐，内部滚动同步移动，拖动期间使用节点自身高亮，减少动效时直接呈现最终位置。 选中背景在独立裁剪层内绘制，溢出测量只读取标签轨道布局宽度，避免删除/改名时动画残留范围触发箭头递归切换。动态集合浏览器回归覆盖固有/受限宽度、RTL、菜单、实时排序与动画中途刷新。",
       "sourceStatus": "stable",
       "sourceRepository": "writer-harness",
       "distribution": "source-sync",
@@ -615,7 +639,10 @@
       "similarAssetsChecked": [
         "Ant Design Segmented",
         "StatusBadge",
-        "DirectoryNav"
+        "DirectoryNav",
+        "Ant Design Dropdown",
+        "BasicButton",
+        "ModelSelector"
       ]
     },
     {

@@ -2,16 +2,16 @@
   "schemaVersion": 1,
   "surface": "web-react",
   "sourceFiles": {
-    "design-system/foundations/tokens/core.tokens.json": "2ec05c568b0f511098e0dbcc6165a9444cda4554a596305c8b16c652e37a0f2b",
+    "design-system/foundations/tokens/core.tokens.json": "4f01c05f6a62bb0d221864a6bfa8994d4ca420ab9017ad7efc949129b882d318",
     "design-system/foundations/tokens/semantic.tokens.json": "55c0e831391c8aa715a85c8d33cc3f4ec89916e026eedd35163a2435463f46c3",
     "design-system/foundations/tokens/themes.tokens.json": "375c91361ce714332e8ccb3d5f5d4daedef86a6bfd56b711bf5eb8d2db8d00cf",
     "design-system/surfaces/web-react/tokens/source/surface.tokens.json": "627fa1fa05a72fc6b5aaef334e2b8ace03e65bac3efdb60713259ee48213516c",
     "design-system/surfaces/web-react/tokens/source/component.tokens.json": "6eaf5543eb63005c1efe54c4e92f1e849c6d2b68b9f3818fbf87d8ff8828a222"
   },
-  "sourceHash": "df16fe40c1accb2e60c5af6d915d9e84f979cd6dd7dc934eaffa8f30f3fe2f13",
+  "sourceHash": "1f204c6eb846b13c483b08ebbaefccab25f1b710a274751846808f0e79a914f9",
   "generatedFiles": {
-    "packages/react/src/tokens/tokens.ts": "7475d7e1619997091f88087c60fb10c57265bfe912606bd24b1707607e18fa94",
-    "packages/react/src/tokens/antdTheme.ts": "5ae660b30c893bb2d96c3bc849b258d282b1ab82c162bf096a505a8b785428b4",
-    "packages/react/styles/tokens.css": "f90e257783b447732f71cb5d6eda282366a55df5d7c3ba6e2cfdd446e65a1e57"
+    "packages/react/src/tokens/tokens.ts": "74251f3eac18eb2212eb246e0d60f0dbc8dfacb69c89f5167342df79b9618197",
+    "packages/react/src/tokens/antdTheme.ts": "773f2004a2c6069d6ddb963682436135dafe60d9981d81baa3008b4121dfa9ea",
+    "packages/react/styles/tokens.css": "bbbae4f4b8b187c453aa24f55a79e6cb78a40fd774cb3def1b7ddcd21af5b434"
   }
 }

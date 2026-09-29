@@ -56,11 +56,13 @@ import {
   type CanvasNodeTooltip,
 } from "./CanvasNode";
 import { CanvasScene } from "./CanvasScene";
+import { PromptPreviewHover } from "./PromptPreviewHover";
 import { CanvasPreviewHover } from "./CanvasPreviewHover";
 import { CanvasOnionSkin } from "./CanvasDisplayControls";
 import { CanvasShape } from "./CanvasShape";
 import { CanvasText, type CanvasTextBounds } from "./CanvasText";
 import { InfiniteCanvasViewport } from "./InfiniteCanvasViewport";
+import { readCanvasClipboard, writeCanvasClipboard } from "./canvasClipboard";
 import { useCanvasImagePaste } from "./useCanvasImagePaste";
 import {
   buildAllUiSketchStagesPrompt,
@@ -74,6 +76,7 @@ import {
 import {
   cloneUiSketchDraft,
   copyUiSketchItems,
+  parseUiSketchClipboard,
   pasteUiSketchItems,
   groupUiSketchItems,
   ungroupUiSketchItems,
@@ -184,6 +187,9 @@ export interface UiSketchCanvasLabels extends CanvasLayerLabels {
   ungroupItems: string;
   copyGroup: string;
   copyPrompt: string;
+  promptPreview: string;
+  promptPreviewLoading: string;
+  promptPreviewFailed: string;
   copySketch: string;
   previewImage: string;
   copyAllStages: string;
@@ -264,6 +270,9 @@ const DEFAULT_LABELS: UiSketchCanvasLabels = {
   ungroupItems: "解组",
   copyGroup: "复制",
   copyPrompt: "复制提示词",
+  promptPreview: zh.clipboard.promptPreview,
+  promptPreviewLoading: zh.clipboard.promptPreviewLoading,
+  promptPreviewFailed: zh.clipboard.promptPreviewFailed,
   copySketch: "复制预览图",
   previewImage: zh.clipboard.previewImage,
   copyAllStages: "动效",
@@ -460,7 +469,8 @@ export function UiSketchCanvas({
   const textResizeSourceRef = useRef<TextResizeSource | null>(null);
   const suppressClickRef = useRef(false);
   const suppressItemSelectionRef = useRef(false);
-  const clipboardRef = useRef<UiSketchClipboard | null>(null);
+  const pasteClipboardRef = useRef(applyClipboard);
+  useLayoutEffect(() => { pasteClipboardRef.current = applyClipboard; });
   const clipboardTokenRef = useRef("");
   const pasteCountRef = useRef(0);
   const stateTabs = uiSketchStateTabs(draft);
@@ -500,6 +510,8 @@ export function UiSketchCanvas({
     resetKey: `${interactionResetKey}:${activeStageId}`,
     labels: imageEditorLabels,
     onUpload: onImageUpload,
+    onReadImageFile,
+    resolveImageSource,
     onImageReady: ({ assetId, x, y, width, height }) => {
       addImage({ x: x - width / 2, y: y - height / 2, width, height }, assetId);
       setPlacementTool(null);
@@ -743,25 +755,32 @@ export function UiSketchCanvas({
     if (!event.clipboardData || selectedItemKeys.length === 0) return;
     const clipboard = copyUiSketchItems(state, selectedIds);
     if (clipboard.layerOrder.length === 0) return;
-    clipboardRef.current = clipboard;
-    clipboardTokenRef.current = createId("ui-sketch-clipboard");
+    clipboardTokenRef.current = writeCanvasClipboard(
+      event.clipboardData, CLIPBOARD_TYPE, clipboard, clipboard.images, resolveImageSource,
+    );
     pasteCountRef.current = 0;
-    event.clipboardData.setData(CLIPBOARD_TYPE, clipboardTokenRef.current);
     event.preventDefault();
     event.stopPropagation();
   }
 
   function handleCanvasPaste(event: ClipboardEvent): void {
-    if (event.defaultPrevented || !onDraftChange || !clipboardRef.current
-      || event.clipboardData?.getData(CLIPBOARD_TYPE) !== clipboardTokenRef.current) return;
+    if (event.defaultPrevented || !onDraftChange || !event.clipboardData) return;
+    const clipboard = readCanvasClipboard(event.clipboardData, CLIPBOARD_TYPE, parseUiSketchClipboard);
+    if (!clipboard) return;
     event.preventDefault();
     event.stopPropagation();
-    const pasteCount = pasteCountRef.current + 1;
-    const pasted = pasteUiSketchItems(latestDraftRef.current, clipboardRef.current, {
+    imagePaste.pasteNodes(clipboard.items.images, clipboard.sources, () => pasteClipboardRef.current(clipboard));
+  }
+
+  function applyClipboard(clipboard: { token: string; items: UiSketchClipboard }): void {
+    if (!onDraftChange) return;
+    const pasteCount = (clipboard.token === clipboardTokenRef.current ? pasteCountRef.current : 0) + 1;
+    const pasted = pasteUiSketchItems(latestDraftRef.current, clipboard.items, {
       x: CLIPBOARD_PASTE_OFFSET * pasteCount,
       y: CLIPBOARD_PASTE_OFFSET * pasteCount,
     }, activeStageId);
     if (pasted.ids.length === 0) return;
+    clipboardTokenRef.current = clipboard.token;
     pasteCountRef.current = pasteCount;
     closeEditor();
     setPlacementTool(null);
@@ -1139,16 +1158,18 @@ export function UiSketchCanvas({
     );
   }
 
+  async function readPromptForStage(stageId: string): Promise<string> {
+    const stylePrompt = await resolveStylePrompt?.();
+    const measureText = (text: UiSketchText) => textBounds(text, textMeasurements);
+    return stageId === "all"
+      ? buildAllUiSketchStagesPrompt(draft, translatePrompt, stylePrompt, measureText)
+      : buildUiSketchPrompt(uiSketchDraftForStage(draft, stageId), translatePrompt, stylePrompt, measureText);
+  }
+
   async function copyPromptFromSidebar(stageId: string): Promise<void> {
     setCopyingPrompt(true);
     try {
-      const stylePrompt = await resolveStylePrompt?.();
-      const measureText = (text: UiSketchText) => textBounds(text, textMeasurements);
-      await copyPrompt(
-        stageId === "all"
-          ? buildAllUiSketchStagesPrompt(draft, translatePrompt, stylePrompt, measureText)
-          : buildUiSketchPrompt(uiSketchDraftForStage(draft, stageId), translatePrompt, stylePrompt, measureText),
-      );
+      await copyPrompt(await readPromptForStage(stageId));
     } catch (error) {
       setNotice({
         type: "error",
@@ -1290,6 +1311,9 @@ export function UiSketchCanvas({
         <span className="human2ai-ui-sketch-canvas__tool-group-title">
           {labels.copyGroup}
         </span>
+        <PromptPreviewHover readPrompt={() => readPromptForStage(activeStageId)} label={labels.promptPreview}
+          loadingLabel={labels.promptPreviewLoading} errorLabel={labels.promptPreviewFailed}
+          disabled={copyingPrompt || openCopyMenu === "prompt"}>
         {motionSketchEnabled ? (
           <Dropdown
             trigger={["click"]}
@@ -1300,9 +1324,11 @@ export function UiSketchCanvas({
             ))}
             menu={{
               items: [
-                ...stageMenuItems,
+                ...stageMenuItems.map(item => ({ ...item, label: <PromptPreviewHover readPrompt={() => readPromptForStage(item.key)}
+                  label={labels.promptPreview} loadingLabel={labels.promptPreviewLoading} errorLabel={labels.promptPreviewFailed}><span>{item.label}</span></PromptPreviewHover> })),
                 { type: "divider" },
-                { key: "all", label: labels.copyAllStages },
+                { key: "all", label: <PromptPreviewHover readPrompt={() => readPromptForStage("all")}
+                  label={labels.promptPreview} loadingLabel={labels.promptPreviewLoading} errorLabel={labels.promptPreviewFailed}><span>{labels.copyAllStages}</span></PromptPreviewHover> },
               ],
               onClick: ({ key }) => {
                 setOpenCopyMenu(null);
@@ -1328,6 +1354,7 @@ export function UiSketchCanvas({
             />
           </span>
         )}
+        </PromptPreviewHover>
         <CanvasPreviewHover renderSvg={renderPreviewSvg} label={labels.previewImage}
           disabled={copyingSketch || openCopyMenu === "sketch"}>
           {motionSketchEnabled ? (

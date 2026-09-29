@@ -2631,7 +2631,7 @@
     },
     "spatial.reference-pass": {
       "meaning": "Selection of color, surface structure, depth, or skeleton projection for a saved camera or observation-box PNG, without changing the scene.",
-      "scope": "Spatial camera reference preview and export.",
+      "scope": "Spatial camera reference preview and export, including independent per-camera gallery controls revealed by hover or keyboard focus.",
       "referent": "Selection of color, surface structure, depth, or skeleton projection for a saved camera or observation-box PNG, without changing the scene.",
       "precedence": "A derived camera output, independent of editor rig visibility, actor material, scene mutations and composition foreground/background labels.",
       "canonicalKey": "spatial.referencePass",
@@ -2703,7 +2703,7 @@
     },
     "spatial.download-reference": {
       "meaning": "Download the selected camera reference representation at the saved revision and camera resolution.",
-      "scope": "Spatial camera reference preview and export.",
+      "scope": "Spatial sidebar preview and the always-visible gallery download action for the currently displayed camera representation.",
       "referent": "Download the selected camera reference representation at the saved revision and camera resolution.",
       "precedence": "A derived camera output, independent of editor rig visibility, actor material, scene mutations and composition foreground/background labels.",
       "canonicalKey": "spatial.downloadReference",

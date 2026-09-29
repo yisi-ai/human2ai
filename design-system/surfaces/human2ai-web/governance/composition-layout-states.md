@@ -1,8 +1,8 @@
 # 构图布局状态
 
-沿用用户指定的 UI 界面状态栏方向，构图顶部以 UiSketchStateTabs 替换固定构图、精修和预览入口。页面继续组合 CompositionWorkflowView、CompositionCanvas、AspectRatioSelector 和现有历史控件。共享 TabSwitch 缺少单状态菜单、增删和拖动接口，因此复用已有本地状态组件；不新增同职责组件，不修改同步 vendor，不声明新的已批准视觉基线。
+沿用用户指定的 UI 界面状态栏方向，构图顶部以 UiSketchStateTabs 替换固定构图、精修和预览入口。页面继续组合 CompositionWorkflowView、CompositionCanvas、AspectRatioSelector 和现有历史控件。UiSketchStateTabs 现适配共享 TabSwitch 0.18.0，使用 hover 菜单、单项尾部动作和可取消的实时拖动；本地仅保留业务弹窗和回调；不新增同职责组件，不修改同步 vendor，不声明新的已批准视觉基线。
 
-- 新增复制指定来源状态并插在其后，选中新状态。支持重命名、确认删除、长按排序与键盘切换/排序，至少保留一个状态。
+- 新增复制指定来源状态并插在其后，选中新状态。支持重命名、确认删除、长按实时排序与键盘切换，至少保留一个状态。
 - 节点身份、类型、文字、图片来源与裁切、备注及业务语义共享，节点增删同步。画框尺寸、位置、比例和节点位置、大小、旋转、层级按状态保存。
 - 顶层几何是 activeStateId 的当前布局。states 只保存布局与状态元数据，草稿验证时同步活动快照、同步共享节点集合，并验证所有布局。旧草稿不强制写入新字段，显示为默认状态。
 - 状态选择和编辑沿用自动保存、版本并发检查、外部草稿同步和会话内历史；当前选择随草稿恢复。复制提示词及图片使用当前布局。
@@ -12,10 +12,18 @@
 
 验证入口：CompositionWorkflowView 的「自定义构图状态与独立布局」Story，UiSketchStateTabs 既有菜单/排序和长名称 Stories，以及 composition-states、canvas-state-management、composition-sessions 测试。支持桌面 1024×800、1280×800 和 1536×960。
 
-验证记录：
+迁移前验证记录：
 
 - 布局恢复、内容共享、节点增删、编号复用、命名排序和删除边界、非法快照及完整指纹测试通过；API 保存/读取序列化与版本撤销往返通过。
 - Chromium 中布局状态 Story、既有菜单/长按/键盘排序 Story 通过；状态栏 axe 检查无违规项。1024、1280 和 1536px 桌面检查无页面横向溢出，状态栏按需内部滚动。
 - 独立临时数据库上的生产页面验证：新增节点和状态、9:16 比例、键盘移动节点、重命名、切回 16:9 原布局、刷新恢复当前状态及比例均通过。
 - i18n、领域基线、共享契约、YisiUI doctor、服务端/Web/Storybook 类型检查、Storybook 和 Next 生产构建通过。
 - 扩大构图回归发现已有 composition-cli 测试仍断言 5 个精修方法，而 HEAD 实现已提供 9 个；与本次状态行为无关，保留该测试不变。
+
+0.18.0 迁移验证：
+
+- 本地菜单、选择和拖动实现已移除，保留 UiSketchStateTabs 作为领域操作与弹窗适配层。共享菜单采用 hover 模式，不新增 Story，原 Story id 保留。
+- 实际 UI/构图路由使用隔离数据库、4 个状态和 20/200 个节点；函数入口计数验证拖动预览及外部取消均不执行画布或侧栏，两个子树 DOM 变更为零。内部松手仅保存一个新版本，选择和标签 DOM 身份保留；提交后的页面/画布更新仍由正式草稿变更触发。
+- Chromium 交互 Story 覆盖菜单定位、非选中项操作、重命名、新建、实时让位、外部取消、内部确认和删除。单状态禁删/尾部添加、键盘菜单开关与焦点恢复、长名称和 480px 内部滚动通过。参考桌面窗口 1024/1280/1536px，浏览器实际 innerWidth 为 1025/1281/1537px。
+- Web/Storybook 类型检查、i18n、相关状态测试、225 个领域契约测试（另有 1 个跳过）、YisiUI doctor/check、Next/Storybook 生产构建通过。浏览器检查为人工驱动，包含合成 Pointer Events，不代表原生 IME 或 CI 自动保护。
+- Escape 仍会触发画布既有预览拖入层的 3 次 visibility 属性写入；该全局清理未因本次迁移扩大。详细证据与剩余限制在 ignored .human2ai-data/output/tabswitch-migration/verification.md。

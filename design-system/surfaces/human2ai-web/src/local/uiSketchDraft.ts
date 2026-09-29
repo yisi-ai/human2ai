@@ -4,6 +4,7 @@ export {
   UI_SKETCH_START_STAGE_ID,
   cloneUiSketchDraft,
   copyUiSketchItems,
+  parseUiSketchClipboard,
   pasteUiSketchItems,
   uiSketchLayerOrder,
   reorderUiSketchLayers,

@@ -2,6 +2,7 @@ import { message } from "antd";
 import { useLayoutEffect, useRef } from "react";
 
 import { getClipboardImage, readPastedImageSize } from "./clipboardImage";
+import { transferCanvasClipboardImages } from "./canvasClipboard";
 import type { CanvasImageEditorLabels } from "./CanvasImageEditorFields";
 
 interface PastedCanvasImage {
@@ -17,6 +18,8 @@ interface CanvasImagePasteOptions {
   resetKey: string | number | undefined;
   labels: Pick<CanvasImageEditorLabels, "uploading" | "uploadFailed">;
   onUpload?: (file: File) => Promise<string>;
+  onReadImageFile?: (src: string) => Promise<File>;
+  resolveImageSource?: (assetId: string) => string | undefined;
   onImageReady: (image: PastedCanvasImage) => void;
   onCopy?: (event: ClipboardEvent) => void;
   onPasteFallback?: (event: ClipboardEvent) => void;
@@ -72,18 +75,26 @@ export function useCanvasImagePaste(options: CanvasImagePasteOptions) {
     if (!file) return false;
     event.preventDefault();
     event.stopPropagation();
-    if (pending.current) return true;
+    const upload = options.onUpload;
+    runImageTask(async isCurrent => {
+      const size = await readPastedImageSize(file);
+      if (!isCurrent()) return;
+      const assetId = await upload(file);
+      return () => latest.current.onImageReady({ assetId, ...center, ...size });
+    });
+    return true;
+  }
+
+  function runImageTask(task: (isCurrent: () => boolean) => Promise<(() => void) | undefined>): void {
+    if (pending.current) return;
     pending.current = true;
     const requestGeneration = generation.current;
-    const upload = options.onUpload;
+    const isCurrent = () => generation.current === requestGeneration && !latest.current.disabled;
     void messageApi.loading({ key: "canvas-image-paste", content: options.labels.uploading, duration: 0 });
     void (async () => {
       try {
-        const size = await readPastedImageSize(file);
-        if (generation.current !== requestGeneration) return;
-        const assetId = await upload(file);
-        if (generation.current !== requestGeneration || latest.current.disabled) return;
-        latest.current.onImageReady({ assetId, ...center, ...size });
+        const commit = await task(isCurrent);
+        if (isCurrent()) commit?.();
       } catch {
         if (generation.current === requestGeneration) {
           void messageApi.error(latest.current.labels.uploadFailed);
@@ -95,8 +106,18 @@ export function useCanvasImagePaste(options: CanvasImagePasteOptions) {
         }
       }
     })();
-    return true;
   }
 
-  return { sceneRef, feedback };
+  function pasteNodes(images: { assetId: string | null }[], sources: Record<string, string>, commit: () => void): void {
+    if (pending.current) return;
+    const transfers = [...new Set(images.flatMap(image => image.assetId ? [image.assetId] : []))]
+      .filter(id => !sources[id] || sources[id] !== options.resolveImageSource?.(id));
+    if (transfers.length === 0) { commit(); return; }
+    const { onReadImageFile: read, onUpload: upload, resolveImageSource: resolveSource } = options;
+    runImageTask(async isCurrent => {
+      if (await transferCanvasClipboardImages(images, sources, { origin: location.origin, read, upload, resolveSource, isCurrent })) return commit;
+    });
+  }
+
+  return { sceneRef, feedback, pasteNodes };
 }

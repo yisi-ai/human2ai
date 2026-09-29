@@ -3,7 +3,7 @@
 import { Button } from "antd";
 import type { ButtonProps } from "antd";
 import type { CSSProperties, ReactNode } from "react";
-import { useLayoutEffect, useRef } from "react";
+import { forwardRef, useImperativeHandle, useLayoutEffect, useRef } from "react";
 
 import "../../styles/tokens.css";
 import "../../styles/basic-button.css";
@@ -36,7 +36,7 @@ function resolveTokenColor(tokenName: BasicButtonColorToken): string {
   return String(tokens[tokenName]);
 }
 
-export function BasicButton({
+export const BasicButton = forwardRef<HTMLButtonElement | HTMLAnchorElement, BasicButtonProps>(function BasicButton({
   children,
   icon,
   mode = "without-icon",
@@ -46,8 +46,11 @@ export function BasicButton({
   style,
   "aria-label": ariaLabel,
   ...buttonProps
-}: BasicButtonProps) {
+}: BasicButtonProps, forwardedRef) {
   const buttonRef = useRef<HTMLButtonElement | HTMLAnchorElement>(null);
+  // Expose the same DOM node used for hover-text measurements to popup triggers.
+  // Run after each commit so switching between a button and a link updates refs too.
+  useImperativeHandle(forwardedRef, () => buttonRef.current!);
   const labelRef = useRef<HTMLSpanElement>(null);
   const hoverLabel = children ?? iconLabel ?? ariaLabel;
   const hasHoverLabel = hoverLabel != null && hoverLabel !== "" && typeof hoverLabel !== "boolean";
@@ -141,4 +144,4 @@ export function BasicButton({
       {hoverMode ? <span ref={labelRef} className="yisi-basic-button-hover-label">{hoverLabel}</span> : iconOnly ? undefined : mode === "hover-text" ? hoverLabel : children}
     </Button>
   );
-}
+});

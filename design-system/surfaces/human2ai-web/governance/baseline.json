@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "surface": "human2ai-web",
   "status": "candidate",
-  "assetCount": 19,
+  "assetCount": 20,
   "approvedByUser": false,
   "verification": {
     "date": "2026-09-28",
@@ -12,5 +12,105 @@
     "route": "/composition, /ui-sketch, /spatial (isolated sessions)",
     "viewport": "1024x800, 1280x800, 1536x960",
     "result": "Manual instrumented Next browser checks at 20 and 200 sessions: unrelated title executions, replaced retained rows and navigation list reloads all zero; expansion and scrolling retained. Dialog typing renders neither tree nor active 3D viewport and allocates no WebGL resources. Pending actions still update global action-control availability. Typecheck, 225 domain tests (1 skipped), 34 focused tests, Next and Storybook builds passed; 24 retained sidebar/shell Story plays passed. Existing immediate-note-navigation autosave loss also reproduced with pre-change shell/layout. Production static-export navigation also retained all rows with no list reloads, overflow or Inspector. Detailed local evidence: .human2ai-data/output/workspace-tree-local-updates/verification.md. Browser checks are manual, not CI protection."
+  },
+  "stateTabsMigration": {
+    "date": "2026-09-28",
+    "sharedVersion": "0.18.0",
+    "status": "candidate",
+    "storyId": "human2ai-ui-sketch-state-tabs--interactions",
+    "routes": [
+      "/ui-sketch",
+      "/composition"
+    ],
+    "evidence": ".human2ai-data/output/tabswitch-migration/verification.md",
+    "result": "Manual Chromium checks on isolated Next development routes with 20/200 nodes: hover menu preserves selection; pointer reorder preview and outside cancellation execute zero unrelated canvas/sidebar components and mutate zero canvas/tree DOM nodes. Inside release saves one revision; original tab nodes and selection are retained. Story interaction checks cover rename/create/delete and live/cancelled reorder. Browser checks are not CI protection."
+  },
+  "cameraGalleryPasses": {
+    "date": "2026-09-29",
+    "sharedVersion": "0.19.3",
+    "result": "Per-card preview state selects color, structure, depth or skeleton locally. Hover/focus replaces the caption with TabSwitch; current PNG download stays visible and requires a loaded image. Removed incompatible two-column grid styling from sidebar TabSwitch. Gallery has no fixed column cap: cards fit the available desktop width with 280px minimum and 420px maximum; a narrower container retains one fitting column.",
+    "renderScope": "Card pass change -> affected card, image and download only -> at 7/70-camera development fixtures: unrelated source-call executions and DOM mutations zero; measured WebGL draws/resource allocations zero. Existing sidebar pass state still belongs to the workspace and is not refactored by this layout fix.",
+    "evidence": ".human2ai-data/output/camera-gallery-passes/verification.md"
+  },
+  "loadingMigration": {
+    "date": "2026-09-28",
+    "sharedVersion": "0.19.3",
+    "status": "candidate",
+    "storyIds": [
+      "human2ai-spatial-workspace-view--loading",
+      "human2ai-style-library-view--loading",
+      "human2ai-spatial-workspace-view--camera-reference-interactions"
+    ],
+    "routes": [
+      "/ui-sketch",
+      "/composition",
+      "/styles"
+    ],
+    "evidence": ".human2ai-data/output/loading-migration/verification.md",
+    "result": "Bounded loading regions use adaptive text rows; camera/observation images use image skeletons. Manual Chrome checks: loading resize executes only LoadingState, retains row nodes, stops DOM changes when settled; image completion preserves preview bounds. Next/Storybook build and typechecks, i18n and YisiUI checks passed. Two unrelated spatial Story assertions fail identically in pre-change build (two-tab expectation and camera-box tree). Browser checks are manual, not CI protection.",
+    "visibilityCorrection": {
+      "reason": "Auto text rows mounted but had zero painted width because block skeleton wraps Ant table-cell children. Earlier row-count checks did not prove visibility.",
+      "resolution": "YisiUI 0.19.2 fixes text width upstream; local compatibility override removed after synchronizing 0.19.3.",
+      "regression": "human2ai-workspace-sidebar--loading",
+      "evidence": ".human2ai-data/output/loading-migration/text-visibility-fix.md",
+      "result": "Regression failed before fix and passes in development/production. Real production UI route row widths: sidebar 216px, workspace 1026.67px, properties 228px. Shared auto-height regression still passes; image variant unchanged."
+    },
+    "actionAreaLoading": {
+      "date": "2026-09-29",
+      "stateOwner": "Existing WorkspaceSidebar project-session request",
+      "result": "The same loading prop replaces top action buttons with compact text skeletons. Content-sized area uses fixed rows; ready/error exits restore the existing controls. Manual production browser checks verify positive skeleton dimensions, zero pending buttons, restored enabled actions, and zero settled skeleton DOM mutations. No additional request, timer, subscription or page state.",
+      "evidence": ".human2ai-data/output/sidebar-actions-loading/verification.md"
+    },
+    "canvasImageLoading": {
+      "date": "2026-09-28",
+      "routes": [
+        "/ui-sketch",
+        "/composition",
+        "/spatial"
+      ],
+      "variant": "image",
+      "retainedText": [
+        "workspace sidebar",
+        "properties panels"
+      ],
+      "firstPaint": "YisiUI 0.19.3 synchronous static CSS renders the complete image skeleton and 48px muted icon before Ant runtime styles. Both local compatibility overrides were removed. Route Suspense fallbacks remain text skeletons.",
+      "evidence": ".human2ai-data/output/yisiui-loading-sync/verification.md"
+    }
+  },
+  "promptPreview": {
+    "date": "2026-09-29",
+    "sharedVersion": "0.19.3",
+    "routes": [
+      "/composition",
+      "/ui-sketch"
+    ],
+    "result": "Hover/focus opens a selectable, scrollable prompt preview using the same reader as copying. UI state menu entries preview their own state or all states. Loading, failure and disabled states covered.",
+    "renderScope": "Hover/focus and prompt resolution -> local Popover and PromptContent; native scrolling -> popup only. Manual development Story checks at 20/200 composition nodes observed zero unrelated canvas-node executions and zero canvas DOM mutations; UI copy Story also retained node execution counts. No page state, polling or GPU resource changes introduced.",
+    "evidence": ".human2ai-data/output/prompt-preview/verification.md",
+    "browserCoverage": "Manual browser execution of Story interaction checks, not CI protection.",
+    "viewportContainment": {
+      "date": "2026-09-29",
+      "result": "Body-mounted fixed Popover prefers top placement with automatic edge adjustment; text height is bounded by min(360px, 40dvh). The retained long-prompt Story samples document scroll bounds during opening and internal scrolling and asserts viewport containment and unchanged trigger geometry. Manual development and production checks cover supported desktop sizes and edge positions.",
+      "renderScope": "Hover/focus and text resolution -> local popup; internal scrolling -> popup scrollport. Existing 20/200-node development Story assertions observe zero unrelated CanvasNode executions and zero canvas DOM mutations. No new shared state, subscription, measurement loop or GPU work is introduced; GPU allocation was not measured.",
+      "evidence": ".human2ai-data/output/prompt-popover/verification.md",
+      "browserCoverage": "Manual browser execution; CI does not run these Story assertions."
+    },
+    "loadingLoopFix": {
+      "date": "2026-09-29",
+      "cause": "Style prompt reads published page state and repeatedly invalidated the preview reader.",
+      "resolution": "Prompt reads only return text; existing refresh/bind owns displayed style state.",
+      "evidence": ".human2ai-data/output/prompt-preview-fix/verification.md",
+      "result": "Actual UI route sustained-hover regression passed at 20/200 nodes with zero unrelated component executions. UI and composition production sustained hover/scroll passed. Existing viewport DOM measurement writes remain; composition development zero-execution scope assertion did not pass and is documented. Manual browser verification, not CI."
+    }
+  },
+  "crossCanvasClipboard": {
+    "date": "2026-09-29",
+    "routes": [
+      "/composition",
+      "/ui-sketch"
+    ],
+    "result": "Versioned native clipboard snapshots survive source unmounts and can paste into another same-type session. Images transfer through existing session image APIs. Save, undo/redo, cancellation, invalid-type rejection and existing image-paste Stories verified in manual browser checks.",
+    "renderScope": "Paste -> target document, new/selected nodes and dependents. At 20/200 fixtures, retained unaffected nodes do not execute after layer-order initialization; old UI drafts perform one global controls-host transition on first paste. Existing composition planning guide still executes on commit. No GPU claim or automated CI browser protection.",
+    "evidence": ".human2ai-data/output/node-clipboard/verification.md"
   }
 }

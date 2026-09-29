@@ -3,9 +3,9 @@ import type { ThemeConfig } from "antd";
 
 export const antdTheme: ThemeConfig = {
   token: {
-    colorPrimary: "#22C55E",
-    colorPrimaryHover: "#4ADE80",
-    colorPrimaryActive: "#16A34A",
+    colorPrimary: "#16A34A",
+    colorPrimaryHover: "#22C55E",
+    colorPrimaryActive: "#15803D",
     colorPrimaryBg: "#F0FDF4",
     colorPrimaryBgHover: "#DCFCE7",
     colorPrimaryBorder: "#15803D",

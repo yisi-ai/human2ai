@@ -2,9 +2,9 @@
   "$schema": "https://design-tokens.github.io/community-group/format/",
   "color": {
     "brand": {
-      "primary": { "$type": "color", "$value": "#22C55E" },
-      "primaryHover": { "$type": "color", "$value": "#4ADE80" },
-      "primaryActive": { "$type": "color", "$value": "#16A34A" },
+      "primary": { "$type": "color", "$value": "#16A34A" },
+      "primaryHover": { "$type": "color", "$value": "#22C55E" },
+      "primaryActive": { "$type": "color", "$value": "#15803D" },
       "primaryBg": { "$type": "color", "$value": "#F0FDF4" },
       "primaryBgHover": { "$type": "color", "$value": "#DCFCE7" },
       "primaryText": { "$type": "color", "$value": "#15803D" },

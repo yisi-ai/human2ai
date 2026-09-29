@@ -84,7 +84,8 @@ export function useSessionStyle(
   async function readPromptLine(): Promise<string | undefined> {
     if (!sessionId) return undefined;
     const current = await getSessionStyle(sessionId);
-    if (activeSession.current === sessionId) setState(current);
+    // Prompt reads must not invalidate the page and restart an open preview.
+    // The refresh/bind flow owns the displayed style state.
     return current.style ? t("sessionStyle.prompt", { summary: current.style.promptSummary }) : undefined;
   }
 

@@ -120,7 +120,7 @@ export function SpatialCameraBoxView({ active, boxes, selectedBoxId, onSelectBox
         : !request ? <p className="spatial-camera-pending">{labels.cameraPreviewPending}</p>
         : failed ? <Alert type="error" message={labels.referenceLoadFailed} action={<BasicButton size="small" disabled={disabled} onClick={() => setAttempt(value => value + 1)}>{retryLabel}</BasicButton>} />
         : ready ? <img src={ready.url} alt={`${box.name} · ${passLabel} · ${views.map(view => view.label).join(" / ")}`} />
-        : <LoadingState label={passLabel} rows={3} />}
+        : <LoadingState label={passLabel} variant="image" />}
     </div>
     {notice && (notice.error ? <Alert type="error" message={notice.message} /> : <p className="spatial-observation-status" role="status">{notice.message}</p>)}
     <div className="spatial-observation-actions">

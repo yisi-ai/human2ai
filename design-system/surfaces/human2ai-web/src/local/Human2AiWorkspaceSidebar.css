@@ -27,6 +27,10 @@
   margin-bottom: var(--yisiui-space-2);
 }
 
+.human2ai-workspace-sidebar__actions-loading {
+  height: auto;
+}
+
 .human2ai-workspace-sidebar__error {
   margin: var(--yisiui-space-1) 0 0;
   color: var(--yisiui-color-feedback-danger-text);

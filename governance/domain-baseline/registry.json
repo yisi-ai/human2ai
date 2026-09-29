@@ -89,6 +89,54 @@
       "reviewTrigger": "新增图片消费者，或修改大小、格式、元数据读取方式、错误映射和写入前校验顺序之前"
     },
     {
+      "id": "capture.canvas-clipboard-transport",
+      "category": "capture",
+      "contractVersion": 1,
+      "status": "shared",
+      "responsibility": "在浏览器自定义 MIME 中传递跨画布节点快照，按领域解析器校验，并转存跨会话图片资产",
+      "invariants": [
+        "复制写入 version=1、随机复制标识和节点快照；每次复制标识不同",
+        "读取仅接受指定 MIME、受支持版本和有效标识，实际节点语义委托给领域解析器",
+        "没有组件实例内快照依赖；读取失败返回 null，不能粘贴旧的缓存内容",
+        "图片保留节点几何与裁切；同一粘贴中的重复资产只转存一次，同会话已有资产不重复上传",
+        "跨会话图片通过既有读取和上传接口转存到目标会话，仅允许同源会话图片内容 URL；全部转存成功后才提交节点",
+        "异步粘贴保留当前目标草稿中的其他编辑，切换会话、状态或撤销恢复后丢弃过期结果；失败不留下缺图节点"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "design-system/surfaces/human2ai-web/src/local/canvasClipboard.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "design-system/surfaces/human2ai-web/src/local/useCanvasImagePaste.tsx"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.tsx",
+          "consumer": "image-composition"
+        },
+        {
+          "role": "adapter",
+          "path": "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.tsx",
+          "consumer": "ui-sketch-editor"
+        }
+      ],
+      "consumers": [
+        "image-composition",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "构图和 UI 使用不同 MIME 与领域解析器；几何、分组、容量、状态初始化不在传输层统一"
+      ],
+      "contractTests": [
+        "test/unit/canvas-node-clipboard.test.ts"
+      ],
+      "reviewEvidence": [],
+      "exceptions": [],
+      "reviewTrigger": "增加其他领域消费者、改变版本载荷或提供 text/plain 后备之前"
+    },
+    {
       "id": "capture.canvas-edit-history",
       "category": "capture",
       "contractVersion": 2,
@@ -596,16 +644,17 @@
     {
       "id": "composition.item-clipboard",
       "category": "composition",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "local",
-      "responsibility": "管理构图草稿节点的会话内复制快照、容量受限粘贴与新节点选择结果",
+      "responsibility": "管理构图草稿节点的同类型跨会话复制快照、容量受限粘贴与新节点选择结果",
       "invariants": [
         "复制内容是复制时节点属性的深拷贝快照，不依赖原节点后续是否修改或删除",
         "粘贴为每个成功创建的焦点、区域和图片生成新 id，动势线沿用领域固定 id direction-1",
         "焦点最多三个、动势线最多一条；多项粘贴时只跳过会超过对应上限的节点，其余节点继续创建",
         "每次成功粘贴保留节点属性和多选相对位置，并按画布世界坐标向右下递增偏移",
         "粘贴完成后的选择结果只包含本次实际创建的节点",
-        "原生粘贴优先识别系统剪贴板图片；只有匹配当前画布复制标记时才粘贴内部节点快照，外部文字不得触发过期节点粘贴"
+        "原生粘贴优先识别系统剪贴板图片；只有通过同类型剪贴板版本与领域校验时才粘贴节点快照，外部文字不得触发过期节点粘贴",
+        "外部文字、旧标记、未知版本、异类型或不合法节点载荷不得修改目标画布；剪贴板不包含整个源会话、全局备注或状态列表。"
       ],
       "implementations": [
         {
@@ -616,6 +665,10 @@
           "role": "adapter",
           "path": "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.tsx",
           "consumer": "image-composition"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/composition/clipboard.ts"
         }
       ],
       "consumers": [
@@ -623,17 +676,19 @@
       ],
       "variationPoints": [
         "浏览器适配层使用 Ctrl/Cmd+C 与 Ctrl/Cmd+V，并把 24px 偏移换算为构图世界坐标",
-        "节点快照只存在于当前挂载的构图画布组件内；系统剪贴板仅写入与该快照匹配的随机自定义 MIME 标记，不写入节点内容或持久化草稿",
-        "UI 草图通过 ui-sketch.item-clipboard 保留像素几何、分组和状态初始化规则；与构图复用 useCanvasImagePaste 事件接入，但不复用构图容量约束或节点模型"
+        "UI 草图通过 ui-sketch.item-clipboard 保留像素几何、分组和状态初始化规则；与构图复用 useCanvasImagePaste 事件接入，但不复用构图容量约束或节点模型",
+        "节点深拷贝快照写入版本化自定义 MIME，经过对应领域既有草稿校验后可跨同类型会话、画布卸载与同应用浏览器标签页粘贴；复制标识决定连续偏移重置，目标文档仍使用既有粘贴规则。",
+        "图片引用跨会话时复用 capture.canvas-clipboard-transport 转存资产，沿用既有上传接口和反馈；会话预览引用保持原预览来源。"
       ],
       "contractTests": [
-        "test/unit/composition-draft.test.ts"
+        "test/unit/composition-draft.test.ts",
+        "test/unit/canvas-node-clipboard.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/src/local/CompositionCanvas.stories.tsx"
       ],
       "exceptions": [],
-      "reviewTrigger": "引入跨会话或系统剪贴板节点序列化、合并 UI 与构图的节点复制规则，修改焦点/动势线上限，或改变粘贴选择与偏移规则之前"
+      "reviewTrigger": "扩展跨类型节点转换、跨服务资产迁移、完整状态轨迹复制或修改剪贴板载荷版本之前"
     },
     {
       "id": "composition.layout-states",
@@ -1559,9 +1614,9 @@
     {
       "id": "ui-sketch.item-clipboard",
       "category": "ui-sketch",
-      "contractVersion": 1,
+      "contractVersion": 2,
       "status": "local",
-      "responsibility": "管理 UI 画布区域、文字和图片的会话内复制快照、连续粘贴及副本分组和层级",
+      "responsibility": "管理 UI 画布区域、文字和图片的同类型跨会话复制快照、连续粘贴及副本分组和层级",
       "invariants": [
         "复制读取当前活动状态，按现有整组选取规则捕获区域、文字和图片的深拷贝快照；后续修改或删除原节点不改变快照",
         "粘贴为所有副本及其组分配新的不冲突 id；保留文字、备注、说明、语义、视觉权重、可见性、几何、图片资产引用和裁切，副本来源为用户新建 user",
@@ -1569,7 +1624,8 @@
         "每次成功粘贴相对快照向右下累计偏移 24 个画布像素；再次复制重新开始计数，画框和全局备注不进入剪贴板",
         "粘贴通过 updateUiSketchStageDraft 在活动状态加入节点，沿用现有新增节点的跨状态初始化，不修改原节点各状态的几何",
         "一次粘贴只调用一次既有草稿变更回调，自动保存和撤销重做复用现有 capture.canvas-edit-history 与 capture.draft-versioning",
-        "原生复制粘贴复用 useCanvasImagePaste 的画布焦点边界；文本编辑保留浏览器行为，外部图片优先上传，其他外部剪贴板内容不能触发旧节点粘贴"
+        "原生复制粘贴复用 useCanvasImagePaste 的画布焦点边界；文本编辑保留浏览器行为，外部图片优先上传，其他外部剪贴板内容不能触发旧节点粘贴",
+        "外部文字、旧标记、未知版本、异类型或不合法节点载荷不得修改目标画布；剪贴板不包含整个源会话、全局备注或状态列表。"
       ],
       "implementations": [
         {
@@ -1587,13 +1643,16 @@
       ],
       "variationPoints": [
         "与 composition.item-clipboard 比较后保留 UI 领域实现：UI 使用像素几何、单层分组和共享节点状态，构图使用归一化坐标并限制焦点和动势线数量；两者共用已有剪贴板事件接入，不引入统一节点模型",
-        "Ctrl/Cmd+C 与 Ctrl/Cmd+V 作用于当前挂载画布；节点快照保存在组件内存，系统剪贴板只写入随机自定义 MIME 标记，不写入节点内容或复制图片文件",
-        "节点复制不复制动效状态列表或原节点完整运动轨迹；新节点按当前复制快照初始化各状态"
+        "节点复制不复制动效状态列表或原节点完整运动轨迹；新节点按当前复制快照初始化各状态",
+        "节点深拷贝快照写入版本化自定义 MIME，经过对应领域既有草稿校验后可跨同类型会话、画布卸载与同应用浏览器标签页粘贴；复制标识决定连续偏移重置，目标文档仍使用既有粘贴规则。",
+        "图片引用跨会话时复用 capture.canvas-clipboard-transport 转存资产，沿用既有上传接口和反馈；会话预览引用保持原预览来源。"
       ],
-      "contractTests": [],
+      "contractTests": [
+        "test/unit/canvas-node-clipboard.test.ts"
+      ],
       "reviewEvidence": [],
       "exceptions": [],
-      "reviewTrigger": "扩展到跨会话或跨画布类型粘贴、系统剪贴板节点序列化、复制完整动效轨迹，或统一构图与 UI 节点模型之前"
+      "reviewTrigger": "扩展跨类型节点转换、跨服务资产迁移、完整状态轨迹复制或修改剪贴板载荷版本之前"
     },
     {
       "id": "ui-sketch.item-groups",

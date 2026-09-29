@@ -402,12 +402,7 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
       <section className="spatial-preview" aria-label={labels.cameraView}>
         <h2>{cameraBox ? labels.cameraBoxSheet : labels.cameraView}</h2>
         {cameraBox ? <Select aria-label={labels.cameraBoxView} value={boxView} options={(["sheet", ...SPATIAL_BOX_FACES] as SpatialBoxView[]).map(value => ({ value, label: faceLabel(value) }))} onChange={setBoxView} /> : <Select aria-label={labels.selectCamera} value={camera.id} options={draft.cameras.map(c => ({ value: c.id, label: c.name }))} onChange={id => { setCameraId(id); if (editingCamera) choose({ cameraId: id }); }} />}
-        <TabSwitch className="spatial-reference-tabs" aria-label={labels.referencePass} value={referencePass} onChange={value => setReferencePass(value as SpatialRenderPass)} items={[
-          { key: "color", label: labels.referenceColor, mode: "text-only", disabled: disabled || loading },
-          { key: "structure", label: labels.referenceStructure, mode: "text-only", disabled: disabled || loading },
-          { key: "depth", label: labels.referenceDepth, mode: "text-only", disabled: disabled || loading },
-          { key: "skeleton", label: labels.referenceSkeleton, mode: "text-only", disabled: disabled || loading },
-        ]} />
+        <CameraReferenceTabs value={referencePass} onChange={setReferencePass} labels={labels} disabled={disabled || loading} />
         {referenceSource && <CameraReferencePreview key={referenceSource} source={referenceSource} camera={cameraBox ? { id: `${cameraBox.id}-${boxView}`, name: `${cameraBox.name} · ${faceLabel(boxView)}`, ...cameraBoxImageSize(cameraBox, boxView) } : camera} pass={referencePass} labels={labels} retryLabel={actions.retry} disabled={disabled} />}
       </section>
       </>}
@@ -430,22 +425,14 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
         </div>
       }>
       <div className="spatial-center">
-        {loading ? <LoadingState label={labels.title} rows={6} /> : <>
+        {loading ? <LoadingState label={labels.title} variant="image" /> : <>
           <div className="spatial-space" hidden={workspaceView !== "space"}>
             {historyControls}
             <SpatialViewport interactionResetKey={interactionResetKey} interacting={Boolean(activeHandPreview)} showRig={showRig} showCameras={showCameras} draft={activeHandPreview?.draft ?? draft} selection={selection} mode={mode} onSelect={choose} onEdit={openEditor} onOperation={perform} onViewChange={next => { view.current = next; }} label={labels.viewport} errorLabel={labels.webglFailed} disabled={disabled} />
           </div>
           {workspaceView === "cameras" && <section className="spatial-camera-gallery" aria-label={labels.cameras}>
-            {draft.cameras.map(item => {
-              const source = cameraSource?.(item.id, "color");
-              return <figure className="spatial-camera-card" key={item.id} data-selected={editingCamera?.id === item.id}>
-                <BasicButton className="spatial-camera-select" backgroundColor="none" aria-label={`${item.name} · ${labels.parameters}`} aria-pressed={editingCamera?.id === item.id} onClick={() => choose({ cameraId: item.id })} />
-                <div className="spatial-camera-image">
-                  {source ? <CameraReferencePreview key={source} source={source} camera={item} pass="color" labels={labels} retryLabel={actions.retry} disabled={disabled} gallery /> : <p className="spatial-camera-pending">{labels.cameraPreviewPending}</p>}
-                </div>
-                <figcaption>{item.name}</figcaption>
-              </figure>;
-            })}
+            {draft.cameras.map(item => <CameraPreviewCard key={item.id} camera={item} selected={editingCamera?.id === item.id}
+              source={cameraSource} labels={labels} retryLabel={actions.retry} disabled={disabled} onSelect={() => choose({ cameraId: item.id })} />)}
           </section>}
           <SpatialCameraBoxView active={workspaceView === "cameraBoxes"} boxes={draft.cameraBoxes ?? []} selectedBoxId={observationBoxId}
             onSelectBox={id => choose({ cameraBoxId: id })} pass={referencePass} onPassChange={setReferencePass} source={cameraBoxSource}
@@ -475,15 +462,53 @@ export function SpatialWorkspaceView({ draft, onOperation, showRig: controlledSh
   </>;
 }
 
-function CameraReferencePreview({ source, camera, pass, labels, retryLabel, disabled, gallery }: { source: string; camera: Pick<SpatialCamera, "id" | "name" | "width" | "height">; pass: SpatialRenderPass; labels: SpatialLabels; retryLabel: string; disabled?: boolean; gallery?: boolean }) {
+function CameraReferenceTabs({ value, onChange, labels, disabled }: { value: SpatialRenderPass; onChange(value: SpatialRenderPass): void; labels: SpatialLabels; disabled?: boolean }) {
+  return <TabSwitch className="spatial-reference-tabs" compact aria-label={labels.referencePass} value={value} onChange={value => onChange(value as SpatialRenderPass)} items={[
+    { key: "color", label: labels.referenceColor, mode: "text-only", disabled },
+    { key: "structure", label: labels.referenceStructure, mode: "text-only", disabled },
+    { key: "depth", label: labels.referenceDepth, mode: "text-only", disabled },
+    { key: "skeleton", label: labels.referenceSkeleton, mode: "text-only", disabled },
+  ]} />;
+}
+
+function CameraPreviewCard({ camera, selected, source, labels, retryLabel, disabled, onSelect }: {
+  camera: SpatialCamera; selected: boolean; source: SpatialWorkspaceViewProps["cameraSource"]; labels: SpatialLabels;
+  retryLabel: string; disabled?: boolean; onSelect(): void;
+}) {
+  const [pass, setPass] = useState<SpatialRenderPass>("color");
+  const [readySource, setReadySource] = useState<string>();
+  const imageSource = source?.(camera.id, pass);
+  const ready = Boolean(imageSource && readySource === imageSource && !disabled);
+  return <figure className="spatial-camera-card" data-camera-id={camera.id} data-selected={selected}>
+    <BasicButton className="spatial-camera-select" backgroundColor="none" aria-label={`${camera.name} · ${labels.parameters}`} aria-pressed={selected} onClick={onSelect} />
+    <div className="spatial-camera-image">
+      {imageSource ? <CameraReferencePreview key={`${pass}:${imageSource}`} source={imageSource} camera={camera} pass={pass} labels={labels} retryLabel={retryLabel} disabled={disabled} gallery onReady={setReadySource} /> : <p className="spatial-camera-pending">{labels.cameraPreviewPending}</p>}
+    </div>
+    <figcaption>
+      <div className="spatial-camera-caption-content">
+        <span className="spatial-camera-name">{camera.name}</span>
+        <div className="spatial-camera-pass-controls">
+          <CameraReferenceTabs value={pass} onChange={value => { setReadySource(undefined); setPass(value); }} labels={labels} disabled={disabled} />
+        </div>
+      </div>
+      <BasicButton className="spatial-camera-download" mode="icon-only" size="small" icon={<DownloadOutlined aria-hidden="true" />}
+        iconLabel={labels.downloadReference} title={labels.downloadReference} disabled={!ready} href={ready ? imageSource : undefined} download={`${camera.id}-${pass}.png`} />
+    </figcaption>
+  </figure>;
+}
+
+function CameraReferencePreview({ source, camera, pass, labels, retryLabel, disabled, gallery, onReady }: { source: string; camera: Pick<SpatialCamera, "id" | "name" | "width" | "height">; pass: SpatialRenderPass; labels: SpatialLabels; retryLabel: string; disabled?: boolean; gallery?: boolean; onReady?(source: string | undefined): void }) {
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [attempt, setAttempt] = useState(0);
+  useLayoutEffect(() => { onReady?.(undefined); }, [source, onReady]);
   const label = pass === "color" ? labels.referenceColor : pass === "structure" ? labels.referenceStructure : pass === "depth" ? labels.referenceDepth : labels.referenceSkeleton;
   return <>
-    {state === "loading" && <LoadingState label={label} rows={1} />}
     {state === "error" && <Alert type="error" message={labels.referenceLoadFailed} action={<BasicButton size="small" disabled={disabled} onClick={() => { setState("loading"); setAttempt(value => value + 1); }}>{retryLabel}</BasicButton>} />}
-    <img key={attempt} src={source} loading={gallery ? "lazy" : "eager"} alt={`${camera.name} · ${label}`} width={camera.width} height={camera.height} onLoad={() => setState("ready")} onError={() => setState("error")}
-      style={{ display: state === "error" ? "none" : undefined, visibility: state === "loading" ? "hidden" : undefined, aspectRatio: `${camera.width} / ${camera.height}`, maxWidth: gallery ? undefined : 230 * camera.width / camera.height }} />
+    <div className="spatial-reference-image" style={{ display: state === "error" ? "none" : undefined, aspectRatio: `${camera.width} / ${camera.height}`, maxWidth: gallery ? undefined : 230 * camera.width / camera.height }}>
+    {state === "loading" && <LoadingState label={label} variant="image" compact />}
+    <img key={attempt} src={source} loading={gallery ? "lazy" : "eager"} alt={`${camera.name} · ${label}`} width={camera.width} height={camera.height} onLoad={() => { setState("ready"); onReady?.(source); }} onError={() => { setState("error"); onReady?.(undefined); }}
+      style={{ visibility: state === "loading" ? "hidden" : undefined }} />
+    </div>
     {!gallery && <BasicButton mode="with-icon" size="small" icon={<DownloadOutlined aria-hidden="true" />} disabled={disabled || state !== "ready"} href={!disabled && state === "ready" ? source : undefined} download={`${camera.id}-${pass}.png`}>{labels.downloadReference}</BasicButton>}
   </>;
 }

@@ -308,6 +308,7 @@ export function StyleLibraryView({
         status: "candidate",
       })}
       className="human2ai-style-library"
+      data-loading={loading || undefined}
     >
       <header className="human2ai-style-library__toolbar">
         <Input
@@ -353,7 +354,7 @@ export function StyleLibraryView({
       </header>
 
       {loading ? (
-        <LoadingState label={labels.loading} rows={5} />
+        <LoadingState label={labels.loading} />
       ) : errorMessage ? (
         <div className="human2ai-style-library__page-state" role="alert">
           <span>{labels.loadFailed}</span>

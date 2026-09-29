@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
-import { AimOutlined, PictureOutlined } from "@ant-design/icons";
+import { AimOutlined, PictureOutlined, CopyOutlined } from "@ant-design/icons";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
 import { ExpandingSwitch } from "@human2ai/ui/yisiui/expanding-switch";
 import { useState } from "react";
@@ -7,12 +7,18 @@ import { expect, userEvent, waitFor, within } from "storybook/test";
 import zh from "../../../../../locales/zh-CN/common.json";
 import { addArea, createDraft, setCompositionPreviewMode, type CompositionDraft } from "../../../../../src/domain/composition";
 import { assertReferenceShapes } from "./compositionPreviewStoryChecks";
+import { PromptPreviewHover } from "./PromptPreviewHover";
+import { buildCompositionPrompt } from "./compositionExport";
+import { createAppI18n } from "../../../../../web/i18n/createI18n";
+import { promptTranslationKey } from "../../../../../locales/promptKeys";
 import { CompositionPreviewHover } from "./CompositionPreviewHover";
 import { CompositionWorkflowView, type CompositionWorkflowViewKey } from "./CompositionWorkflowView";
 import { SessionDetails } from "./SessionDetails";
 import { canvasNodeExecutionCounts } from "./canvasNodeRenderTrace";
 import { captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import "./CompositionPreviewHover.stories.css";
+
+const promptI18n = createAppI18n("zh-CN");
 
 function fixture(count: number): CompositionDraft {
   const draft = addArea(createDraft(), { primitive: "triangle" }).draft;
@@ -55,6 +61,10 @@ function Harness({ count = 20, disabled = false }: { count?: number; disabled?: 
             }} /> }}
         createdAt={null} updatedAt={null} nodeCount={count} agentCommand={null} locale="zh-CN"
         labels={{ ...zh.sessionDetails, copied: zh.clipboard.copied }} />
+      <PromptPreviewHover readPrompt={() => buildCompositionPrompt(draft, (key, values) => promptI18n.t(promptTranslationKey("composition", key), values))} label={zh.clipboard.promptPreview}
+        loadingLabel={zh.clipboard.promptPreviewLoading} errorLabel={zh.clipboard.promptPreviewFailed} disabled={disabled}>
+        <CompositeButton icon={<CopyOutlined aria-hidden="true" />} label={zh.clipboard.copyPrompt} />
+      </PromptPreviewHover>
       <CompositionPreviewHover draft={draft} label={zh.composition.views.referenceCanvas} disabled={disabled}>
         <CompositeButton label={zh.clipboard.copyPreview} icon={<PictureOutlined aria-hidden="true" />} disabled={disabled} />
       </CompositionPreviewHover>
@@ -112,6 +122,22 @@ async function checkHover(canvasElement: HTMLElement) {
   unchanged();
   trigger.blur();
   await waitFor(() => expect(preview()).toBeNull(), { timeout: 5000 });
+  const promptButton = canvas.getByRole("button", { name: zh.clipboard.copyPrompt });
+  unchanged = captureCanvasNodeExecutions(canvasElement);
+  let mutations = 0;
+  const observer = new MutationObserver(records => { mutations += records.length; });
+  const scene = canvasElement.querySelector('[data-composition-scene]') ?? canvasElement.querySelector('svg[data-canvas-scene]');
+  if (scene) observer.observe(scene, { subtree: true, childList: true, attributes: true });
+  await userEvent.hover(promptButton);
+  await waitFor(() => expect(document.querySelector('.human2ai-prompt-preview-hover__content pre')?.textContent).toBeTruthy());
+  const promptContent = document.querySelector<HTMLElement>('.human2ai-prompt-preview-hover__content')!;
+  promptContent.scrollTop = promptContent.scrollHeight;
+  await new Promise(resolve => setTimeout(resolve, 150));
+  unchanged(); observer.disconnect();
+  expect(mutations).toBe(0);
+  canvasElement.dataset.promptScopeChecked = 'passed';
+  await userEvent.unhover(promptButton);
+  await waitFor(() => expect(document.querySelector('.human2ai-prompt-preview-hover__content')).toBeNull(), { timeout: 5000 });
   canvasElement.dataset.previewScopeChecked = "passed";
   await userEvent.click(canvas.getByRole("radio", { name: zh.composition.views.reference }));
   const count = Number(canvasElement.querySelector<HTMLElement>("[data-fixture-count]")!.dataset.fixtureCount);

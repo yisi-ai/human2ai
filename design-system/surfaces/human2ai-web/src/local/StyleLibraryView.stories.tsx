@@ -63,7 +63,7 @@ function Harness({
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: "var(--yisiui-color-surface-page)" }}>
+    <div style={{ minHeight: "100vh", height: loading ? "100vh" : undefined, background: "var(--yisiui-color-surface-page)" }}>
       <StyleLibraryView
         styles={styles}
         labels={labels}
@@ -171,6 +171,12 @@ export const Empty: Story = {
 export const Loading: Story = {
   name: "加载中",
   render: () => <Harness loading />,
+  play: async ({ canvasElement }) => {
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const region = canvasElement.querySelector<HTMLElement>('.yisi-loading-state[data-rows="auto"]')!;
+    if (!region || region.clientHeight < 400 || canvasElement.ownerDocument.documentElement.scrollHeight > innerHeight) throw new Error('Style loading must fill the available desktop area without page overflow');
+    canvasElement.dataset.loadingChecksPassed = 'true';
+  },
 };
 
 export const ErrorState: Story = {

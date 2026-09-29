@@ -2,6 +2,36 @@
   "schemaVersion": 1,
   "surface": "human2ai-web",
   "generated": false,
-  "localAssetCount": 20,
-  "sharedVersion": "0.17.1"
+  "localAssetCount": 21,
+  "sharedVersion": "0.19.3",
+  "stateTabsMigration": {
+    "asset": "human2ai/ui-sketch-state-tabs",
+    "replacement": "yisiui/tab-switch",
+    "version": "0.18.0",
+    "retainedResponsibility": "State rename/delete dialogs and product callbacks",
+    "menuTrigger": "hover",
+    "evidence": "src/local/UiSketchStateTabs.stories.tsx"
+  },
+  "loadingMigration": {
+    "asset": "yisiui/loading-state",
+    "version": "0.19.3",
+    "adaptiveText": [
+      "workspace-sidebar",
+      "ui-sketch route/properties",
+      "composition route/properties",
+      "style library"
+    ],
+    "image": [
+      "ui-sketch canvas",
+      "composition canvas",
+      "spatial workspace",
+      "spatial camera previews/gallery",
+      "spatial observation box"
+    ],
+    "retainedFixedRows": [
+      "workspace sidebar actions (content-sized section)",
+      "spatial object list (content-sized section)"
+    ],
+    "evidence": "src/local/SpatialWorkspaceView.stories.tsx"
+  }
 }

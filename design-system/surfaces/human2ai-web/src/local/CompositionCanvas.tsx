@@ -39,6 +39,7 @@ import {
   visibleCompositionDraft,
   renderCompositionNodesSvg,
   copyCompositionItems,
+  parseCompositionClipboard,
   frameBoundsInCanvas,
   isCompositionTextRegion,
   moveItem,
@@ -74,6 +75,7 @@ import {
 import { uiAssetAttributes } from "../vendor/yisiui/runtime/src/assetMarker";
 import { CanvasFrame } from "./CanvasFrame";
 import { CanvasImage } from "./CanvasImage";
+import { readCanvasClipboard, writeCanvasClipboard } from "./canvasClipboard";
 import { useCanvasImagePaste } from "./useCanvasImagePaste";
 import {
   CanvasImageEditorFields,
@@ -355,7 +357,8 @@ export function CompositionCanvas({
   const suppressClickRef = useRef(false);
   const suppressItemSelectionRef = useRef(false);
   const groupResizeSourceRef = useRef<GroupResizeSource | null>(null);
-  const clipboardRef = useRef<CompositionClipboardItem[]>([]);
+  const pasteClipboardRef = useRef(applyClipboard);
+  useLayoutEffect(() => { pasteClipboardRef.current = applyClipboard; });
   const clipboardTokenRef = useRef("");
   const pasteCountRef = useRef(0);
   const [draggingItems, setDraggingItems] = useState(false);
@@ -418,9 +421,11 @@ export function CompositionCanvas({
   }, [interactionResetKey, draft.activeStateId]);
   const imagePaste = useCanvasImagePaste({
     disabled: appearance === "reference" || !onDraftChange || Boolean(editingTarget),
-    resetKey: interactionResetKey,
+    resetKey: `${interactionResetKey}:${draft.activeStateId}`,
     labels: imageEditorLabels,
     onUpload: onImageUpload,
+    onReadImageFile,
+    resolveImageSource,
     onCopy: handleCanvasCopy,
     onPasteFallback: handleCanvasPaste,
     onImageReady: ({ assetId, x, y, width, height }) => {
@@ -945,26 +950,39 @@ export function CompositionCanvas({
 
   function handleCanvasCopy(event: ClipboardEvent): void {
     if (selectedItemIds.length === 0 || !event.clipboardData) return;
-    clipboardRef.current = copyCompositionItems(draft, selectedItemIds);
-    clipboardTokenRef.current = crypto.randomUUID();
+    const clipboard = copyCompositionItems(draft, selectedItemIds);
+    if (clipboard.length === 0) return;
+    clipboardTokenRef.current = writeCanvasClipboard(
+      event.clipboardData, "application/x-human2ai-composition", clipboard,
+      clipboard.flatMap(entry => entry.kind === "image" ? [entry.item] : []), resolveImageSource,
+    );
     pasteCountRef.current = 0;
-    event.clipboardData.setData("application/x-human2ai-composition", clipboardTokenRef.current);
     event.preventDefault();
     event.stopPropagation();
   }
 
   function handleCanvasPaste(event: ClipboardEvent): void {
-    if (event.defaultPrevented || !onDraftChange || clipboardRef.current.length === 0
-      || event.clipboardData?.getData("application/x-human2ai-composition") !== clipboardTokenRef.current) return;
+    if (event.defaultPrevented || !onDraftChange || !event.clipboardData) return;
+    const clipboard = readCanvasClipboard(event.clipboardData, "application/x-human2ai-composition", parseCompositionClipboard);
+    if (!clipboard) return;
 
     event.preventDefault();
     event.stopPropagation();
-    const pasteCount = pasteCountRef.current + 1;
-    const pasted = pasteCompositionItems(draft, clipboardRef.current, {
+    imagePaste.pasteNodes(
+      clipboard.items.flatMap(entry => entry.kind === "image" ? [entry.item] : []),
+      clipboard.sources, () => pasteClipboardRef.current(clipboard),
+    );
+  }
+
+  function applyClipboard(clipboard: { token: string; items: CompositionClipboardItem[] }): void {
+    if (!onDraftChange) return;
+    const pasteCount = (clipboard.token === clipboardTokenRef.current ? pasteCountRef.current : 0) + 1;
+    const pasted = pasteCompositionItems(latestDraftRef.current.draft, clipboard.items, {
       x: (CLIPBOARD_PASTE_OFFSET * pasteCount) / COMPOSITION_CANVAS.width,
       y: (CLIPBOARD_PASTE_OFFSET * pasteCount) / COMPOSITION_CANVAS.height,
     });
     if (pasted.ids.length === 0) return;
+    clipboardTokenRef.current = clipboard.token;
     pasteCountRef.current = pasteCount;
     closeItemEditor();
     onDraftChange(pasted.draft);

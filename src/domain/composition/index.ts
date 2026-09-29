@@ -93,3 +93,4 @@ export {
   compositionStates, createCompositionState, selectCompositionState,
   renameCompositionState, reorderCompositionStates, deleteCompositionState,
 } from "./states.ts";
+export { parseCompositionClipboard } from "./clipboard.ts";
