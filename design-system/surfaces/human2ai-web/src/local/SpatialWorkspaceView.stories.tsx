@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react-webpack5";
 import { useState } from "react";
+import { waitFor } from "storybook/test";
 import { applySpatialOperations, BODY_SHAPE_LIMITS, createSpatialCameraBox, SPATIAL_BOX_FACES, createHumanoid, createSpatialDraft, DEFAULT_TORSO_RATIO, type SpatialBodyShape, type SpatialDraft } from "../../../../../src/domain/spatial";
 import zh from "../../../../../locales/zh-CN/common.json";
 import en from "../../../../../locales/en/common.json";
@@ -35,7 +36,52 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 export const Default: Story = { name: "标准人形" };
 export const Empty: Story = { name: "空空间", render: () => <Harness initial={createSpatialDraft()} /> };
-export const Loading: Story = { name: "载入中", render: () => <Harness loading /> };
+export const Loading: Story = {
+  name: "载入中",
+  render: () => <Harness loading />,
+  play: async ({ canvasElement }) => {
+    const region = canvasElement.querySelector<HTMLElement>('.spatial-center')!;
+    const skeleton = region.querySelector<HTMLElement>('.yisi-loading-state')!;
+    const frame = () => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    const image = skeleton.querySelector<HTMLElement>('.ant-skeleton-image')!;
+    if (skeleton.dataset.variant !== 'image' || !image) throw new Error('The canvas must show an image loading placeholder');
+    const icon = image.querySelector('svg')!;
+    const runtimeSheets = [...canvasElement.ownerDocument.querySelectorAll<HTMLStyleElement>('style[data-css-hash]')]
+      .filter(style => style.textContent?.includes('.ant-skeleton-image-path'))
+      .map(style => style.sheet).filter((sheet): sheet is CSSStyleSheet => Boolean(sheet));
+    const disabled = runtimeSheets.map(sheet => sheet.disabled);
+    try {
+      runtimeSheets.forEach(sheet => { sheet.disabled = true; });
+      await frame();
+      if (icon.getBoundingClientRect().width !== 48 || icon.getBoundingClientRect().height !== 48 || getComputedStyle(icon.querySelector('path')!).fill === 'rgb(0, 0, 0)' || getComputedStyle(image).backgroundImage === 'none') {
+        throw new Error('Static styles must show the complete image loading state before Ant runtime styles arrive');
+      }
+    } finally {
+      runtimeSheets.forEach((sheet, index) => { sheet.disabled = disabled[index]; });
+    }
+    if (icon.getBoundingClientRect().width <= 0 || icon.getBoundingClientRect().width > 64) throw new Error('Styled loading must restore its normal small image icon');
+    const oldStyle = region.getAttribute('style');
+    try {
+      region.style.flex = 'none'; region.style.height = '240px';
+      await frame();
+      const shortHeight = image.getBoundingClientRect().height;
+      if (shortHeight <= 0 || image.getBoundingClientRect().width <= 0) throw new Error('Image loading must be visible');
+      region.style.height = '480px';
+      await waitFor(() => {
+        if (image.getBoundingClientRect().height <= shortHeight || region.querySelector('.yisi-loading-state') !== skeleton) throw new Error('Resizing must grow the retained image loading placeholder');
+      });
+      await frame();
+      let mutations = 0;
+      const observer = new MutationObserver(records => { mutations += records.length; });
+      observer.observe(skeleton, { subtree: true, childList: true, attributes: true });
+      await new Promise(resolve => setTimeout(resolve, 200)); observer.disconnect();
+      if (mutations) throw new Error('Loading must stop changing DOM after its size settles');
+    } finally {
+      if (oldStyle === null) region.removeAttribute('style'); else region.setAttribute('style', oldStyle);
+    }
+    canvasElement.dataset.loadingChecksPassed = 'true';
+  },
+};
 let errorRetries = 0;
 export const LoadError: Story = {
   name: "读取失败",
@@ -192,9 +238,11 @@ const cameraFixture: SpatialDraft = { ...fixture, cameras: [
 const galleryFixture: SpatialDraft = { ...fixture, cameras: Array.from({ length: 7 }, (_, index) => ({
   ...cameraFixture.cameras[index % 2], id: `gallery-${index}`, name: index === 6 ? "Camera_".repeat(18) : zh.spatial.camera.replace("{{number}}", String(index + 1)),
 })), cameraBoxes: [createSpatialCameraBox("box", zh.spatial.cameraBox)] };
-const galleryPreview = (id: string) => {
+const galleryRequests: { id: string; pass: SpatialRenderPass }[] = [];
+const galleryPreview = (id: string, pass: SpatialRenderPass = "color") => {
+  galleryRequests.push({ id, pass });
   const camera = galleryFixture.cameras.find(item => item.id === id) ?? galleryFixture.cameras[0];
-  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${camera.width}" height="${camera.height}" viewBox="0 0 400 300"><rect width="400" height="300" fill="#edf0f3"/><path d="M0 220L200 150L400 220M200 150V300" stroke="#9cbbd3" fill="none"/><rect x="130" y="100" width="140" height="100" fill="#b6a58c"/><text x="200" y="160" text-anchor="middle" font-size="30">${id.replace('gallery-', '')}</text></svg>`)}`;
+  return `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="${camera.width}" height="${camera.height}" viewBox="0 0 400 300"><rect width="400" height="300" fill="#edf0f3"/><path d="M0 220L200 150L400 220M200 150V300" stroke="#9cbbd3" fill="none"/><rect x="130" y="100" width="140" height="100" fill="#b6a58c"/><text x="200" y="160" text-anchor="middle" font-size="30">${id.replace('gallery-', '')} ${pass}</text></svg>`)}`;
 };
 const galleryChanges: SpatialDraft[] = [];
 export const CameraGallery: Story = {
@@ -204,7 +252,7 @@ export const CameraGallery: Story = {
     const pause = () => new Promise(resolve => setTimeout(resolve, 180));
     const tabs = canvasElement.querySelector<HTMLElement>('.spatial-workspace-tabs')!;
     const inputs = tabs.querySelectorAll<HTMLInputElement>('input[type="radio"]');
-    if (inputs.length !== 2 || !inputs[0].checked) throw new Error('The workspace must start with exactly two fixed views');
+    if (inputs.length !== 3 || !inputs[0].checked) throw new Error('The workspace must start with the three fixed views');
     const viewport = canvasElement.querySelector('.spatial-viewport');
     galleryChanges.length = 0;
     inputs[1].click(); await pause();
@@ -212,11 +260,30 @@ export const CameraGallery: Story = {
     const cards = [...gallery.querySelectorAll('figure')];
     if (cards.length !== galleryFixture.cameras.length) throw new Error('Show every scene camera, excluding camera boxes');
     cards.forEach((card, index) => {
-      if (card.querySelector('figcaption')!.textContent !== galleryFixture.cameras[index].name) throw new Error('Keep complete camera names');
+      if (card.querySelector('.spatial-camera-name')!.textContent !== galleryFixture.cameras[index].name) throw new Error('Keep complete camera names');
       if (!card.querySelector<HTMLImageElement>('img')!.alt.startsWith(galleryFixture.cameras[index].name)) throw new Error('Associate each view with its camera');
     });
+    const target = cards[1];
+    const retainedImages = cards.map(card => card.querySelector('img'));
+    const panel = canvasElement.querySelector('.spatial-panel')!;
+    let unrelatedMutations = 0;
+    const observer = new MutationObserver(records => { unrelatedMutations += records.length; });
+    for (const element of [panel, ...cards.filter(card => card !== target)]) observer.observe(element, { subtree: true, childList: true, attributes: true });
+    galleryRequests.length = 0;
+    for (const pass of ['structure', 'depth', 'skeleton', 'color']) {
+      target.querySelector<HTMLInputElement>(`input[value="${pass}"]`)!.click(); await pause();
+      const image = target.querySelector<HTMLImageElement>('img')!;
+      const download = target.querySelector<HTMLAnchorElement>('a[download]')!;
+      if (!image.complete || !image.naturalWidth || !download || download.getAttribute('href') !== image.getAttribute('src') || download.download !== `gallery-1-${pass}.png`) throw new Error('Gallery download must follow the displayed camera pass');
+      if (cards.some((card, index) => index !== 1 && card.querySelector('img') !== retainedImages[index])) throw new Error('Switching one camera must retain every other preview');
+      if (target.dataset.selected !== 'false') throw new Error('Pass controls must not select camera properties');
+    }
+    observer.disconnect();
+    if (unrelatedMutations || galleryRequests.some(request => request.id !== 'gallery-1') || galleryChanges.length) throw new Error('Pass changes must stay inside the affected camera card');
+    canvasElement.dataset.cameraPassScope = JSON.stringify({ cameras: cards.length, unrelatedMutations, unrelatedSourceCalls: galleryRequests.filter(request => request.id !== 'gallery-1').length });
     const bounds = cards.map(card => card.getBoundingClientRect());
-    if (Math.abs(bounds[0].top - bounds[2].top) > 1 || bounds[3].top <= bounds[0].top) throw new Error('Render exactly three cameras per row');
+    const columns = getComputedStyle(gallery).gridTemplateColumns.split(" ").length;
+    if (bounds.some(bounds => bounds.width > 421 || bounds.width < Math.min(280, gallery.clientWidth) - 1) || (bounds[columns] && bounds[columns].top <= bounds[0].top)) throw new Error('Camera cards must respect width limits and wrap into available columns');
     inputs[1].focus();
     inputs[1].dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', keyCode: 37, which: 37, bubbles: true })); await pause();
     if (!inputs[0].checked || canvasElement.querySelector('.spatial-viewport') !== viewport || viewport!.getBoundingClientRect().height < 160) throw new Error('Keyboard switching must preserve the mounted spatial editor');
@@ -230,7 +297,6 @@ export const CameraGallery: Story = {
     const panelToggle = canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${zh.shell.collapseRightPanel}"]`)!;
     panelToggle.click(); await pause();
     select[1].click(); await pause();
-    const panel = canvasElement.querySelector('.spatial-panel')!;
     const selectedName = () => panel.querySelector<HTMLInputElement>(`input[aria-label="${zh.spatial.name}"]`)?.value;
     if (panelToggle.getAttribute('aria-expanded') !== 'true' || selectedName() !== galleryFixture.cameras[1].name || !panel.querySelector(`[aria-label="${zh.spatial.span}"]`)) throw new Error('Selecting a camera must reopen its properties, including its projection settings');
     select[0].focus(); select[0].click(); await pause();
@@ -325,6 +391,9 @@ export const CameraReferenceInteractions: Story = {
     await pause();
     for (const [pass, label] of [["color", zh.spatial.referenceColor], ["structure", zh.spatial.referenceStructure], ["depth", zh.spatial.referenceDepth], ["skeleton", zh.spatial.referenceSkeleton]]) {
       tabs.querySelector<HTMLInputElement>(`input[value="${pass}"]`)!.click(); await pause();
+      const selected = tabs.querySelector<HTMLInputElement>('input:checked')!.closest('label')!.getBoundingClientRect();
+      const track = tabs.querySelector('.yisi-tab-switch-viewport')?.getBoundingClientRect() ?? tabs.getBoundingClientRect();
+      if (selected.left < track.left - 1 || selected.right > track.right + 1) throw new Error('Selected preview tab must remain fully reachable inside the sidebar');
       const image = panel.querySelector<HTMLImageElement>('.spatial-preview img')!;
       const download = panel.querySelector<HTMLAnchorElement>('a[download]')!;
       if (!image.complete || !image.naturalWidth || !image.alt.endsWith(label)) throw new Error("Preview must show the selected reference");

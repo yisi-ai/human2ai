@@ -142,7 +142,6 @@ function LayoutStatesHarness() {
                 switch: t("canvasStates.switch"), rename: t("actions.rename"), name: t("uiSketch.states.name"),
                 add: t("uiSketch.views.enableMotion"),
                 new: t("uiSketch.states.new"), delete: t("uiSketch.states.delete"), cancel: t("actions.cancel"),
-                reorderHint: t("uiSketch.states.reorderHint"),
                 actions: (name) => t("uiSketch.states.actions", { name }),
                 deleteTitle: (name) => t("uiSketch.states.deleteTitle", { name }),
               }}

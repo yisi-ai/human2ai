@@ -1,4 +1,4 @@
-import { UI_SKETCH_START_STAGE_ID, uiSketchDraftForStage, updateUiSketchStageDraft } from "./draft.ts";
+import { createUiSketchDraft, validateUiSketchDraft, UI_SKETCH_START_STAGE_ID, uiSketchDraftForStage, updateUiSketchStageDraft } from "./draft.ts";
 import { uiSketchSelectionWithGroups } from "./groups.ts";
 import { uiSketchLayerOrder } from "./layers.ts";
 import type { UiSketchDraft, UiSketchNodeOrigin } from "./types.ts";
@@ -6,6 +6,24 @@ import type { UiSketchDraft, UiSketchNodeOrigin } from "./types.ts";
 export type UiSketchClipboard = Pick<UiSketchDraft, "rectangles" | "texts" | "images" | "groups"> & {
   layerOrder: string[];
 };
+
+/** Validate only copied nodes; source frame, states and overall note are not transferred. */
+export function parseUiSketchClipboard(input: unknown): UiSketchClipboard | null {
+  if (!input || typeof input !== "object") return null;
+  const value = input as Record<string, unknown>;
+  if (!["rectangles", "texts", "images", "groups", "layerOrder"].every(key => Array.isArray(value[key]))) return null;
+  try {
+    const draft = validateUiSketchDraft({
+      ...createUiSketchDraft(),
+      rectangles: value.rectangles, texts: value.texts, images: value.images,
+      groups: value.groups, layerOrder: value.layerOrder,
+    });
+    const items = copyUiSketchItems(draft, [...draft.rectangles, ...draft.texts, ...draft.images].map(item => item.id));
+    return items.layerOrder.length ? items : null;
+  } catch {
+    return null;
+  }
+}
 
 export function copyUiSketchItems(
   draft: UiSketchDraft,

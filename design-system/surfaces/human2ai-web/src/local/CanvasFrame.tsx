@@ -223,12 +223,14 @@ export function CanvasFrame({
         className={nodeClasses}
       >
         <CanvasShape
+          key="border"
           type="rectangle"
           width={bounds.width}
           height={bounds.height}
           className="human2ai-canvas-frame__border"
         />
         <rect
+          key="hit-area"
           className="human2ai-canvas-frame__hit"
           x={nodeBounds.x}
           y={nodeBounds.y}

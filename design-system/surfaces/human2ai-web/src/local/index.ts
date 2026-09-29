@@ -166,3 +166,5 @@ export { SpatialWorkspaceView, type SpatialWorkspaceViewProps, type SpatialLabel
 export { SpatialViewport, type SpatialViewportProps, type SpatialSelection } from "./SpatialViewport";
 export { SessionPreviewPicker } from "./SessionPreviewPicker";
 export type { SessionPreviewPickerProps } from "./SessionPreviewPicker";
+
+export { PromptPreviewHover, type PromptPreviewHoverProps } from "./PromptPreviewHover";

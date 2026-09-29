@@ -4,7 +4,10 @@
   box-sizing: border-box;
   display: inline-flex;
   align-items: stretch;
-  min-width: max-content;
+  min-width: 0;
+  max-width: 100%;
+  position: relative;
+  isolation: isolate;
   padding: 2px;
   background: var(--yisiui-tab-switch-background, var(--yisiui-color-surface-page));
   color: var(--yisiui-tab-switch-unselected-text-color, var(--yisiui-color-text-secondary));
@@ -19,6 +22,8 @@
 }
 
 .yisi-tab-switch-item {
+  position: relative;
+  z-index: 1;
   display: flex;
   min-width: 0;
   align-items: stretch;
@@ -46,9 +51,39 @@
 }
 
 .yisi-tab-switch-active-item {
-  background: var(--yisiui-tab-switch-selected-background, var(--yisiui-color-surface-panel));
-  color: var(--yisiui-tab-switch-selected-text-color, var(--yisiui-color-text-primary));
+  background: var(--yisiui-tab-switch-selected-background, var(--yisiui-color-action-primary));
+  color: var(--yisiui-tab-switch-selected-text-color, var(--yisiui-color-text-inverse));
   box-shadow: 0 1px 2px color-mix(in srgb, var(--yisiui-color-neutral-900) 8%, transparent);
+}
+
+.yisi-tab-switch-selection-layer {
+  position: absolute;
+  inset: 0;
+  overflow: clip;
+  pointer-events: none;
+}
+
+.yisi-tab-switch-selection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  visibility: hidden;
+  border-radius: var(--yisiui-radius-sm);
+  background: var(--yisiui-tab-switch-selected-background, var(--yisiui-color-action-primary));
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--yisiui-color-neutral-900) 8%, transparent);
+}
+
+.yisi-tab-switch-selection[data-animate] {
+  transition: transform var(--yisiui-motion-slow) ease,
+    width var(--yisiui-motion-slow) ease,
+    height var(--yisiui-motion-slow) ease;
+}
+
+.yisi-tab-switch[data-indicator-ready]:not([data-drag-state]) .yisi-tab-switch-selection { visibility: visible; }
+.yisi-tab-switch[data-indicator-ready]:not([data-drag-state]) .yisi-tab-switch-active-item {
+  background: transparent;
+  box-shadow: none;
 }
 
 .yisi-tab-switch-disabled-item .yisi-tab-switch-label {
@@ -116,7 +151,128 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .yisi-tab-switch-selection[data-animate],
   .yisi-tab-switch-item {
     transition: none;
+  }
+}
+
+.yisi-tab-switch-item { flex: 0 0 auto; }
+
+.yisi-tab-switch[data-drag-state] .yisi-tab-switch-item:not([data-dragged]) {
+  transition: transform var(--yisiui-motion-normal) ease,
+    background-color var(--yisiui-motion-normal) ease,
+    color var(--yisiui-motion-normal) ease;
+}
+
+.yisi-tab-switch-menu,
+.yisi-tab-switch-trailing-action {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.yisi-tab-switch-menu-trigger {
+  opacity: 0;
+  width: 24px;
+  height: 24px;
+}
+
+.yisi-tab-switch-item:hover .yisi-tab-switch-menu-trigger,
+.yisi-tab-switch-item:focus-within .yisi-tab-switch-menu-trigger,
+.yisi-tab-switch-menu[data-open] .yisi-tab-switch-menu-trigger {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .yisi-tab-switch-menu-trigger { opacity: 1; }
+}
+
+.yisi-tab-switch[data-reorderable] .yisi-tab-switch-label {
+  touch-action: pan-x;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.yisi-tab-switch[data-drag-state] { cursor: grabbing; }
+.yisi-tab-switch[data-drag-state] .yisi-tab-switch-label { cursor: inherit; }
+.yisi-tab-switch[data-drag-state] .yisi-tab-switch-right-slot { pointer-events: none; }
+.yisi-tab-switch-item[data-dragged] {
+  position: relative;
+  z-index: 2;
+  transition: none;
+  background: var(--yisiui-color-surface-panel);
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--yisiui-color-neutral-900) 24%, transparent);
+  outline: 2px solid var(--yisiui-color-border-focus);
+  outline-offset: -2px;
+}
+.yisi-tab-switch[data-drag-state="cancel"] {
+  cursor: not-allowed;
+  outline: 2px dashed var(--yisiui-color-border-control);
+}
+.yisi-tab-switch[data-drag-state="cancel"] .yisi-tab-switch-item[data-dragged] { opacity: 0.6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .yisi-tab-switch-item,
+  .yisi-tab-switch[data-drag-state] .yisi-tab-switch-item:not([data-dragged]) { transition: none; }
+}
+
+
+.yisi-tab-switch-viewport {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.yisi-tab-switch-viewport::-webkit-scrollbar { display: none; }
+.yisi-tab-switch-track {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: stretch;
+  width: max-content;
+  min-width: 100%;
+}
+.yisi-tab-switch-scroll-arrow.ant-btn {
+  flex: 0 0 26px;
+  width: 26px;
+  height: auto;
+  min-height: var(--yisiui-tab-switch-item-height);
+  align-self: stretch;
+  padding: 0;
+  touch-action: none;
+}
+.yisi-tab-switch[data-scroll-direction="rtl"] .yisi-tab-switch-scroll-left { order: 1; }
+.yisi-tab-switch[data-scroll-direction="rtl"] .yisi-tab-switch-scroll-right { order: -1; }
+
+
+.yisi-tab-switch-active-item .yisi-tab-switch-menu-trigger.ant-btn {
+  color: var(--yisiui-tab-switch-selected-text-color);
+}
+.yisi-tab-switch-active-item[data-dragged] {
+  background: var(--yisiui-tab-switch-selected-background);
+}
+
+/* Hover mode has no pointer ellipsis; Tab focus and touch retain a visible trigger. */
+.yisi-tab-switch-menu[data-mode="hover"]:not(:focus-within) { width: 0; }
+.yisi-tab-switch-menu[data-mode="hover"] .yisi-tab-switch-menu-trigger:not(:focus-visible) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+@media (hover: none) {
+  .yisi-tab-switch-menu[data-mode="hover"]:not(:focus-within) { width: auto; }
+  .yisi-tab-switch-menu[data-mode="hover"] .yisi-tab-switch-menu-trigger:not(:focus-visible) {
+    position: static;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    margin: 0;
+    clip-path: none;
   }
 }

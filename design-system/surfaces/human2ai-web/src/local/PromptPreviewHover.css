@@ -1,0 +1,15 @@
+.human2ai-prompt-preview-hover { display: block; min-width: 0; }
+.human2ai-prompt-preview-hover__content {
+  width: min(560px, 50vw);
+  max-height: min(480px, 65vh);
+  overflow: auto;
+  overscroll-behavior: contain;
+  user-select: text;
+}
+.human2ai-prompt-preview-hover__content pre {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  line-height: 1.6;
+}

@@ -545,7 +545,6 @@
       "new": "New state",
       "delete": "Delete state",
       "deleteTitle": "Delete state “{{name}}”?",
-      "reorderHint": "Hold a tab to drag it, or press Ctrl + Shift + Left/Right to reorder.",
       "notFound": "Unknown UI state: {{state}}."
     },
     "preview": {
@@ -561,7 +560,10 @@
     "copyPreview": "Copy preview",
     "previewImage": "Preview image",
     "previewFailed": "Could not copy the preview.",
-    "previewDownloaded": "This browser cannot copy images, so the preview was downloaded"
+    "previewDownloaded": "This browser cannot copy images, so the preview was downloaded",
+    "promptPreview": "Prompt preview",
+    "promptPreviewLoading": "Loading prompt",
+    "promptPreviewFailed": "Could not preview prompt"
   },
   "visualWeight": {
     "auto": "Auto",

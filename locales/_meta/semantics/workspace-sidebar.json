@@ -172,7 +172,7 @@
     },
     "workspace.loading": {
       "meaning": "Progress and failure feedback for loading the workspace project-session hierarchy.",
-      "scope": "Workspace sidebar loading boundary.",
+      "scope": "Workspace sidebar loading boundary, including action-area placeholders while the same project-session request is pending.",
       "referent": "Projects and sessions fetched to populate sidebar navigation.",
       "precedence": "Not mutation feedback; retry uses actions.retry.",
       "canonicalKey": "workspaceSidebar.loading",
@@ -183,7 +183,8 @@
         "Could not load projects"
       ],
       "examples": [
-        "Show loading feedback while fetching sidebar data."
+        "Show loading feedback while fetching sidebar data.",
+        "Temporarily replace sidebar action controls while the project-session hierarchy loads."
       ],
       "nonExamples": [
         "Report failure to rename a session."

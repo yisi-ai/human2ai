@@ -116,7 +116,6 @@ export default function UiSketchPage() {
         <LoadingState
           className={styles.routeLoading}
           label={t("uiSketch.session.loading")}
-          rows={10}
         />
       )}
     >
@@ -446,12 +445,11 @@ function UiSketchPageContent() {
       rightPanelOpen={rightPanelOpen}
       onRightPanelOpenChange={setRightPanelOpen}
       rightPanel={(
-        <div className={styles.panel} data-canvas-editor>
+        <div className={`${styles.panel} ${loading ? styles.panelIsLoading : ""}`} data-canvas-editor>
           {loading ? (
             <LoadingState
               className={styles.panelLoading}
               label={t("uiSketch.session.loading")}
-              rows={8}
               compact
             />
           ) : rightPanelOpen ? (
@@ -516,8 +514,8 @@ function UiSketchPageContent() {
         {loading ? (
           <LoadingState
             className={styles.workspaceLoading}
+            variant="image"
             label={t("uiSketch.session.loading")}
-            rows={10}
           />
         ) : sessionLoadFailed ? null : (
           <CompositionWorkflowView
@@ -534,7 +532,6 @@ function UiSketchPageContent() {
                   new: t("uiSketch.states.new"),
                   delete: t("uiSketch.states.delete"),
                   cancel: t("actions.cancel"),
-                  reorderHint: t("uiSketch.states.reorderHint"),
                   actions: (name) => t("uiSketch.states.actions", { name }),
                   deleteTitle: (name) => t("uiSketch.states.deleteTitle", { name }),
                 }}
@@ -621,6 +618,9 @@ function UiSketchPageContent() {
                   ungroupItems: t("uiSketch.canvasLabels.ungroupItems"),
                   copyGroup: t("clipboard.group"),
                   copyPrompt: t("clipboard.copyPrompt"),
+                  promptPreview: t("clipboard.promptPreview"),
+                  promptPreviewLoading: t("clipboard.promptPreviewLoading"),
+                  promptPreviewFailed: t("clipboard.promptPreviewFailed"),
                   copySketch: t("clipboard.copyPreview"),
                   previewImage: t("clipboard.previewImage"),
                   copyAllStages: t("uiSketch.motion.copyPrompt"),

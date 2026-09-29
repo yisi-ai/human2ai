@@ -9,7 +9,7 @@ import { checkUiSketchPreviewPixels } from "./uiSketchPreviewStoryChecks";
 import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canvasNodeAppearanceStoryChecks";
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
-import { waitFor } from "storybook/test";
+import { waitFor, userEvent } from "storybook/test";
 import { useState } from "react";
 
 import { placeNodeInStory, placementLayer, placementPointer } from "./canvasPlacementStoryChecks";
@@ -1790,10 +1790,19 @@ export const SeparateCopyActions: Story = {
     sketchCopyTracker.count = 0;
     const promptButton = findButton(canvasElement, "复制提示词");
     const sketchButton = findButton(canvasElement, "复制预览图");
+    await waitForCanvasRender();
+    const unchanged = captureCanvasNodeExecutions(canvasElement);
+    await userEvent.hover(promptButton);
+    await waitFor(() => {
+      if (!canvasElement.ownerDocument.querySelector('.human2ai-prompt-preview-hover__content pre')) throw new Error('Missing prompt preview');
+    });
+    const preview = canvasElement.ownerDocument.querySelector('.human2ai-prompt-preview-hover__content pre')!.textContent;
+    unchanged();
     promptButton.click();
     await waitForCanvasRender();
     if (
-      !copiedPrompt.startsWith("请根据以下信息设计并实现界面。")
+      copiedPrompt !== preview
+      || !copiedPrompt.startsWith("请根据以下信息设计并实现界面。")
       || copiedPrompt.includes("状态过渡")
       || findMenuItems("开始").length > 0
       || currentSketchCopyCount() !== 0
@@ -1877,7 +1886,7 @@ function DisplayControlsFixture({ draft: initialDraft, activeStageId = "start", 
                 switch: storyI18n.t("uiSketch.views.switch"), add: storyI18n.t("uiSketch.views.enableMotion"),
                 rename: storyI18n.t("actions.rename"), name: storyI18n.t("uiSketch.states.name"),
                 new: storyI18n.t("uiSketch.states.new"), delete: storyI18n.t("uiSketch.states.delete"),
-                cancel: storyI18n.t("actions.cancel"), reorderHint: storyI18n.t("uiSketch.states.reorderHint"),
+                cancel: storyI18n.t("actions.cancel"),
                 actions: (name) => storyI18n.t("uiSketch.states.actions", { name }),
                 deleteTitle: (name) => storyI18n.t("uiSketch.states.deleteTitle", { name }),
               }}

@@ -1158,7 +1158,8 @@
       ],
       "examples": [
         "Add State 2 so its layout can be edited separately.",
-        "Use the compact Add state button beside the only state tab; after a second state exists, create further states from the state menu."
+        "Use the compact Add state button beside the only state tab; after a second state exists, create further states from the state menu.",
+        "A decorative leading plus icon reinforces the same Add state action without changing its accessible name."
       ],
       "nonExamples": [
         "Copy the motion implementation prompt.",
@@ -1327,6 +1328,26 @@
       ],
       "nonExamples": [
         "Change viewport zoom."
+      ]
+    },
+    "clipboard.prompt-preview": {
+      "meaning": "Read the generated prompt before copying it, including the same selected state and resolved style instructions used by the copy action.",
+      "scope": "Hover and keyboard-focus previews on composition and UI-sketch copy controls and UI state-copy menu items.",
+      "referent": "Read-only generated prompt text, not a new AI generation or clipboard operation.",
+      "precedence": "Button preview uses the current state; menu previews use their own state or all states. Preview loading/failure is separate from copy feedback.",
+      "canonicalKey": "clipboard.promptPreview",
+      "searchTerms": [
+        "提示词预览",
+        "Prompt preview",
+        "预览提示词"
+      ],
+      "examples": [
+        "Read and scroll the current composition prompt before copying.",
+        "Preview all UI states from the all-states copy menu entry."
+      ],
+      "nonExamples": [
+        "Generate a new image with AI.",
+        "Show the rendered canvas image."
       ]
     }
   },
@@ -2357,14 +2378,6 @@
       "tone": "neutral",
       "reusePolicy": "contextual"
     },
-    "uiSketch.states.reorderHint": {
-      "conceptId": "canvas.layout-states",
-      "variant": "reorder-help",
-      "role": "on-demand instructions for pointer and keyboard state reordering",
-      "grammar": "instructional sentence",
-      "tone": "neutral",
-      "reusePolicy": "contextual"
-    },
     "uiSketch.prompt.stateHeading": {
       "conceptId": "canvas.layout-states",
       "variant": "named-state-heading",
@@ -2509,6 +2522,30 @@
       "tone": "Neutral",
       "reusePolicy": "canonical",
       "duplicateReason": "uiSketch.canvasLabels.rangeTitle is the old UI-specific control title; runtime frame controls now share this key."
+    },
+    "clipboard.promptPreview": {
+      "conceptId": "clipboard.prompt-preview",
+      "variant": "heading",
+      "role": "heading and accessible name for the scrollable preview",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "clipboard.promptPreviewLoading": {
+      "conceptId": "clipboard.prompt-preview",
+      "variant": "loading",
+      "role": "progress announcement while resolving preview text",
+      "grammar": "progress phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "clipboard.promptPreviewFailed": {
+      "conceptId": "clipboard.prompt-preview",
+      "variant": "failure",
+      "role": "error when prompt text cannot be prepared",
+      "grammar": "failure sentence",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
     }
   }
 }

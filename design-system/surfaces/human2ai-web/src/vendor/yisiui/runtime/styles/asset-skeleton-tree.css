@@ -166,13 +166,13 @@
 
 .yisi-asset-skeleton-tree-control
   .ant-tree-node-content-wrapper.ant-tree-node-selected {
-  background: var(--yisiui-color-brand-primary-active);
+  background: var(--yisiui-color-action-primary);
   color: var(--yisiui-color-text-inverse);
 }
 
 .yisi-asset-skeleton-tree-control
   .ant-tree-node-content-wrapper.ant-tree-node-selected:hover {
-  background: var(--yisiui-color-brand-primary-active);
+  background: var(--yisiui-color-action-primary);
 }
 
 .yisi-asset-skeleton-tree-control
@@ -181,7 +181,7 @@
 .yisi-asset-skeleton-tree-control
   .ant-tree-treenode.yisi-asset-skeleton-tree-item-content.yisi-asset-skeleton-tree-item-current
   > .ant-tree-node-content-wrapper {
-  background: var(--yisiui-color-brand-primary-active);
+  background: var(--yisiui-color-action-primary);
   color: var(--yisiui-color-text-inverse);
 }
 
@@ -191,7 +191,7 @@
 .yisi-asset-skeleton-tree-control
   .ant-tree-treenode.yisi-asset-skeleton-tree-item-content.yisi-asset-skeleton-tree-item-current
   > .ant-tree-node-content-wrapper:hover {
-  background: var(--yisiui-color-brand-primary-active);
+  background: var(--yisiui-color-action-primary);
 }
 
 .yisi-asset-skeleton-tree-control

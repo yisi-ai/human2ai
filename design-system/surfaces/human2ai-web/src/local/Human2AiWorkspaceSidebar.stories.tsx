@@ -640,11 +640,25 @@ export const Loading: Story = {
   name: "加载项目",
   args: { loading: true },
   render: (args) => <StoryFrame><Human2AiWorkspaceSidebar {...args} /></StoryFrame>,
-  play: ({ canvasElement }) => {
+  play: async ({ canvasElement }) => {
     assertStorySelector(
       canvasElement,
-      '[data-yisiui-asset="yisiui/loading-state"][aria-label="正在加载项目"]',
+      '[data-yisiui-asset="yisiui/loading-state"][aria-label="正在加载项目"][data-rows="auto"]',
     );
+    await waitFor(() => {
+      for (const selector of ['.human2ai-workspace-sidebar__actions-loading', '.human2ai-workspace-sidebar__loading']) {
+        const region = canvasElement.querySelector<HTMLElement>(selector);
+        const lines = [...(region?.querySelectorAll<HTMLElement>('.ant-skeleton-title, .ant-skeleton-paragraph > li') ?? [])];
+        if (lines.length < 2 || lines.some(line => line.getBoundingClientRect().width <= 0 || line.getBoundingClientRect().height <= 0)) {
+          throw new Error('Both sidebar regions must paint visible loading skeletons');
+        }
+      }
+      const actions = canvasElement.querySelector('.human2ai-workspace-sidebar__actions')!;
+      if (actions.getAttribute('aria-busy') !== 'true' || actions.querySelector('button')) {
+        throw new Error('Pending sidebar actions must show a busy placeholder instead of buttons');
+      }
+    });
+    canvasElement.dataset.loadingVisiblePassed = 'true';
   },
 };
 

@@ -893,44 +893,56 @@ export function Human2AiWorkspaceSidebar({
       <section
         className="human2ai-workspace-sidebar__actions"
         aria-labelledby="human2ai-sidebar-actions-title"
+        aria-busy={loading}
       >
         <h2 id="human2ai-sidebar-actions-title">{labels.functionArea}</h2>
-        <CompositeButton
-          icon={<PictureOutlined aria-hidden="true" />}
-          label={labels.newComposition}
-          collapsedLabel={labels.newComposition}
-          loading={pendingAction === "composition" && pendingSessionProjectId === null}
-          disabled={Boolean(
-            pendingAction
-            && (pendingAction !== "composition" || pendingSessionProjectId !== null)
-          )}
-          onClick={() => void createComposition()}
-        />
-        <CompositeButton
-          icon={<LayoutOutlined aria-hidden="true" />}
-          label={labels.newUiSketch}
-          collapsedLabel={labels.newUiSketch}
-          loading={pendingAction === "ui-sketch" && pendingSessionProjectId === null}
-          disabled={Boolean(
-            pendingAction
-            && (pendingAction !== "ui-sketch" || pendingSessionProjectId !== null)
-          )}
-          onClick={() => void createUiSketch()}
-        />
-        {onCreateSpatial && <CompositeButton icon={<CodeSandboxOutlined aria-hidden="true" />} label={labels.newSpatial} collapsedLabel={labels.newSpatial} loading={pendingAction === "spatial" && pendingSessionProjectId === null} disabled={Boolean(pendingAction && pendingAction !== "spatial")} onClick={() => void createSpatial()} />}
-        <CompositeButton
-          icon={<FolderAddOutlined aria-hidden="true" />}
-          label={labels.newProject}
-          collapsedLabel={labels.newProject}
-          disabled={Boolean(pendingAction)}
-          onClick={openProjectDialog}
-        />
-        <CompositeButton
-          icon={<BgColorsOutlined aria-hidden="true" />}
-          label={labels.styleLibrary}
-          collapsedLabel={labels.styleLibrary}
-          onClick={onOpenStyleLibrary}
-        />
+        {loading ? (
+          <LoadingState
+            className="human2ai-workspace-sidebar__actions-loading"
+            label={labels.loading}
+            rows={onCreateSpatial ? 4 : 3}
+            compact
+          />
+        ) : (
+          <>
+            <CompositeButton
+              icon={<PictureOutlined aria-hidden="true" />}
+              label={labels.newComposition}
+              collapsedLabel={labels.newComposition}
+              loading={pendingAction === "composition" && pendingSessionProjectId === null}
+              disabled={Boolean(
+                pendingAction
+                && (pendingAction !== "composition" || pendingSessionProjectId !== null)
+              )}
+              onClick={() => void createComposition()}
+            />
+            <CompositeButton
+              icon={<LayoutOutlined aria-hidden="true" />}
+              label={labels.newUiSketch}
+              collapsedLabel={labels.newUiSketch}
+              loading={pendingAction === "ui-sketch" && pendingSessionProjectId === null}
+              disabled={Boolean(
+                pendingAction
+                && (pendingAction !== "ui-sketch" || pendingSessionProjectId !== null)
+              )}
+              onClick={() => void createUiSketch()}
+            />
+            {onCreateSpatial && <CompositeButton icon={<CodeSandboxOutlined aria-hidden="true" />} label={labels.newSpatial} collapsedLabel={labels.newSpatial} loading={pendingAction === "spatial" && pendingSessionProjectId === null} disabled={Boolean(pendingAction && pendingAction !== "spatial")} onClick={() => void createSpatial()} />}
+            <CompositeButton
+              icon={<FolderAddOutlined aria-hidden="true" />}
+              label={labels.newProject}
+              collapsedLabel={labels.newProject}
+              disabled={Boolean(pendingAction)}
+              onClick={openProjectDialog}
+            />
+            <CompositeButton
+              icon={<BgColorsOutlined aria-hidden="true" />}
+              label={labels.styleLibrary}
+              collapsedLabel={labels.styleLibrary}
+              onClick={onOpenStyleLibrary}
+            />
+          </>
+        )}
         {actionError &&
           !groupEditor &&
           !deleteGroupTarget &&
@@ -956,7 +968,6 @@ export function Human2AiWorkspaceSidebar({
           <LoadingState
             className="human2ai-workspace-sidebar__loading"
             label={labels.loading}
-            rows={6}
             compact
           />
         ) : errorMessage ? (

@@ -1,6 +1,6 @@
 import { useId, useState, type CSSProperties } from "react";
 import { Checkbox, ConfigProvider, Input, type ThemeConfig } from "antd";
-import { BasicButton } from "@human2ai/ui/yisiui";
+import { BasicButton, tokens } from "@human2ai/ui/yisiui";
 
 import styles from "./FoundationsColorComparison.module.css";
 
@@ -24,9 +24,10 @@ const palettes: Palette[] = [
     foreground: "#FFFFFF", text: "#24484D", background: "#EDF3F2", backgroundHover: "#E1ECEA",
   },
   {
-    name: "鲜绿 · 当前主色", description: "明亮、自然，绿色辨识度高",
-    primary: "#22C55E", hover: "#4ADE80", active: "#16A34A",
-    foreground: "#FFFFFF", text: "#15803D", background: "#F0FDF4", backgroundHover: "#DCFCE7",
+    name: "鲜绿 · 当前主色", description: "主色 #16A34A，绿色更浓郁",
+    primary: tokens["color.brand.primary"], hover: tokens["color.brand.primaryHover"], active: tokens["color.brand.primaryActive"],
+    foreground: tokens["color.text.onPrimary"], text: tokens["color.brand.primaryText"],
+    background: tokens["color.brand.primaryBg"], backgroundHover: tokens["color.brand.primaryBgHover"],
   },
   {
     name: "翡翠绿", description: "略偏青，清爽且克制",

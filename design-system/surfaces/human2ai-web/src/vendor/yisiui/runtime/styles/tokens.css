@@ -1,8 +1,8 @@
 /* GENERATED FILE. DO NOT EDIT. Run `npm run tokens:build`. */
 :root {
-  --yisiui-color-brand-primary: #22C55E;
-  --yisiui-color-brand-primary-hover: #4ADE80;
-  --yisiui-color-brand-primary-active: #16A34A;
+  --yisiui-color-brand-primary: #16A34A;
+  --yisiui-color-brand-primary-hover: #22C55E;
+  --yisiui-color-brand-primary-active: #15803D;
   --yisiui-color-brand-primary-bg: #F0FDF4;
   --yisiui-color-brand-primary-bg-hover: #DCFCE7;
   --yisiui-color-brand-primary-text: #15803D;
@@ -105,9 +105,9 @@
   --yisiui-color-surface-active: #DCFCE7;
   --yisiui-color-surface-disabled: #F3F6F5;
   --yisiui-color-surface-overlay: rgba(31,41,43,0.45);
-  --yisiui-color-action-primary: #22C55E;
-  --yisiui-color-action-primary-hover: #4ADE80;
-  --yisiui-color-action-primary-active: #16A34A;
+  --yisiui-color-action-primary: #16A34A;
+  --yisiui-color-action-primary-hover: #22C55E;
+  --yisiui-color-action-primary-active: #15803D;
   --yisiui-color-action-secondary-hover: #F8FAF9;
   --yisiui-color-action-secondary-active: #F0FDF4;
   --yisiui-color-action-link: #15803D;
@@ -203,7 +203,7 @@
   --yisiui-theme-dark-page: #141414;
   --yisiui-theme-dark-panel: #1F1F1F;
   --yisiui-theme-dark-text: #F5F5F5;
-  --yisiui-theme-dark-interactive: #4ADE80;
+  --yisiui-theme-dark-interactive: #22C55E;
   --yisiui-motion-text-speed-slow: 0.6;
   --yisiui-motion-text-speed-medium: 1;
   --yisiui-motion-text-speed-fast: 1.6;
@@ -227,14 +227,14 @@
   --yisiui-component-status-light-yellow: #FADB14;
   --yisiui-component-status-light-yellow-on-light: #D0A003;
   --yisiui-component-status-light-red: #FF4D4F;
-  --yisiui-component-border-scan-color: #4ADE80;
+  --yisiui-component-border-scan-color: #22C55E;
   --yisiui-component-border-scan-duration: 3200ms;
   --yisiui-component-border-scan-line-width: 3px;
   --yisiui-component-text-shine-color: #FFFFFF;
   --yisiui-component-text-shine-beam-width: 216px;
   --yisiui-component-text-shine-beam-angle: 105deg;
   --yisiui-component-text-shine-base-velocity: 96;
-  --yisiui-component-writing-agent-main: #22C55E;
+  --yisiui-component-writing-agent-main: #16A34A;
   --yisiui-component-writing-agent-logic: #722ED1;
   --yisiui-component-writing-agent-draft: #08979C;
   --yisiui-component-writing-agent-annotation: #C41D7F;
@@ -270,7 +270,7 @@
   --yisiui-component-content-graph-label-text: #48595C;
   --yisiui-component-content-graph-label-background: rgba(255,255,255,0.92);
   --yisiui-component-content-graph-label-border: rgba(122,140,163,0.32);
-  --yisiui-component-content-graph-selection: #22C55E;
+  --yisiui-component-content-graph-selection: #16A34A;
   --yisiui-component-focus-outline: #15803D;
   --yisiui-component-focus-outline-width: 2px;
   --yisiui-theme-page: #F3F6F5;

@@ -45,7 +45,8 @@
       "examples": [
         "Choose a PNG, JPEG, WebP, or self-contained SVG file for the selected image node.",
         "Replace the image content while keeping the image node's note and geometry.",
-        "Paste a clipboard image onto the canvas to upload it into a new node, or paste in the image-node editor to replace its content."
+        "Paste a clipboard image onto the canvas to upload it into a new node, or paste in the image-node editor to replace its content.",
+        "Paste image nodes from another same-type canvas and upload their source image files into the destination session."
       ],
       "nonExamples": [
         "Creating the image node from the canvas toolbar.",

@@ -19,6 +19,7 @@ import {
   CompositionWorkflowView,
   CanvasFrameControls,
   CompositionPreviewHover,
+  PromptPreviewHover,
   CompositionPlanningPanel,
   type CompositionPlanningLabels,
   UiSketchStateTabs,
@@ -141,7 +142,6 @@ export default function CompositionPage() {
         <LoadingState
           className={styles.routeLoading}
           label={t("composition.session.loading")}
-          rows={10}
         />
       )}
     >
@@ -504,14 +504,18 @@ function CompositionPageContent() {
     requestCanvasViewport("fit-frame");
   }
 
+  async function readPrompt(): Promise<string> {
+    const stylePrompt = await sessionStyle.readPromptLine();
+    return buildCompositionPrompt(draft, translatePrompt, stylePrompt);
+  }
+
   async function copyPrompt(): Promise<void> {
     setCopyingPrompt(true);
     try {
       if (!navigator.clipboard?.writeText) {
         throw new Error(t("clipboard.promptUnsupported"));
       }
-      const stylePrompt = await sessionStyle.readPromptLine();
-      await navigator.clipboard.writeText(buildCompositionPrompt(draft, translatePrompt, stylePrompt));
+      await navigator.clipboard.writeText(await readPrompt());
       setDeliveryNotice({ type: "success", message: t("clipboard.copied") });
     } catch (error) {
       setDeliveryNotice({
@@ -683,6 +687,9 @@ function CompositionPageContent() {
 
       <div className={styles.toolGroup} data-composition-tool-group="copy">
         <span className={styles.toolGroupTitle}>{t("clipboard.group")}</span>
+        <PromptPreviewHover readPrompt={readPrompt} label={t("clipboard.promptPreview")}
+          loadingLabel={t("clipboard.promptPreviewLoading")} errorLabel={t("clipboard.promptPreviewFailed")}
+          disabled={loading || copyingPrompt}>
         <CompositeButton
           icon={<CopyOutlined aria-hidden="true" />}
           label={t("clipboard.copyPrompt")}
@@ -690,6 +697,7 @@ function CompositionPageContent() {
           disabled={loading}
           onClick={() => void copyPrompt()}
         />
+        </PromptPreviewHover>
         <CompositionPreviewHover draft={draft} label={t("composition.views.referenceCanvas")}
           resolveImageSource={resolvePreviewImageSource}
           disabled={loading}>
@@ -725,7 +733,6 @@ function CompositionPageContent() {
             <LoadingState
               className={styles.panelLoading}
               label={t("composition.session.loading")}
-              rows={8}
               compact
             />
           ) : rightPanelOpen ? (
@@ -887,8 +894,8 @@ function CompositionPageContent() {
             {loading ? (
               <LoadingState
                 className={styles.workspaceLoading}
+                variant="image"
                 label={t("composition.session.loading")}
-                rows={10}
               />
             ) : (
               <CompositionWorkflowView
@@ -911,7 +918,6 @@ function CompositionPageContent() {
                       new: t("uiSketch.states.new"),
                       delete: t("uiSketch.states.delete"),
                       cancel: t("actions.cancel"),
-                      reorderHint: t("uiSketch.states.reorderHint"),
                       actions: (name) => t("uiSketch.states.actions", { name }),
                       deleteTitle: (name) => t("uiSketch.states.deleteTitle", { name }),
                     }}

@@ -545,7 +545,6 @@
       "new": "新建状态",
       "delete": "删除状态",
       "deleteTitle": "确认删除状态“{{name}}”？",
-      "reorderHint": "长按标签拖动排序；也可按 Ctrl + Shift + 左右方向键移动。",
       "notFound": "找不到界面状态：{{state}}。"
     },
     "preview": {
@@ -561,7 +560,10 @@
     "copyPreview": "复制预览图",
     "previewImage": "预览图",
     "previewFailed": "复制预览图失败。",
-    "previewDownloaded": "浏览器不支持复制图片，预览图已下载"
+    "previewDownloaded": "浏览器不支持复制图片，预览图已下载",
+    "promptPreview": "提示词预览",
+    "promptPreviewLoading": "正在加载提示词",
+    "promptPreviewFailed": "无法预览提示词"
   },
   "visualWeight": {
     "auto": "自动",

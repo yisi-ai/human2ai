@@ -12,7 +12,7 @@
 
 .routeLoading {
   box-sizing: border-box;
-  min-height: 100vh;
+  height: 100vh;
   padding: var(--yisiui-surface-desktop-web-page-padding);
 }
 
@@ -20,6 +20,11 @@
 .panelLoading {
   box-sizing: border-box;
   width: 100%;
+}
+
+.panel.panelIsLoading {
+  grid-template-rows: minmax(0, 1fr);
+  align-content: stretch;
 }
 
 .workspaceLoading {

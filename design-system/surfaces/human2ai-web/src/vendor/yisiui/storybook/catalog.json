@@ -175,7 +175,7 @@
       "title": "yisiui-Components/Switching/TabSwitch",
       "kind": "experimental",
       "assetKey": "yisiui/tab-switch",
-      "description": "需要在两个或多个同级视图之间切换",
+      "description": "需要在一个或多个同级状态或视图之间切换",
       "source": "apps/storybook/stories/TabSwitch.stories.tsx"
     },
     {

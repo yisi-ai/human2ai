@@ -11,6 +11,21 @@
   margin-bottom: var(--yisiui-space-5);
 }
 
+.human2ai-style-library[data-loading="true"] {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+}
+
+.human2ai-style-library[data-loading="true"] > .human2ai-style-library__toolbar {
+  flex-shrink: 0;
+}
+
+.human2ai-style-library[data-loading="true"] > .yisi-loading-state {
+  height: auto;
+  flex: 1;
+}
+
 .human2ai-style-library__search {
   width: min(280px, 100%);
 }
