@@ -14,6 +14,7 @@ import { buildSessionCliCommand } from "../../lib/session-connection";
 import { useCanvasHistory } from "../../lib/use-canvas-history";
 import { useSessionStyle } from "../../lib/use-session-style";
 import { SpatialEditQueue } from "../../lib/spatial-edit-queue";
+import { createStorageProtection } from "../../lib/storage-protection";
 import { availableSpatialCameraPreviews, updateSpatialCameraPreviews, type SpatialCameraPreviewState } from "../../lib/spatial-camera-previews";
 import zh from "../../../locales/zh-CN/common.json";
 
@@ -80,6 +81,8 @@ function SpatialSessionPage() {
     setCameraPreviews(undefined);
     setDraft(context.queue.draft); setRevision(0); setUpdatedAt(null);
     if (!sessionId) { setDraft(context.queue.draft); setRevision(0); return; }
+    const storageProtection = createStorageProtection(sessionId, () => ({ revisions: context.queue.protectedRevisions(), assetIds: [] }));
+    storageProtection.start();
     const receive = (next: Awaited<ReturnType<typeof getLatestSpatialDraftVersion>>) => {
       context.queue = new SpatialEditQueue(next?.draft ?? emptyDraft.current(), next?.revision ?? 0);
       history.reset(context.queue.draft);
@@ -101,6 +104,10 @@ function SpatialSessionPage() {
           writing = true;
           if (!disposed) setSaving(true);
           await context.queue.flush({
+            protect: async () => {
+              if (!disposed) context.queue.retainHistory(history.retainedDrafts());
+              await storageProtection.renew();
+            },
             saveInitial: initial => saveSpatialDraft(sessionId, 0, initial),
             apply: (revision, operations) => applySpatialEdits(sessionId, revision, operations),
             restore: (revision, target) => restoreSpatialDraft(sessionId, revision, target),
@@ -117,12 +124,13 @@ function SpatialSessionPage() {
         }
       } catch (failure) {
         context.stopped = true;
-        if (!disposed) setError(failure instanceof Human2AiApiError && failure.status === 409 ? "spatial.conflict" : "spatial.saveFailed");
+        if (!disposed) setError(failure instanceof Human2AiApiError && failure.code === "DRAFT_VERSION_EXPIRED"
+          ? "errors.historyExpired" : failure instanceof Human2AiApiError && failure.status === 409 ? "spatial.conflict" : "spatial.saveFailed");
       } finally {
         context.busy = false; writing = false;
         if (!disposed) setSaving(false);
         else if (context.queue.pending && !context.stopped) void synchronize();
-        else window.removeEventListener("beforeunload", beforeUnload);
+        else { window.removeEventListener("beforeunload", beforeUnload); void storageProtection.close(); }
       }
     };
     const timer = window.setInterval(() => void synchronize(), 800);
@@ -134,7 +142,7 @@ function SpatialSessionPage() {
       document.removeEventListener("visibilitychange", visible);
       // Client navigation must finish the queued revision even after unmount.
       if (context.queue.pending && !context.stopped) void synchronize();
-      else if (!writing) window.removeEventListener("beforeunload", beforeUnload);
+      else if (!writing) { window.removeEventListener("beforeunload", beforeUnload); void storageProtection.close(); }
     };
   }, [sessionId, reload]);
 

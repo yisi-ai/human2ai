@@ -1,3 +1,4 @@
+import { validatePngSplitRegions } from "./png-split-regions.ts";
 import { uiSketchLayerOrder } from "./layers.ts";
 import { DEFAULT_CANVAS_FRAME } from "../canvas-frame.ts";
 import { Ajv2020, type ErrorObject } from "ajv/dist/2020.js";
@@ -46,6 +47,7 @@ export function uiSketchDraftFingerprint(input: unknown): string {
 export function cloneUiSketchDraft(draft: UiSketchDraft): UiSketchDraft {
   return {
     ...draft,
+    ...(draft.pngSplits ? { pngSplits: structuredClone(draft.pngSplits) } : {}),
     ...(draft.layerOrder ? { layerOrder: [...draft.layerOrder] } : {}),
     frame: { ...draft.frame },
     ...(draft.stateTabs ? { stateTabs: uiSketchStateTabs(draft) } : {}),
@@ -298,6 +300,22 @@ export function validateUiSketchDraft(input: unknown): UiSketchDraft {
   draft.images.forEach((image) => {
     if (image.crop) validateImageCrop(image.crop);
   });
+  const splitIds = new Set<string>();
+  for (const split of draft.pngSplits ?? []) {
+    const sources = new Map(split.sources.map(source => [source.nodeId, source]));
+    for (const source of split.sources) validatePngSplitRegions(source.regions ?? []);
+    if (splitIds.has(split.id) || sources.size !== split.sources.length) throw new Error("Duplicate PNG split identity.");
+    splitIds.add(split.id);
+    const pieceIds = new Set<string>();
+    for (const piece of split.pieces) {
+      const source = sources.get(piece.sourceNodeId);
+      const [x, y, width, height] = piece.sourceRect;
+      if (!source || pieceIds.has(piece.nodeId) || width !== piece.width || height !== piece.height ||
+        x + width > source.width || y + height > source.height) throw new Error("Invalid PNG split source rectangle.");
+      pieceIds.add(piece.nodeId);
+    }
+    if ((split.pieces.length >= 2) !== Boolean(split.groupId)) throw new Error("Invalid PNG split group identity.");
+  }
   const groupedIds = new Set<string>();
   const groupIds = new Set<string>();
   for (const group of draft.groups) {

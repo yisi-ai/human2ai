@@ -32,3 +32,17 @@ export function isAppLocale(locale: string | null | undefined): locale is AppLoc
 export function resolveAppLocale(language: string | undefined): AppLocale {
   return language?.toLowerCase().startsWith("en") ? "en" : defaultLocale;
 }
+
+export function resolveInitialAppLocale(
+  savedLocale: string | null,
+  browserLanguages: readonly string[],
+): AppLocale {
+  if (isAppLocale(savedLocale)) return savedLocale;
+  for (const language of browserLanguages) {
+    const normalized = language.toLowerCase();
+    const match = appLocales.find(locale => locale.toLowerCase() === normalized)
+      ?? appLocales.find(locale => locale.toLowerCase().split("-")[0] === normalized.split("-")[0]);
+    if (match) return match;
+  }
+  return defaultLocale;
+}

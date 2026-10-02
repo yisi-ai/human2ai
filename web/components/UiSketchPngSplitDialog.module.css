@@ -1,0 +1,110 @@
+.layout {
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 280px;
+  gap: 24px;
+  height: min(680px, calc(100vh - 200px));
+  padding-top: 12px;
+}
+
+.previews {
+  display: grid;
+  align-content: start;
+  grid-auto-rows: 100%;
+  gap: 16px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.image {
+  box-sizing: border-box;
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--yisiui-color-border-default);
+  border-radius: 8px;
+  background-color: var(--yisiui-color-surface-panel);
+  background-image: conic-gradient(var(--yisiui-color-surface-soft) 25%, transparent 0 50%, var(--yisiui-color-surface-soft) 0 75%, transparent 0);
+  background-size: 16px 16px;
+}
+
+.image img {
+  position: absolute;
+  inset: 0 auto auto 0;
+  display: block;
+  max-width: none;
+  pointer-events: none;
+}
+
+.boundsOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.bounds {
+  stroke: #138cbd;
+  stroke-width: 2;
+  stroke-dasharray: 6 4;
+  fill: rgb(19 140 189 / 8%);
+}
+
+.parameters {
+  display: grid;
+  align-content: start;
+  gap: 20px;
+  min-height: 0;
+  overflow: auto;
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px;
+  align-items: center;
+  gap: 12px;
+}
+
+.status {
+  color: var(--yisiui-color-text-secondary);
+  font-size: 12px;
+}
+
+.error {
+  display: grid;
+  justify-items: start;
+  gap: 8px;
+}
+
+.regionEditor {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  outline-offset: -3px;
+}
+
+.regionEditor[data-drawing="true"] { cursor: crosshair; }
+
+.regionTools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.manualRegion {
+  fill: rgb(217 119 6 / 12%);
+  stroke: #b66a0a;
+  stroke-width: 2;
+  cursor: pointer;
+}
+
+.manualRegion[data-selected="true"] {
+  fill: rgb(217 119 6 / 24%);
+  stroke-width: 3;
+}
+
+.regionDraft { fill: none; stroke: #b66a0a; stroke-width: 2; }
+.regionDraft circle { fill: var(--yisiui-color-surface-panel); }
+.startAnchor[data-close-ready] { fill: #b66a0a; stroke-width: 6; }

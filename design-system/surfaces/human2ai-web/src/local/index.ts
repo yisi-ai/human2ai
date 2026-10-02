@@ -23,6 +23,8 @@ export type {
   CompositionSketchCopyResult,
 } from "./compositionExport";
 export { UiSketchCanvas } from "./UiSketchCanvas";
+export { Human2AiSettingsPanel } from "./Human2AiSettingsPanel";
+export type { Human2AiSettingsPanelProps, Human2AiSettingsLabels, RetentionInputs, SettingsSection } from "./Human2AiSettingsPanel";
 export type { UiSketchCanvasLabels, UiSketchCanvasProps, UiSketchSessionPreviewEditorProps } from "./UiSketchCanvas";
 export type { UiSketchPromptKey, UiSketchPromptTranslator } from "./uiSketchExport";
 export {

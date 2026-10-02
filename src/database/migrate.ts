@@ -13,6 +13,7 @@ export function openDatabase(
   const database = new Database(databasePath);
 
   try {
+    if (database.pragma("page_count", { simple: true }) === 0) database.pragma("auto_vacuum = INCREMENTAL");
     database.pragma("foreign_keys = ON");
     database.pragma("synchronous = FULL");
     database.pragma("busy_timeout = 5000");

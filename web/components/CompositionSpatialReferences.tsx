@@ -56,7 +56,7 @@ export function useCompositionSpatialReferences(options: {
     const targetSessionId = options.sessionId;
     if (!targetSessionId) return;
     let cancelled = false, refreshing = false;
-    setMissing(new Set());
+    setMissing(previous => previous.size === 0 ? previous : new Set());
     const refresh = async () => {
       if (refreshing) return;
       refreshing = true;
@@ -80,7 +80,8 @@ export function useCompositionSpatialReferences(options: {
             }), false);
           } catch { unavailable.add(key); }
         }
-        if (!cancelled) setMissing(unavailable);
+        if (!cancelled) setMissing(previous => previous.size === unavailable.size
+          && [...unavailable].every(key => previous.has(key)) ? previous : unavailable);
       } finally { refreshing = false; }
     };
     void refresh();

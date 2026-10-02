@@ -64,6 +64,8 @@ const required = [
   "skills/human2ai/references/composition.md",
   "skills/human2ai/references/composition-projection.md",
   "skills/human2ai/references/ui-layout.md",
+  "skills/human2ai/references/ui-extraction.md",
+  "skills/human2ai/references/ui-extraction-prompt.txt",
   "skills/human2ai/references/spatial.md",
 ];
 const npm = process.platform === "win32" ? "npm.cmd" : "npm";

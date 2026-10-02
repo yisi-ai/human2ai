@@ -82,6 +82,20 @@ const SESSION_TYPE_DEFINITIONS: Record<SessionType, SessionTypeDefinition> = {
     uiPath: "/ui-sketch/",
     operations: [
       {
+        id: "ui-layout.split-png@1",
+        mode: "derive",
+        command: ["ui-layout", "split-png", "--revision", "<revision>", "--node", "<image-node-id>"],
+        sessionScoped: true,
+        sourceCaptureKind: "ui-layout-draft",
+      },
+      {
+        id: "ui-layout.preview-png-split@1",
+        mode: "read",
+        command: ["ui-layout", "preview-png-split", "--revision", "<revision>", "--node", "<image-node-id>"],
+        sessionScoped: true,
+        sourceCaptureKind: "ui-layout-draft",
+      },
+      {
         id: "ui-layout.render@1",
         mode: "artifact",
         command: ["ui-layout", "render", "--revision", "<revision>", "--state", "<state-id>", "--output", "<preview.png>"],

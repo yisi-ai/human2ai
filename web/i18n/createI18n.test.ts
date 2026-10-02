@@ -3,6 +3,7 @@ import {
   createAppI18n,
   isAppLocale,
   resolveAppLocale,
+  resolveInitialAppLocale,
 } from "./createI18n";
 
 describe("createAppI18n", () => {
@@ -135,5 +136,20 @@ describe("createAppI18n", () => {
     expect(resolveAppLocale("zh-CN")).toBe("zh-CN");
     expect(isAppLocale("en")).toBe(true);
     expect(isAppLocale("fr")).toBe(false);
+  });
+
+  it.each([
+    ["en", ["zh-CN"], "en"],
+    ["zh-CN", ["en-US"], "zh-CN"],
+    [null, ["en-US", "zh-CN"], "en"],
+    [null, ["zh-TW", "en"], "zh-CN"],
+    [null, ["ja-JP", "en-GB", "zh-CN"], "en"],
+    [null, ["EN-us"], "en"],
+    [null, ["ja-JP"], "zh-CN"],
+    [null, [], "zh-CN"],
+    ["invalid", ["en-US"], "en"],
+    ["", ["en-US"], "en"],
+  ] as const)("chooses saved locale %s before browser preferences %j", (saved, languages, expected) => {
+    expect(resolveInitialAppLocale(saved, languages)).toBe(expected);
   });
 });

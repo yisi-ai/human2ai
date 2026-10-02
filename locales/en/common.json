@@ -11,7 +11,8 @@
   },
   "integrations": {
     "workbuddy": {
-      "description": "Create and edit compositions, UI sketches and 3D spaces in a shared local workspace.",
+      "name": "human2ai",
+      "description": "An agent-operated tool for drawing and UI design. Let your agent create and edit compositions, interfaces and 3D spaces, export previews, and collaborate with you on one canvas.",
       "examples": {
         "composition": "Recreate this reference image's composition on a canvas I can keep editing.",
         "uiSketch": "Read this UI sketch, adjust the layout using my notes, and export a preview.",
@@ -115,6 +116,7 @@
       "label": "Note",
       "prompt": "- Note: {{note}}",
       "nodePlaceholder": "Describe what this node represents",
+      "nodeHelp": "Add requirements for this node to include in the prompt.",
       "regionPlaceholder": "Describe the layout content represented by this region",
       "textPlaceholder": "Describe what this text communicates"
     }
@@ -133,6 +135,7 @@
     "agentCommand": "Use the following CLI command to connect to the current session:\n\n{{command}}\n\nOnce connected, stop and wait for the next instruction."
   },
   "workspaceSidebar": {
+    "containsCurrentSession": "Contains current session",
     "functionArea": "Actions",
     "projectArea": "Projects",
     "newComposition": "New composition",
@@ -158,7 +161,7 @@
     "renameSessionTitle": "Rename session",
     "renameSessionPlaceholder": "Enter session name",
     "deleteSessionTitle": "Delete session",
-    "deleteSessionDescription": "Deleting this session also removes its drafts and refinement records.",
+    "deleteSessionDescription": "This session will move to Trash and can be restored before its retention period ends.",
     "loading": "Loading projects",
     "loadFailed": "Could not load projects",
     "newSessionGroup": "New group",
@@ -194,6 +197,8 @@
     },
     "imageEditor": {
       "content": "Image content",
+      "sourceDimensions": "{{width}} × {{height}} px",
+      "sourceFileSize": "{{size}} {{unit}}",
       "upload": "Upload image",
       "replace": "Replace image",
       "uploading": "Uploading",
@@ -225,6 +230,7 @@
     },
     "node": {
       "nodeDescription": "Node description",
+      "nodeDescriptionHelp": "Explains this node's role; agents can read and edit it.",
       "originUser": "user",
       "originAgent": "agent",
       "originImport": "import"
@@ -549,6 +555,31 @@
     },
     "preview": {
       "outputFormatError": "UI preview output must use a .png or .svg filename."
+    },
+    "pngSplit": {
+      "action": "Split PNG",
+      "alphaThreshold": "Alpha threshold",
+      "minSize": "Minimum size",
+      "gap": "Gap",
+      "failed": "Splitting failed. Please retry.",
+      "invalid": "Select nonempty static PNG images with transparent areas.",
+      "complete": "Created {{count}} images; filtered {{discarded}} fragments.",
+      "alreadySplit": "Selected images have already been split.",
+      "retrySave": "Retry save",
+      "settings": "PNG split settings",
+      "applySettings": "Split",
+      "running": "Splitting PNG…",
+      "preview": "Split bounds preview",
+      "previewing": "Calculating split bounds…",
+      "previewFailed": "Could not preview split bounds. Please retry.",
+      "previewSummary": "Will create {{count}} images and filter {{discarded}} fragments.",
+      "zoomIn": "Zoom in",
+      "zoomOut": "Zoom out",
+      "help": "Preview controls",
+      "interactionHelp": "Scroll to zoom. Right-drag or Space-drag to pan. Choose Free anchors and click to add points. With at least three non-collinear points, click the first point or press Enter to close; Esc cancels drawing. Closed regions can be selected and deleted, but not reshaped. Each region becomes one image; earlier regions own overlapping pixels.",
+      "freeAnchors": "Free anchors",
+      "manualRegion": "Manual region {{index}}",
+      "closeRegion": "Close region"
     }
   },
   "clipboard": {
@@ -586,6 +617,7 @@
     "uiSketchPlaceholder": "Enter text"
   },
   "errors": {
+    "historyExpired": "This history has expired. Reload the current canvas.",
     "serviceSync": "Could not synchronize with Human2AI: {{message}}",
     "operationFailed": "The action failed. Try again."
   },
@@ -832,5 +864,35 @@
     "loading": "Loading preview sources",
     "descendantMatches": "{{count}} matching descendants",
     "searchResults": "{{count}} matches"
+  },
+  "units": {
+    "pixels": "px"
+  },
+  "settings": {
+    "title": "Settings",
+    "navigationLabel": "Settings sections",
+    "close": "Close settings",
+    "autoRelease": "Automatic cleanup",
+    "imageDays": "Unused images",
+    "imageHint": "Images in use are kept.",
+    "historyDays": "Canvas history",
+    "historyHint": "The latest version and active undo history are kept. Ordinary history is limited to 100 versions.",
+    "trash": "Trash",
+    "trashDays": "Auto-delete after",
+    "trashHint": "Deleted sessions and their content are permanently removed when this period ends.",
+    "resetDefaults": "Reset to defaults",
+    "restoreSession": "Restore session",
+    "emptyTrash": "Trash is empty",
+    "deletedAt": "Deleted at",
+    "loading": "Loading settings",
+    "invalidDays": "Enter a whole number of days from 1 to 3650.",
+    "conflict": "Settings have changed. Retry to save your changes.",
+    "daysUnit_one": "day",
+    "daysUnit_other": "days",
+    "deleteNow": "Delete now",
+    "deleteNowConfirm": "Permanently delete “{{title}}”?",
+    "clearTrash": "Empty trash",
+    "clearTrashConfirm": "Empty the trash?",
+    "permanentDeleteHint": "Deleted sessions and their content cannot be restored."
   }
 }

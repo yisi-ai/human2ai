@@ -138,6 +138,20 @@ export function registerProjectSessionRoutes(
   server: FastifyInstance,
   repository: ProjectSessionRepository,
 ): void {
+  server.get("/api/v1/trash/sessions", { schema: { response: { 200: {
+    type: "object", additionalProperties: false, required: ["sessions"], properties: { sessions: { type: "array", items: {
+      ...sessionSchema, required: [...sessionSchema.required, "deletedAt"], properties: { ...sessionSchema.properties, deletedAt: { type: "string" } },
+    } } },
+  } } } }, async () => ({ sessions: repository.listTrashSessions() }));
+  server.post<{ Params: SessionParams; Body: DeleteSessionBody }>("/api/v1/trash/sessions/:sessionId/restore", {
+    schema: { params: idParamsSchema("sessionId"), body: { type: "object", additionalProperties: false, required: ["expectedRevision"],
+      properties: { expectedRevision: { type: "integer", minimum: 1 } } }, response: { 200: sessionSchema, 404: errorSchema, 409: errorSchema } },
+  }, async (request, reply) => execute(reply, 200, () => repository.restoreSession(request.params.sessionId, request.body)));
+  server.delete<{ Params: SessionParams; Body: DeleteSessionBody }>("/api/v1/trash/sessions/:sessionId", {
+    schema: { params: idParamsSchema("sessionId"), body: { type: "object", additionalProperties: false, required: ["expectedRevision"],
+      properties: { expectedRevision: { type: "integer", minimum: 1 } } }, response: { 404: errorSchema, 409: errorSchema } },
+  }, async (request, reply) => execute(reply, 204, () => repository.deleteTrashSession(request.params.sessionId, request.body)));
+  server.delete("/api/v1/trash/sessions", async (_request, reply) => execute(reply, 204, () => repository.clearTrash()));
   const groupSchema = {
     type: "object", additionalProperties: false,
     required: ["id", "projectId", "name", "revision", "sessionIds"],

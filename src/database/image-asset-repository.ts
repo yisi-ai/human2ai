@@ -6,6 +6,7 @@ import { existsSync } from "node:fs";
 import { inspectImageInput, MAX_IMAGE_ASSET_BYTES } from "./image-input.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 import { SessionNotFoundError } from "./project-session-repository.ts";
+import type { SessionPreviewReference } from "../domain/session/preview.ts";
 
 export { MAX_IMAGE_ASSET_BYTES } from "./image-input.ts";
 
@@ -48,6 +49,19 @@ export class ImageAssetNotFoundError extends Error {
 
 export class ImageAssetRepository {
   private readonly root: string;
+  private readonly protections = new Map<string, number>();
+
+  isProtected(id: string): boolean { return this.protections.has(id); }
+  async withProtection<T>(ids: string[], operation: () => Promise<T>): Promise<T> {
+    for (const id of new Set(ids)) this.protections.set(id, (this.protections.get(id) ?? 0) + 1);
+    try { return await operation(); }
+    finally {
+      for (const id of new Set(ids)) {
+        const remaining = this.protections.get(id)! - 1;
+        if (remaining) this.protections.set(id, remaining); else this.protections.delete(id);
+      }
+    }
+  }
 
   constructor(
     private readonly database: DatabaseConnection,
@@ -58,7 +72,7 @@ export class ImageAssetRepository {
 
   async create(
     sessionId: string,
-    input: { filename: string; data: Buffer },
+    input: { filename: string; data: Buffer; previewReference?: SessionPreviewReference },
   ): Promise<ImageAsset> {
     this.assertSession(sessionId);
     const inspected = await inspectImageInput(input.data, { allowSvg: true });
@@ -85,8 +99,8 @@ export class ImageAssetRepository {
       this.database.prepare(
         `INSERT INTO image_assets
           (id, session_id, relative_path, original_filename, mime_type,
-           byte_size, width, height, sha256, created_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+           byte_size, width, height, sha256, created_at, preview_reference_json)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(
         id,
         sessionId,
@@ -98,6 +112,7 @@ export class ImageAssetRepository {
         height,
         sha256,
         createdAt,
+        input.previewReference ? JSON.stringify(input.previewReference) : null,
       );
     } catch (error) {
       await unlink(filePath).catch(() => undefined);
@@ -113,7 +128,7 @@ export class ImageAssetRepository {
       `SELECT id, session_id, relative_path, original_filename, mime_type,
               byte_size, width, height, sha256, created_at
        FROM image_assets
-       WHERE session_id = ? AND id = ?`,
+       WHERE session_id = ? AND id = ? AND deleting = 0`,
     ).get(sessionId, assetId);
     if (!row) throw new ImageAssetNotFoundError(sessionId, assetId);
     const filePath = this.filePath(row.relative_path);
@@ -123,7 +138,7 @@ export class ImageAssetRepository {
 
   private assertSession(sessionId: string): void {
     const row = this.database.prepare<[string], { id: string }>(
-      "SELECT id FROM sessions WHERE id = ?",
+      "SELECT id FROM sessions WHERE id = ? AND deleted_at IS NULL",
     ).get(sessionId);
     if (!row) throw new SessionNotFoundError(sessionId);
   }

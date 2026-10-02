@@ -8,7 +8,7 @@ import { styleModelContentUrl, styleReferenceContentUrl, type StyleCategory } fr
 import { getStyleLibraryLabels } from "../lib/style-library-labels";
 import type { useSessionStyle } from "../lib/use-session-style";
 
-export function SessionStyleControl({ controller, category, processing, disabled, showProcessingStatus = true }: {
+export function SessionStyleControl({ controller, category, processing, disabled, showProcessingStatus = false }: {
   controller: ReturnType<typeof useSessionStyle>;
   category: StyleCategory;
   processing?: StyleProcessing;

@@ -11,6 +11,7 @@
     "semantics/composition.json",
     "semantics/integrations.json",
     "semantics/session-preview.json",
+    "semantics/settings.json",
     "semantics/shared.json",
     "semantics/spatial.json",
     "semantics/style-library.json",

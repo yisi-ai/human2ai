@@ -18,6 +18,44 @@ import type { StyleProcessing } from "../../src/domain/session";
 import type { SessionGroup } from "../../src/domain/session";
 import type { SessionPreviewSource } from "../../src/domain/session/preview";
 import type { MaterializedSessionPreview } from "../../src/domain/ui-sketch/session-preview";
+import type { PngSplitBatch, PngSplitOptions, PngSplitSource, PngSplitPreview } from "../../src/domain/ui-sketch/png-split";
+import type { WorkspaceSettings, RetentionSettings } from "../../src/domain/session/storage";
+import type { TrashSession } from "../../src/domain/session/types";
+
+export function getWorkspaceSettings(): Promise<WorkspaceSettings> {
+  return requestJson("/api/v1/settings", {}, globalThis.fetch);
+}
+export function saveWorkspaceSettings(settings: RetentionSettings, expectedRevision: number): Promise<WorkspaceSettings> {
+  return requestJson("/api/v1/settings", { method: "PUT", body: JSON.stringify({ ...settings, expectedRevision }) }, globalThis.fetch);
+}
+export async function listTrashSessions(): Promise<TrashSession[]> {
+  return (await requestJson<{ sessions: TrashSession[] }>("/api/v1/trash/sessions", {}, globalThis.fetch)).sessions;
+}
+export function restoreTrashSession(sessionId: string, expectedRevision: number): Promise<Human2AiSession> {
+  return requestJson(`/api/v1/trash/sessions/${encodeURIComponent(sessionId)}/restore`, {
+    method: "POST", body: JSON.stringify({ expectedRevision }),
+  }, globalThis.fetch);
+}
+export async function deleteTrashSession(sessionId: string, expectedRevision: number): Promise<void> {
+  await requestResponse(`/api/v1/trash/sessions/${encodeURIComponent(sessionId)}`, {
+    method: "DELETE", body: JSON.stringify({ expectedRevision }),
+  }, globalThis.fetch);
+}
+export async function clearTrash(): Promise<void> {
+  await requestResponse("/api/v1/trash/sessions", { method: "DELETE" }, globalThis.fetch);
+}
+
+export function previewPngSplit(sessionId: string, sources: PngSplitSource[], options: PngSplitOptions, signal: AbortSignal): Promise<PngSplitPreview> {
+  return requestJson(`/api/v1/sessions/${encodeURIComponent(sessionId)}/ui-sketch/png-splits/preview`, {
+    method: "POST", body: JSON.stringify({ sources, options }), signal,
+  }, globalThis.fetch);
+}
+
+export function preparePngSplit(sessionId: string, sources: PngSplitSource[], options: PngSplitOptions): Promise<PngSplitBatch> {
+  return requestJson(`/api/v1/sessions/${encodeURIComponent(sessionId)}/ui-sketch/png-splits`, {
+    method: "POST", body: JSON.stringify({ sources, options }),
+  }, globalThis.fetch);
+}
 
 export interface SessionPreviewSourceOption {
   session: Human2AiSession;

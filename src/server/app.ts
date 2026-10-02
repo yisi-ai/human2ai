@@ -14,6 +14,13 @@ import { registerImageContentTypeParser } from "./image-content-type-parser.ts";
 import type { SpatialSessionRepository } from "../database/spatial-session-repository.ts";
 import { registerSpatialSessionRoutes } from "./routes/spatial-sessions.ts";
 import { registerSessionPreviewRoutes } from "./routes/session-previews.ts";
+import type { UiSketchPngSplitRepository } from "../database/ui-sketch-png-split-repository.ts";
+import { registerUiSketchPngSplitRoutes } from "./routes/ui-sketch-png-splits.ts";
+import type { SessionStorageRepository } from "../database/session-storage-repository.ts";
+import { registerStorageProtectionRoutes } from "./routes/storage-protection.ts";
+import { registerStorageMaintenance } from "./storage-maintenance-service.ts";
+import type { WorkspaceSettingsRepository } from "../database/workspace-settings-repository.ts";
+import { registerWorkspaceSettingsRoutes } from "./routes/workspace-settings.ts";
 
 const healthResponseSchema = {
   type: "object",
@@ -34,12 +41,16 @@ export const HUMAN2AI_SERVICE_CAPABILITIES = [
   "composition-drafts",
   "composition-refinements",
   "ui-sketch-drafts",
+  "ui-sketch-png-splits",
   "spatial-drafts",
   "capture-undo",
   "image-assets",
   "style-library",
   "session-styles",
   "session-previews",
+  "storage-retention",
+  "workspace-settings",
+  "session-trash",
 ] as const;
 
 export interface ServerDependencies {
@@ -48,6 +59,9 @@ export interface ServerDependencies {
   projectSessions?: ProjectSessionRepository;
   styleLibrary?: StyleLibraryRepository;
   uiSketchSessions?: UiSketchSessionRepository;
+  pngSplits?: UiSketchPngSplitRepository;
+  storage?: SessionStorageRepository;
+  settings?: WorkspaceSettingsRepository;
   spatialSessions?: SpatialSessionRepository;
   webDirectory?: string;
 }
@@ -65,6 +79,7 @@ export function buildServer(
       ? ["composition-drafts", "composition-refinements"]
       : []),
     ...(dependencies.uiSketchSessions ? ["ui-sketch-drafts"] : []),
+    ...(dependencies.pngSplits && uiSketchSessions ? ["ui-sketch-png-splits"] : []),
     ...(dependencies.spatialSessions ? ["spatial-drafts"] : []),
     ...(dependencies.compositionSessions || dependencies.uiSketchSessions || dependencies.spatialSessions
       ? ["capture-undo"]
@@ -72,6 +87,9 @@ export function buildServer(
     ...(dependencies.imageAssets ? ["image-assets"] : []),
     ...(dependencies.styleLibrary ? ["style-library", "session-styles"] : []),
     ...(previews ? ["session-previews"] : []),
+    ...(dependencies.storage ? ["storage-retention"] : []),
+    ...(dependencies.settings ? ["workspace-settings"] : []),
+    ...(dependencies.projectSessions ? ["session-trash"] : []),
   ];
 
   server.setErrorHandler((error, _request, reply) => {
@@ -103,11 +121,18 @@ export function buildServer(
   if (dependencies.projectSessions) {
     registerProjectSessionRoutes(server, dependencies.projectSessions);
   }
+  if (dependencies.settings) registerWorkspaceSettingsRoutes(server, dependencies.settings);
+  if (dependencies.storage) {
+    registerStorageProtectionRoutes(server, dependencies.storage);
+    registerStorageMaintenance(server, dependencies.storage, [compositionSessions, uiSketchSessions, spatialSessions]
+      .filter((repository): repository is NonNullable<typeof repository> => Boolean(repository)));
+  }
   if (dependencies.compositionSessions) {
     registerCompositionSessionRoutes(server, dependencies.compositionSessions);
   }
   if (dependencies.uiSketchSessions) {
     registerUiSketchSessionRoutes(server, dependencies.uiSketchSessions);
+    if (dependencies.pngSplits) registerUiSketchPngSplitRoutes(server, dependencies.pngSplits, dependencies.uiSketchSessions);
   }
   if (dependencies.spatialSessions) registerSpatialSessionRoutes(server, dependencies.spatialSessions);
   if (projectSessions && compositionSessions && uiSketchSessions && spatialSessions && imageAssets) {

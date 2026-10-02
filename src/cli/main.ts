@@ -44,6 +44,10 @@ import {
   renderUiSketchSvg,
   type UiSketchDraft,
 } from "../domain/ui-sketch/index.ts";
+import { appendPngSplit, pngSplitSourceApplied, type PngSplitBatch } from "../domain/ui-sketch/png-split.ts";
+import { compactGeometry, nearFrameStart, DEFAULT_GAP } from "../domain/ui-sketch/png-canvas.ts";
+import { alphaThreshold, minimumPieceSize } from "../domain/ui-sketch/transparent-png.ts";
+import { validatePngSplitRegions, type PngSplitRegion } from "../domain/ui-sketch/png-split-regions.ts";
 
 import { validateSpatialDraft, jointWorldTransforms, boneWorldTransforms, angles, type SpatialDraft } from "../domain/spatial/index.ts";
 import spatialOperationsSchema from "../../schemas/spatial-operations.schema.json" with { type: "json" };
@@ -54,6 +58,7 @@ import en from "../../locales/en/common.json" with { type: "json" };
 
 interface CommandOptions {
   agent?: string;
+  alphaThreshold?: string;
   asset?: string;
   category?: string;
   camera?: string;
@@ -66,16 +71,20 @@ interface CommandOptions {
   description?: string;
   draft?: string;
   expectedRevision?: string;
+  gap?: string;
   input?: string;
   kind?: string;
   mode?: string;
+  minSize?: string;
   name?: string;
+  node?: string;
   output?: string;
   plan?: string;
   preview?: string;
   project?: string;
   creator?: string;
   reference?: string;
+  regions?: string;
   revision?: string;
   root?: string;
   run?: string;
@@ -88,6 +97,8 @@ interface CommandOptions {
   title?: string;
   type?: string;
   unassigned?: boolean;
+  x?: string;
+  y?: string;
 }
 
 export interface CliDependencies {
@@ -271,6 +282,9 @@ export async function executeCli(
   }
   if (scope === "ui-layout" && command === "render") {
     return renderUiLayoutPreview(options, effectiveDependencies);
+  }
+  if (scope === "ui-layout" && (command === "split-png" || command === "preview-png-split")) {
+    return splitUiLayoutPng(options, effectiveDependencies, command === "preview-png-split");
   }
   if (scope === "ui-layout" && command === "standardize") {
     assertOnlyOptions(options, ["input", "output", "plan"], "ui-layout standardize");
@@ -551,6 +565,14 @@ async function executeImageCommand(
     assertOnlyOptions(options, ["session", "asset", "output"], "image source");
     const sessionId = requireOption(options, "session");
     const assetId = requireOption(options, "asset");
+    if (options.output && path.extname(options.output).toLowerCase() !== ".svg") {
+      const source = await requestService(dependencies,
+        `/api/v1/sessions/${encodeURIComponent(sessionId)}/assets/${encodeURIComponent(assetId)}/content`,
+        { imageBytes: true }) as { mimeType: string; bytes: Buffer };
+      const output = path.resolve(options.output);
+      await writeFile(output, source.bytes);
+      return { sessionId, assetId, output, mimeType: source.mimeType };
+    }
     const source = await requestService(
       dependencies,
       `/api/v1/sessions/${encodeURIComponent(sessionId)}/assets/${encodeURIComponent(assetId)}/content`,
@@ -564,6 +586,55 @@ async function executeImageCommand(
     return { sessionId, assetId, source };
   }
   throw new Error(imageUsage());
+}
+
+async function splitUiLayoutPng(
+  options: CommandOptions,
+  dependencies: CliDependencies,
+  preview: boolean,
+): Promise<unknown> {
+  assertOnlyOptions(options, ["session", "node", "revision", "alphaThreshold", "minSize", "gap", "regions",
+    ...(preview ? [] : ["x", "y"] as const)], `ui-layout ${preview ? "preview-png-split" : "split-png"}`);
+  const sessionId = requireOption(options, "session");
+  const nodeId = requireOption(options, "node");
+  const revision = requireInteger(options, "revision", 1);
+  const params = {
+    alphaThreshold: alphaThreshold(options.alphaThreshold === undefined ? undefined : requireInteger(options, "alphaThreshold", 0)),
+    minSize: minimumPieceSize(options.minSize === undefined ? undefined : requireInteger(options, "minSize", 0)),
+    gap: options.gap === undefined ? DEFAULT_GAP : Number(options.gap),
+  };
+  const regions = options.regions ? await readJson(path.resolve(options.regions)) as PngSplitRegion[] : [];
+  validatePngSplitRegions(regions);
+  const descriptor = await resolveCaptureDescriptor(sessionId, dependencies);
+  assertCaptureKind(descriptor, "ui-layout-draft");
+  const latest = requireRecord(await requestService(dependencies, `${descriptor.draftsPath}/latest`), "latest UI draft");
+  const version = parseCaptureVersion(latest.draftVersion ?? await requestService(dependencies, `${descriptor.draftsPath}/${revision}`), descriptor);
+  if (version.revision !== revision) {
+    throw new CliServiceError("DRAFT_REVISION_CONFLICT",
+      en.uiSketch.session.revisionConflict.replace("{{revision}}", String(version.revision)), 409,
+      { expectedLatestRevision: revision, actualLatestRevision: version.revision });
+  }
+  const draft = version.document as UiSketchDraft;
+  const image = draft.images.find(image => image.id === nodeId);
+  if (!image?.assetId || image.previewReference) {
+    throw new CliServiceError("INVALID_IMAGE_ASSET", en.uiSketch.pngSplit.invalid, 400, { nodeId });
+  }
+  const source = { nodeId, assetId: image.assetId, ...(regions.length ? { regions } : {}) };
+  const start = nearFrameStart(draft.frame);
+  const origin = { x: options.x === undefined ? start.x : Number(options.x), y: options.y === undefined ? start.y : Number(options.y) };
+  compactGeometry([], origin.x, origin.y, params.gap);
+  if (!preview && pngSplitSourceApplied(draft, source, params)) {
+    return { kind: "ui-layout-png-split-result", changed: false, capture: captureVersionResult(version, descriptor), batch: null };
+  }
+  const result = await requestService(dependencies,
+    `/api/v1/sessions/${encodeURIComponent(sessionId)}/ui-sketch/png-splits${preview ? "/preview" : ""}`,
+    { method: "POST", body: { sources: [source], options: params } });
+  if (preview) return { kind: "ui-layout-png-split-preview", sessionId, revision, ...requireRecord(result, "PNG split preview") };
+  const batch = requireRecord(result, "PNG split batch") as unknown as PngSplitBatch;
+  const document = validateUiSketchDraft(appendPngSplit(draft, batch, origin));
+  const saved = parseCaptureVersion(await requestService(dependencies, descriptor.draftsPath,
+    { method: "POST", body: { expectedLatestRevision: revision, draft: document } }), descriptor);
+  return { kind: "ui-layout-png-split-result", changed: true, capture: captureVersionResult(saved, descriptor), batch };
 }
 
 async function executeProjectCommand(
@@ -1391,6 +1462,7 @@ function parseOptions(args: string[]): CommandOptions {
   const options: CommandOptions = {};
   const flags = new Set([
     "--agent",
+    "--alpha-threshold",
     "--asset",
     "--category",
     "--camera",
@@ -1403,16 +1475,20 @@ function parseOptions(args: string[]): CommandOptions {
     "--description",
     "--draft",
     "--expected-revision",
+    "--gap",
     "--input",
     "--kind",
     "--mode",
+    "--min-size",
     "--name",
+    "--node",
     "--output",
     "--pass",
     "--plan",
     "--preview",
     "--project",
     "--reference",
+    "--regions",
     "--revision",
     "--root",
     "--run",
@@ -1425,6 +1501,8 @@ function parseOptions(args: string[]): CommandOptions {
     "--title",
     "--type",
     "--unassigned",
+    "--x",
+    "--y",
   ]);
   for (let index = 0; index < args.length; index += 1) {
     const flag = args[index];
@@ -1447,6 +1525,8 @@ function parseOptions(args: string[]): CommandOptions {
 }
 
 function flagToOptionKey(flag: string): keyof CommandOptions {
+  if (flag === "--alpha-threshold") return "alphaThreshold";
+  if (flag === "--min-size") return "minSize";
   if (flag === "--style-revision") return "styleRevision";
   if (flag === "--session-revision") return "sessionRevision";
   if (flag === "--change-revision") return "changeRevision";
@@ -1475,6 +1555,8 @@ function requireInteger(
 }
 
 function optionKeyToFlag(key: keyof CommandOptions): string {
+  if (key === "alphaThreshold") return "alpha-threshold";
+  if (key === "minSize") return "min-size";
   if (key === "styleRevision") return "style-revision";
   if (key === "sessionRevision") return "session-revision";
   if (key === "changeRevision") return "change-revision";
@@ -1551,7 +1633,7 @@ function assertArtifactTargets(
 async function requestService(
   dependencies: CliDependencies,
   pathname: string,
-  request: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; svgSource?: boolean; png?: boolean; imageSource?: boolean } = {},
+  request: { method?: "GET" | "POST" | "PATCH" | "DELETE"; body?: unknown; svgSource?: boolean; png?: boolean; imageSource?: boolean; imageBytes?: boolean } = {},
 ): Promise<unknown> {
   const url = new URL(pathname, configuredServiceUrl(dependencies));
   const fetcher = dependencies.fetch ?? globalThis.fetch;
@@ -1570,10 +1652,11 @@ async function requestService(
     );
   }
 
-  if (response.ok && request.imageSource) {
+  if (response.ok && (request.imageSource || request.imageBytes)) {
     const mime = response.headers.get("content-type")?.split(";")[0].trim();
     if (!mime || !["image/png", "image/jpeg", "image/webp", "image/svg+xml"].includes(mime)) throw invalidServiceResponse("Expected an image asset");
-    return `data:${mime};base64,${Buffer.from(await response.arrayBuffer()).toString("base64")}`;
+    const bytes = Buffer.from(await response.arrayBuffer());
+    return request.imageBytes ? { mimeType: mime, bytes } : `data:${mime};base64,${bytes.toString("base64")}`;
   }
   if (response.ok && request.png) {
     if (response.headers.get("content-type")?.split(";")[0].trim() !== "image/png") throw invalidServiceResponse("Expected a camera PNG");
@@ -1826,6 +1909,8 @@ function usage(): string {
     ...imageUsage().split("\n").slice(1),
     "  human2ai ui-layout standardize --input <document.json> --output <standardized.json> [--plan <alignment-plan.json>]",
     "  human2ai ui-layout render --session <id> --revision <n> [--state <state-id>] --output <preview.png|preview.svg>",
+    "  human2ai ui-layout split-png --session <id> --revision <n> --node <image-id> [--alpha-threshold <0..254>] [--min-size <n>] [--gap <px>] [--regions <regions.json>] [--x <px>] [--y <px>]",
+    "  human2ai ui-layout preview-png-split --session <id> --revision <n> --node <image-id> [--alpha-threshold <0..254>] [--min-size <n>] [--gap <px>] [--regions <regions.json>]",
     "  human2ai spatial methods",
     "  human2ai spatial inspect --session <id> --revision <n> [--output <inspection.json>]",
     "  human2ai spatial apply --session <id> --revision <n> --input <operations.json> [--output <version.json>]",
@@ -1849,7 +1934,7 @@ function imageUsage(): string {
   return [
     "Image usage:",
     "  human2ai image upload --session <id> --input <image-file>",
-    "  human2ai image source --session <id> --asset <id> [--output <image.svg>]",
+    "  human2ai image source --session <id> --asset <id> [--output <image-file>]",
   ].join("\n");
 }
 

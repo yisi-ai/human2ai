@@ -146,6 +146,28 @@
         "Downloading a newly rendered spatial camera reference.",
         "Uploading or replacing the image asset."
       ]
+    },
+    "canvas.image-source-metadata": {
+      "meaning": "Read-only intrinsic image width and height in pixels and the original file byte size, displayed beside the image-content heading.",
+      "scope": "Shared image-node editor in composition and UI sketches, including its locked-source uses.",
+      "referent": "The bound source image dimensions and file, independent of node geometry, crop and viewport zoom.",
+      "precedence": "Subordinate metadata beside the image-content heading; shown only when its existing source data is available. File sizes use decimal B, KB and MB.",
+      "canonicalKey": "canvas.imageEditor.sourceDimensions",
+      "searchTerms": [
+        "图片尺寸",
+        "文件容量",
+        "原图大小",
+        "source dimensions",
+        "file size"
+      ],
+      "examples": [
+        "1920 × 1080 px · 256 KB beside Image content."
+      ],
+      "nonExamples": [
+        "The resized node bounds on the canvas.",
+        "The cropped image area.",
+        "Exported canvas resolution."
+      ]
     }
   },
   "keys": {
@@ -349,6 +371,22 @@
       "role": "visible retryable error when writing or initiating the download fails",
       "grammar": "complete sentence",
       "tone": "clear and actionable",
+      "reusePolicy": "contextual"
+    },
+    "canvas.imageEditor.sourceDimensions": {
+      "conceptId": "canvas.image-source-metadata",
+      "variant": "pixel-dimensions",
+      "role": "Read-only intrinsic width × height in pixels",
+      "grammar": "numeric measurement",
+      "tone": "concise and neutral",
+      "reusePolicy": "canonical"
+    },
+    "canvas.imageEditor.sourceFileSize": {
+      "conceptId": "canvas.image-source-metadata",
+      "variant": "file-byte-size",
+      "role": "Read-only formatted source file byte size",
+      "grammar": "numeric measurement",
+      "tone": "concise and neutral",
       "reusePolicy": "contextual"
     }
   }

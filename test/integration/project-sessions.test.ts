@@ -279,7 +279,7 @@ describe("project and typed session API", () => {
     expect(deleted.statusCode).toBe(204);
     expect(
       database.prepare("SELECT session_id FROM composition_sessions").all(),
-    ).toEqual([]);
+    ).toEqual([{ session_id: session.id }]);
 
     const missing = await server.inject({
       method: "GET",

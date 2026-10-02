@@ -24,6 +24,11 @@ export class CanvasEditHistory<T, Context = undefined> {
   get canUndo(): boolean { return this.past.length > 0; }
   get canRedo(): boolean { return this.future.length > 0; }
 
+  /** Used by storage protection without publishing editor state or cloning snapshots. */
+  retainedDrafts(): T[] {
+    return [...new Set([this.current, ...[...this.past, ...this.future].flatMap(entry => [entry.before, entry.after])])];
+  }
+
   record(next: T, beforeContext?: Context, afterContext = beforeContext, group?: symbol): boolean {
     if (JSON.stringify(this.current) === JSON.stringify(next)) return false;
     const previous = this.past.at(-1);

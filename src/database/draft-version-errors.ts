@@ -1,4 +1,12 @@
 import type { SessionType } from "../domain/session/index.ts";
+import en from "../../locales/en/common.json" with { type: "json" };
+
+export class DraftVersionExpiredError extends Error {
+  readonly code = "DRAFT_VERSION_EXPIRED";
+  constructor(readonly sessionId: string, readonly revision: number) {
+    super(en.errors.historyExpired);
+  }
+}
 
 export class DraftSessionTypeMismatchError extends Error {
   readonly code = "SESSION_TYPE_MISMATCH";

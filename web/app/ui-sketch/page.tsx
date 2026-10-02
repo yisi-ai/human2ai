@@ -36,6 +36,8 @@ import { useTranslation } from "react-i18next";
 
 import type { StyleProcessing } from "../../../src/domain/session";
 import { SessionStyleControl } from "../../components/SessionStyleControl";
+import { UiSketchPngSplitDialog } from "../../components/UiSketchPngSplitDialog";
+import type { UiSketchCanvasProps } from "@human2ai/ui";
 import { SessionPreviewAction, SessionPreviewProperties } from "../../components/UiSessionPreviews";
 import { mergeUiPreviewRefresh } from "../../../src/domain/ui-sketch/session-preview";
 import { droppedSessionPreviewUrl, materializeDroppedSessionPreview } from "../../lib/session-preview-drop";
@@ -56,6 +58,7 @@ import {
 } from "../../lib/human2ai-api";
 import { buildSessionCliCommand } from "../../lib/session-connection";
 import { useCanvasHistory } from "../../lib/use-canvas-history";
+import { useStorageProtection } from "../../lib/use-storage-protection";
 import styles from "./page.module.css";
 
 const AUTO_SAVE_DELAY_MS = 800;
@@ -89,6 +92,7 @@ async function loadUiSketchSession(
 
 function formatServiceError(error: unknown, t: TFunction): string {
   if (error instanceof Human2AiApiError) {
+    if (error.code === "DRAFT_VERSION_EXPIRED") return t("errors.historyExpired");
     if (error.code === "DRAFT_REVISION_CONFLICT") {
       return t("uiSketch.session.revisionConflict", {
         revision: error.details.actualLatestRevision,
@@ -141,6 +145,10 @@ function UiSketchPageContent() {
     cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT),
   );
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const renderPngSplitDialog = useCallback<NonNullable<UiSketchCanvasProps["renderPngSplitDialog"]>>(
+    props => sessionId ? <UiSketchPngSplitDialog key={sessionId} sessionId={sessionId} {...props} /> : null,
+    [sessionId],
+  );
   const loadDroppedSessionPreview = useCallback((sourceSessionId: string) =>
     materializeDroppedSessionPreview(sessionId!, sourceSessionId), [sessionId]);
   const loadSessionPreviewDragImage = useCallback((sourceSessionId: string) =>
@@ -153,6 +161,7 @@ function UiSketchPageContent() {
   const [dirty, setDirty] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [saveAttempt, setSaveAttempt] = useState(0);
   const [sessionLoadFailed, setSessionLoadFailed] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [serviceError, setServiceError] = useState<string | null>(null);
@@ -179,6 +188,7 @@ function UiSketchPageContent() {
     const tabs = uiSketchStateTabs(restored);
     setActiveStageId(tabs.some(tab => tab.id === context) ? context! : tabs[0].id);
   }, loading || sessionLoadFailed || revisionConflictRef.current);
+  const storageProtection = useStorageProtection(sessionId, history);
 
   useEffect(() => {
     if (
@@ -276,6 +286,7 @@ function UiSketchPageContent() {
             if (saveContextVersion !== saveContextVersionRef.current) return;
           }
 
+          await storageProtection?.renew();
           const saved = await saveUiSketchDraft(
             targetSessionId,
             latestRevision,
@@ -326,7 +337,7 @@ function UiSketchPageContent() {
     }, AUTO_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [dirty, draft, latestRevision, loading, router, saving, sessionId, t]);
+  }, [dirty, draft, latestRevision, loading, router, saving, saveAttempt, sessionId, storageProtection, t]);
 
   useEffect(() => {
     if (!sessionId || loading || saving) return;
@@ -507,6 +518,13 @@ function UiSketchPageContent() {
               <BasicButton size="small" onClick={() => setLoadAttempt((value) => value + 1)}>
                 {t("actions.retry")}
               </BasicButton>
+            ) : dirty && draft.pngSplits?.length && !revisionConflictRef.current ? (
+              <BasicButton size="small" disabled={saving} onClick={() => {
+                blockedAutoSaveVersionRef.current = null;
+                setSaveAttempt(value => value + 1);
+              }}>
+                {t("uiSketch.pngSplit.retrySave")}
+              </BasicButton>
             ) : null}
           </div>
         ) : null}
@@ -545,6 +563,9 @@ function UiSketchPageContent() {
           >
               <CanvasHistoryControls {...history} labels={{ undo: t("canvasHistory.undo"), redo: t("canvasHistory.redo"), label: t("canvasHistory.label") }} />
               <UiSketchCanvas
+                renderPngSplitDialog={sessionId && !loading && !sessionLoadFailed ? renderPngSplitDialog : undefined}
+                pngSplitLabels={{ action: t("uiSketch.pngSplit.action"), running: t("uiSketch.pngSplit.running"), alreadySplit: t("uiSketch.pngSplit.alreadySplit"),
+                  complete: (count, discarded) => t("uiSketch.pngSplit.complete", { count, discarded }) }}
                 sessionPreviewLabel={t("sessionPreview.label")}
                 sessionPreviewFailedLabel={t("sessionPreview.failed")}
                 onSessionPreviewDrop={sessionId ? loadDroppedSessionPreview : undefined}
@@ -571,6 +592,8 @@ function UiSketchPageContent() {
                 onReadImageFile={readImageFile}
                 imageEditorLabels={{
                   content: t("canvas.imageEditor.content"),
+                  sourceDimensions: (width, height) => t("canvas.imageEditor.sourceDimensions", { width, height }),
+                  sourceFileSize: (size, unit) => t("canvas.imageEditor.sourceFileSize", { size, unit }),
                   upload: t("canvas.imageEditor.upload"),
                   download: t("canvas.imageEditor.download"),
                   downloading: t("canvas.imageEditor.downloading"),
@@ -616,6 +639,7 @@ function UiSketchPageContent() {
                   sendToBack: t("canvasLayers.sendToBack"),
                   groupItems: t("uiSketch.canvasLabels.groupItems"),
                   ungroupItems: t("uiSketch.canvasLabels.ungroupItems"),
+                  deleteSelection: t("actions.delete"),
                   copyGroup: t("clipboard.group"),
                   copyPrompt: t("clipboard.copyPrompt"),
                   promptPreview: t("clipboard.promptPreview"),
@@ -638,10 +662,12 @@ function UiSketchPageContent() {
                   editRegionNote: t("uiSketch.canvasLabels.editRegionNote"),
                   editText: t("uiSketch.canvasLabels.editText"),
                   nodeDescription: t("canvas.node.nodeDescription"),
+                  nodeDescriptionHelp: t("canvas.node.nodeDescriptionHelp"),
                   originUser: t("canvas.node.originUser"),
                   originAgent: t("canvas.node.originAgent"),
                   originImport: t("canvas.node.originImport"),
                   note: t("notes.element.label"),
+                  noteHelp: t("notes.element.nodeHelp"),
                   textContent: t("textContent.label"),
                   regionPlaceholder: t("notes.element.regionPlaceholder"),
                   textPlaceholder: t("textContent.uiSketchPlaceholder"),

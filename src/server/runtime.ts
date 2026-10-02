@@ -1,4 +1,5 @@
 import { mkdirSync } from "node:fs";
+import { WorkspaceSettingsRepository } from "../database/workspace-settings-repository.ts";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -6,10 +7,12 @@ import type { FastifyInstance, FastifyServerOptions } from "fastify";
 
 import { CompositionSessionRepository } from "../database/composition-session-repository.ts";
 import { ImageAssetRepository } from "../database/image-asset-repository.ts";
+import { SessionStorageRepository } from "../database/session-storage-repository.ts";
 import { openDatabase } from "../database/migrate.ts";
 import { ProjectSessionRepository } from "../database/project-session-repository.ts";
 import { StyleLibraryRepository } from "../database/style-library-repository.ts";
 import { UiSketchSessionRepository } from "../database/ui-sketch-session-repository.ts";
+import { UiSketchPngSplitRepository } from "../database/ui-sketch-png-split-repository.ts";
 import { SpatialSessionRepository } from "../database/spatial-session-repository.ts";
 import { HUMAN2AI_SERVICE_CAPABILITIES, buildServer } from "./app.ts";
 import { resolveRuntimeDefaults } from "../runtime-defaults.ts";
@@ -158,12 +161,16 @@ export function createHuman2AiServer(
     databaseClosed = true;
     database.close();
   };
+  const imageAssets = new ImageAssetRepository(database, artifactsDirectory);
   const server = buildServer(
     { logger: options.logger ?? false },
     {
       compositionSessions: new CompositionSessionRepository(database),
-      imageAssets: new ImageAssetRepository(database, artifactsDirectory),
+      imageAssets,
+      storage: new SessionStorageRepository(database, imageAssets, artifactsDirectory),
+      pngSplits: new UiSketchPngSplitRepository(database, imageAssets),
       projectSessions: new ProjectSessionRepository(database),
+      settings: new WorkspaceSettingsRepository(database),
       styleLibrary: new StyleLibraryRepository(database, artifactsDirectory),
       uiSketchSessions: new UiSketchSessionRepository(database),
       spatialSessions: new SpatialSessionRepository(database),

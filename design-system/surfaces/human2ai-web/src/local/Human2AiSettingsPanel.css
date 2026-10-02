@@ -1,0 +1,117 @@
+.human2ai-settings {
+  height: 480px;
+  max-height: calc(100dvh - 120px);
+}
+
+.human2ai-settings__content {
+  padding: var(--yisiui-space-2) var(--yisiui-space-4);
+}
+
+.human2ai-settings__content--trash {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.human2ai-settings__content--trash > :not(.human2ai-settings__trash) {
+  flex-shrink: 0;
+}
+
+.human2ai-settings__field {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-4);
+  margin-bottom: var(--yisiui-space-5);
+}
+
+.human2ai-settings__label {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+}
+
+.human2ai-settings__label .anticon {
+  color: var(--yisiui-color-text-muted);
+}
+
+.human2ai-settings__field .ant-input {
+  width: 112px;
+  flex-shrink: 0;
+}
+
+.human2ai-settings__value {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-2);
+  flex-shrink: 0;
+}
+
+.human2ai-settings__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--yisiui-space-2);
+}
+
+.human2ai-settings__error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--yisiui-space-2);
+  margin-bottom: var(--yisiui-space-4);
+  color: var(--yisiui-color-feedback-error);
+}
+
+.human2ai-settings__trash {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: var(--yisiui-space-2);
+  margin-top: var(--yisiui-space-5);
+}
+
+.human2ai-settings__trash > .human2ai-settings__actions {
+  flex-shrink: 0;
+}
+
+.human2ai-settings__trash-list {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.human2ai-settings__session {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-3);
+  padding-block: var(--yisiui-space-3);
+}
+
+.human2ai-settings__session > .ant-btn {
+  box-shadow: none;
+}
+
+.human2ai-settings__session-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.human2ai-settings__session-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.human2ai-settings__timestamp,
+.human2ai-settings__empty {
+  color: var(--yisiui-color-text-secondary);
+}
+
+.human2ai-settings__timestamp {
+  font-size: var(--yisiui-font-size-sm);
+  margin-top: var(--yisiui-space-1);
+}
