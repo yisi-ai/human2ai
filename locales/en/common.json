@@ -11,7 +11,8 @@
   },
   "integrations": {
     "workbuddy": {
-      "description": "Create and edit compositions, UI sketches and 3D spaces in a shared local workspace.",
+      "name": "human2ai",
+      "description": "An agent-operated tool for drawing and UI design. Let your agent create and edit compositions, interfaces and 3D spaces, export previews, and collaborate with you on one canvas.",
       "examples": {
         "composition": "Recreate this reference image's composition on a canvas I can keep editing.",
         "uiSketch": "Read this UI sketch, adjust the layout using my notes, and export a preview.",

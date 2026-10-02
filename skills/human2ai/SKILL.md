@@ -2,7 +2,7 @@
 name: human2ai
 description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); to extract UI artwork from an interface image (“提取 UI”) or split a transparent PNG into canvas images; to model in the consumer project using a style and 3D spatial guidance; or to reuse a visual style. The consumer project's Agent owns downstream implementation.
 metadata:
-  version: "0.1.7"
+  version: "0.1.8"
 ---
 
 # Human2AI

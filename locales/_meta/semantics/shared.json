@@ -881,19 +881,22 @@
       ]
     },
     "app.product-name": {
-      "meaning": "The localized product identity shown by the application.",
+      "meaning": "The localized Human2AI product identity, with a contextual capability-oriented display name for WorkBuddy marketplace listings.",
       "scope": "Browser document title, home-page introduction heading, shared shell product name, and connector or Skill marketplace product identity. The home-page content shows the name beside the brand icon and omits the duplicate shell header title; the application sidebar brand links to the home page.",
-      "referent": "The Human2AI product, named 以形塑形 in Chinese and human2ai in English.",
-      "precedence": "The product name is distinct from individual feature names, session titles and implementation readiness messages.",
+      "referent": "The Human2AI product, named 以形塑形 in the Chinese application and Agent自动画布 in the Chinese WorkBuddy listing; the English identity remains human2ai.",
+      "precedence": "The product name is distinct from individual feature names, session titles and implementation readiness messages. The WorkBuddy contextual name applies to connector and standalone Skill display metadata rather than the browser application's branding.",
       "canonicalKey": "app.title",
       "searchTerms": [
         "以形塑形",
         "human2ai",
         "Human2AI",
-        "product name"
+        "product name",
+        "Agent自动画布",
+        "WorkBuddy display name"
       ],
       "examples": [
-        "Show the product name in the shell and browser title."
+        "Show the product name in the shell and browser title.",
+        "Display Agent自动画布 in a WorkBuddy connector or standalone Skill listing."
       ],
       "nonExamples": [
         "Use a session title as the product identity."
@@ -1205,9 +1208,9 @@
       ]
     },
     "integrations.visual-workspace-description": {
-      "meaning": "A short description of Human2AI as a shared local visual workspace where people and AI create and edit compositions, UI sketches, and 3D spaces.",
+      "meaning": "A short description of Human2AI as a shared local visual workspace where an Agent can independently operate drawing and UI-design workflows, create and edit compositions, interfaces and 3D spaces, export previews, and collaborate with the user on the same canvas.",
       "scope": "Home-page product introduction, WorkBuddy connector listing, bundled Skill discovery metadata, and standalone Skill marketplace listing.",
-      "referent": "Human2AI's existing browser workspace and CLI collaboration capabilities.",
+      "referent": "Human2AI's existing browser workspace and Agent-operated CLI authoring, editing, preview-export and collaboration capabilities.",
       "precedence": "Describes the product's capabilities; does not promise hosted storage, image generation, or automatic implementation of a finished application.",
       "canonicalKey": "integrations.workbuddy.description",
       "searchTerms": [
@@ -1218,7 +1221,11 @@
         "首页介绍",
         "产品能力",
         "home introduction",
-        "product capabilities"
+        "product capabilities",
+        "Agent 自行操作",
+        "画图神器",
+        "画 UI 界面",
+        "agent-operated drawing and UI design"
       ],
       "examples": [
         "Explain which visual artifacts the installed connector lets an Agent edit.",
@@ -2266,7 +2273,17 @@
       "role": "localized product name for title and branding surfaces; visible name of the brand link returning to the home page",
       "grammar": "proper name",
       "tone": "neutral",
-      "reusePolicy": "canonical"
+      "reusePolicy": "canonical",
+      "duplicateReason": "The English identity is also human2ai in integrations.workbuddy.name, but the application keeps the Chinese branding 以形塑形 while the WorkBuddy listing uses the contextual name Agent自动画布."
+    },
+    "integrations.workbuddy.name": {
+      "conceptId": "app.product-name",
+      "variant": "workbuddy-marketplace-name",
+      "role": "localized display name for WorkBuddy connectors and standalone Skills",
+      "grammar": "proper name",
+      "tone": "capability-oriented branding",
+      "reusePolicy": "contextual",
+      "duplicateReason": "The English name deliberately remains human2ai, matching app.title, while the Chinese WorkBuddy marketplace uses Agent自动画布 rather than the application's 以形塑形."
     },
     "canvas.viewport.help": {
       "conceptId": "canvas.viewport-help",
@@ -2497,7 +2514,7 @@
       "variant": "marketplace-description",
       "role": "connector capability description and bundled or standalone Skill discovery summary",
       "grammar": "complete sentence describing available actions",
-      "tone": "direct and factual",
+      "tone": "promotional and focused on Agent-operated capabilities",
       "reusePolicy": "canonical"
     },
     "home.description": {

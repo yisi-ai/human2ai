@@ -11,7 +11,8 @@
   },
   "integrations": {
     "workbuddy": {
-      "description": "在人与 AI 共享的本地视觉工作区中创建和编辑构图、UI 草图与 3D 空间。",
+      "name": "Agent自动画布",
+      "description": "Agent 可自行操作的画图、画 UI 界面神器，支持自主创建、编辑构图、UI 界面和 3D 空间，导出预览，并与您在同一画布上协作。",
       "examples": {
         "composition": "把这张参考图的构图画到画布上，让我继续编辑。",
         "uiSketch": "读取这个 UI 草图，按我的备注调整布局并导出预览。",
