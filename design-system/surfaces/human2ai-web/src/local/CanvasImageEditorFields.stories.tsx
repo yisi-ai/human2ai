@@ -12,6 +12,8 @@ const FIXTURE_IMAGE = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/s
 
 const labels = {
   content: "图片内容",
+  sourceDimensions: (width: number, height: number) => `${width} × ${height} px`,
+  sourceFileSize: (size: number, unit: string) => `${size} ${unit}`,
   upload: "上传图片",
   download: "下载图片",
   downloading: "正在下载",

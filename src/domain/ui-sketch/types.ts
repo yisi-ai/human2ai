@@ -5,6 +5,7 @@ import type {
 } from "../canvas-node-metadata.ts";
 import type { DraftVersion } from "../session/index.ts";
 import type { SessionPreviewReference } from "../session/preview.ts";
+import type { PngSplitBatch } from "./png-split.ts";
 
 export interface UiSketchBounds {
   x: number;
@@ -83,6 +84,7 @@ export interface UiSketchStateTab {
 }
 
 export interface UiSketchDraft {
+  pngSplits?: PngSplitBatch[];
   layerOrder?: string[];
   version: 1;
   kind: "ui-layout-draft";

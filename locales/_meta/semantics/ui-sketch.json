@@ -347,7 +347,7 @@
       "meaning": "Create a persistent, non-visual, single-level group from selected UI sketch elements so they can be selected and moved together while retaining editable members.",
       "scope": "UI sketch canvas context menu.",
       "referent": "The membership relation between selected rectangles, text nodes and images.",
-      "precedence": "Grouping preserves every node, its geometry and stage state. It is independent of visual surfaces, component hierarchy and temporary multi-selection.",
+      "precedence": "Grouping preserves every node, its geometry and stage state. It is independent of visual surfaces, component hierarchy and temporary multi-selection. A padded dashed outline on member hover or group selection is an editor-only membership indicator, not saved or exported content.",
       "canonicalKey": "uiSketch.canvasLabels.groupItems",
       "searchTerms": [
         "建组",
@@ -415,6 +415,300 @@
       ],
       "nonExamples": [
         "Reject an uploaded JPEG image."
+      ]
+    },
+    "ui-sketch.png-split": {
+      "meaning": "Split one selected transparent PNG original into independent native-size images, filtering only pieces with both dimensions below the minimum and grouping the newly added pieces.",
+      "scope": "Single ungrouped image selection in the UI-sketch canvas; unavailable for multi-selection, groups, non-image nodes and session preview references.",
+      "referent": "The one selected original image asset and its recorded split operation.",
+      "precedence": "Preserves the source image and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis. The menu action opens settings with read-only preview; only confirmation executes splitting.",
+      "canonicalKey": "uiSketch.pngSplit.action",
+      "searchTerms": [
+        "拆分 PNG",
+        "Split PNG",
+        "PNG split"
+      ],
+      "examples": [
+        "Select one original PNG, open Split PNG settings, inspect the preview and confirm to create retained slices."
+      ],
+      "nonExamples": [
+        "Split a group or multiple selected images.",
+        "Replace or delete the source image; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-alpha-threshold": {
+      "meaning": "The alpha cutoff used only for eight-direction connectivity; original soft-edge RGBA pixels are preserved and assigned to the nearest body.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.alphaThreshold",
+      "searchTerms": [
+        "透明度阈值",
+        "Alpha threshold",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-minimum-size": {
+      "meaning": "Minimum original pixel dimension for automatically detected pieces: discard only when both width and height are smaller, retaining thin pieces. Zero disables filtering. Explicit manual regions are always retained when nonempty.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.minSize",
+      "searchTerms": [
+        "最小尺寸（px）",
+        "Minimum size (px)",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-gap": {
+      "meaning": "Space in canvas pixels between native-size pieces in the compact rectangle. It does not scale or rotate images.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.gap",
+      "searchTerms": [
+        "间距（px）",
+        "Gap (px)",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-failure": {
+      "meaning": "Splitting or saving slice assets failed before committing canvas content; retry resumes recorded successful assets.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.failed",
+      "searchTerms": [
+        "拆分失败，请重试。",
+        "Splitting failed. Please retry.",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-invalid-input": {
+      "meaning": "The selection contains an image that is not a static PNG with an alpha channel, fully transparent pixels and at least one nontransparent pixel.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas and ordinary-image input validation in its CLI.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.invalid",
+      "searchTerms": [
+        "请选择包含透明区域且非空的静态 PNG 图片。",
+        "Select nonempty static PNG images with transparent areas.",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-completion": {
+      "meaning": "The operation completed, reporting retained slices and discarded fragments across the selected originals. Zero retained slices is also successful.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.complete",
+      "searchTerms": [
+        "已拆分 {{count}} 张图片，过滤 {{discarded}} 个碎片。",
+        "Created {{count}} images; filtered {{discarded}} fragments.",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-repeat": {
+      "meaning": "Every requested source and connectivity/size-filter parameter combination has already been applied; preserve edited, deleted and ungrouped results.",
+      "scope": "Selected-image PNG splitting in the UI-sketch canvas.",
+      "referent": "The selected original image assets and their recorded split operation.",
+      "precedence": "Preserves source images and user edits; distinct from crop, replacement, grouping existing nodes and semantic image analysis.",
+      "canonicalKey": "uiSketch.pngSplit.alreadySplit",
+      "searchTerms": [
+        "所选图片已拆分。",
+        "Selected images have already been split.",
+        "PNG split"
+      ],
+      "examples": [
+        "Split one or more selected transparent PNG assets without resizing their retained slices."
+      ],
+      "nonExamples": [
+        "Replace or delete source images; restore deleted slices on rerun."
+      ]
+    },
+    "ui-sketch.png-split-save-retry": {
+      "meaning": "Retry saving the current UI-sketch draft after a failed nonconflicting save of a PNG split operation, retaining prepared slice assets and the single local undo step.",
+      "scope": "UI-sketch service error action when a PNG split remains unsaved.",
+      "referent": "The current unsaved full draft containing PNG split provenance.",
+      "precedence": "Retries existing draft persistence without repeating splitting or creating nodes. Revision conflicts continue to stop writes. Distinct from reloading a failed session or retrying asset preparation.",
+      "canonicalKey": "uiSketch.pngSplit.retrySave",
+      "searchTerms": [
+        "重试保存",
+        "Retry save",
+        "PNG save retry"
+      ],
+      "examples": [
+        "A split has appended six images locally but its save request fails; retry the pending draft."
+      ],
+      "nonExamples": [
+        "Overwrite a newer external draft on revision conflict."
+      ]
+    },
+    "ui-sketch.png-split-settings": {
+      "meaning": "Preview one selected original PNG with retained slice bounds while editing alpha threshold, minimum native piece size and packing gap; confirm to execute splitting with these parameters.",
+      "scope": "UI-sketch PNG split settings dialog and confirmation button, opened by the Split PNG menu action.",
+      "referent": "PNG split parameters remembered in the current browser; valid input is saved automatically and restored when settings reopen.",
+      "precedence": "Editing settings saves valid parameter preferences locally and computes read-only bounds; no slice assets, draft changes or undo entries are created until Split is clicked. Closing keeps saved preferences without splitting. Gap affects output packing, not source bounds.",
+      "canonicalKey": "uiSketch.pngSplit.settings",
+      "searchTerms": [
+        "拆分 PNG 设置",
+        "PNG split settings",
+        "split parameters"
+      ],
+      "examples": [
+        "Adjust the minimum size, inspect retained bounds over the selected original, then confirm to create slices."
+      ],
+      "nonExamples": [
+        "Create slice assets while typing parameters.",
+        "Execute splitting when closing settings."
+      ]
+    },
+    "ui-sketch.png-split-progress": {
+      "meaning": "Transient feedback while preparing slices from selected PNG assets before their atomic canvas insertion.",
+      "scope": "UI-sketch canvas status after confirming PNG split settings.",
+      "referent": "The pending selected-image PNG split preparation request.",
+      "precedence": "Does not open parameter settings or imply completion, partial canvas insertion or draft-save completion.",
+      "canonicalKey": "uiSketch.pngSplit.running",
+      "searchTerms": [
+        "正在拆分 PNG",
+        "Splitting PNG",
+        "PNG split progress"
+      ],
+      "examples": [
+        "Announce preparation after confirming PNG split settings."
+      ],
+      "nonExamples": [
+        "Announce that a draft has finished saving."
+      ]
+    },
+    "ui-sketch.png-split-preview": {
+      "meaning": "The selected original PNG overlaid with retained slice bounds from prioritized manual regions and automatic detection using valid threshold and minimum size.",
+      "scope": "Manual PNG split settings dialog.",
+      "referent": "The single selected PNG source and unconfirmed parameters.",
+      "precedence": "Describes read-only preview, not completed splitting or saved canvas content.",
+      "canonicalKey": "uiSketch.pngSplit.preview",
+      "searchTerms": [
+        "PNG split preview",
+        "拆分预览",
+        "preview"
+      ],
+      "examples": [
+        "Inspect retained bounds before confirming a split."
+      ],
+      "nonExamples": [
+        "Report that slices have already been saved."
+      ]
+    },
+    "ui-sketch.png-split-previewing": {
+      "meaning": "A read-only split-bounds preview is being computed for the current parameters; no slices have been created.",
+      "scope": "Manual PNG split settings dialog.",
+      "referent": "The current selected PNG sources and unconfirmed parameters.",
+      "precedence": "Describes read-only preview, not completed splitting or saved canvas content.",
+      "canonicalKey": "uiSketch.pngSplit.previewing",
+      "searchTerms": [
+        "PNG split preview",
+        "拆分预览",
+        "previewing"
+      ],
+      "examples": [
+        "Inspect retained bounds before confirming a split."
+      ],
+      "nonExamples": [
+        "Report that slices have already been saved."
+      ]
+    },
+    "ui-sketch.png-split-preview-failure": {
+      "meaning": "Read-only PNG split preview could not be computed; retry the preview before confirming.",
+      "scope": "Manual PNG split settings dialog.",
+      "referent": "The current selected PNG sources and unconfirmed parameters.",
+      "precedence": "Describes read-only preview, not completed splitting or saved canvas content.",
+      "canonicalKey": "uiSketch.pngSplit.previewFailed",
+      "searchTerms": [
+        "PNG split preview",
+        "拆分预览",
+        "previewFailed"
+      ],
+      "examples": [
+        "Inspect retained bounds before confirming a split."
+      ],
+      "nonExamples": [
+        "Report that slices have already been saved."
+      ]
+    },
+    "ui-sketch.png-split-preview-summary": {
+      "meaning": "Counts of retained slices and discarded fragments predicted for all selected originals using the current parameters.",
+      "scope": "Manual PNG split settings dialog.",
+      "referent": "The current selected PNG sources and unconfirmed parameters.",
+      "precedence": "Describes read-only preview, not completed splitting or saved canvas content.",
+      "canonicalKey": "uiSketch.pngSplit.previewSummary",
+      "searchTerms": [
+        "PNG split preview",
+        "拆分预览",
+        "previewSummary"
+      ],
+      "examples": [
+        "Inspect retained bounds before confirming a split."
+      ],
+      "nonExamples": [
+        "Report that slices have already been saved."
+      ]
+    },
+    "ui-sketch.png-manual-region": {
+      "meaning": "A closed polygon drawn with free anchor points that forces all enclosed source pixels into one PNG image before automatic detection processes the remainder.",
+      "scope": "PNG split preview editor; polygons are created, selected or deleted, never reshaped after closure.",
+      "referent": "Source-image pixel coordinates of one manual split region.",
+      "precedence": "Manual regions bypass automatic connectivity and minimum-size filtering. Earlier regions own overlapping pixels. Empty regions produce no image. Region drafts belong to the currently open image dialog, not shared numeric preferences.",
+      "canonicalKey": "uiSketch.pngSplit.freeAnchors",
+      "searchTerms": [
+        "自由锚点",
+        "手动区域",
+        "Free anchors",
+        "manual region",
+        "polygon"
+      ],
+      "examples": [
+        "Close a polygon around one touching object and split it as one image.",
+        "Select a completed region and delete it before drawing a replacement."
+      ],
+      "nonExamples": [
+        "Drag a completed polygon vertex.",
+        "Create vector nodes from a polygon."
       ]
     }
   },
@@ -801,6 +1095,158 @@
       "grammar": "complete sentence",
       "tone": "clear and actionable",
       "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.action": {
+      "conceptId": "ui-sketch.png-split",
+      "variant": "default",
+      "role": "canvas context-menu action opening settings for one selected image",
+      "grammar": "imperative verb",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.alphaThreshold": {
+      "conceptId": "ui-sketch.png-split-alpha-threshold",
+      "variant": "default",
+      "role": "numeric field label",
+      "grammar": "noun phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.minSize": {
+      "conceptId": "ui-sketch.png-split-minimum-size",
+      "variant": "default",
+      "role": "numeric field label; pixel unit is displayed separately after the value",
+      "grammar": "noun phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.gap": {
+      "conceptId": "ui-sketch.png-split-gap",
+      "variant": "default",
+      "role": "numeric field label; pixel unit is displayed separately after the value",
+      "grammar": "noun phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.failed": {
+      "conceptId": "ui-sketch.png-split-failure",
+      "variant": "default",
+      "role": "visible retryable canvas error",
+      "grammar": "complete sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.invalid": {
+      "conceptId": "ui-sketch.png-split-invalid-input",
+      "variant": "default",
+      "role": "visible canvas or CLI image input-validation error",
+      "grammar": "complete sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.complete": {
+      "conceptId": "ui-sketch.png-split-completion",
+      "variant": "default",
+      "role": "transient canvas status",
+      "grammar": "complete sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.alreadySplit": {
+      "conceptId": "ui-sketch.png-split-repeat",
+      "variant": "default",
+      "role": "transient canvas status",
+      "grammar": "complete sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.retrySave": {
+      "conceptId": "ui-sketch.png-split-save-retry",
+      "variant": "default",
+      "role": "button retrying pending PNG split persistence",
+      "grammar": "imperative verb",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.settings": {
+      "conceptId": "ui-sketch.png-split-settings",
+      "variant": "default",
+      "role": "settings dialog title",
+      "grammar": "noun phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.applySettings": {
+      "conceptId": "ui-sketch.png-split-settings",
+      "variant": "confirm",
+      "role": "button executing the split using current valid, automatically saved parameters",
+      "grammar": "imperative verb",
+      "tone": "clear and concise",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.pngSplit.running": {
+      "conceptId": "ui-sketch.png-split-progress",
+      "variant": "default",
+      "role": "transient canvas progress status",
+      "grammar": "progress phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.preview": {
+      "conceptId": "ui-sketch.png-split-preview",
+      "variant": "default",
+      "role": "accessible name of the split preview region",
+      "grammar": "noun phrase",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.previewing": {
+      "conceptId": "ui-sketch.png-split-previewing",
+      "variant": "default",
+      "role": "preview progress status",
+      "grammar": "sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.previewFailed": {
+      "conceptId": "ui-sketch.png-split-preview-failure",
+      "variant": "default",
+      "role": "preview error message",
+      "grammar": "sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.previewSummary": {
+      "conceptId": "ui-sketch.png-split-preview-summary",
+      "variant": "default",
+      "role": "preview result summary",
+      "grammar": "sentence",
+      "tone": "clear and concise",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.freeAnchors": {
+      "conceptId": "ui-sketch.png-manual-region",
+      "variant": "tool",
+      "role": "toggle button arming one polygon drawing",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
+    "uiSketch.pngSplit.manualRegion": {
+      "conceptId": "ui-sketch.png-manual-region",
+      "variant": "region",
+      "role": "accessible name of a selectable closed region",
+      "grammar": "noun phrase with index",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.pngSplit.closeRegion": {
+      "conceptId": "ui-sketch.png-manual-region",
+      "variant": "close",
+      "role": "button closing the current polygon",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
     }
   }
 }

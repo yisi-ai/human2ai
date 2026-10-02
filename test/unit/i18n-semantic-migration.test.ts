@@ -62,7 +62,7 @@ describe("semantic migration reuse boundaries", () => {
     ["actions.start", "开始", "Start"],
     ["errors.operationFailed", "操作失败，请重试。", "The action failed. Try again."],
     ["workspaceSidebar.deleteProjectDescription", "删除后无法恢复。", "This action cannot be undone."],
-    ["workspaceSidebar.deleteSessionDescription", "删除后，该会话的草图和加工记录也会被删除。", "Deleting this session also removes its drafts and refinement records."],
+    ["workspaceSidebar.deleteSessionDescription", "会话将移入回收站，可在保留期限内恢复。", "This session will move to Trash and can be restored before its retention period ends."],
     ["sessionDetails.created", "创建时间", "Created"],
     ["sessionDetails.updated", "修改时间", "Last updated"],
     ["sessionDetails.nodes", "节点数", "Nodes"],

@@ -44,6 +44,7 @@ describe("UI layout CLI preview", () => {
   it("discovers and exports one immutable revision as self-contained SVG and cropped PNG without browser access", async () => {
     const raster = await sharp(Buffer.from([255, 0, 0, 0, 255, 0]), { raw: { width: 2, height: 1, channels: 3 } }).png().toBuffer();
     const bitmap = await env.imageAssets.create(env.session.id, { filename: "colors.png", data: raster });
+    const hidden = await env.imageAssets.create(env.session.id, { filename: "hidden.png", data: raster });
     const vector = await env.imageAssets.create(env.session.id, { filename: "blue.svg", data: Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#0000ff"/></svg>') });
     const draft = validateUiSketchDraft({ ...createUiSketchDraft(),
       frame: { x: 100, y: 200, width: 64, height: 48 },
@@ -55,7 +56,7 @@ describe("UI layout CLI preview", () => {
       images: [
         { id: "bitmap", x: 114, y: 214, width: 8, height: 8, assetId: bitmap.id, crop: { x: 0.5, y: 0, width: 0.5, height: 1 } },
         { id: "vector", x: 140, y: 210, width: 8, height: 8, assetId: vector.id },
-        { id: "hidden", x: 100, y: 200, width: 8, height: 8, assetId: "not-fetched", visible: false },
+        { id: "hidden", x: 100, y: 200, width: 8, height: 8, assetId: hidden.id, visible: false },
       ],
       layerOrder: ["region", "outside", "bitmap", "vector", "label", "hidden"],
     });
@@ -86,6 +87,7 @@ describe("UI layout CLI preview", () => {
     expect(env.uiSketchSessions.listDraftVersions(env.session.id)).toHaveLength(2);
     expect(env.uiSketchSessions.getDraftVersion(env.session.id, 1).draft.rectangles[0].note).toBe(draft.rectangles[0].note);
     expect(env.dependencies.openUrl).not.toHaveBeenCalled();
+    expect(env.dependencies.fetch.mock.calls.every(([input]) => !String(input).includes(hidden.id))).toBe(true);
   });
 
   it("selects named states by stable id and defaults to display order after start is deleted", async () => {

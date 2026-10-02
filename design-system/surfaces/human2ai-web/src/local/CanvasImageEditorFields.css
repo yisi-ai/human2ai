@@ -11,8 +11,17 @@
 
 .human2ai-canvas-image-editor-fields__heading {
   display: flex;
+  flex-wrap: wrap;
   min-width: 0;
   align-items: baseline;
+  column-gap: var(--yisiui-space-3);
+  row-gap: var(--yisiui-space-1);
+}
+
+.human2ai-canvas-image-editor-fields__metadata {
+  color: var(--yisiui-color-text-muted);
+  font-size: var(--yisiui-font-size-sm);
+  font-weight: var(--yisiui-font-weight-regular);
 }
 
 .human2ai-canvas-image-editor-fields__actions {

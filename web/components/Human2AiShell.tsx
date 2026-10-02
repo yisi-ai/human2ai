@@ -16,6 +16,8 @@ import { useTranslation } from "react-i18next";
 
 import { isAppLocale, resolveAppLocale } from "../i18n/createI18n";
 import { useAppShellWidths } from "../lib/use-app-shell-widths";
+import { useWorkspaceTreeExpansion } from "../lib/use-workspace-tree-expansion";
+import { WorkspaceSettings } from "./WorkspaceSettings";
 import {
   createCompositionSession,
   createUiSketchSession,
@@ -166,6 +168,11 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loadAttempt, setLoadAttempt] = useState(0);
+  const hasUnassignedSessions = sessions.some(session => session.projectId === null);
+  const containerKeys = useMemo(() => [...projects.map(project => `project:${project.id}`),
+    ...groups.map(group => `group:${group.id}`), ...(hasUnassignedSessions ? ["project:unassigned"] : [])],
+    [projects, groups, hasUnassignedSessions]);
+  const treeExpansion = useWorkspaceTreeExpansion(containerKeys);
 
   useEffect(() => {
     let cancelled = false;
@@ -275,6 +282,7 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
     projectNamePlaceholder: t("workspaceSidebar.projectNamePlaceholder"),
     createProject: t("actions.create"),
     unassigned: t("workspaceSidebar.unassigned"),
+    containsCurrentSession: t("workspaceSidebar.containsCurrentSession"),
     imageCompositionSession: t("workspaceSidebar.imageCompositionSession"),
     uiLayoutSession: t("workspaceSidebar.uiLayoutSession"),
     sessionActions: t("workspaceSidebar.sessionActions"),
@@ -316,8 +324,10 @@ const WorkspaceSidebar = memo(function WorkspaceSidebar({
       sessions={sessions}
       groups={groups}
       currentSessionId={currentSessionId}
+      {...treeExpansion}
       loading={loading}
       errorMessage={loadError}
+      footerExtra={<WorkspaceSettings onRestored={() => setLoadAttempt(attempt => attempt + 1)} />}
       repositoryLink={{ href: "https://github.com/yisi-ai/human2ai", label: t("app.repositoryLink", { productName: t("app.title") }) }}
       languageSelector={{
         "aria-label": t("language.selectorLabel"),

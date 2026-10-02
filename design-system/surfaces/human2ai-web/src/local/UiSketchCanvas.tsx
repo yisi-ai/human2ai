@@ -1,6 +1,8 @@
 "use client";
 
 import { useCanvasNodeActions, useCanvasNodeCache } from "./useCanvasNodeCache";
+import { appendPngSplit, type PngSplitBatch, type PngSplitOptions } from "../../../../../src/domain/ui-sketch/png-split";
+import { nearFrameStart } from "../../../../../src/domain/ui-sketch/png-canvas";
 import { createCanvasShapeOverlap } from "./canvasShapeOverlap";
 import { canvasNodeTone } from "./canvasNodeTone";
 
@@ -13,6 +15,7 @@ import {
   MinusOutlined,
   PictureOutlined,
   PlusOutlined,
+  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 import { CompositeButton } from "@human2ai/ui/yisiui/composite-button";
@@ -185,6 +188,7 @@ export interface UiSketchCanvasLabels extends CanvasLayerLabels {
   clearCanvasCancel: string;
   groupItems: string;
   ungroupItems: string;
+  deleteSelection: string;
   copyGroup: string;
   copyPrompt: string;
   promptPreview: string;
@@ -207,10 +211,12 @@ export interface UiSketchCanvasLabels extends CanvasLayerLabels {
   editRegionNote: string;
   editText: string;
   nodeDescription: string;
+  nodeDescriptionHelp: string;
   originUser: string;
   originAgent: string;
   originImport: string;
   note: string;
+  noteHelp: string;
   textContent: string;
   regionPlaceholder: string;
   textPlaceholder: string;
@@ -268,6 +274,7 @@ const DEFAULT_LABELS: UiSketchCanvasLabels = {
   clearCanvasCancel: "取消",
   groupItems: "建组",
   ungroupItems: "解组",
+  deleteSelection: zh.actions.delete,
   copyGroup: "复制",
   copyPrompt: "复制提示词",
   promptPreview: zh.clipboard.promptPreview,
@@ -290,10 +297,12 @@ const DEFAULT_LABELS: UiSketchCanvasLabels = {
   editRegionNote: "编辑区域信息",
   editText: "编辑文字",
   nodeDescription: "节点说明",
+  nodeDescriptionHelp: zh.canvas.node.nodeDescriptionHelp,
   originUser: "user",
   originAgent: "agent",
   originImport: "import",
   note: "备注",
+  noteHelp: zh.notes.element.nodeHelp,
   textContent: "显示文字",
   regionPlaceholder: "这个区域表达什么布局内容",
   textPlaceholder: "输入文字",
@@ -344,6 +353,9 @@ export interface UiSketchSessionPreviewEditorProps {
 }
 
 export interface UiSketchCanvasProps {
+  renderPngSplitDialog?: (props: { images: UiSketchImage[]; mode: "split" | "settings"; options: PngSplitOptions;
+    onSplit(options: PngSplitOptions): void; onApply(batch: PngSplitBatch): void; onError(message: string, keepOpen?: boolean): void; onCancel(): void }) => ReactNode;
+  pngSplitLabels?: { action: string; running: string; complete(count: number, discarded: number): string; alreadySplit: string };
   interactionResetKey?: number;
   draft: UiSketchDraft;
   activeStageId?: string;
@@ -375,13 +387,15 @@ export interface UiSketchCanvasProps {
   "aria-label"?: string;
 }
 
-type Notice = { type: "success" | "warning" | "error"; message: string } | null;
+type Notice = { type: "info" | "success" | "warning" | "error"; message: string } | null;
 
 const ImmediateInput = withOptimisticInput(Input);
 const ImmediateTextArea = withOptimisticInput(Input.TextArea);
 const ImmediateNoteInput = withOptimisticInput(TextMarkEditorTextArea);
 
 export function UiSketchCanvas({
+  renderPngSplitDialog,
+  pngSplitLabels,
   sessionPreviewLabel,
   sessionPreviewFailedLabel = zh.sessionPreview.failed,
   onSessionPreviewDrop,
@@ -415,6 +429,8 @@ export function UiSketchCanvas({
   const labels = { ...DEFAULT_LABELS, ...labelOverrides };
   const imageEditorLabels = {
     content: "图片内容",
+    sourceDimensions: (width: number, height: number) => `${width} × ${height} px`,
+    sourceFileSize: (size: number, unit: string) => `${size} ${unit}`,
     upload: "上传图片",
     download: "下载图片",
     downloading: "正在下载",
@@ -453,6 +469,12 @@ export function UiSketchCanvas({
   useLayoutEffect(() => () => { previewDropGeneration.current++; }, [activeStageId, interactionResetKey, onSessionPreviewDrop]);
   const [placementTool, setPlacementTool] = useState<UiSketchItemKind | null>(null);
   const [selectedKeys, setSelectedKeys] = useState<UiSketchLayerKey[]>([]);
+  const [pngSplitRequest, setPngSplitRequest] = useState<{ images: UiSketchImage[]; mode: "split" | "settings" } | null>(null);
+  const [pngSplitOptions, setPngSplitOptions] = useState<PngSplitOptions>({ alphaThreshold: 8, minSize: 16, gap: 12 });
+  useLayoutEffect(() => {
+    setPngSplitRequest(null);
+    setNotice(current => current?.type === "info" ? null : current);
+  }, [activeStageId, interactionResetKey, renderPngSplitDialog]);
   const [editingKey, setEditingKey] = useState<UiSketchItemKey | null>(null);
   const [editorDraft, setEditorDraft] = useState<UiSketchEditorDraft | null>(null);
   const [overallNoteOpen, setOverallNoteOpen] = useState(false);
@@ -506,7 +528,7 @@ export function UiSketchCanvas({
   const latestImageUpdateRef = useRef({ updateImage, interactionResetKey });
   useLayoutEffect(() => { latestImageUpdateRef.current = { updateImage, interactionResetKey }; });
   const imagePaste = useCanvasImagePaste({
-    disabled: !onDraftChange || Boolean(editingKey) || overallNoteOpen,
+    disabled: !onDraftChange || Boolean(editingKey) || overallNoteOpen || Boolean(pngSplitRequest),
     resetKey: `${interactionResetKey}:${activeStageId}`,
     labels: imageEditorLabels,
     onUpload: onImageUpload,
@@ -529,6 +551,10 @@ export function UiSketchCanvas({
   const selectedGroups = state.groups.filter((group) => (
     group.itemIds.some((id) => selectedIds.includes(id))
   ));
+  const canSplitPng = Boolean(onDraftChange) && selectedIds.length === 1 && selectedGroups.length === 0
+    && state.images.some(image => image.id === selectedIds[0] && image.assetId && !image.previewReference);
+  const singleGroupSelection = selectedGroups.length === 1
+    && selectedIds.every((id) => selectedGroups[0]!.itemIds.includes(id));
   const canGroup = selectedIds.length >= 2 && !state.groups.some((group) => (
     group.itemIds.length === selectedIds.length && group.itemIds.every((id) => selectedIds.includes(id))
   ));
@@ -801,10 +827,15 @@ export function UiSketchCanvas({
   }
 
   function deleteItems(keys: UiSketchItemKey[]): void {
+    if (!onDraftChange || keys.length === 0) return;
     updateDraft((current) => removeItems(current, keys));
     setSelectedKeys([]);
     setEditingKey(null);
     setEditorDraft(null);
+  }
+
+  function deleteSelection(): void {
+    deleteItems(selectionWithGroups(state, selectedItemKeys));
   }
 
   function updateFrame(frame: CanvasNodeBounds): void {
@@ -995,16 +1026,21 @@ export function UiSketchCanvas({
       const moveKeys = selectedItemKeySet.has(key)
         ? selectedItemKeys
         : selectionWithGroups(state, [key]);
+      const moveIds = new Set(moveKeys.map(keyId));
+      const moveGroupIds = new Set(state.groups
+        .filter((group) => group.itemIds.every((id) => moveIds.has(id)))
+        .map((group) => group.id));
       interactionRef.current = {
         type: "move-items",
         pointerId: event.pointerId,
         keys: moveKeys,
         scene: event.currentTarget,
         previewElements: Array.from(event.currentTarget.querySelectorAll<SVGGraphicsElement>(
-          "[data-ui-sketch-preview], [data-ui-sketch-multi-selection]",
+          "[data-ui-sketch-preview], [data-ui-sketch-multi-selection], [data-ui-sketch-group-outline]",
         )).filter((element) => (
           moveKeys.includes(element.dataset.uiSketchPreview as UiSketchItemKey)
           || (moveKeys.length > 1 && element.hasAttribute("data-ui-sketch-multi-selection"))
+          || moveGroupIds.has(element.dataset.uiSketchGroupOutline ?? "")
         )),
         delta: { x: 0, y: 0 },
         animationFrame: null,
@@ -1418,7 +1454,13 @@ export function UiSketchCanvas({
   const editorFields = editorDraft ? (
     <div className="human2ai-ui-sketch-canvas__editor-primary-fields">
       {editorDraft.item.annotation.trim() ? (
-        <TextMarkEditorField label={labels.nodeDescription}>
+        <TextMarkEditorField label={labels.nodeDescription} hint={(
+          <Tooltip title={labels.nodeDescriptionHelp} trigger={["hover", "focus"]}>
+            <BasicButton className="human2ai-canvas-node-editor__field-help" mode="icon-only" size="small"
+              type="text" backgroundColor="none" icon={<QuestionCircleOutlined aria-hidden="true" />}
+              iconLabel={labels.nodeDescriptionHelp} />
+          </Tooltip>
+        )}>
           <p
             className="human2ai-ui-sketch-canvas__node-description"
             data-ui-sketch-node-description
@@ -1441,7 +1483,13 @@ export function UiSketchCanvas({
         </TextMarkEditorField>
       ) : null}
 
-      <TextMarkEditorField label={labels.note}>
+      <TextMarkEditorField label={labels.note} hint={(
+        <Tooltip title={labels.noteHelp} trigger={["hover", "focus"]}>
+          <BasicButton className="human2ai-canvas-node-editor__field-help" mode="icon-only" size="small"
+            type="text" backgroundColor="none" icon={<QuestionCircleOutlined aria-hidden="true" />}
+            iconLabel={labels.noteHelp} />
+          </Tooltip>
+        )}>
         <ImmediateNoteInput
           autoFocus={editorDraft.kind !== "text"}
           name="nodeNote"
@@ -1629,8 +1677,14 @@ export function UiSketchCanvas({
                 disabled: !onDraftChange || reorderUiSketchLayers(state, selectedIds, action) === state,
               })),
               { type: "divider" },
+              ...(renderPngSplitDialog && pngSplitLabels ? [{
+                key: "split-png", label: <span data-png-split-action>{pngSplitLabels.action}</span>,
+                disabled: Boolean(pngSplitRequest) || !canSplitPng,
+              }, { type: "divider" as const }] : []),
               { key: "group", label: labels.groupItems, disabled: !onDraftChange || !canGroup },
               { key: "ungroup", label: labels.ungroupItems, disabled: !onDraftChange || selectedGroups.length === 0 },
+              { type: "divider" },
+              { key: "delete", label: labels.deleteSelection, danger: true, disabled: !onDraftChange || selectedItemKeys.length === 0 },
             ],
             onClick: ({ key }) => {
               const layerAction = CANVAS_LAYER_ACTIONS.find((action) => action === key);
@@ -1640,6 +1694,10 @@ export function UiSketchCanvas({
                 updateDraft((current) => groupUiSketchItems(current, selectedIds, createId("group")));
               } else if (key === "ungroup" && selectedGroups.length > 0) {
                 updateDraft((current) => ungroupUiSketchItems(current, selectedIds));
+              } else if (key === "delete") {
+                deleteSelection();
+              } else if (key === "split-png" && canSplitPng && !pngSplitRequest) {
+                setPngSplitRequest({ images: state.images.filter(image => image.id === selectedIds[0]), mode: "settings" });
               }
               closeContextMenu();
             },
@@ -1647,6 +1705,44 @@ export function UiSketchCanvas({
         >
           <span aria-hidden="true" style={{ position: "fixed", left: contextMenuPoint.x, top: contextMenuPoint.y, width: 1, height: 1, pointerEvents: "none" }} />
         </Dropdown>
+        {pngSplitRequest && renderPngSplitDialog?.({
+          ...pngSplitRequest,
+          options: pngSplitOptions,
+          onSplit: options => {
+            setPngSplitOptions(options);
+            setPngSplitRequest(current => current ? { ...current, mode: "split" } : null);
+            setNotice({ type: "info", message: pngSplitLabels!.running });
+          },
+          onCancel: () => setPngSplitRequest(null),
+          onError: (message, keepOpen) => {
+            setNotice({ type: "error", message });
+            setPngSplitRequest(current => keepOpen && current ? { ...current, mode: "settings" } : null);
+          },
+          onApply: batch => {
+            const current = latestDraftRef.current;
+            if (batch.sources.some(source => !current.images.some(image => image.id === source.nodeId && image.assetId === source.assetId))) {
+              throw new Error("PNG source changed during splitting.");
+            }
+            const scene = workspaceRef.current?.querySelector<SVGSVGElement>("[data-ui-sketch-scene]");
+            const svgPoint = scene?.createSVGPoint();
+            const transform = scene?.getScreenCTM();
+            let origin = nearFrameStart(state.frame);
+            if (svgPoint && transform) {
+              const bounds = workspaceRef.current!.getBoundingClientRect();
+              svgPoint.x = bounds.left + bounds.width / 2; svgPoint.y = bounds.top + bounds.height / 2;
+              const point = svgPoint.matrixTransform(transform.inverse());
+              origin = { x: Math.round(point.x), y: Math.round(point.y) };
+            }
+            const next = appendPngSplit(current, batch, origin);
+            if (next !== current) {
+              commitDraft(next);
+              const added = next.images.filter(image => !current.images.some(existing => existing.id === image.id));
+              setSelectedKeys(added.map(image => itemKey("image", image.id)));
+              setNotice({ type: "success", message: pngSplitLabels!.complete(added.length, batch.sources.reduce((sum, source) => sum + source.discarded, 0)) });
+            } else setNotice({ type: "success", message: pngSplitLabels!.alreadySplit });
+            setPngSplitRequest(null);
+          },
+        })}
         <InfiniteCanvasViewport
           onContextMenuRequest={openContextMenu}
           onCameraCenterChange={() => dismissContextMenu()}
@@ -1676,7 +1772,7 @@ export function UiSketchCanvas({
                 bounds={viewport.viewportBounds}
                 className="human2ai-ui-sketch-canvas__scene"
                 aria-label={labels.scene}
-                aria-keyshortcuts={onDraftChange ? "Control+C Meta+C Control+V Meta+V" : undefined}
+                aria-keyshortcuts={onDraftChange ? "Control+C Meta+C Control+V Meta+V Delete Backspace" : undefined}
                 data-ui-sketch-scene
                 onDragOver={event => {
                   if (!event.dataTransfer.types.includes(WORKSPACE_SESSION_DRAG_TYPE)) return;
@@ -1706,6 +1802,15 @@ export function UiSketchCanvas({
                 tabIndex={-1}
                 onPointerDownCapture={(event) => event.currentTarget.focus()}
                 onKeyDown={(event) => {
+                  if ((event.key === "Delete" || event.key === "Backspace")
+                    && onDraftChange && selectedItemKeys.length > 0
+                    && !event.nativeEvent.isComposing && !event.ctrlKey && !event.metaKey && !event.altKey
+                    && !(event.target instanceof Element && event.target.closest('input, textarea, [contenteditable="true"], [role="textbox"]'))) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    deleteSelection();
+                    return;
+                  }
                   if (event.key === "ContextMenu" || (event.shiftKey && event.key === "F10")) {
                     event.preventDefault();
                     openContextMenu({
@@ -1978,7 +2083,14 @@ export function UiSketchCanvas({
                 ].filter((node) => node !== null), state.layerOrder, (node) => String(node.key))}
 
                 {sessionPreviewDrag.preview}
-                {multiSelectionBounds ? (
+                <UiSketchGroupOutlines
+                  key={`${interactionResetKey}:${activeStageId}`}
+                  state={displayedState}
+                  selectedKeys={selectedItemKeys}
+                  textMeasurements={textMeasurements}
+                  zoom={viewport.zoom}
+                />
+                {multiSelectionBounds && !singleGroupSelection ? (
                   <rect
                     className="human2ai-ui-sketch-canvas__multi-selection"
                     x={multiSelectionBounds.x}
@@ -2125,6 +2237,82 @@ export function UiSketchCanvas({
   );
 }
 
+function UiSketchGroupOutlines({ state, selectedKeys, textMeasurements, zoom }: {
+  state: UiSketchDraft;
+  selectedKeys: readonly UiSketchItemKey[];
+  textMeasurements: TextMeasurements;
+  zoom: number;
+}) {
+  const rootRef = useRef<SVGGElement | null>(null);
+  const hoveredItemRef = useRef<string | null>(null);
+  const [hoveredGroupId, setHoveredGroupId] = useState<string | null>(null);
+  const groupsById = useMemo(() => new Map(state.groups.map((group) => (
+    [group.id, group] as const
+  ))), [state.groups]);
+  const groupsByItem = useMemo(() => new Map(state.groups.flatMap((group) => (
+    group.itemIds.map((id) => [id, group] as const)
+  ))), [state.groups]);
+  const boundsById = useMemo(() => new Map<string, UiSketchBounds>([
+    ...state.rectangles.map((item) => [item.id, item] as const),
+    ...state.images.map((item) => [item.id, item] as const),
+    ...state.texts.map((item) => [item.id, textBounds(item, textMeasurements)] as const),
+  ]), [state.rectangles, state.images, state.texts, textMeasurements]);
+
+  useLayoutEffect(() => {
+    const scene = rootRef.current?.ownerSVGElement;
+    if (!scene) return;
+    const updateHover = (target: EventTarget | null) => {
+      const key = target instanceof Element && scene.contains(target)
+        ? target.closest<SVGGElement>("[data-ui-sketch-item]")?.dataset.uiSketchItem
+        : undefined;
+      hoveredItemRef.current = key && isItemKey(key) ? keyId(key) : null;
+      setHoveredGroupId(groupsByItem.get(hoveredItemRef.current ?? "")?.id ?? null);
+    };
+    const enter = (event: PointerEvent) => {
+      if (!scene.hasPointerCapture(event.pointerId)) updateHover(event.target);
+    };
+    const leave = (event: PointerEvent) => {
+      if (!scene.hasPointerCapture(event.pointerId)) updateHover(event.relatedTarget);
+    };
+    const clear = () => updateHover(null);
+    setHoveredGroupId(groupsByItem.get(hoveredItemRef.current ?? "")?.id ?? null);
+    scene.addEventListener("pointerover", enter);
+    scene.addEventListener("pointerout", leave);
+    scene.addEventListener("pointerleave", clear);
+    return () => {
+      scene.removeEventListener("pointerover", enter);
+      scene.removeEventListener("pointerout", leave);
+      scene.removeEventListener("pointerleave", clear);
+    };
+  }, [groupsByItem]);
+
+  const outlinedGroups = new Set(selectedKeys.map((key) => groupsByItem.get(keyId(key))));
+  const hoveredGroup = hoveredGroupId ? groupsById.get(hoveredGroupId) : undefined;
+  if (hoveredGroup) outlinedGroups.add(hoveredGroup);
+  const padding = 6 / zoom;
+  return (
+    <g ref={rootRef} aria-hidden="true">
+      {Array.from(outlinedGroups).map((group) => {
+        if (!group) return null;
+        const bounds = combinedBounds(group.itemIds
+          .map((id) => boundsById.get(id))
+          .filter((value): value is UiSketchBounds => Boolean(value)));
+        return bounds ? (
+          <rect
+            key={group.id}
+            className="human2ai-ui-sketch-canvas__group-outline"
+            data-ui-sketch-group-outline={group.id}
+            x={bounds.x - padding}
+            y={bounds.y - padding}
+            width={bounds.width + padding * 2}
+            height={bounds.height + padding * 2}
+          />
+        ) : null;
+      })}
+    </g>
+  );
+}
+
 function nodeOriginLabel(
   origin: UiSketchNodeOrigin,
   labels: UiSketchCanvasLabels,
@@ -2247,6 +2435,10 @@ function boundsForItems(
   const bounds = keys
     .map((key) => itemBounds(state, key, textMeasurements))
     .filter((value): value is UiSketchBounds => Boolean(value));
+  return combinedBounds(bounds);
+}
+
+function combinedBounds(bounds: readonly UiSketchBounds[]): UiSketchBounds | null {
   if (!bounds.length) return null;
   const minimumX = Math.min(...bounds.map((value) => value.x));
   const minimumY = Math.min(...bounds.map((value) => value.y));

@@ -169,8 +169,27 @@
 }
 
 .human2ai-workspace-sidebar__tree-node {
+  display: flex;
+  align-items: center;
+  gap: var(--yisiui-space-2);
   min-width: 0;
   width: 100%;
+}
+
+.human2ai-workspace-sidebar__tree-node-label {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.human2ai-workspace-sidebar__current-dot {
+  flex: 0 0 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--yisiui-color-action-primary);
 }
 
 .human2ai-workspace-sidebar__tree-node[data-drop-target="true"] {

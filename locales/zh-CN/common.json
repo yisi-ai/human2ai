@@ -115,6 +115,7 @@
       "label": "备注",
       "prompt": "- 备注：{{note}}",
       "nodePlaceholder": "说明这个节点表达什么",
+      "nodeHelp": "填写该节点的要求，会加入提示词。",
       "regionPlaceholder": "这个区域表达什么布局内容",
       "textPlaceholder": "这段文字表达什么"
     }
@@ -133,6 +134,7 @@
     "agentCommand": "请使用以下 CLI 命令连接当前会话：\n\n{{command}}\n\n连接完成后，请停止并等待下一步命令。"
   },
   "workspaceSidebar": {
+    "containsCurrentSession": "包含当前会话",
     "functionArea": "功能区",
     "projectArea": "项目",
     "newComposition": "新建构图",
@@ -158,7 +160,7 @@
     "renameSessionTitle": "重命名会话",
     "renameSessionPlaceholder": "输入会话名称",
     "deleteSessionTitle": "删除会话",
-    "deleteSessionDescription": "删除后，该会话的草图和加工记录也会被删除。",
+    "deleteSessionDescription": "会话将移入回收站，可在保留期限内恢复。",
     "loading": "正在加载项目",
     "loadFailed": "项目列表加载失败",
     "newSessionGroup": "新建分组",
@@ -194,6 +196,8 @@
     },
     "imageEditor": {
       "content": "图片内容",
+      "sourceDimensions": "{{width}} × {{height}} px",
+      "sourceFileSize": "{{size}} {{unit}}",
       "upload": "上传图片",
       "replace": "替换图片",
       "uploading": "正在上传",
@@ -225,6 +229,7 @@
     },
     "node": {
       "nodeDescription": "节点说明",
+      "nodeDescriptionHelp": "解释节点在画面中的作用，agent可读写。",
       "originUser": "user",
       "originAgent": "agent",
       "originImport": "import"
@@ -549,6 +554,31 @@
     },
     "preview": {
       "outputFormatError": "UI 预览输出文件必须使用 .png 或 .svg 扩展名。"
+    },
+    "pngSplit": {
+      "action": "拆分 PNG",
+      "alphaThreshold": "透明度阈值",
+      "minSize": "最小尺寸",
+      "gap": "间距",
+      "failed": "拆分失败，请重试。",
+      "invalid": "请选择包含透明区域且非空的静态 PNG 图片。",
+      "complete": "已拆分 {{count}} 张图片，过滤 {{discarded}} 个碎片。",
+      "alreadySplit": "所选图片已拆分。",
+      "retrySave": "重试保存",
+      "settings": "拆分 PNG 设置",
+      "applySettings": "拆分",
+      "running": "正在拆分 PNG…",
+      "preview": "拆分范围预览",
+      "previewing": "正在计算拆分范围…",
+      "previewFailed": "无法预览拆分范围，请重试。",
+      "previewSummary": "将生成 {{count}} 张图片，过滤 {{discarded}} 个碎片。",
+      "zoomIn": "放大预览",
+      "zoomOut": "缩小预览",
+      "help": "预览操作说明",
+      "interactionHelp": "滚轮缩放；按住右键，或空格键加左键平移。选择自由锚点后依次点击，至少三个不共线的点可点击起点或按 Enter 闭合；Esc 取消绘制。闭合区域只能选中删除，不能修改；每个区域保留为一张图片，重叠像素归先创建的区域。",
+      "freeAnchors": "自由锚点",
+      "manualRegion": "手动区域 {{index}}",
+      "closeRegion": "闭合区域"
     }
   },
   "clipboard": {
@@ -586,6 +616,7 @@
     "uiSketchPlaceholder": "输入文字"
   },
   "errors": {
+    "historyExpired": "这段历史已过期，请重新载入当前画布。",
     "serviceSync": "无法同步 Human2AI 服务：{{message}}",
     "operationFailed": "操作失败，请重试。"
   },
@@ -832,5 +863,35 @@
     "loading": "正在加载预览来源",
     "descendantMatches": "下级有 {{count}} 项匹配",
     "searchResults": "匹配 {{count}} 项"
+  },
+  "units": {
+    "pixels": "px"
+  },
+  "settings": {
+    "title": "设置",
+    "navigationLabel": "设置分区",
+    "close": "关闭设置",
+    "autoRelease": "自动释放",
+    "imageDays": "未使用图片",
+    "imageHint": "正在使用的图片不会释放。",
+    "historyDays": "画布历史版本",
+    "historyHint": "保留最新版和正在使用的撤销记录；普通历史版本最多保留 100 个。",
+    "trash": "回收站",
+    "trashDays": "自动删除时间",
+    "trashHint": "删除的会话及其内容保留到期后自动永久删除。",
+    "resetDefaults": "恢复默认值",
+    "restoreSession": "恢复会话",
+    "emptyTrash": "回收站为空",
+    "deletedAt": "删除时间",
+    "loading": "正在加载设置",
+    "invalidDays": "请输入 1–3650 之间的整数天数。",
+    "conflict": "设置已被更新，请重试以保存当前修改。",
+    "daysUnit_one": "天",
+    "daysUnit_other": "天",
+    "deleteNow": "立刻删除",
+    "deleteNowConfirm": "确认立刻删除“{{title}}”？",
+    "clearTrash": "清空回收站",
+    "clearTrashConfirm": "确认清空回收站？",
+    "permanentDeleteHint": "删除后，会话及其内容无法恢复。"
   }
 }

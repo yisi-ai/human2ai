@@ -1,0 +1,601 @@
+{
+  "$schema": "../semantic-shard.schema.json",
+  "domain": "settings",
+  "concepts": {
+    "settings.workspace": {
+      "meaning": "Global preferences for automatic retention and recovery of deleted sessions.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Global preferences for automatic retention and recovery of deleted sessions.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.title",
+      "searchTerms": [
+        "设置",
+        "Settings"
+      ],
+      "examples": [
+        "Global preferences for automatic retention and recovery of deleted sessions."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.navigation": {
+      "meaning": "Accessible name of the settings section navigation.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Accessible name of the settings section navigation.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.navigationLabel",
+      "searchTerms": [
+        "设置分区",
+        "Settings sections"
+      ],
+      "examples": [
+        "Accessible name of the settings section navigation."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.close": {
+      "meaning": "Finish pending valid automatic saves, then close the settings dialog.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "The current settings dialog and its pending valid retention edits.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.close",
+      "searchTerms": [
+        "关闭设置",
+        "Close settings"
+      ],
+      "examples": [
+        "Close the settings dialog without submitting unsaved day values."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.retention": {
+      "meaning": "Automatic cleanup windows for unused images and historical canvas snapshots.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Automatic cleanup windows for unused images and historical canvas snapshots.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.autoRelease",
+      "searchTerms": [
+        "自动释放",
+        "Automatic cleanup"
+      ],
+      "examples": [
+        "Automatic cleanup windows for unused images and historical canvas snapshots."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.image-retention": {
+      "meaning": "Number of continuously unreferenced days before an image may be collected.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Number of continuously unreferenced days before an image may be collected.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.imageDays",
+      "searchTerms": [
+        "未使用图片",
+        "Unused images"
+      ],
+      "examples": [
+        "Number of continuously unreferenced days before an image may be collected."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.image-retention-hint": {
+      "meaning": "Referenced images remain owned and are excluded from the unused-image window.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Referenced images remain owned and are excluded from the unused-image window.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.imageHint",
+      "searchTerms": [
+        "正在使用的图片不会释放。",
+        "Images in use are kept."
+      ],
+      "examples": [
+        "Referenced images remain owned and are excluded from the unused-image window."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.history-retention": {
+      "meaning": "Maximum age in days of ordinary saved canvas history across all session types.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Maximum age in days of ordinary saved canvas history across all session types.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.historyDays",
+      "searchTerms": [
+        "画布历史版本",
+        "Canvas history"
+      ],
+      "examples": [
+        "Maximum age in days of ordinary saved canvas history across all session types."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.history-retention-hint": {
+      "meaning": "The latest canvas and active undo history remain protected, with ordinary history also subject to the existing 100-version limit.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "The latest canvas and active undo history remain protected, with ordinary history also subject to the existing 100-version limit.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.historyHint",
+      "searchTerms": [
+        "保留最新版和正在使用的撤销记录；普通历史版本最多保留 100 个。",
+        "The latest version and active undo history are kept. Ordinary history is limited to 100 versions."
+      ],
+      "examples": [
+        "The latest canvas and active undo history remain protected, with ordinary history also subject to the existing 100-version limit."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.trash": {
+      "meaning": "Recoverable deleted sessions before automatic permanent deletion.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Recoverable deleted sessions before automatic permanent deletion.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.trash",
+      "searchTerms": [
+        "回收站",
+        "Trash"
+      ],
+      "examples": [
+        "Recoverable deleted sessions before automatic permanent deletion."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.trash-retention": {
+      "meaning": "Number of days after a session enters the recycle bin before automatic permanent deletion.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "The configured duration until automatic deletion, rather than a clock time or calendar date.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.trashDays",
+      "searchTerms": [
+        "自动删除时间",
+        "Auto-delete after",
+        "trash retention"
+      ],
+      "examples": [
+        "Auto-delete after 7 days in the recycle bin."
+      ],
+      "nonExamples": [
+        "A scheduled clock time or calendar date for deletion.",
+        "Delete one session immediately."
+      ]
+    },
+    "settings.trash-retention-hint": {
+      "meaning": "Trash retains session content until its configured deletion deadline, after which the session cannot be recovered.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Trash retains session content until its configured deletion deadline, after which the session cannot be recovered.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.trashHint",
+      "searchTerms": [
+        "删除的会话及其内容保留到期后自动永久删除。",
+        "Deleted sessions and their content are permanently removed when this period ends."
+      ],
+      "examples": [
+        "Trash retains session content until its configured deletion deadline, after which the session cannot be recovered."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.reset-retention": {
+      "meaning": "Restore and save the default image and canvas-history day values, preserving the separate trash setting.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Restore and save the default image and canvas-history day values, preserving the separate trash setting.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.resetDefaults",
+      "searchTerms": [
+        "恢复默认值",
+        "Reset to defaults"
+      ],
+      "examples": [
+        "Restore and save the default image and canvas-history day values, preserving the separate trash setting."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.restore-session": {
+      "meaning": "Return the selected trashed session and its retained contents to the active workspace.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Return the selected trashed session and its retained contents to the active workspace.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.restoreSession",
+      "searchTerms": [
+        "恢复会话",
+        "Restore session"
+      ],
+      "examples": [
+        "Return the selected trashed session and its retained contents to the active workspace."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.empty-trash": {
+      "meaning": "No deleted recoverable sessions currently exist.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "No deleted recoverable sessions currently exist.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.emptyTrash",
+      "searchTerms": [
+        "回收站为空",
+        "Trash is empty"
+      ],
+      "examples": [
+        "No deleted recoverable sessions currently exist."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.deleted-at": {
+      "meaning": "Date and time the session entered trash; starts the trash retention clock.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Date and time the session entered trash; starts the trash retention clock.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.deletedAt",
+      "searchTerms": [
+        "删除时间",
+        "Deleted at"
+      ],
+      "examples": [
+        "Date and time the session entered trash; starts the trash retention clock."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.loading": {
+      "meaning": "Loading retention preferences and recoverable sessions from the local service.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "Loading retention preferences and recoverable sessions from the local service.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.loading",
+      "searchTerms": [
+        "正在加载设置",
+        "Loading settings"
+      ],
+      "examples": [
+        "Loading retention preferences and recoverable sessions from the local service."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.invalid-days": {
+      "meaning": "A retention field requires a whole number between one and 3650 days.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "A retention field requires a whole number between one and 3650 days.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.invalidDays",
+      "searchTerms": [
+        "请输入 1–3650 之间的整数天数。",
+        "Enter a whole number of days from 1 to 3650."
+      ],
+      "examples": [
+        "A retention field requires a whole number between one and 3650 days."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.concurrent-change": {
+      "meaning": "A different client has changed persisted settings; retry refreshes its revision and merges only the locally edited fields.",
+      "scope": "Global workspace settings, shared by composition, UI layout and spatial workbenches.",
+      "referent": "The failed automatic settings save and the local fields still awaiting persistence.",
+      "precedence": "Service-wide persisted retention and trash recovery; distinct from canvas editing, browser-only PNG split parameters and style-library editing.",
+      "canonicalKey": "settings.conflict",
+      "searchTerms": [
+        "自动保存冲突",
+        "设置重试",
+        "settings autosave conflict",
+        "retry settings"
+      ],
+      "examples": [
+        "Retry a changed image-retention value while preserving a trash-retention value changed by another client."
+      ],
+      "nonExamples": [
+        "Change the PNG split algorithm or remove one node from a canvas."
+      ]
+    },
+    "settings.days-unit": {
+      "meaning": "The day unit displayed immediately after a numerical retention value, with singular or plural English grammar based on that value.",
+      "scope": "All three day inputs in global settings.",
+      "referent": "A retention duration measured in days.",
+      "precedence": "Separate from the field name; follows the entered number and does not label a timestamp or a session count.",
+      "canonicalKey": "settings.daysUnit_other",
+      "searchTerms": [
+        "天",
+        "day",
+        "days",
+        "duration unit"
+      ],
+      "examples": [
+        "1 day",
+        "7 days",
+        "7 天"
+      ],
+      "nonExamples": [
+        "A deletion date or the number of retained versions."
+      ]
+    },
+    "settings.delete-trashed-session": {
+      "meaning": "Permanently remove one trashed session and its contents immediately, before its retention period expires.",
+      "scope": "Workspace recycle bin across composition, UI layout and spatial sessions.",
+      "referent": "Trashed sessions and their owned saved contents.",
+      "precedence": "Explicit permanent deletion after confirmation; distinct from reversible removal from active navigation, retention settings, restoration and empty-list status.",
+      "canonicalKey": "settings.deleteNow",
+      "searchTerms": [
+        "立刻删除",
+        "Delete now",
+        "permanent deletion"
+      ],
+      "examples": [
+        "Permanently remove one trashed session and its contents immediately, before its retention period expires."
+      ],
+      "nonExamples": [
+        "Move an active session to the recycle bin.",
+        "Restore a trashed session.",
+        "Delete a canvas node or empty project."
+      ]
+    },
+    "settings.clear-trash": {
+      "meaning": "Permanently remove every session still in the recycle bin when the operation executes.",
+      "scope": "Workspace recycle bin across composition, UI layout and spatial sessions.",
+      "referent": "Trashed sessions and their owned saved contents.",
+      "precedence": "Explicit permanent deletion after confirmation; distinct from reversible removal from active navigation, retention settings, restoration and empty-list status.",
+      "canonicalKey": "settings.clearTrash",
+      "searchTerms": [
+        "清空回收站",
+        "Empty trash",
+        "permanent deletion"
+      ],
+      "examples": [
+        "Permanently remove every session still in the recycle bin when the operation executes."
+      ],
+      "nonExamples": [
+        "Move an active session to the recycle bin.",
+        "Restore a trashed session.",
+        "Delete a canvas node or empty project."
+      ]
+    },
+    "settings.permanent-deletion-warning": {
+      "meaning": "Explain that permanent session deletion removes its contents and makes recovery unavailable.",
+      "scope": "Workspace recycle bin across composition, UI layout and spatial sessions.",
+      "referent": "Trashed sessions and their owned saved contents.",
+      "precedence": "Explicit permanent deletion after confirmation; distinct from reversible removal from active navigation, retention settings, restoration and empty-list status.",
+      "canonicalKey": "settings.permanentDeleteHint",
+      "searchTerms": [
+        "无法恢复",
+        "cannot be restored",
+        "permanent deletion"
+      ],
+      "examples": [
+        "Explain that permanent session deletion removes its contents and makes recovery unavailable."
+      ],
+      "nonExamples": [
+        "Move an active session to the recycle bin.",
+        "Restore a trashed session.",
+        "Delete a canvas node or empty project."
+      ]
+    }
+  },
+  "keys": {
+    "settings.title": {
+      "conceptId": "settings.workspace",
+      "variant": "default",
+      "role": "settings dialog title and launcher",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.navigationLabel": {
+      "conceptId": "settings.navigation",
+      "variant": "default",
+      "role": "navigation landmark",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.close": {
+      "conceptId": "settings.close",
+      "variant": "default",
+      "role": "dialog close action",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.autoRelease": {
+      "conceptId": "settings.retention",
+      "variant": "default",
+      "role": "settings section label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.imageDays": {
+      "conceptId": "settings.image-retention",
+      "variant": "default",
+      "role": "integer field label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.imageHint": {
+      "conceptId": "settings.image-retention-hint",
+      "variant": "default",
+      "role": "field tooltip",
+      "grammar": "sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.historyDays": {
+      "conceptId": "settings.history-retention",
+      "variant": "default",
+      "role": "integer field label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.historyHint": {
+      "conceptId": "settings.history-retention-hint",
+      "variant": "default",
+      "role": "field tooltip",
+      "grammar": "sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.trash": {
+      "conceptId": "settings.trash",
+      "variant": "default",
+      "role": "settings section label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.trashDays": {
+      "conceptId": "settings.trash-retention",
+      "variant": "default",
+      "role": "integer field label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.trashHint": {
+      "conceptId": "settings.trash-retention-hint",
+      "variant": "default",
+      "role": "field tooltip",
+      "grammar": "sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.resetDefaults": {
+      "conceptId": "settings.reset-retention",
+      "variant": "default",
+      "role": "automatic cleanup reset action",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.restoreSession": {
+      "conceptId": "settings.restore-session",
+      "variant": "default",
+      "role": "trash row action",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.emptyTrash": {
+      "conceptId": "settings.empty-trash",
+      "variant": "default",
+      "role": "trash empty state",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.deletedAt": {
+      "conceptId": "settings.deleted-at",
+      "variant": "default",
+      "role": "trash row timestamp label",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.loading": {
+      "conceptId": "settings.loading",
+      "variant": "default",
+      "role": "settings loading state",
+      "grammar": "short label",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.invalidDays": {
+      "conceptId": "settings.invalid-days",
+      "variant": "default",
+      "role": "form validation feedback",
+      "grammar": "sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.conflict": {
+      "conceptId": "settings.concurrent-change",
+      "variant": "default",
+      "role": "settings revision conflict feedback",
+      "grammar": "sentence",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical"
+    },
+    "settings.daysUnit_one": {
+      "conceptId": "settings.days-unit",
+      "variant": "one",
+      "role": "numeric input suffix",
+      "grammar": "singular unit",
+      "tone": "concise and direct",
+      "reusePolicy": "contextual",
+      "duplicateReason": "Chinese uses the same duration unit for singular and plural; English requires count-dependent grammar."
+    },
+    "settings.daysUnit_other": {
+      "conceptId": "settings.days-unit",
+      "variant": "other",
+      "role": "numeric input suffix",
+      "grammar": "plural unit",
+      "tone": "concise and direct",
+      "reusePolicy": "canonical",
+      "duplicateReason": "Chinese uses the same duration unit for singular and plural; English requires count-dependent grammar."
+    },
+    "settings.deleteNow": {
+      "conceptId": "settings.delete-trashed-session",
+      "variant": "default",
+      "role": "trash row action",
+      "grammar": "imperative action label",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "settings.clearTrash": {
+      "conceptId": "settings.clear-trash",
+      "variant": "default",
+      "role": "trash list action",
+      "grammar": "imperative action label",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "settings.permanentDeleteHint": {
+      "conceptId": "settings.permanent-deletion-warning",
+      "variant": "default",
+      "role": "deletion confirmation description",
+      "grammar": "sentence",
+      "tone": "concise and explicit",
+      "reusePolicy": "canonical"
+    },
+    "settings.deleteNowConfirm": {
+      "conceptId": "settings.delete-trashed-session",
+      "variant": "confirmation-title",
+      "role": "confirmation question for one named trashed session",
+      "grammar": "question",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    },
+    "settings.clearTrashConfirm": {
+      "conceptId": "settings.clear-trash",
+      "variant": "confirmation-title",
+      "role": "confirmation question for the complete recycle bin",
+      "grammar": "question",
+      "tone": "concise and explicit",
+      "reusePolicy": "contextual"
+    }
+  }
+}

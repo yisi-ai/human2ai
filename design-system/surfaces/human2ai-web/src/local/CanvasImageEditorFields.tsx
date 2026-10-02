@@ -23,6 +23,8 @@ import "./CanvasImageEditorFields.css";
 
 export interface CanvasImageEditorLabels {
   content: string;
+  sourceDimensions(width: number, height: number): string;
+  sourceFileSize(size: number, unit: string): string;
   upload: string;
   download: string;
   downloading: string;
@@ -302,6 +304,14 @@ export function CanvasImageEditorFields({
   const previewWidth = imageSize && imageSize.width < imageSize.height
     ? `min(100%, ${Math.round(360 * imageSize.width / imageSize.height)}px)`
     : "100%";
+  const sourceBytes = src && imageFile?.src === src ? imageFile.file.size : null;
+  const sizeUnit = sourceBytes !== null && sourceBytes >= 1_000_000 ? "MB"
+    : sourceBytes !== null && sourceBytes >= 1_000 ? "KB" : "B";
+  const sizeDivisor = sizeUnit === "MB" ? 1_000_000 : sizeUnit === "KB" ? 1_000 : 1;
+  const sourceInfo = [
+    src && imageSize ? labels.sourceDimensions(imageSize.width, imageSize.height) : null,
+    sourceBytes !== null ? labels.sourceFileSize(Number((sourceBytes / sizeDivisor).toFixed(1)), sizeUnit) : null,
+  ].filter(Boolean).join(" · ");
 
   const preview = (
     <div className="human2ai-canvas-image-editor-fields__preview-shell">
@@ -390,6 +400,7 @@ export function CanvasImageEditorFields({
         <span id={contentLabelId} className="yisi-text-mark-editor-field-label">
           {labels.content}
         </span>
+        {sourceInfo && <span className="human2ai-canvas-image-editor-fields__metadata">{sourceInfo}</span>}
       </div>
 
       <div className="human2ai-canvas-image-editor-fields__actions">

@@ -54,6 +54,7 @@ describe("Human2AI server runtime", () => {
     const server = createHuman2AiServer({
       databasePath: path.join(directory, "human2ai.sqlite"),
       migrationsDirectory: path.resolve("migrations"),
+      artifactsDirectory: path.join(directory, "artifacts"),
     });
 
     try {
@@ -70,12 +71,16 @@ describe("Human2AI server runtime", () => {
           "composition-drafts",
           "composition-refinements",
           "ui-sketch-drafts",
+          "ui-sketch-png-splits",
           "spatial-drafts",
           "capture-undo",
           "image-assets",
           "style-library",
           "session-styles",
           "session-previews",
+          "storage-retention",
+          "workspace-settings",
+          "session-trash",
         ],
       });
     } finally {
@@ -120,6 +125,7 @@ describe("Human2AI server runtime", () => {
       databasePath: path.join(directory, "human2ai.sqlite"),
       migrationsDirectory: path.resolve("migrations"),
       webDirectory,
+      artifactsDirectory: path.join(directory, "artifacts"),
     });
 
     try {
@@ -168,12 +174,16 @@ describe("Human2AI server runtime", () => {
           "composition-drafts",
           "composition-refinements",
           "ui-sketch-drafts",
+          "ui-sketch-png-splits",
           "spatial-drafts",
           "capture-undo",
           "image-assets",
           "style-library",
           "session-styles",
           "session-previews",
+          "storage-retention",
+          "workspace-settings",
+          "session-trash",
         ],
       });
     } finally {
@@ -192,12 +202,16 @@ describe("Human2AI server runtime", () => {
           "composition-drafts",
           "composition-refinements",
           "ui-sketch-drafts",
+          "ui-sketch-png-splits",
           "spatial-drafts",
           "capture-undo",
           "image-assets",
           "style-library",
           "session-styles",
           "session-previews",
+          "storage-retention",
+          "workspace-settings",
+          "session-trash",
         ],
       }),
     ) as typeof fetch;

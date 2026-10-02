@@ -5,8 +5,10 @@ import {
   DraftSessionTypeMismatchError,
   DraftUndoUnavailableError,
   DraftVersionNotFoundError,
+  DraftVersionExpiredError,
   StyleProcessingStaleError,
 } from "../../database/draft-version-errors.ts";
+import { ImageAssetNotFoundError } from "../../database/image-asset-repository.ts";
 import {
   InvalidRecordError,
   SessionNotFoundError,
@@ -113,6 +115,7 @@ export function registerDraftVersionRoutes<TDraft>(
             properties: { draftVersion: { anyOf: [draftVersionSchema, { type: "null" }] } },
           },
           404: errorSchema,
+          410: errorSchema,
           409: errorSchema,
         },
       },
@@ -137,6 +140,7 @@ export function registerDraftVersionRoutes<TDraft>(
             },
           },
           404: errorSchema,
+          410: errorSchema,
           409: errorSchema,
         },
       },
@@ -174,6 +178,7 @@ export function registerDraftVersionRoutes<TDraft>(
           201: draftVersionSchema,
           400: errorSchema,
           404: errorSchema,
+          410: errorSchema,
           409: errorSchema,
         },
       },
@@ -192,6 +197,7 @@ export function registerDraftVersionRoutes<TDraft>(
         response: {
           200: draftVersionSchema,
           404: errorSchema,
+          410: errorSchema,
           409: errorSchema,
         },
       },
@@ -218,7 +224,7 @@ export function registerDraftVersionRoutes<TDraft>(
             expectedLatestRevision: { type: "integer", minimum: 1 },
           },
         },
-        response: { 201: draftVersionSchema, 400: errorSchema, 404: errorSchema, 409: errorSchema },
+        response: { 201: draftVersionSchema, 400: errorSchema, 404: errorSchema, 410: errorSchema, 409: errorSchema },
       },
     },
     async (request, reply) => execute(reply, 201, () =>
@@ -235,6 +241,7 @@ export function registerDraftVersionRoutes<TDraft>(
           201: draftVersionSchema,
           400: errorSchema,
           404: errorSchema,
+          410: errorSchema,
           409: errorSchema,
         },
       },
@@ -250,9 +257,11 @@ export function replyToDraftVersionError(
   reply: FastifyReply,
   error: unknown,
 ): FastifyReply | undefined {
+  if (error instanceof DraftVersionExpiredError) return reply.code(410).send({ code: error.code, message: error.message });
   if (
     error instanceof SessionNotFoundError
     || error instanceof DraftVersionNotFoundError
+    || error instanceof ImageAssetNotFoundError
   ) {
     return reply.code(404).send({ code: error.code, message: error.message });
   }

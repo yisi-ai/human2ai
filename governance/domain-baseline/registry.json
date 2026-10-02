@@ -89,6 +89,83 @@
       "reviewTrigger": "新增图片消费者，或修改大小、格式、元数据读取方式、错误映射和写入前校验顺序之前"
     },
     {
+      "id": "asset.storage-retention",
+      "category": "asset",
+      "contractVersion": 2,
+      "status": "shared",
+      "responsibility": "统一管理有限草稿历史、活动撤销保护、会话图片与失去所有权的托管文件回收。",
+      "invariants": [
+        "共享 capture.draft-versioning 保存时淘汰普通超限历史，最新版本永不自动删除；过期读取返回 410，乐观并发与版本号保持原语义。",
+        "当前所有节点（包含隐藏节点和全部状态）、保留历史、有效撤销保护和进行中的图片任务持有资产；切图来源记录与缓存不构成永久文件所有权。",
+        "客户端保护只持有本会话实际存在的版本和未删除图片，每次续期存活三分钟；UI 使用不可变快照身份缓存引用，续期不触发 React 状态更新。",
+        "图片连续无引用达到服务端设置的 imageRetentionDays 后才删除（默认 1 天）；新增引用重置等待期，文件系统等待后再次校验引用、设置和活动会话，失败恢复可读状态重试。",
+        "图片、相机 PNG、会话 SVG/PNG 快照、PNG 切片和取消上传残留采用相同资产回收流程；删除会话/项目保留待回收文件路径。",
+        "仅扫描 UUID 命名的会话 source 与 styles 托管路径；仍属于风格库的参考图/GLB 保留，静态源资产、导出文件和其他用户文件不回收。",
+        "服务启动补扫、保存后合并安排当前会话清理、每小时巡检全部会话；闲置时整理 SQLite 空闲页，关闭时等待维护任务结束。",
+        "历史期限使用统一服务端 historyRetentionDays（默认 7 天），普通版本最多 100 个；回收站里的会话暂停图片、历史和切图缓存清理，恢复重置图片等待期。",
+        "全局巡检委托 ProjectSessionRepository 永久删除超过 trashRetentionDays 的会话（默认 7 天）；更新设置安排补扫。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/domain/session/storage.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/database/session-storage-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/storage-maintenance-service.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/storage-protection.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/storage-protection.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/use-storage-protection.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "src/database/draft-version-store.ts",
+          "consumer": "capture-version-store"
+        },
+        {
+          "role": "adapter",
+          "path": "src/server/runtime.ts",
+          "consumer": "human2ai-service"
+        },
+        {
+          "role": "canonical",
+          "path": "src/database/workspace-settings-repository.ts"
+        }
+      ],
+      "consumers": [
+        "capture-version-store",
+        "human2ai-service"
+      ],
+      "variationPoints": [
+        "三类会话保留各自草稿、领域约束与表；构图加工记录随源版本级联淘汰。",
+        "风格库自行管理用户参考图与 GLB，只回收失去库记录的托管文件。",
+        "UI 撤销提交完整草稿，3D 撤销提交原版本恢复请求，因此前者保护图片、后者保护保存版本。"
+      ],
+      "contractTests": [
+        "test/integration/storage-retention.test.ts",
+        "test/unit/canvas-edit-history.test.ts",
+        "test/unit/spatial-edit-queue.test.ts",
+        "web/lib/storage-protection.test.ts",
+        "test/integration/workspace-settings.test.ts"
+      ],
+      "reviewEvidence": [],
+      "exceptions": [],
+      "reviewTrigger": "增加图片消费者、修改保留窗口或恢复边界、增加全局容量上限或长期固定版本之前"
+    },
+    {
       "id": "capture.canvas-clipboard-transport",
       "category": "capture",
       "contractVersion": 1,
@@ -139,7 +216,7 @@
     {
       "id": "capture.canvas-edit-history",
       "category": "capture",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "shared",
       "responsibility": "在当前打开的会话中按完整操作记录、撤销和重做画布草稿，并与各领域保存流程衔接",
       "invariants": [
@@ -148,7 +225,8 @@
         "原生文字输入的撤销优先，画布观察视角与选择不进入草稿历史；UI 历史同时保存目标状态定位",
         "本地撤销立即生效，保存中的旧回执不得覆盖后续本地操作；3D 操作队列先保存目标快照，再通过共享指定版本恢复提交撤销或重做",
         "3D 恢复不绕过任意新草稿的领域约束，只恢复已验证且已保存的历史草稿；冲突停止写入，禁止以旧快照覆盖外部版本",
-        "会话预览的派生内容可同步到当前草稿而不创建用户撤销步骤、不取消手势、不修改已有历史快照。"
+        "会话预览的派生内容可同步到当前草稿而不创建用户撤销步骤、不取消手势、不修改已有历史快照。",
+        "活动撤销/重做快照通过共享 asset.storage-retention 保护实际需要的图片；3D 保护仍在栈内或等待提交的原保存版本，每次排队写入前刷新保护，关闭窗口后的排队提交结束才释放，断线保护三分钟过期。续期不发布 React 状态或画布订阅。"
       ],
       "implementations": [
         {
@@ -192,7 +270,9 @@
       "contractTests": [
         "test/unit/canvas-edit-history.test.ts",
         "test/unit/spatial-edit-queue.test.ts",
-        "test/integration/draft-version-contract.test.ts"
+        "test/integration/draft-version-contract.test.ts",
+        "web/lib/storage-protection.test.ts",
+        "test/integration/storage-retention.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/src/local/CanvasHistoryControls.stories.tsx"
@@ -203,11 +283,11 @@
     {
       "id": "capture.draft-versioning",
       "category": "capture",
-      "contractVersion": 5,
+      "contractVersion": 6,
       "status": "shared",
       "responsibility": "管理捕捉草稿的不可变版本、乐观并发检查与撤销恢复",
       "invariants": [
-        "草稿版本只能追加，不能覆盖或删除历史版本",
+        "保留窗口内的草稿版本只能追加且不可覆盖；普通历史最多保留最近 100 个版本且不超过 7 天，最新版本与有效编辑器保护的版本不淘汰，版本号不重排或复用。",
         "创建版本必须检查 expectedLatestRevision",
         "撤销通过创建一个恢复历史内容的新版本完成",
         "草稿指纹必须根据校验和规范化后的草稿计算",
@@ -216,7 +296,8 @@
         "加工元数据记录 styleId、styleRevision、sourceRevision 和 resultRevision；普通编辑继承上次记录，undo 恢复目标文档的记录（包括无记录）",
         "最新版本查询复用同一会话类型校验和规范化版本读取；无历史或 knownRevision 等于最新 revision 时返回空结果且不读取历史草稿 JSON，否则仅返回最新版本；读取不写入新版本，完整历史与撤销接口保持原语义",
         "指定历史版本恢复复用版本追加、会话类型与乐观并发检查，恢复目标草稿及其加工元数据；只允许恢复同一会话中已保存的版本，保留原有 undo 上一版本协议",
-        "所有保存和恢复在版本事务内执行可选会话上下文校验；草稿成功提交后通知订阅者，外层事务回滚不发布事件；派生预览写入携带服务端批次标识且仍执行乐观并发检查。"
+        "所有保存和恢复在版本事务内执行可选会话上下文校验；草稿成功提交后通知订阅者，外层事务回滚不发布事件；派生预览写入携带服务端批次标识且仍执行乐观并发检查。",
+        "保存事务内检查图片属于当前会话且未进入删除阶段；新增引用重置无引用等待期。已淘汰版本读取/恢复返回 DRAFT_VERSION_EXPIRED（410），未知未来版本仍返回既有 404。"
       ],
       "implementations": [
         {
@@ -286,7 +367,8 @@
         "test/integration/session-styles.test.ts",
         "test/integration/spatial-sessions.test.ts",
         "test/integration/session-preview.test.ts",
-        "test/unit/draft-saved-events.test.ts"
+        "test/unit/draft-saved-events.test.ts",
+        "test/integration/storage-retention.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "新增捕捉类型，或修改共享的 revision、并发、undo、指纹或会话类型不变量之前，或改变指定历史版本恢复协议之前"
@@ -1185,7 +1267,7 @@
     {
       "id": "project.session-organization",
       "category": "project",
-      "contractVersion": 2,
+      "contractVersion": 3,
       "status": "shared",
       "responsibility": "管理构图、UI 和 3D 空间会话的可选项目归属、项目内创建和跨项目移动",
       "invariants": [
@@ -1193,7 +1275,7 @@
         "创建会话时提供 projectId 会立即建立项目归属，省略或传入 null 时创建无项目会话",
         "移动会话必须检查 expectedRevision，并在归属变化时递增 revision",
         "无项目分组只表示 projectId 为 null 的会话，不对应真实项目记录",
-        "包含会话的项目不能删除",
+        "包含活动会话的项目不能删除；仅含回收站会话的项目可以删除，恢复会话时保留外键置空后的无项目归属",
         "创建时可指定同项目的 groupId，归组复用 project.session-groups 并在创建事务内完成；失败不保留新会话"
       ],
       "implementations": [
@@ -1232,13 +1314,105 @@
         "test/integration/project-sessions.test.ts",
         "test/unit/web-api.test.ts",
         "test/integration/spatial-sessions.test.ts",
-        "test/integration/session-groups.test.ts"
+        "test/integration/session-groups.test.ts",
+        "test/integration/workspace-settings.test.ts"
       ],
       "exceptions": [],
       "reviewTrigger": "修改会话创建时的项目校验、无项目语义、移动 revision 或非空项目删除约束之前",
       "reviewEvidence": [
         "storybook/stories/Home.stories.tsx"
       ]
+    },
+    {
+      "id": "project.session-trash",
+      "category": "project",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "管理三类会话移入回收站、恢复、到期永久删除及用户确认的立即删除和清空",
+      "invariants": [
+        "删除与恢复均检查 expectedRevision 并递增会话 revision；活动列表、项目计数和分组成员隐藏回收站会话。",
+        "暂存保留原项目、分组、草稿和图片；项目或分组消失时恢复使用现有外键归属。",
+        "普通草稿与图片接口拒绝回收站会话；自动永久删除复用清理服务和级联删除。",
+        "单条立即删除只接受仍在回收站且 expectedRevision 匹配的会话；清空以原子语句删除执行时仍在回收站的会话，保留活动和已恢复的会话。两者复用外键级联删除与现有文件回收。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/project-session-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/project-sessions.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/components/WorkspaceSettings.tsx",
+          "consumer": "workspace-settings"
+        }
+      ],
+      "consumers": [
+        "workspace-settings"
+      ],
+      "variationPoints": [
+        "界面文案和格式化日期由应用注入；三类会话共享同一设置与回收站生命周期。"
+      ],
+      "contractTests": [
+        "test/integration/workspace-settings.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/Human2AiSettingsPanel.stories.tsx",
+        "test/browser/workspace-settings.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "修改保留默认值、过期条件、恢复或 revision 边界之前"
+    },
+    {
+      "id": "project.workspace-settings",
+      "category": "project",
+      "contractVersion": 2,
+      "status": "local",
+      "responsibility": "持久化全局图片、画布历史和回收站保留天数",
+      "invariants": [
+        "保留天数为 1–3650 的整数，默认图片 1 天、画布历史 7 天、回收站 7 天。",
+        "更新检查 expectedRevision，保存全局设置并递增 revision，刷新或重启后保留。",
+        "自动释放重置只恢复图片和历史期限，不改变回收站期限。",
+        "有效天数输入停顿 350 毫秒后自动保存，无保存按钮；合并待保存字段，串行使用最新 revision，关闭前提交最后有效修改。保存失败保留输入，重试读取最新 revision 并只合并本地编辑字段。"
+      ],
+      "implementations": [
+        {
+          "role": "canonical",
+          "path": "src/database/workspace-settings-repository.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "src/server/routes/workspace-settings.ts"
+        },
+        {
+          "role": "canonical",
+          "path": "web/lib/workspace-settings-autosave.ts"
+        },
+        {
+          "role": "adapter",
+          "path": "web/components/WorkspaceSettings.tsx",
+          "consumer": "workspace-settings"
+        }
+      ],
+      "consumers": [
+        "workspace-settings"
+      ],
+      "variationPoints": [
+        "界面文案和格式化日期由应用注入；三类会话共享同一设置与回收站生命周期。"
+      ],
+      "contractTests": [
+        "test/integration/workspace-settings.test.ts",
+        "web/lib/workspace-settings-autosave.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/Human2AiSettingsPanel.stories.tsx",
+        "test/browser/workspace-settings.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "修改保留默认值、过期条件、恢复或 revision 边界之前"
     },
     {
       "id": "spatial.scene-authoring",
@@ -1788,6 +1962,104 @@
       "reviewTrigger": "引入 UI 草图组件层级、代码生成、嵌套组，或改变节点来源、import 删除/文字编辑语义、标准化回写顺序及关键可感知元素选择边界之前"
     },
     {
+      "id": "ui-sketch.png-splitting",
+      "category": "ui-sketch",
+      "contractVersion": 6,
+      "status": "local",
+      "responsibility": "从单张透明 PNG 按自动连通与优先手动闭合区域生成独立图片切片，以原像素过滤、紧凑排列、持久来源和整体撤销保证可重试拆分。",
+      "invariants": [
+        "阈值默认 8，按 alpha 大于阈值八方向连通；柔边分配最近本体且保留原 RGBA，独立低透明度区域仍拆分。",
+        "自动切片最小尺寸默认 16，只有两边均严格小于门槛才丢弃；过滤发生在资产保存及节点创建之前。",
+        "复用 lishi 两个核心算法的 TypeScript 移植，原尺寸 skyline 排列不旋转不缩放；图片保存委托 ImageAssetRepository 现有验证及资产边界。",
+        "一次追加保留原图和当前编辑，新增切片两件以上通过 groupUiSketchItems 建单层可解散组，零件及一件正常结束。",
+        "源节点、资产摘要、阈值/尺寸参数与有序手动区域决定切片身份；已应用来源记录在切片删除和解散组后保留，重复操作及间距变更不重新插图。",
+        "资产准备按源图持久化成功片段，每源并发请求共用准备任务；失败不发布部分画布，重启及重试复用成功资产。",
+        "完整草稿版本携带源资产、摘要、参数、像素范围、切片资产/节点和组 ID；一次追加通过 capture.canvas-edit-history 整体撤销/重做。",
+        "编辑器仅对单张未分组的普通图片开放拆分；多选、分组、非图片、无资产图片及会话预览引用不可用。主入口只打开设置弹窗，左侧原图与范围，右侧局部参数；预览与正式拆分复用同一像素分析，预览不编码切片、不写资产或拆分记录。有效参数自动保存在当前浏览器，关闭及重新打开恢复；仅点击拆分执行一次，关闭不改草稿或撤销历史。",
+        "切换会话、状态或恢复历史取消待完成拆分结果；完成后向最新草稿追加且不覆盖等待期间的用户编辑。",
+        "非冲突保存失败可重试当前完整草稿，不重做拆分或新增撤销步骤；版本冲突沿用共享草稿边界停止写入，禁止覆盖外部编辑。",
+        "拆分中临时保护源图；重试缓存七天过期，缓存与草稿中的已应用来源记录不永久持有切片文件；回收切片仅将对应缓存资产置空，重试重新生成缺失片段并复用其他片段，重新取用的片段重置等待期以完成新放置。",
+        "自由锚点按源像素坐标闭合，每个含非透明像素的手动区域强制为一张图片，不受连通/最小尺寸过滤。区域按创建顺序取得像素，重叠像素仅归先创建的区域；范围外透明，剩余像素沿用自动分析。预览和编码共用同一标签分析；空区域不创建空白图片，保存、重试、撤销/重做携带区域坐标，旧自动拆分身份不变。",
+        "锚点草稿仅属当前预览编辑器，点击起点或 Enter 闭合，Esc 取消；闭合后只能选中删除，不移动或修改锚点。指针移动按帧只更新草稿连线/起点高亮，只有闭合/删除触发预览重算；开始未闭合区域时禁止执行拆分。",
+        "CLI 从当前已保存 UI 草稿按节点 ID 选择普通图片，通过同一预览/准备 API、appendPngSplit 和共享草稿保存边界完成操作；revision 必须匹配最新版本，冲突停止写入。重复已应用来源不上传、不追加版本、不恢复删除项；只读预览不写资产或草稿。"
+      ],
+      "implementations": [
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/transparent-png.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/png-canvas.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/png-split.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/database/ui-sketch-png-split-repository.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/server/routes/ui-sketch-png-splits.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/components/UiSketchPngSplitDialog.tsx"
+        },
+        {
+          "role": "current",
+          "path": "schemas/ui-sketch-draft.schema.json"
+        },
+        {
+          "role": "current",
+          "path": "web/lib/png-split-settings.ts"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/ui-sketch/png-split-regions.ts"
+        },
+        {
+          "role": "current",
+          "path": "web/components/PngSplitRegionEditor.tsx"
+        },
+        {
+          "role": "adapter",
+          "path": "src/cli/main.ts",
+          "consumer": "ui-layout-cli"
+        },
+        {
+          "role": "current",
+          "path": "src/domain/session/capabilities.ts"
+        },
+        {
+          "role": "current",
+          "path": "skills/human2ai/references/ui-layout.md"
+        }
+      ],
+      "consumers": [
+        "ui-layout-cli",
+        "ui-sketch-editor"
+      ],
+      "variationPoints": [
+        "UI 草图本地工作流复用现有资产保存、单层组、草稿版本及内存撤销能力；不迁移游戏项目的 CLI 配置、文件路径、重排和说明文案。",
+        "CLI 显式指定单个图片节点，可定位组内的普通图片；使用每次命令参数与可选源像素多边形，不读取浏览器的设置或选择状态。"
+      ],
+      "contractTests": [
+        "test/unit/transparent-png.test.ts",
+        "test/integration/ui-sketch-png-splits.test.ts",
+        "test/integration/storage-retention.test.ts",
+        "web/lib/png-split-settings.test.ts",
+        "test/integration/ui-layout-png-split-cli.test.ts"
+      ],
+      "reviewEvidence": [
+        "design-system/surfaces/human2ai-web/src/local/UiSketchCanvas.stories.tsx"
+      ],
+      "exceptions": [],
+      "reviewTrigger": "改变像素连通/柔边规则、引入其他画布消费者、允许重复恢复已删节点或引入跨操作语义筛选之前"
+    },
+    {
       "id": "ui-sketch.preview-export",
       "category": "ui-sketch",
       "contractVersion": 4,
@@ -1873,7 +2145,7 @@
     {
       "id": "ui-sketch.session-preview",
       "category": "ui-sketch",
-      "contractVersion": 7,
+      "contractVersion": 8,
       "status": "local",
       "responsibility": "在 UI 会话内嵌同项目其他会话的指定状态或摄像机预览，并用有限更新批次支持交叉引用。",
       "invariants": [
@@ -1886,7 +2158,8 @@
         "项目树会话拖入 UI 画布时使用来源已保存顺序中的第一个状态或摄像机；以画布世界坐标落点为中心新建预览。异步读取不覆盖后续编辑，切换会话、状态或恢复历史后丢弃旧插入结果。",
         "新建会话预览从来源输出原始尺寸开始等比缩小，宽、高分别不超过目标 UI 画框对应尺寸的 50%，不放大小图。拖动预览与插入复用同一尺寸规则；松手保留已经显示的尺寸，尚未显示时按松手时的画框尺寸计算，异步完成不改变放置尺寸。",
         "UI 和构图来源保留自包含 SVG 并由浏览器绘制，避免字体栅格化及缩放差异；摄像机保留 PNG。原生预览接口与不可变素材使用相同字节，旧 preview.png 接口继续显式返回 PNG。服务启动时仅为仍使用旧 PNG 的二维会话引用按来源合并排入既有有限刷新批次，已使用 SVG 或缺失来源不迁移；不改写历史素材，后续保存继续使用同一刷新流程。",
-        "构图来源按源会话的 previewMode 输出，缺省 precise；保存模式变化通过既有有限批次刷新引用，保持目标节点几何与历史快照。"
+        "构图来源按源会话的 previewMode 输出，缺省 precise；保存模式变化通过既有有限批次刷新引用，保持目标节点几何与历史快照。",
+        "生成、迁移与校验通过的目标会话快照将来源身份和 renderedRevision 记录于图片资产，恢复校验精确匹配该不可变来源证明，不因源历史过期锁住源版本；同项目跨会话复制的相同字节仅在摘要、来源身份和版本完全匹配已有快照时继承证明；无引用的快照与其他会话图片共用回收规则。"
       ],
       "implementations": [
         {
@@ -1932,7 +2205,8 @@
       "contractTests": [
         "test/unit/session-preview.test.ts",
         "test/integration/session-preview.test.ts",
-        "web/lib/session-preview-drop.test.ts"
+        "web/lib/session-preview-drop.test.ts",
+        "test/integration/storage-retention.test.ts"
       ],
       "reviewEvidence": [
         "design-system/surfaces/human2ai-web/governance/session-preview.md",

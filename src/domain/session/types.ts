@@ -25,6 +25,11 @@ export interface Session {
   updatedAt: string;
 }
 
+/** Deleted sessions remain recoverable until their trash retention expires. */
+export interface TrashSession extends Session {
+  deletedAt: string;
+}
+
 /** Project-tree organization; membership never changes session data or revisions. */
 export interface SessionGroup {
   id: string;

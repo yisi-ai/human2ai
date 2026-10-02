@@ -2,6 +2,26 @@
   "$schema": "../semantic-shard.schema.json",
   "domain": "shared",
   "concepts": {
+    "history.expired": {
+      "meaning": "A requested saved canvas version is no longer available because its retention period or history limit has been exceeded.",
+      "scope": "Saved-version retrieval and undo or redo in all canvas editors.",
+      "referent": "An expired historical snapshot, while the current canvas remains available.",
+      "precedence": "More specific than service synchronization failure; differs from an external revision conflict or an unknown version.",
+      "canonicalKey": "errors.historyExpired",
+      "searchTerms": [
+        "历史过期",
+        "自动淘汰",
+        "history expired",
+        "retention"
+      ],
+      "examples": [
+        "An editor reconnects after its protected undo snapshots have expired."
+      ],
+      "nonExamples": [
+        "Another editor saves a newer version.",
+        "A source session is deleted."
+      ]
+    },
     "session.agent-connection-instruction": {
       "meaning": "An instruction handed from an open Human2AI session to an external Agent, containing the CLI command that discovers the current session, its latest capture, its UI URL, and its supported operations before the Agent waits for the user's next request.",
       "scope": "The shared session-details panel used by composition, UI-sketch, and 3D space workbenches.",
@@ -87,7 +107,7 @@
     "actions.delete": {
       "meaning": "A destructive command that removes the target identified by the surrounding interface, after confirmation when confirmation is required.",
       "scope": "Shared product deletion controls: menu and button commands plus target-specific confirmation questions.",
-      "referent": "The project, session, or other item made explicit by the current control or dialog.",
+      "referent": "The project, session, current canvas selection, or other item made explicit by the current control or dialog.",
       "precedence": "None; this is an action rather than hierarchical content.",
       "canonicalKey": "actions.delete",
       "searchTerms": [
@@ -100,6 +120,7 @@
       ],
       "examples": [
         "A Delete item in an actions menu.",
+        "Delete every member of the selected canvas group or marquee selection in one undoable action.",
         "The destructive Delete button in a confirmation dialog."
       ],
       "nonExamples": [
@@ -697,8 +718,8 @@
       ]
     },
     "canvas.viewport-zoom": {
-      "meaning": "Change or report the viewing magnification of the canvas without resizing draft elements.",
-      "scope": "Canvas viewport zoom controls; currently localized through the composition viewport labels.",
+      "meaning": "Change or report viewing magnification without resizing draft elements or source images.",
+      "scope": "Canvas viewport and read-only image preview zoom controls.",
       "referent": "The viewport zoom factor and its percentage display.",
       "precedence": "Presentation only, distinct from changing element area, font size, frame dimensions, or generated output size.",
       "canonicalKey": "composition.canvasZoom",
@@ -721,8 +742,8 @@
     },
     "canvas.fit-view": {
       "meaning": "Adjust the viewport camera and zoom to show the bounds specified by the current editor.",
-      "scope": "Fit-view controls in composition and UI-sketch canvases.",
-      "referent": "Composition content bounds or the UI-sketch interface frame bounds.",
+      "scope": "Fit-view controls in composition, UI-sketch canvases and read-only image previews.",
+      "referent": "Composition content bounds, UI-sketch interface frame bounds, or source image bounds in a preview.",
       "precedence": "Does not resize or move stored draft elements. Composition fits its content bounds; UI sketch fits the interface frame, not every out-of-frame element.",
       "canonicalKey": "composition.fitAll",
       "searchTerms": [
@@ -823,7 +844,7 @@
     },
     "session.draft-revision-conflict": {
       "meaning": "The submitted draft revision is stale because another operation has already updated the persisted draft; the message reports the latest revision and asks the user to reopen the session.",
-      "scope": "Composition and UI-sketch session editors; default names are also used by workspace creation controls.",
+      "scope": "Composition and UI-sketch session editors and stale UI-sketch CLI writes; default names are also used by workspace creation controls.",
       "referent": "DRAFT_REVISION_CONFLICT and its actualLatestRevision value for the current editor.",
       "precedence": "Specific recovery feedback rather than generic synchronization failure; it does not automatically overwrite, merge, or discard local edits.",
       "canonicalKey": "composition.session.revisionConflict",
@@ -880,7 +901,7 @@
     },
     "canvas.viewport-help": {
       "meaning": "On-demand instructions for placing nodes, cancelling placement, zooming and panning the editor canvas.",
-      "scope": "Composition and UI-sketch viewport help controls.",
+      "scope": "Composition and UI-sketch viewport help controls, including read-only image previews whose help only covers pan and zoom.",
       "referent": "The shared one-shot tool placement gestures and InfiniteCanvasViewport wheel, secondary-button drag and Space plus primary-button drag gestures.",
       "precedence": "Selecting a node tool arms placement without creating data; clicking places a default-sized node, dragging sizes a shape or image, and Escape cancels. Panning retains priority over placement. This help does not explain node metadata or frame resizing.",
       "canonicalKey": "canvas.viewport.help",
@@ -905,8 +926,8 @@
       ]
     },
     "canvas.node-description": {
-      "meaning": "A read-only explanation supplied by an Agent of what a canvas node represents and contributes. In composition work it explains the visual relationship and perceptual effect, without becoming the user's revision instruction.",
-      "scope": "Read-only node metadata in composition and UI canvas editors, including their shared node tooltips.",
+      "meaning": "An explanation supplied by an Agent of what a canvas node represents and contributes. Agents can read and update it; users see it as read-only in the canvas editor. In composition work it explains the visual relationship and perceptual effect, without becoming the user's revision instruction.",
+      "scope": "Node descriptions in composition and UI canvas editors, including their shared node tooltips; read-only in the user interface and readable and writable by Agents.",
       "referent": "The user-perceived region, static text, or image represented by the selected node.",
       "precedence": "It explains the current node's role and remains separate from the editable node note, which carries the user's direction for changing that node. Composition explanations prioritize contribution to the whole over pictured-object identity.",
       "canonicalKey": "canvas.node.nodeDescription",
@@ -1349,14 +1370,49 @@
         "Generate a new image with AI.",
         "Show the rendered canvas image."
       ]
+    },
+    "measurement.pixel-unit": {
+      "meaning": "The abbreviated unit for a length measured in image or canvas pixels.",
+      "scope": "Pixel-valued numeric inputs; initially PNG split minimum size and output gap.",
+      "referent": "The unit of the adjacent numeric value.",
+      "precedence": "Specifies pixels, not a percentage, a pixel count in an area, or image resolution.",
+      "canonicalKey": "units.pixels",
+      "searchTerms": [
+        "px",
+        "像素",
+        "pixels"
+      ],
+      "examples": [
+        "Show px after the minimum slice size value.",
+        "Show px after the packing gap value."
+      ],
+      "nonExamples": [
+        "Label an alpha threshold as px."
+      ]
     }
   },
   "keys": {
+    "errors.historyExpired": {
+      "conceptId": "history.expired",
+      "variant": "message",
+      "role": "Explain an unavailable historical snapshot and the recovery action",
+      "grammar": "Two short sentences",
+      "tone": "Direct and actionable",
+      "reusePolicy": "canonical"
+    },
     "notes.element.nodePlaceholder": {
       "conceptId": "notes.element",
       "variant": "node-placeholder",
       "role": "prompt for instructions describing a composition node or UI image node",
       "grammar": "imperative instruction",
+      "tone": "concise and explanatory",
+      "reusePolicy": "contextual"
+    },
+    "notes.element.nodeHelp": {
+      "conceptId": "notes.element",
+      "variant": "node-field-help",
+      "role": "tooltip and accessible explanation beside the editable composition or UI node note label, explaining that the user's node requirements are included in the generated prompt",
+      "grammar": "instructional sentence",
       "tone": "concise and explanatory",
       "reusePolicy": "contextual"
     },
@@ -2060,7 +2116,8 @@
       "role": "tooltip and accessible name of the viewport zoom-in button",
       "grammar": "imperative verb phrase",
       "tone": "neutral",
-      "reusePolicy": "contextual"
+      "reusePolicy": "contextual",
+      "duplicateReason": "English matches the preview zoom action; Chinese distinguishes the editing canvas from the read-only preview."
     },
     "composition.zoomOut": {
       "conceptId": "canvas.viewport-zoom",
@@ -2068,12 +2125,13 @@
       "role": "tooltip and accessible name of the viewport zoom-out button",
       "grammar": "imperative verb phrase",
       "tone": "neutral",
-      "reusePolicy": "contextual"
+      "reusePolicy": "contextual",
+      "duplicateReason": "English matches the preview zoom action; Chinese distinguishes the editing canvas from the read-only preview."
     },
     "composition.fitAll": {
       "conceptId": "canvas.fit-view",
       "variant": "content-fit-action",
-      "role": "tooltip and accessible name for fitting composition content bounds",
+      "role": "tooltip and accessible name for fitting all content bounds in an editor or image preview",
       "grammar": "imperative verb phrase",
       "tone": "neutral",
       "reusePolicy": "canonical"
@@ -2233,6 +2291,14 @@
       "grammar": "noun phrase",
       "tone": "concise and neutral",
       "reusePolicy": "canonical"
+    },
+    "canvas.node.nodeDescriptionHelp": {
+      "conceptId": "canvas.node-description",
+      "variant": "field-help",
+      "role": "tooltip and accessible explanation beside the composition or UI node description label, explaining the node's role and that Agents can read and update its description",
+      "grammar": "explanatory sentence",
+      "tone": "concise and neutral",
+      "reusePolicy": "contextual"
     },
     "canvas.node.originUser": {
       "conceptId": "canvas.node-origin-user",
@@ -2546,6 +2612,48 @@
       "grammar": "failure sentence",
       "tone": "neutral",
       "reusePolicy": "contextual"
+    },
+    "uiSketch.pngSplit.zoomIn": {
+      "conceptId": "canvas.viewport-zoom",
+      "variant": "preview-zoom-in-action",
+      "role": "tooltip and accessible name of the preview zoom-in button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "English uses the same Zoom in/out action as the editor; Chinese names the preview instead of the editing canvas."
+    },
+    "uiSketch.pngSplit.zoomOut": {
+      "conceptId": "canvas.viewport-zoom",
+      "variant": "preview-zoom-out-action",
+      "role": "tooltip and accessible name of the preview zoom-out button",
+      "grammar": "imperative verb phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual",
+      "duplicateReason": "English uses the same Zoom in/out action as the editor; Chinese names the preview instead of the editing canvas."
+    },
+    "uiSketch.pngSplit.help": {
+      "conceptId": "canvas.viewport-help",
+      "variant": "preview-help-action",
+      "role": "accessible name of the preview gesture help button",
+      "grammar": "noun phrase",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "uiSketch.pngSplit.interactionHelp": {
+      "conceptId": "canvas.viewport-help",
+      "variant": "preview-gesture-instructions",
+      "role": "tooltip explaining preview pan/zoom and creation, closure, cancellation and deletion of manual split regions",
+      "grammar": "instruction sentences",
+      "tone": "neutral",
+      "reusePolicy": "contextual"
+    },
+    "units.pixels": {
+      "conceptId": "measurement.pixel-unit",
+      "variant": "abbreviation",
+      "role": "numeric input unit suffix",
+      "grammar": "unit abbreviation",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
     }
   }
 }

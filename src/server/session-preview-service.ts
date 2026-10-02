@@ -123,10 +123,11 @@ export class SessionPreviewService {
         draft = selectCompositionState(this.deps.compositionSessions.getDraftVersion(source.sessionId, revision).draft, source.stateId);
       }
       const assets = new Map<string, string>();
-      await Promise.all([...new Set(draft.images.flatMap(image => image.assetId && image.visible !== false ? [image.assetId] : []))].map(async id => {
+      const assetIds = [...new Set(draft.images.flatMap(image => image.assetId && image.visible !== false ? [image.assetId] : []))];
+      await this.deps.imageAssets.withProtection(assetIds, () => Promise.all(assetIds.map(async id => {
         const { asset, filePath } = this.deps.imageAssets.get(source.sessionId, id);
         assets.set(id, `data:${asset.mimeType};base64,${(await readFile(filePath)).toString("base64")}`);
-      }));
+      })));
       const svg = draft.kind === "ui-layout-draft" ? renderUiSketchSvg(draft, id => assets.get(id)) : renderCompositionReferenceSvg(draft, id => assets.get(id));
       key = createHash("sha256").update(svg).digest("hex");
       create = () => Promise.resolve(Buffer.from(svg));
@@ -143,7 +144,8 @@ export class SessionPreviewService {
   async materialize(ownerId: string, source: SessionPreviewSource): Promise<MaterializedSessionPreview> {
     const { data, extension, revision } = await this.render(ownerId, source);
     this.assertSource(ownerId, source);
-    const asset = await this.deps.imageAssets.create(ownerId, { filename: `session-preview.${extension}`, data });
+    const asset = await this.deps.imageAssets.create(ownerId, { filename: `session-preview.${extension}`, data,
+      previewReference: { ...source, renderedRevision: revision } });
     return { assetId: asset.id, width: asset.width, height: asset.height, reference: { ...source, renderedRevision: revision } };
   }
 
@@ -198,7 +200,8 @@ export class SessionPreviewService {
             const matches = initial.draft.images.filter(item => item.previewReference && previewSourceKey(item.previewReference) === previewSourceKey(ref));
             if (matches.every(item => item.assetId && this.deps.imageAssets.get(id, item.assetId).asset.sha256 === sha)) continue;
             this.assertSource(id, ref);
-            const asset = await this.deps.imageAssets.create(id, { filename: `session-preview.${extension}`, data });
+            const asset = await this.deps.imageAssets.create(id, { filename: `session-preview.${extension}`, data,
+              previewReference: { ...ref, renderedRevision: revision } });
             updates.set(previewSourceKey(ref), { assetId: asset.id, width: asset.width, height: asset.height, reference: { ...ref, renderedRevision: revision } });
           } catch { this.notify(id); /* Retain the last successful image. */ }
         }

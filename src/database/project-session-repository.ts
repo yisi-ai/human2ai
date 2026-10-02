@@ -8,6 +8,7 @@ import {
   type SessionLifecycleStage,
   type SessionType,
 } from "../domain/session/index.ts";
+import type { TrashSession } from "../domain/session/types.ts";
 import type { DatabaseConnection } from "./migrate.ts";
 
 interface ProjectRow {
@@ -30,6 +31,7 @@ interface SessionRow {
   revision: number;
   created_at: string;
   updated_at: string;
+  deleted_at: string | null;
 }
 
 export class ProjectNotFoundError extends Error {
@@ -93,14 +95,15 @@ export class SessionGroupNameConflictError extends Error {
 }
 
 export class ProjectSessionRepository {
-  constructor(private readonly database: DatabaseConnection) {}
+  constructor(private readonly database: DatabaseConnection, private readonly now: () => number = Date.now) {}
 
   listSessionGroups(): SessionGroup[] {
     const groups = this.database.prepare<[], Omit<SessionGroup, "sessionIds">>(
       "SELECT id, project_id AS projectId, name, revision FROM session_groups ORDER BY rowid",
     ).all();
     const members = this.database.prepare<[], { sessionId: string; groupId: string }>(
-      "SELECT session_id AS sessionId, group_id AS groupId FROM session_group_members ORDER BY session_id",
+      `SELECT member.session_id AS sessionId, member.group_id AS groupId FROM session_group_members member
+       JOIN sessions session ON session.id = member.session_id WHERE session.deleted_at IS NULL ORDER BY member.session_id`,
     ).all();
     const byGroup = new Map<string, string[]>();
     for (const member of members) {
@@ -117,7 +120,8 @@ export class ProjectSessionRepository {
     ).get(groupId);
     if (!group) throw new SessionGroupNotFoundError(groupId);
     const members = this.database.prepare<[string], { id: string }>(
-      "SELECT session_id AS id FROM session_group_members WHERE group_id = ? ORDER BY session_id",
+      `SELECT member.session_id AS id FROM session_group_members member JOIN sessions session ON session.id = member.session_id
+       WHERE member.group_id = ? AND session.deleted_at IS NULL ORDER BY member.session_id`,
     ).all(groupId);
     return { ...group, sessionIds: members.map(member => member.id) };
   }
@@ -186,7 +190,7 @@ export class ProjectSessionRepository {
           p.updated_at,
           count(s.id) AS session_count
         FROM projects p
-        LEFT JOIN sessions s ON s.project_id = p.id
+        LEFT JOIN sessions s ON s.project_id = p.id AND s.deleted_at IS NULL
         GROUP BY p.id
         ORDER BY p.updated_at DESC, p.id
       `)
@@ -206,7 +210,7 @@ export class ProjectSessionRepository {
           p.updated_at,
           count(s.id) AS session_count
         FROM projects p
-        LEFT JOIN sessions s ON s.project_id = p.id
+        LEFT JOIN sessions s ON s.project_id = p.id AND s.deleted_at IS NULL
         WHERE p.id = ?
         GROUP BY p.id
       `)
@@ -270,7 +274,7 @@ export class ProjectSessionRepository {
       .prepare(
         `DELETE FROM projects
          WHERE id = ? AND revision = ?
-           AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = ?)`,
+           AND NOT EXISTS (SELECT 1 FROM sessions WHERE project_id = ? AND deleted_at IS NULL)`,
       )
       .run(projectId, input.expectedRevision, projectId);
   }
@@ -290,7 +294,7 @@ export class ProjectSessionRepository {
 
   getSession(sessionId: string): Session {
     const row = this.database
-      .prepare<[string], SessionRow>(`${SESSION_SELECT} WHERE id = ?`)
+      .prepare<[string], SessionRow>(`${SESSION_SELECT} WHERE id = ? AND deleted_at IS NULL`)
       .get(sessionId);
     if (!row) throw new SessionNotFoundError(sessionId);
     return mapSession(row);
@@ -384,13 +388,48 @@ export class ProjectSessionRepository {
     const session = this.getSession(sessionId);
     assertRevision(input.expectedRevision, session.revision);
     this.database
-      .prepare("DELETE FROM sessions WHERE id = ? AND revision = ?")
-      .run(sessionId, input.expectedRevision);
+      .prepare("UPDATE sessions SET deleted_at = ?, updated_at = ?, revision = revision + 1 WHERE id = ? AND revision = ?")
+      .run(new Date(this.now()).toISOString(), new Date(this.now()).toISOString(), sessionId, input.expectedRevision);
+  }
+
+  listTrashSessions(): TrashSession[] {
+    return this.database.prepare<[], SessionRow>(`${SESSION_SELECT} WHERE deleted_at IS NOT NULL ORDER BY deleted_at DESC, id`)
+      .all().map(row => ({ ...mapSession(row), deletedAt: row.deleted_at! }));
+  }
+
+  restoreSession(sessionId: string, input: { expectedRevision: number }): Session {
+    return this.database.transaction(() => {
+      const row = this.database.prepare<[string], SessionRow>(`${SESSION_SELECT} WHERE id = ? AND deleted_at IS NOT NULL`).get(sessionId);
+      if (!row) throw new SessionNotFoundError(sessionId);
+      assertRevision(input.expectedRevision, row.revision);
+      this.database.prepare("UPDATE sessions SET deleted_at = NULL, revision = revision + 1, updated_at = ? WHERE id = ?")
+        .run(new Date(this.now()).toISOString(), sessionId);
+      // Trash suspends image collection; restoring restarts the unused-image grace period.
+      this.database.prepare("UPDATE image_assets SET unreferenced_since = NULL WHERE session_id = ?").run(sessionId);
+      return this.getSession(sessionId);
+    })();
+  }
+
+  purgeExpiredTrash(cutoff: string): number {
+    return this.database.prepare("DELETE FROM sessions WHERE deleted_at IS NOT NULL AND deleted_at <= ?").run(cutoff).changes;
+  }
+
+  deleteTrashSession(sessionId: string, input: { expectedRevision: number }): void {
+    this.database.transaction(() => {
+      const row = this.database.prepare<[string], SessionRow>(`${SESSION_SELECT} WHERE id = ? AND deleted_at IS NOT NULL`).get(sessionId);
+      if (!row) throw new SessionNotFoundError(sessionId);
+      assertRevision(input.expectedRevision, row.revision);
+      this.database.prepare("DELETE FROM sessions WHERE id = ? AND deleted_at IS NOT NULL").run(sessionId);
+    })();
+  }
+
+  clearTrash(): void {
+    this.database.prepare("DELETE FROM sessions WHERE deleted_at IS NOT NULL").run();
   }
 
   private selectSessions(where: string, parameters: string[]): Session[] {
     const rows = this.database
-      .prepare<string[], SessionRow>(`${SESSION_SELECT} ${where} ORDER BY updated_at DESC, id`)
+      .prepare<string[], SessionRow>(`${SESSION_SELECT} ${where ? `${where} AND` : "WHERE"} deleted_at IS NULL ORDER BY updated_at DESC, id`)
       .all(...parameters);
     return rows.map(mapSession);
   }
@@ -421,7 +460,8 @@ const SESSION_SELECT = `
     lifecycle_stage,
     revision,
     created_at,
-    updated_at
+    updated_at,
+    deleted_at
   FROM sessions
 `;
 

@@ -1,6 +1,6 @@
 ---
 name: human2ai
-description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); to model in the consumer project using a style and 3D spatial guidance; or to reuse a visual style. The consumer project's Agent owns downstream implementation.
+description: Collaborate through local Human2AI design sessions, its style library, and its CLI. Use in a consumer project containing .human2ai/integration.json to inspect, edit, refine, review, or undo design work; to draw a reference picture as editable scene or editorial composition (“把这张图的构图画到画布上”); to project existing UI into a layout canvas (“把 UI 放到画布上让我修改”); to extract UI artwork from an interface image (“提取 UI”) or split a transparent PNG into canvas images; to model in the consumer project using a style and 3D spatial guidance; or to reuse a visual style. The consumer project's Agent owns downstream implementation.
 metadata:
   version: "0.1.7"
 ---
@@ -113,6 +113,12 @@ When generating an image from a spatial camera, follow that reference's **Camera
 ## Model in the consumer project
 
 When the user asks for final 3D models or a scene in their project, read [references/spatial-modeling.md](references/spatial-modeling.md). Combine the full style specification and reference images with the Human2AI spatial session's layout, scale, pose and camera guidance. Build and review the result using the consumer project's existing tools. A style binding does not alter the guide scene or record completion of external modeling. Use the spatial authoring workflow above only when the guide scene itself needs edits.
+
+## Extract UI artwork from an interface image
+
+For requests such as “提取这张界面图里的 UI” or “把图里的按钮和图标提取出来”, read [references/ui-extraction.md](references/ui-extraction.md) and its image-edit prompt template. Recover complete artwork from the specified source image, preserving its design and separating overlapping objects, with the background in its own image. This workflow produces image assets; projection into editable layout regions follows the separate UI-layout reference.
+
+PNG splitting is optional. Decide from the user's current request whether to deliver the extracted images, add the intact images to the session, or split transparent sheets into independent canvas nodes. When independent nodes are needed, use Human2AI's native CLI operations in [Split a transparent PNG](references/ui-layout.md#split-a-transparent-png); extraction alone does not require splitting. Retain the original image and existing user edits.
 
 ## Choose design, planning, refinement or style processing
 

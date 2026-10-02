@@ -1,0 +1,41 @@
+AGENT PREFLIGHT — complete before image generation; send only the filled image-edit prompt below to the image tool:
+Analyze the original interface before choosing the UI output count. Use exactly 1, 2 or 4 UI images, maximum 4. Default to 2; use 1 only for a sufficiently simple source whose completed, separated objects fit clearly; propose 4 when 2 cannot accommodate the source's complexity while preserving complete objects, transparent spacing and readable text. Consider independent objects after overlap separation, space after completion, lettering size and detail complexity. Do not decide from a rigid element-count threshold or from fragments of a generated PNG.
+Plan 2 as upper/lower or left/right source regions, or 4 as upper-left, upper-right, lower-left and lower-right regions, according to the source distribution; allow non-equal boundaries. Assign every UI object to exactly one batch. Plan 1 separate complete background image, excluded from the UI count. Respect an explicitly narrower request, such as extracting only a specified object or excluding the background.
+For 4 UI images, show the user the concrete regions, their object lists and why 2 are insufficient. Obtain explicit confirmation for that four-image plan before generating any of its UI batches, including when upgrading a 1- or 2-image plan. Reuse an existing explicit confirmation for the same plan; do not treat authorization for 2 as authorization for 4. Authorized 1- or 2-image extraction needs no additional count confirmation.
+PREFLIGHT PLAN: <chosen UI count and reason; source-region boundaries; object ownership per batch; separate background or the user's narrower scope>
+FOUR-IMAGE CONFIRMATION: <not required for 1/2; for 4, the user's actual confirmation and its scope — leave pending until received>
+DELIVERY: <files, intact canvas images, or independent canvas objects according to the current request; PNG splitting is optional>
+
+IMAGE-EDIT PROMPT — one call per planned UI batch:
+Extract complete, independently usable UI objects from the supplied original interface image. Preserve the source design, proportions, colors, lettering policy, materials and drawing style. Use image editing with the source as direct visual evidence.
+
+REFERENCE ROLES: <identify the original full-screen image and any optional regional reference; the full image supplies context, not extra output objects>
+UI BATCH PLAN: <chosen total of 1, 2 or 4 UI images; this batch's index and object ownership>
+TARGET REGION / BATCH: <all requested UI for 1; upper/lower or left/right for 2; upper-left/upper-right/lower-left/lower-right for 4; specify this region's boundaries, allowing non-equal partitions>
+OBJECTS TO EXTRACT: <list each independent object; explicitly identify what overlaps what and which surfaces must be restored>
+TEXT POLICY AND EXACT COPY: <the user's current text requirement and known literal strings belonging to each object>
+OUTPUT: <transparent PNG canvas with sufficient space and margins for all complete objects at a readable scale>
+
+COMPLETENESS:
+Output every requested object as a whole object, including parts slightly hidden by another UI object or cropped by the original image boundary. Reconstruct its missing outline, face, sidewall, corners, rim and decoration by continuing that same object's visible design and light direction. Do not reproduce the shape of the occluder as a notch, hole, missing corner or cut-out. Preserve an intentional opening belonging to the object itself. Do not invent entirely hidden UI objects or guess unknown text or numbers.
+
+OVERLAP SEPARATION:
+Objects that appear independently layered or overlapping in the interface must be extracted separately. For example, separate an icon from its button/support, a foreground marker from its illustrated panel, separate stacked books, and separate logo ornaments from the lettered plaque. Restore the complete lower object after removing the upper one. Preserve printed or engraved lettering and surface illustration on their own object; do not split a word into strokes or a material into its paint planes. Do not fuse overlapping objects into one composite silhouette.
+
+TRANSPARENT ARRANGEMENT:
+Move the extracted objects apart as needed. Preserve their own shape and proportions rather than their original screen coordinates. Give every complete object a fully transparent margin and separate unrelated objects with actual alpha-zero space; no overlap, touching edges, shadow bridges, clipped edges or shared scenery. Use sufficient canvas space for this planned batch instead of shrinking labels or sacrificing complete silhouettes. Do not add backplates solely to connect floating letters.
+
+REGIONAL BATCHES:
+Follow the batch plan decided from the original image before generation: all requested UI in 1 image, upper/lower or left/right in 2 images, or upper-left/upper-right/lower-left/lower-right in 4 images. Regional boundaries need not divide the source equally. This call outputs only one transparent UI image containing this batch's listed objects; do not add other batches, grid panels or dividing lines. An object crossing the regional boundary must be extracted whole in its assigned batch; expand the regional reference or use the full original image for its hidden/context parts. Do not cut an object at the batch boundary or repeat it across outputs.
+
+TEXT AND BACKGROUND:
+Follow the stated text policy. When retaining text, preserve the known original words and numbers on their owning UI objects, with readable letterforms; do not rewrite, translate, omit or invent copy. Remove environmental background outside the requested objects. Retain a scene printed inside a UI illustration as part of that illustration. The full environment belongs to a separate background image and must never be included in this transparent UI output.
+
+Output genuine RGBA transparency. No fake checkerboard, opaque background, crop frames, labels, asset names, instructional captions or watermarks. Only the complete, separated, requested UI objects.
+
+BACKGROUND IMAGE-EDIT PROMPT — one separate call when included in the user's scope:
+Extract and reconstruct the complete environmental background from the supplied original interface image. Preserve the source composition, proportions, colors, materials, drawing style and light direction. Remove foreground UI controls, icons, panels, logos and UI text. Restore background regions hidden behind them by continuing visible scenery, textures and lighting. Do not invent unrelated subjects or leave the shapes of removed UI as gaps. Retain text or illustrations that belong to the environment itself according to the stated text policy. Output one complete opaque background image, with no transparent UI sheet, extraction grid, labels, guide markings or watermarks.
+REFERENCE ROLES: <identify the original full-screen interface image>
+BACKGROUND CONTENT AND RESTORATION: <visible environmental content and regions obscured by UI>
+TEXT POLICY: <the user's requirement for text belonging to the environment>
+OUTPUT: <one complete background image preserving the source aspect ratio unless the user requests another>

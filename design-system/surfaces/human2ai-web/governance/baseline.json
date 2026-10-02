@@ -101,7 +101,72 @@
       "resolution": "Prompt reads only return text; existing refresh/bind owns displayed style state.",
       "evidence": ".human2ai-data/output/prompt-preview-fix/verification.md",
       "result": "Actual UI route sustained-hover regression passed at 20/200 nodes with zero unrelated component executions. UI and composition production sustained hover/scroll passed. Existing viewport DOM measurement writes remain; composition development zero-execution scope assertion did not pass and is documented. Manual browser verification, not CI."
+    },
+    "unchangedReferencePolling": {
+      "date": "2026-10-01",
+      "cause": "Composition camera-reference polling published a new missing-source Set every two seconds, invalidating the page and restarting the open prompt reader even when membership was unchanged.",
+      "resolution": "Retain the existing missing-source Set when membership is unchanged, including an already-empty reset. Changed source availability still publishes the new Set.",
+      "renderScope": "Unchanged camera-reference poll -> membership comparison only -> zero CompositionPageContent, CompositionCanvas, CanvasNode and sidebar executions. Hover and prompt resolution -> local PromptContent -> four development StrictMode executions and two initial reads; sustained hover and scrolling produce no further prompt reads or canvas-node/tree DOM mutations at 20/200-area actual Next development fixtures (22/202 CanvasNodes including frame and planning). No GPU allocation claim.",
+      "result": "Six-second sustained-hover assertions pass at 1280x800 for both fixture sizes, retaining text, popup height, content identity, trigger position and scroll position. Keyboard focus and native pointer movement into and out of the scrollable popup pass at 1024x800.",
+      "evidence": ".human2ai-data/output/prompt-hover-flicker/",
+      "browserCoverage": "Manual browser execution of retained setup-browser.js and check-hover.js against isolated actual routes; CI does not run these browser assertions."
     }
+  },
+  "sessionStyleSidebarStatus": {
+    "date": "2026-10-01",
+    "routes": [
+      "/composition",
+      "/ui-sketch",
+      "/spatial"
+    ],
+    "implementation": "The SessionStyleControl application adapter defaults its existing showProcessingStatus option to false, removing the unprocessed-style status text from session sidebars. SessionStylePicker retains its explicit pending-state presentation contract.",
+    "verification": "Not run: this continues the user's UI changes without tests, checks, builds or browser measurements."
+  },
+  "nodeEditorFieldHelp": {
+    "date": "2026-10-01",
+    "sharedVersion": "0.19.3",
+    "routes": [
+      "/composition",
+      "/ui-sketch"
+    ],
+    "implementation": "Both node editors use the shared title style with an additional space-3 bottom margin. Existing TextMarkEditorField hint slots place question-icon BasicButtons directly beside Node description and Note; Ant Design Tooltip exposes concise help on hover or keyboard focus. Help copy reuses the existing description and element-note concepts through contextual keys in both supported locales.",
+    "renderScope": "Expected hover/focus scope: the active local Tooltip only. Tooltip state stays inside Ant Design; rendering scope has not been measured.",
+    "verification": "Skipped at the user's explicit request: no tests, i18n/type/governance checks, builds or browser measurements."
+  },
+  "pngSplitting": {
+    "date": "2026-10-01",
+    "storyId": "human2ai-ui-sketch-canvas--png-split-workflow",
+    "evidence": ".human2ai-data/output/png-split-preview/regions-verification.json",
+    "browser": "Manual development browser execution of the retained Story passes with 20/200 unrelated nodes: single-image menu constraints, saved numeric settings, preview/zoom, multiple manual regions, first-anchor and Enter closure, Escape cancellation, immutable completed polygons, keyboard/button deletion, failed execution retaining regions for retry, image-node insertion, undo/redo and duplicate prevention. Native mouse/keyboard checks additionally pass at 1280x800; English layout checked at 1024x800. Browser assertions are not run in CI.",
+    "renderScope": "Parameter input and closed-region changes -> dialog and actual preview dependents. Draft pointer movement -> provisional SVG edge and start-anchor highlight, scheduled once per frame. At 20/200 nodes, zero unrelated CanvasNode executions and zero canvas DOM mutations; 20 pointer events produce one guide update and no preview API request. Existing wheel burst check produces one viewport update without API calls. Opening/closing changes the canvas interaction lock; successful split uses existing document append/history. No native IME or GPU allocation measurement.",
+    "sharedVersion": "0.19.3",
+    "status": "candidate",
+    "routes": [
+      "/ui-sketch"
+    ],
+    "layout": "Centered dialog up to 1280px wide, independent preview workspace dimensions, 280px right panel. Free anchors, Close region while drawing, and Delete appear above parameter rows in the right panel through a portal; no editing toolbar overlays the preview. Fields use label/value rows with trailing px. Footer contains only Split."
+  },
+  "uiSketchSelectionDeletion": {
+    "date": "2026-09-30",
+    "routes": [
+      "/ui-sketch"
+    ],
+    "storyId": "human2ai-ui-sketch-canvas--selection-deletion-workflow",
+    "composition": "Reuse the existing canvas Dropdown for the destructive actions.delete command, canonical UI group selection/cleanup and shared useCanvasHistory. ClearCanvas targets the full document; member-editor ConfirmAction targets one edited member. Neither owns selection deletion.",
+    "result": "A selected group or marquee selection can be deleted from the context menu or with Delete/Backspace while the scene has focus. The operation commits one draft and is undone/redone as a whole, including group membership, assets/crop, layer order and all state geometry. No selection and read-only modes disable deletion; member-editor deletion remains scoped to the edited member.",
+    "renderScope": "Delete -> removed members, previous selection/outlines, existing document/history/save consumers. In 20/200-unrelated-node development fixtures, retained Story assertions observe zero unrelated CanvasNode executions; manual native-key probes retain every unrelated SVG node and observe zero mutations within those node subtrees. Existing stage normalization and canvas reconciliation traverse the document after topology changes. Synthetic Delete dispatch to fixture document DOM commit measured 109.3/122.6ms in one development sample per size; these timings are supporting evidence only. GPU drawing/allocation was not measured.",
+    "verification": "Retained deletion Story, read-only and member-deletion Stories pass manual browser execution at 1536x960. Web/Storybook type checks, Next production/Storybook builds, domain and i18n gates pass. Browser assertions are not run by CI; synthetic composition/modifier checks do not claim native IME coverage. Earlier no-testing group-outline change is not validated by this record.",
+    "evidence": ".human2ai-data/output/selection-deletion/verification.json"
+  },
+  "uiSketchGroupOutlines": {
+    "date": "2026-09-30",
+    "routes": [
+      "/ui-sketch"
+    ],
+    "composition": "Extend the existing UiSketchCanvas and CanvasScene with an editor-only SVG group outline, reusing CanvasNode item markers and measured text bounds. CanvasNode selection controls describe individual nodes; CanvasPreviewHover describes exported previews, so neither owns group membership feedback.",
+    "result": "Hovering any displayed member or selecting its persistent group shows the same dashed outline with 6 screen pixels of padding. A single selected group replaces the aggregate solid selection outline. Group outlines follow the existing animation-frame drag preview and cancellation cleanup; saved geometry and exported content are unchanged.",
+    "renderScope": "Pointer boundary events -> outline-local hover state -> affected group SVG outlines. Group bounds use an indexed geometry lookup; hover does not update UiSketchCanvas/page state or node resources. Selection/document changes use existing owners. This describes implementation boundaries only; React execution, DOM paint and GPU work were not measured.",
+    "verification": "Not run at the user's explicit request: no tests, type checks, builds, governance checks or browser measurements. Earlier PNG splitting verification does not cover this change."
   },
   "crossCanvasClipboard": {
     "date": "2026-09-29",
@@ -112,5 +177,50 @@
     "result": "Versioned native clipboard snapshots survive source unmounts and can paste into another same-type session. Images transfer through existing session image APIs. Save, undo/redo, cancellation, invalid-type rejection and existing image-paste Stories verified in manual browser checks.",
     "renderScope": "Paste -> target document, new/selected nodes and dependents. At 20/200 fixtures, retained unaffected nodes do not execute after layer-order initialization; old UI drafts perform one global controls-host transition on first paste. Existing composition planning guide still executes on commit. No GPU claim or automated CI browser protection.",
     "evidence": ".human2ai-data/output/node-clipboard/verification.md"
+  },
+  "imageSourceMetadata": {
+    "date": "2026-10-01",
+    "routes": [
+      "/composition",
+      "/ui-sketch"
+    ],
+    "implementation": "Existing CanvasImageEditorFields heading displays intrinsic image dimensions and original file byte size in muted small text, separated from the heading by space-3. Existing imageSize and imageFile state supply metadata; no extra requests or state. Source dimensions and file size have contextual measurement keys in the canvas-images semantic shard; Chinese and English use the same technical unit notation.",
+    "renderScope": "Source image load or existing file-read completion -> local editor metadata. No added interaction or subscriptions; no document writes. Scope not measured.",
+    "verification": "Not run at the user’s explicit request: no tests, type checks, i18n/governance checks, builds or browser verification."
+  },
+  "workspaceSettings": {
+    "date": "2026-10-01",
+    "sharedVersion": "0.19.3",
+    "status": "candidate",
+    "experimentalAssets": [
+      "section-navigation-panel",
+      "confirm-action"
+    ],
+    "storyId": "human2ai-settings-panel--default",
+    "viewports": [
+      "1024x800",
+      "1280x800",
+      "1536x960"
+    ],
+    "result": "Reuse synchronized experimental SectionNavigationPanel in a product-local settings presentation and an Ant Design Modal supplying named dialog semantics, focus containment, Escape and focus return. API automatically persists valid image/history/trash day values after a 350 ms input pause without a save button; localized day units follow numeric inputs; reset preserves trash values, restore reloads workspace navigation. Desktop browser review covered Chinese/English, automatic saving, edits during delayed requests, reset during save, immediate close/reopen, recovery and empty trash. Next static export and Storybook builds passed. Trash rows offer scoped immediate permanent deletion and a list-level empty-trash action through synchronized experimental ConfirmAction. Manual browser verification covers cancellation, failed-request retry, single deletion, clearing, disabled empty state and preservation of active sessions.",
+    "renderScope": "Settings open, input, validation, automatic save, reset, section switch, deletion confirmation, single deletion and empty trash -> settings subtree only -> manual development browser fixtures at 20/200 sessions and canvas nodes: actual sidebar executions 0, actual canvas executions 0, unrelated tree/canvas DOM mutations 0. Writes serialize against the latest revision; immediate close flushes the final valid edit. Restore intentionally reloads navigation because membership changes.",
+    "regression": "test/browser/workspace-settings.tsx is manually invoked, not run in CI. Native IME is not exercised.",
+    "evidence": ".human2ai-data/output/settings/render-scope.json",
+    "latestPresentationChange": {
+      "date": "2026-10-01",
+      "change": "Rename trash duration label to 自动删除时间 / Auto-delete after; use compact small row buttons and theme-green solid restoration without bottom shadows on restore/delete buttons. Constrain trash records to the remaining panel height with independent scrolling, keeping the duration field and empty-trash action above the list.",
+      "verification": "Not run at the user’s explicit request: no tests, type checks, i18n/governance checks, builds or browser verification. Previous evidence predates this presentation change."
+    }
+  },
+  "sidebarSessionReveal": {
+    "date": "2026-10-02",
+    "sharedVersion": "0.19.3",
+    "status": "candidate",
+    "storyId": "human2ai-workspace-sidebar--default",
+    "implementation": "Reuse currentSessionId and AssetSkeletonTree. The application hook stores collapsed project/group keys in localStorage and injects controlled expandedKeys/onExpandedKeysChange; new containers default open. Disable automatic ancestor expansion, preserve collapsed parents across remounts, and mark the nearest visible collapsed ancestor with a solid theme-color dot and Chinese/English accessible name. After tree height motion settles, align the session or collapsed ancestor to the upper quarter of the tree viewport; native scroll clamping handles insufficient trailing content. Keep manual scrolling after revealing; unknown sessions do not scroll. No route, API or domain lifecycle changes.",
+    "renderScope": "Current session change, delayed list readiness or expansion toggle -> sidebar rows, controlled browser expansion preferences, ancestor marker and one initial scrollport adjustment -> manual development browser fixtures at 20/200 sessions and canvas nodes: canvas executions 0, canvas DOM mutations 0, document scroll unchanged. Expansion checks coalesce to one animation-frame callback while height motion is active; no page or canvas state is published. Regression covers storage restoration across sidebar remounts, collapsed project/group precedence, marker styling, upper placement, bottom clamping, manual scrolling and rapid switching.",
+    "regression": "test/browser/sidebar-session-reveal.tsx is manually invoked; CI does not run this browser regression.",
+    "evidence": ".human2ai-data/output/sidebar-session-reveal/render-scope.json",
+    "verification": "Manual development browser regression passed at 20/200 sessions and canvas nodes. Next production deep-link reload at 1024x800 preserved collapsed project and group states, revealed the visible ancestor, and rendered the theme-green marker with no console errors. npm run typecheck, npm run i18n:check, npm run build:web, npm run storybook:build and YisiUI doctor passed. Browser regression remains manual, outside CI."
   }
 }

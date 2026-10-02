@@ -13,6 +13,7 @@ import {
   DraftSessionTypeMismatchError,
   DraftUndoUnavailableError,
   DraftVersionNotFoundError,
+  DraftVersionExpiredError,
   StyleProcessingStaleError,
 } from "./draft-version-errors.ts";
 import type { DatabaseConnection } from "./migrate.ts";
@@ -20,6 +21,9 @@ import {
   InvalidRecordError,
   SessionNotFoundError,
 } from "./project-session-repository.ts";
+import { pruneDraftVersions } from "./session-storage-repository.ts";
+import { draftImageAssetIds } from "../domain/session/storage.ts";
+import { ImageAssetNotFoundError } from "./image-asset-repository.ts";
 
 interface DraftVersionRow {
   id: string;
@@ -87,6 +91,7 @@ export class DraftVersionStore<TDraft> {
       )
       .get(sessionId, revision);
     if (!row) {
+      if (revision > 0 && revision <= this.latestDraftRevision(sessionId)) throw new DraftVersionExpiredError(sessionId, revision);
       throw new DraftVersionNotFoundError(
         sessionId,
         revision,
@@ -124,6 +129,13 @@ export class DraftVersionStore<TDraft> {
       }
       this.options.validateSessionDraft?.(sessionId, draft,
         actualLatestRevision > 0 ? this.getDraftVersion(sessionId, actualLatestRevision).draft : undefined);
+      const assetIds = draftImageAssetIds(draft);
+      const missing = this.database.prepare<[string, string], { value: string }>(`SELECT image.value FROM json_each(?) image
+        LEFT JOIN image_assets asset ON asset.id = image.value AND asset.session_id = ? AND asset.deleting = 0
+        WHERE asset.id IS NULL LIMIT 1`).get(JSON.stringify(assetIds), sessionId);
+      if (missing) throw new ImageAssetNotFoundError(sessionId, missing.value);
+      if (assetIds.length) this.database.prepare("UPDATE image_assets SET unreferenced_since = NULL WHERE session_id = ? AND id IN (SELECT value FROM json_each(?))")
+        .run(sessionId, JSON.stringify(assetIds));
 
       if (!restoredProcessing && actualLatestRevision > 0 && this.options.validateTransition) {
         try {
@@ -177,6 +189,7 @@ export class DraftVersionStore<TDraft> {
           )
           .run(id, sessionId, revision, draftJson, createdAt, processingJson);
       }
+      pruneDraftVersions(this.database, this.options.table, sessionId);
       return this.getDraftVersion(sessionId, revision);
     })();
     // Spatial operations may wrap this append in another transaction. Notify only
@@ -231,7 +244,7 @@ export class DraftVersionStore<TDraft> {
   assertSessionType(sessionId: string): void {
     const row = this.database
       .prepare<[string], { session_type: SessionType }>(
-        "SELECT session_type FROM sessions WHERE id = ?",
+        "SELECT session_type FROM sessions WHERE id = ? AND deleted_at IS NULL",
       )
       .get(sessionId);
     if (!row) throw new SessionNotFoundError(sessionId);

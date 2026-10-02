@@ -135,15 +135,21 @@
 }
 
 .human2ai-ui-sketch-canvas__multi-selection,
+.human2ai-ui-sketch-canvas__group-outline,
 .human2ai-ui-sketch-canvas__marquee {
   vector-effect: non-scaling-stroke;
   pointer-events: none;
 }
 
-.human2ai-ui-sketch-canvas__multi-selection {
+.human2ai-ui-sketch-canvas__multi-selection,
+.human2ai-ui-sketch-canvas__group-outline {
   fill: none;
   stroke: var(--yisiui-component-focus-outline);
   stroke-width: var(--yisiui-component-focus-outline-width);
+}
+
+.human2ai-ui-sketch-canvas__group-outline {
+  stroke-dasharray: 6 4;
 }
 
 .human2ai-ui-sketch-canvas__marquee {

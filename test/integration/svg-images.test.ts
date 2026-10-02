@@ -92,8 +92,9 @@ describe("SVG image content", () => {
     }
     const databasePath = join(directory, "previous.sqlite");
     const previous = openDatabase(databasePath, oldMigrations);
-    const projects = new ProjectSessionRepository(previous);
-    const session = projects.createSession({ sessionType: "ui-layout", title: "Existing" });
+    const session = { id: "existing-session" };
+    previous.prepare("INSERT INTO sessions (id, session_type, title, lifecycle_stage, revision, created_at, updated_at) VALUES (?, 'ui-layout', 'Existing', 'draft', 1, 'now', 'now')").run(session.id);
+    previous.prepare("INSERT INTO ui_sessions (session_id) VALUES (?)").run(session.id);
     previous.prepare(`INSERT INTO image_assets VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
       .run("old-image", session.id, "old.png", "old.png", "image/png", 1, 24, 24, "abc", "now");
     previous.close();

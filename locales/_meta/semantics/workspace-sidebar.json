@@ -2,6 +2,16 @@
   "$schema": "../semantic-shard.schema.json",
   "domain": "workspace-sidebar",
   "concepts": {
+    "workspace.current-session-container": {
+      "meaning": "A collapsed project or session group contains the currently open session, whose own row is hidden beneath it.",
+      "scope": "The right-side dot on the visible collapsed ancestor in the workspace project-session tree.",
+      "referent": "The current session's nearest visible collapsed container, not an unread item or a modified session.",
+      "precedence": "A collapsed project takes precedence over its hidden groups. Once the project is expanded, a collapsed containing group carries the marker; when the session row is visible, no container marker is shown.",
+      "canonicalKey": "workspaceSidebar.containsCurrentSession",
+      "searchTerms": ["包含当前会话", "收起的项目", "Contains current session", "collapsed current session"],
+      "examples": ["Mark a collapsed project containing the session opened by its URL.", "Move the marker to the collapsed group after its project is expanded."],
+      "nonExamples": ["Mark a project containing unread updates.", "Mark an expanded group whose current session row is visible."]
+    },
     "session.create-image-composition": {
       "meaning": "Create a new image-composition session, either without a project from the sidebar action area or already assigned to the project named by a project-row action. A group-row action creates it inside that group and its owning project.",
       "scope": "The global and per-project creation actions in the Human2AI workspace sidebar. Also used by the home page to create and open an unassigned session. Includes creation from named session-group rows.",
@@ -151,10 +161,10 @@
       ]
     },
     "session.deletion-consequences": {
-      "meaning": "Deleting a session also removes its drafts and refinement records.",
+      "meaning": "Deleting a session moves it and its associated contents to recoverable trash until the configured retention period expires.",
       "scope": "Workspace session deletion confirmation.",
       "referent": "The selected session and its associated draft and refinement data.",
-      "precedence": "Unlike deleting an empty project, this removes dependent session content; it does not delete the containing project.",
+      "precedence": "Removes the session from active navigation immediately; preserves content for restoration until automatic permanent deletion. The containing project is not deleted.",
       "canonicalKey": "workspaceSidebar.deleteSessionDescription",
       "searchTerms": [
         "删除会话",
@@ -164,10 +174,10 @@
         "refinement records"
       ],
       "examples": [
-        "Warn about related draft removal before deleting a session."
+        "Explain that the session can be recovered from trash before its retention expires."
       ],
       "nonExamples": [
-        "Delete only one node in a draft."
+        "Immediately erase all saved drafts when the Delete action is confirmed."
       ]
     },
     "workspace.loading": {
@@ -467,6 +477,14 @@
     }
   },
   "keys": {
+    "workspaceSidebar.containsCurrentSession": {
+      "conceptId": "workspace.current-session-container",
+      "variant": "collapsed-container-indicator",
+      "role": "accessible name for the solid theme-color dot on a collapsed container",
+      "grammar": "concise status phrase",
+      "tone": "neutral",
+      "reusePolicy": "canonical"
+    },
     "workspaceSidebar.newComposition": {
       "conceptId": "session.create-image-composition",
       "variant": "global-action-label",

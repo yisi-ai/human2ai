@@ -13,6 +13,7 @@
   align-items: center;
   justify-content: flex-start;
   gap: var(--yisiui-space-2);
+  margin-block-end: var(--yisiui-space-3);
   padding-inline-end: var(--yisiui-space-6);
 }
 
@@ -25,6 +26,11 @@
   min-width: 0;
   align-items: center;
   gap: var(--yisiui-space-2);
+}
+
+.yisi-text-mark-editor-field-heading:has(.human2ai-canvas-node-editor__field-help) {
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .human2ai-canvas-node-editor__primary-fields {

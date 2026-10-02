@@ -1,14 +1,17 @@
 "use client";
 
 import { withOptimisticInput } from "./optimisticInput";
+import { QuestionCircleOutlined } from "@ant-design/icons";
+import { BasicButton } from "@human2ai/ui/yisiui/basic-button";
 
 import {
   TextMarkEditor,
   TextMarkEditorField,
   TextMarkEditorTextArea,
 } from "@human2ai/ui/yisiui/text-mark-editor";
-import { Select } from "antd";
+import { Select, Tooltip } from "antd";
 import type { CSSProperties, ReactNode } from "react";
+import zh from "../../../../../locales/zh-CN/common.json";
 
 import type {
   CompositionNodeMetadata,
@@ -27,6 +30,7 @@ export type Human2AiCanvasNodeEditorAutoFocusField = "note" | "none";
 export interface Human2AiCanvasNodeEditorLabels {
   title: string;
   note: string;
+  noteHelp: string;
   notePlaceholder: string;
   shotScale: string;
   shotScaleAuto: string;
@@ -42,6 +46,7 @@ export interface Human2AiCanvasNodeEditorLabels {
   textKind: string;
   imageKind: string;
   nodeDescription: string;
+  nodeDescriptionHelp: string;
   originUser: string;
   originAgent: string;
   originImport: string;
@@ -68,6 +73,7 @@ export interface Human2AiCanvasNodeEditorProps {
 const DEFAULT_LABELS: Human2AiCanvasNodeEditorLabels = {
   title: "编辑节点",
   note: "备注",
+  noteHelp: zh.notes.element.nodeHelp,
   notePlaceholder: "说明这个节点表达什么",
   shotScale: "景别",
   shotScaleAuto: "自动",
@@ -83,6 +89,7 @@ const DEFAULT_LABELS: Human2AiCanvasNodeEditorLabels = {
   textKind: "文字",
   imageKind: "图像",
   nodeDescription: "节点说明",
+  nodeDescriptionHelp: zh.canvas.node.nodeDescriptionHelp,
   originUser: "user",
   originAgent: "agent",
   originImport: "import",
@@ -160,13 +167,25 @@ export function Human2AiCanvasNodeEditor({
       >
         <div className="human2ai-canvas-node-editor__primary-fields">
           {metadata.origin !== "user" && metadata.annotation.trim() ? (
-            <TextMarkEditorField label={labels.nodeDescription}>
+            <TextMarkEditorField label={labels.nodeDescription} hint={(
+              <Tooltip title={labels.nodeDescriptionHelp} trigger={["hover", "focus"]}>
+                <BasicButton className="human2ai-canvas-node-editor__field-help" mode="icon-only" size="small"
+                  type="text" backgroundColor="none" icon={<QuestionCircleOutlined aria-hidden="true" />}
+                  iconLabel={labels.nodeDescriptionHelp} />
+              </Tooltip>
+            )}>
               <p className="human2ai-canvas-node-editor__description">{metadata.annotation}</p>
             </TextMarkEditorField>
           ) : null}
           {leadingFields}
 
-          <TextMarkEditorField label={labels.note}>
+          <TextMarkEditorField label={labels.note} hint={(
+            <Tooltip title={labels.noteHelp} trigger={["hover", "focus"]}>
+              <BasicButton className="human2ai-canvas-node-editor__field-help" mode="icon-only" size="small"
+                type="text" backgroundColor="none" icon={<QuestionCircleOutlined aria-hidden="true" />}
+                iconLabel={labels.noteHelp} />
+            </Tooltip>
+          )}>
             <ImmediateNoteInput
               name="nodeNote"
               autoFocus={autoFocusField === "note"}

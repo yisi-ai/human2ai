@@ -6,6 +6,7 @@
   "additionalProperties": false,
   "required": ["version", "kind", "frame", "overallNote", "rectangles", "texts", "images", "groups", "stages"],
   "properties": {
+    "pngSplits": { "type": "array", "items": { "$ref": "#/$defs/pngSplit" } },
     "layerOrder": { "type": "array", "uniqueItems": true, "items": { "type": "string", "minLength": 1 } },
     "version": { "const": 1 },
     "kind": { "const": "ui-layout-draft" },
@@ -231,6 +232,178 @@
     }
   },
   "$defs": {
+    "pngSplit": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "algorithm",
+        "packingAlgorithm",
+        "options",
+        "sources",
+        "pieces",
+        "groupId"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "algorithm": {
+          "enum": [
+            "alpha-threshold-soft-edges-8-connected-v2",
+            "alpha-threshold-manual-regions-v3"
+          ]
+        },
+        "packingAlgorithm": {
+          "const": "native-size-skyline-v1"
+        },
+        "options": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "alphaThreshold",
+            "minSize",
+            "gap"
+          ],
+          "properties": {
+            "alphaThreshold": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 254
+            },
+            "minSize": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "gap": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "nodeId",
+              "assetId",
+              "sha256",
+              "width",
+              "height",
+              "discarded"
+            ],
+            "properties": {
+              "nodeId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "assetId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "discarded": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "regions": {
+                "type": "array",
+                "maxItems": 64,
+                "items": {
+                  "type": "array",
+                  "minItems": 3,
+                  "maxItems": 256,
+                  "items": {
+                    "type": "array",
+                    "minItems": 2,
+                    "maxItems": 2,
+                    "items": {
+                      "type": "number",
+                      "minimum": -1000000,
+                      "maximum": 1000000
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "pieces": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "nodeId",
+              "assetId",
+              "sourceNodeId",
+              "sourceRect",
+              "sha256",
+              "width",
+              "height"
+            ],
+            "properties": {
+              "nodeId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "assetId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceNodeId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sourceRect": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "minItems": 4,
+                "maxItems": 4
+              },
+              "sha256": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "width": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "height": {
+                "type": "integer",
+                "minimum": 1
+              }
+            }
+          }
+        },
+        "groupId": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "minLength": 1
+        }
+      }
+    },
     "imageCrop": {
       "type": "object",
       "additionalProperties": false,

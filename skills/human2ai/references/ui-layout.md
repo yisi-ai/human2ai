@@ -14,6 +14,28 @@ Use a `.svg` output filename for a self-contained vector preview. Both formats e
 
 Read state ids, names and order from the capture's `stateTabs`; older captures use `start` followed by `stages[].id`. Pass the stable id to `--state`, not the display name. If omitted, the first state in display order is exported, including when `start` has been deleted. Export each state relevant to the task separately. Unknown or deleted state ids fail instead of falling back to another state. Open the PNG with the available local image viewer to check placement, text, visibility and clipping; opening the Human2AI page is unnecessary for this check.
 
+## Split a transparent PNG
+
+Use `ui-layout.split-png@1` when the current task calls for independent images from a transparent PNG already on the canvas. UI artwork extraction does not require this step. Discover the commands through `session connect`, read the latest capture and choose one ordinary image node with an `assetId`, without a `previewReference`:
+
+```text
+<runner> ui-layout split-png --session <session-id> --revision <latest-revision> --node <image-node-id>
+```
+
+The command prepares slices through the existing service, packs them at original pixel size outside the interface's right edge, groups two or more new nodes, and saves one complete draft revision. It preserves the source image, unrelated nodes, notes, crop, layer order and motion states. The result returns `changed`, `capture` (the saved version) and `batch` (source and slice provenance). Repeating an applied source with the same parameters returns `changed: false` without uploads or a new revision; it does not restore user-deleted slices or move existing ones.
+
+Defaults are `--alpha-threshold 8`, `--min-size 16` and `--gap 12`. The threshold controls connectivity while preserving soft-edge RGBA. Only automatic pieces whose original width and height are both below the minimum are discarded; thin pieces survive when either dimension reaches it. `--min-size 0` disables filtering. Optional finite `--x` and `--y` override the starting coordinates. Parameter changes create separate results and preserve prior edits; a gap or position change alone does not repack an applied batch.
+
+When a range preview helps the current task, use the optional read-only operation:
+
+```text
+<runner> ui-layout preview-png-split --session <session-id> --revision <latest-revision> --node <image-node-id>
+```
+
+It returns retained source-pixel rectangles and discarded counts without creating assets, split records or draft revisions. Both commands accept the same threshold, minimum-size and gap parameters. Both also accept `--regions <regions.json>` for explicitly requested manual closed polygons, as an array of polygons in original asset pixel coordinates, for example `[[[0,0],[80,0],[80,60],[0,60]]]`. A nonempty region becomes one piece regardless of connectivity or minimum size; earlier regions claim overlapping pixels first, and remaining pixels use automatic splitting. Do not add manual regions merely because extraction was requested.
+
+`--revision` must match the latest saved capture. A revision conflict stops the write and preserves external edits; reconnect and read the latest capture before retrying. Asset preparation is resumable, so a save or upload failure does not require generating the image again. Undo a completed split through the existing Capture undo command, using the returned saved revision.
+
 ## Capture user-perceived layout intent
 
 A UI layout draft is a flat spatial sketch of what users can see, read, recognize, or interact with. It is not a DOM tree, component tree, CSS layout model, or inventory of framework components.

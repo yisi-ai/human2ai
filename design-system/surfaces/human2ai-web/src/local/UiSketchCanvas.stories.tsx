@@ -10,7 +10,13 @@ import { captureCanvasNodeAppearance, captureCanvasNodeExecutions } from "./canv
 import { checkCanvasImagePaste, uploadPastedStoryImage } from "./canvasImagePasteStoryChecks";
 import type { Meta, StoryContext, StoryObj } from "@storybook/react-webpack5";
 import { waitFor, userEvent } from "storybook/test";
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { I18nextProvider } from "react-i18next";
+import { UiSketchPngSplitDialog } from "../../../../../web/components/UiSketchPngSplitDialog";
+import { PNG_SPLIT_SETTINGS_KEY } from "../../../../../web/lib/png-split-settings";
+import { useCanvasHistory } from "../../../../../web/lib/use-canvas-history";
+import { CanvasHistoryControls } from "./CanvasHistoryControls";
+import type { PngSplitBatch, PngSplitOptions, PngSplitSource } from "../../../../../src/domain/ui-sketch/png-split";
 
 import { placeNodeInStory, placementLayer, placementPointer } from "./canvasPlacementStoryChecks";
 
@@ -1584,6 +1590,110 @@ export const GroupedMemberDeletion: Story = {
   },
 };
 
+function SelectionDeletionFixture() {
+  const [draft, setDraft] = useState(() => {
+    const count = new URLSearchParams(window.location.search).get("fixture") === "200" ? 200 : 20;
+    const base: UiSketchDraft = {
+      ...cloneUiSketchDraft(buttonGroupFixture),
+      overallNote: "keep-note",
+      rectangles: [...buttonGroupFixture.rectangles,
+        { ...buttonGroupFixture.rectangles[0]!, id: "hidden-member", visible: false },
+        ...Array.from({ length: count }, (_, index) => ({ ...buttonGroupFixture.rectangles[0]!,
+          id: `unrelated-${index}`, x: 560 + (index % 10) * 8, y: 400 + Math.floor(index / 10) * 8, width: 6, height: 6 })),
+      ],
+      images: [{ ...buttonGroupFixture.rectangles[0]!, id: "independent-image", x: 520, y: 250, width: 32, height: 24,
+        assetId: "retained-asset", crop: { x: 0.1, y: 0.2, width: 0.6, height: 0.5 } }],
+      groups: [{ id: "button-group", itemIds: ["button", "label", "hidden-member"] }],
+    };
+    base.layerOrder = [...base.rectangles, ...base.texts, ...base.images].map(item => item.id);
+    return insertUiSketchStage(base, "start", "delete-stage");
+  });
+  const [commits, setCommits] = useState(0);
+  const history = useCanvasHistory(draft, snapshot => setDraft(snapshot.draft));
+  return <ConfigProvider theme={{ token: { motion: false } }}><div style={{ height: "100vh" }} data-canvas-editor>
+    <CanvasHistoryControls {...history} labels={{ undo: storyI18n.t("canvasHistory.undo"), redo: storyI18n.t("canvasHistory.redo"), label: storyI18n.t("canvasHistory.label") }} />
+    <UiSketchCanvas draft={draft} activeStageId="delete-stage" interactionResetKey={history.restoreToken}
+      translatePrompt={translatePrompt} resolveImageSource={() => nestedPreviewSource}
+      onDraftChange={next => { setCommits(value => value + 1); history.record(next); setDraft(next); }} />
+    <output hidden data-selection-deletion-draft data-commits={commits}>{JSON.stringify(draft)}</output>
+  </div></ConfigProvider>;
+}
+
+export const SelectionDeletionWorkflow: Story = {
+  args: { draft: EMPTY_UI_SKETCH_DRAFT },
+  render: () => <SelectionDeletionFixture />,
+  play: async ({ canvasElement }) => {
+    const user = userEvent.setup();
+    const scene = canvasElement.querySelector<SVGSVGElement>("[data-ui-sketch-scene]")!;
+    const output = () => canvasElement.querySelector<HTMLOutputElement>("[data-selection-deletion-draft]")!;
+    const read = () => JSON.parse(output().textContent!) as UiSketchDraft;
+    const original = output().textContent!;
+    const commits = () => Number(output().dataset.commits);
+    const label = () => canvasElement.querySelector<SVGGElement>('[data-ui-sketch-item="text:label"]')!;
+    const travel = async (action: "undo" | "redo") => {
+      canvasElement.querySelector<HTMLButtonElement>(`button[aria-label="${storyI18n.t(`canvasHistory.${action}`)}"]`)!.click();
+      await waitForCanvasRender();
+    };
+    const restored = () => { if (output().textContent !== original) throw new Error("Undo must restore all nodes, group, assets, crop, layer order and stage geometry"); };
+    await waitForCanvasRender();
+    label().dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await waitForCanvasRender();
+    scene.focus();
+    const retained = captureCanvasNodeExecutions(canvasElement, ["button", "label", "hidden-member"]);
+    await user.keyboard("{Delete}");
+    await waitForCanvasRender();
+    retained();
+    if (commits() !== 1 || read().groups.length || read().texts.length || read().rectangles.some(item => ["button", "hidden-member"].includes(item.id)) || read().images.length !== 1) {
+      throw new Error("Scene-focused Delete must remove the whole group, including hidden members, in one commit");
+    }
+    await user.keyboard("{Control>}z{/Control}");
+    await waitForCanvasRender();
+    restored();
+    await travel("redo");
+    if (read().groups.length || read().texts.length) throw new Error("Redo must repeat whole-group deletion");
+    await travel("undo");
+    restored();
+
+    const start = clientPointForWorld(scene, { x: 310, y: 230 });
+    const end = clientPointForWorld(scene, { x: 555, y: 315 });
+    scene.dispatchEvent(pointerEvent("pointerdown", { pointerId: 901, ...start }));
+    scene.dispatchEvent(pointerEvent("pointermove", { pointerId: 901, ...end }));
+    scene.dispatchEvent(pointerEvent("pointerup", { pointerId: 901, ...end }));
+    await waitForCanvasRender();
+    if (canvasElement.querySelectorAll('[data-ui-sketch-item][data-selected="true"]').length !== 3 || document.activeElement !== scene) throw new Error("Marquee must select the group plus independent image and keep scene focus");
+    const before = commits();
+    const retainedMarquee = captureCanvasNodeExecutions(canvasElement, ["button", "label", "hidden-member", "independent-image"]);
+    await user.keyboard("{Backspace}");
+    await waitForCanvasRender();
+    retainedMarquee();
+    if (commits() !== before + 1 || read().images.length || read().texts.length || read().groups.length || read().rectangles.some(item => !item.id.startsWith("unrelated-"))) throw new Error("Marquee Backspace must delete all selected items once");
+    await travel("undo");
+    restored();
+    await travel("redo");
+    if (read().images.length || read().texts.length) throw new Error("Redo must repeat marquee deletion");
+    await travel("undo");
+
+    label().dispatchEvent(new KeyboardEvent("keydown", { key: "F10", shiftKey: true, bubbles: true }));
+    await waitForCanvasRender();
+    findMenuItem(storyI18n.t("actions.delete")).click();
+    await waitForCanvasRender();
+    if (commits() !== before + 2 || read().groups.length || read().texts.length || read().images.length !== 1) throw new Error("Context Delete must delete the selected group once");
+    await travel("undo");
+    restored();
+    scene.focus();
+    const emptyBefore = commits();
+    await user.keyboard("{Delete}{Backspace}");
+    await waitForCanvasRender();
+    if (commits() !== emptyBefore || output().textContent !== original) throw new Error("Empty selection must not delete or record history");
+    const menuEvent = new KeyboardEvent("keydown", { key: "F10", shiftKey: true, bubbles: true });
+    scene.dispatchEvent(menuEvent);
+    await waitForCanvasRender();
+    if (findMenuItem(storyI18n.t("actions.delete")).getAttribute("aria-disabled") !== "true") throw new Error("Delete must be disabled without selected nodes");
+    window.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+    output().dataset.result = "passed";
+  },
+};
+
 export const ReadOnlyGroups: Story = {
   name: "只读组菜单",
   args: { draft: { ...buttonGroupFixture, groups: [{ id: "button-group", itemIds: ["button", "label"] }] } },
@@ -1595,7 +1705,8 @@ export const ReadOnlyGroups: Story = {
     label.dispatchEvent(new KeyboardEvent("keydown", { key: "F10", shiftKey: true, bubbles: true }));
     await waitForCanvasRender();
     if (findMenuItem("建组").getAttribute("aria-disabled") !== "true"
-      || findMenuItem("解组").getAttribute("aria-disabled") !== "true") {
+      || findMenuItem("解组").getAttribute("aria-disabled") !== "true"
+      || findMenuItem(storyI18n.t("actions.delete")).getAttribute("aria-disabled") !== "true") {
       throw new Error("只读组必须禁用建组和解组");
     }
   },
@@ -2069,5 +2180,310 @@ export const SessionPreviewRefresh: Story = {
       if (!crop || crop.width >= .95) throw new Error("Final crop was lost during refresh");
       if (preview.querySelector("img")!.src === src) throw new Error("Pending preview did not display after the gesture");
     });
+  },
+};
+
+const pngSplitPreviewSource = `data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="70" height="24"><g fill="#638d88"><rect x="1" y="1" width="15" height="15"/><rect x="20" y="1" width="16" height="1"/><rect x="40" y="1" width="1" height="16"/><rect x="45" y="1" width="17" height="17"/></g></svg>')}`;
+
+function pngSplitFixture(nodeCount = 200): UiSketchDraft {
+  const draft = cloneUiSketchDraft(EMPTY_UI_SKETCH_DRAFT);
+  draft.frame = { x: 0, y: 0, width: 600, height: 400 };
+  draft.images = [0, 1].map(index => ({ id: `png-source-${index}`, assetId: `source-asset-${index}`,
+    x: 50 + index * 180, y: 70, width: 140, height: 48, crop: null, note: `PNG ${index + 1}`,
+    annotation: "", semanticType: "", origin: "import", visible: true, weight: "auto" }));
+  draft.rectangles = Array.from({ length: nodeCount }, (_, index) => ({ ...UI_SKETCH_FIXTURE.rectangles[0],
+    id: `png-unrelated-${index}`, x: 20 + index % 10 * 55, y: 150 + Math.floor(index / 10) * 10, width: 45, height: 8 }));
+  draft.layerOrder = [...draft.rectangles, ...draft.images].map(node => node.id);
+  return draft;
+}
+
+function PngSplitWorkflowFixture({ initialDraft }: { initialDraft: UiSketchDraft }) {
+  const [draft, setDraft] = useState(initialDraft);
+  const requestLog = useRef<HTMLDivElement>(null);
+  const history = useCanvasHistory(draft, snapshot => setDraft(snapshot.draft));
+  const renderDialog = useCallback<NonNullable<UiSketchCanvasProps["renderPngSplitDialog"]>>(
+    props => <UiSketchPngSplitDialog sessionId="png-split-story" {...props} resolveImageSource={() => pngSplitPreviewSource} />, [],
+  );
+  useEffect(() => {
+    const original = window.fetch; let requests = 0;
+    const previousSettings = localStorage.getItem(PNG_SPLIT_SETTINGS_KEY);
+    localStorage.removeItem(PNG_SPLIT_SETTINGS_KEY);
+    const fetcher: typeof fetch = async (input, init) => {
+      if (String(input).endsWith("/png-split-story/ui-sketch/png-splits/preview")) {
+        const { sources, options } = JSON.parse(String(init?.body)) as { sources: PngSplitSource[]; options: PngSplitOptions };
+        if (sources.length !== 1 || sources[0].nodeId !== "png-source-0") throw new Error("Expected exactly the selected source");
+        requestLog.current!.dataset.pngPreviewRegions = JSON.stringify(sources[0].regions ?? []);
+        requestLog.current!.dataset.pngPreviewRequests = String(Number(requestLog.current!.dataset.pngPreviewRequests ?? 0) + 1);
+        await new Promise(resolve => setTimeout(resolve, options.minSize === 17 ? 300 : 20));
+        const rects = [[20, 1, 16, 1], [40, 1, 1, 16], [45, 1, 17, 17]].filter(rect => rect[2] >= options.minSize || rect[3] >= options.minSize);
+        return new Response(JSON.stringify({ sources: sources.map(source => ({ nodeId: source.nodeId, width: 70, height: 24,
+          discarded: 4 - rects.length, rects })) }), { status: 200 });
+      }
+      if (!String(input).endsWith("/png-split-story/ui-sketch/png-splits")) return original(input, init);
+      const { sources, options } = JSON.parse(String(init?.body)) as { sources: PngSplitSource[]; options: PngSplitOptions };
+      if (sources.length !== 1 || sources[0].nodeId !== "png-source-0") throw new Error("Expected exactly the selected source");
+      requestLog.current!.dataset.pngSplitRegions = JSON.stringify(sources[0].regions ?? []);
+      requestLog.current!.dataset.pngSplitRequests = String(++requests);
+      requestLog.current!.dataset.pngSplitOptions = JSON.stringify(options);
+      if (requests === 1) return new Response(JSON.stringify({ code: "HTTP_500", message: "fixture failure" }), { status: 500 });
+      const suffix = sources.some(source => source.regions?.length) ? "-manual" : "";
+      if (suffix && requests === 4) return new Response(JSON.stringify({ code: "HTTP_500", message: "manual fixture failure" }), { status: 500 });
+      const batch: PngSplitBatch = { id: `story-split${suffix}`, algorithm: "alpha-threshold-soft-edges-8-connected-v2", packingAlgorithm: "native-size-skyline-v1", options,
+        sources: sources.map(source => ({ ...source, sha256: "a".repeat(64), width: 70, height: 24, discarded: 1 })),
+        pieces: sources.flatMap(source => [[20, 1, 16, 1], [40, 1, 1, 16], [45, 1, 17, 17]].map(rect => ({ nodeId: `cut-${source.nodeId}-${rect[0]}${suffix}`,
+          assetId: `cut-asset-${source.nodeId}-${rect[0]}`, sourceNodeId: source.nodeId, sourceRect: rect as [number, number, number, number],
+          width: rect[2], height: rect[3], sha256: "b".repeat(64) }))), groupId: `story-png-group${suffix}` };
+      return new Response(JSON.stringify(batch), { status: 200 });
+    };
+    window.fetch = fetcher;
+    return () => {
+      if (window.fetch === fetcher) window.fetch = original;
+      if (previousSettings === null) localStorage.removeItem(PNG_SPLIT_SETTINGS_KEY);
+      else localStorage.setItem(PNG_SPLIT_SETTINGS_KEY, previousSettings);
+    };
+  }, []);
+  return <I18nextProvider i18n={storyI18n}><div ref={requestLog} style={{ height: "100vh" }} data-png-split-story data-fixture-nodes={initialDraft.rectangles.length}>
+    <CanvasHistoryControls {...history} labels={{ undo: "撤销", redo: "重做", label: "编辑历史" }} />
+    <UiSketchCanvas draft={draft} translatePrompt={translatePrompt} interactionResetKey={history.restoreToken}
+      onDraftChange={next => { history.record(next); setDraft(next); }} renderPngSplitDialog={renderDialog}
+      resolveImageSource={() => nestedPreviewSource}
+      pngSplitLabels={{ action: storyI18n.t("uiSketch.pngSplit.action"), running: storyI18n.t("uiSketch.pngSplit.running"), alreadySplit: storyI18n.t("uiSketch.pngSplit.alreadySplit"),
+        complete: (count, discarded) => storyI18n.t("uiSketch.pngSplit.complete", { count, discarded }) }} />
+    <output hidden data-png-split-story-draft>{JSON.stringify(draft)}</output>
+  </div></I18nextProvider>;
+}
+
+export const PngSplitWorkflow: Story = {
+  name: "透明 PNG 拆分、重试和整体撤销",
+  args: { draft: pngSplitFixture() },
+  render: args => <PngSplitWorkflowFixture key={args.draft.rectangles.length} initialDraft={args.draft} />,
+  play: async ({ canvasElement }) => {
+    const doc = canvasElement.ownerDocument;
+    const user = userEvent.setup();
+    const read = () => JSON.parse(canvasElement.querySelector('[data-png-split-story-draft]')!.textContent!) as UiSketchDraft;
+    const button = (text: string) => doc.querySelector<HTMLButtonElement>(`button[aria-label="${text}"]`)!;
+    const requests = () => Number(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngSplitRequests ?? 0);
+    const openMenu = async (ids = ["png-source-0"]) => {
+      await user.click(canvasElement.querySelector(`[data-canvas-node="${ids[0]}"]`)!);
+      for (const id of ids.slice(1)) {
+        await user.keyboard("{Shift>}"); await user.click(canvasElement.querySelector(`[data-canvas-node="${id}"]`)!); await user.keyboard("{/Shift}");
+      }
+      await user.keyboard("{Shift>}{F10}{/Shift}");
+      await waitFor(() => { if (!doc.querySelector('[role="menuitem"]')) throw new Error("Selection menu not open"); });
+      const items = [...doc.querySelectorAll<HTMLElement>('[role="menuitem"]')].map(item => item.textContent);
+      if (items.indexOf("拆分 PNG") >= items.indexOf("建组") || items.indexOf("建组") >= items.indexOf("解组")) throw new Error("Split/group menu order changed");
+    };
+    const splitItem = () => doc.querySelector<HTMLElement>('[data-png-split-action]')!.closest<HTMLElement>('[role="menuitem"]')!;
+    const assertDisabled = async () => {
+      if (splitItem().getAttribute("aria-disabled") !== "true") throw new Error("Ineligible selection enabled PNG splitting");
+      await user.click(splitItem());
+      if (doc.querySelector('[data-png-split-parameters]') || requests()) throw new Error("Disabled split opened settings or executed");
+      await user.keyboard("{Escape}");
+    };
+    await openMenu(["png-source-0", "png-source-1"]); await assertDisabled();
+    await openMenu(["png-unrelated-0"]); await assertDisabled();
+    await openMenu(["png-source-0", "png-unrelated-0"]); await assertDisabled();
+    await openMenu(["png-source-0", "png-source-1"]);
+    await user.click([...doc.querySelectorAll<HTMLElement>('[role="menuitem"]')].find(item => item.textContent === "建组")!);
+    await waitFor(() => { if (read().groups.length !== 1) throw new Error("Source group not created"); });
+    await openMenu(); await assertDisabled();
+    await user.click(button("撤销"));
+    await waitFor(() => { if (read().groups.length) throw new Error("Source group not undone"); });
+    const settings = async (keyboard = false) => {
+      const before = requests();
+      await openMenu();
+      if (splitItem().getAttribute("aria-disabled") === "true" || splitItem().querySelector('button, [role="button"], .anticon')) throw new Error("Single-image split disabled or extra settings icon remains");
+      if (keyboard) { splitItem().focus(); splitItem().dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", code: "Enter", keyCode: 13, bubbles: true })); } else await user.click(splitItem());
+      await waitFor(() => { if (!doc.querySelector('[data-png-split-parameters]')) throw new Error("Split action did not open settings"); });
+      if (requests() !== before || doc.querySelectorAll('[data-png-split-image]').length !== 1) throw new Error("Opening settings executed a split or included extra sources");
+      if (doc.querySelectorAll('.ant-modal-footer button').length !== 1 || doc.querySelector('.ant-modal-footer button')?.textContent?.replace(/\s/g, '') !== "拆分") throw new Error("Footer must contain only Split");
+      for (const input of doc.querySelectorAll<HTMLInputElement>('[data-png-split-parameters] input')) {
+        const label = input.closest('label')!.firstElementChild!;
+        const unit = doc.getElementById(input.getAttribute('aria-describedby') ?? '');
+        if (label.getBoundingClientRect().right > input.getBoundingClientRect().left) throw new Error("Parameter label is not left of its value");
+        if (input.getAttribute('aria-label') !== "透明度阈值" && (unit?.textContent !== "px" || unit.getBoundingClientRect().left < input.getBoundingClientRect().right)) throw new Error("Pixel unit is not after the value");
+      }
+    };
+    const confirm = async () => {
+      await waitFor(() => { if (doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!.disabled) throw new Error("Preview not ready for confirmation"); });
+      await user.click(doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!);
+    };
+    const split = async () => { await settings(); await confirm(); };
+    await split();
+    await waitFor(() => { if (!doc.body.textContent?.includes("拆分失败，请重试。")) throw new Error("Retry error not visible"); });
+    if (requests() !== 1 || doc.querySelector('[data-png-split-parameters]') || read().images.length !== 2) throw new Error("Failed confirmation inserted partial images");
+    const defaults = JSON.parse(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngSplitOptions!);
+    if (JSON.stringify(defaults) !== JSON.stringify({ alphaThreshold: 8, minSize: 16, gap: 12 })) throw new Error("Confirmation did not use defaults");
+    await settings();
+    await waitFor(() => { if (doc.querySelectorAll('[data-png-split-bound]').length !== 3) throw new Error("Single-image preview bounds not ready"); });
+    const check = captureCanvasNodeExecutions(canvasElement);
+    let canvasMutations = 0;
+    const observer = new MutationObserver(records => { canvasMutations += records.length; });
+    observer.observe(canvasElement.querySelector('[data-ui-sketch-scene]')!, { subtree: true, attributes: true, childList: true, characterData: true });
+    const previewImages = [...doc.querySelectorAll<HTMLElement>('[data-png-split-image]')];
+    const viewport = previewImages[0].querySelector<HTMLElement>('[data-camera-zoom]')!;
+    const zoom = () => Number(viewport.dataset.cameraZoom);
+    await waitFor(() => { if (zoom() <= 1) throw new Error("Source image has not fitted yet"); });
+    const fittedZoom = zoom();
+    const range = viewport.querySelector<SVGRectElement>('[data-png-split-bound]')!;
+    const sourceImage = viewport.querySelector('img')!;
+    const previewRequestsBeforeZoom = canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRequests;
+    const localChanges: MutationRecord[] = [];
+    const localObserver = new MutationObserver(records => localChanges.push(...records));
+    localObserver.observe(doc.querySelector('[data-png-split-parameters]')!, { subtree: true, attributes: true, childList: true, characterData: true });
+    const zoomChanges: MutationRecord[] = [];
+    const zoomObserver = new MutationObserver(records => zoomChanges.push(...records));
+    zoomObserver.observe(viewport, { attributes: true, attributeFilter: ['data-camera-zoom'] });
+    const wheel = (deltaY: number) => {
+      const box = viewport.getBoundingClientRect();
+      viewport.dispatchEvent(new WheelEvent('wheel', { bubbles: true, cancelable: true, deltaY, clientX: box.left + box.width / 3, clientY: box.top + box.height / 3 }));
+    };
+    for (let i = 0; i < 20; i++) wheel(2);
+    await waitFor(() => { if (Math.abs(zoom() - fittedZoom * Math.exp(-40 * 0.0015)) > 0.00001) throw new Error("Wheel burst lost its final zoom"); });
+    zoomChanges.push(...zoomObserver.takeRecords()); zoomObserver.disconnect();
+    if (zoomChanges.length !== 1) throw new Error(`Wheel burst published ${zoomChanges.length} updates instead of one frame`);
+    const zoomAfterWheel = zoom();
+    await user.click(viewport.querySelector('[aria-label="放大预览"]')!);
+    if (Math.abs(zoom() - zoomAfterWheel * 1.2) > 0.00001) throw new Error("Zoom-in button failed");
+    await user.click(viewport.querySelector('[aria-label="缩小预览"]')!);
+    if (Math.abs(zoom() - zoomAfterWheel) > 0.00001) throw new Error("Zoom-out button failed");
+    const matrix = range.ownerSVGElement!.getScreenCTM()!;
+    const imageBox = sourceImage.getBoundingClientRect();
+    if (Math.abs(matrix.e - imageBox.x) > 0.1 || Math.abs(matrix.f - imageBox.y) > 0.1 || Math.abs(matrix.a * sourceImage.naturalWidth - imageBox.width) > 0.1) throw new Error("Dashed bounds drifted from the zoomed source image");
+    wheel(-100000);
+    await waitFor(() => { if (!viewport.querySelector<HTMLButtonElement>('[aria-label="放大预览"]')!.disabled) throw new Error("Maximum zoom not clamped"); });
+    wheel(100000);
+    await waitFor(() => { if (!viewport.querySelector<HTMLButtonElement>('[aria-label="缩小预览"]')!.disabled) throw new Error("Minimum zoom not clamped"); });
+    await user.click(viewport.querySelector('[aria-label="适应全部"]')!);
+    if (Math.abs(zoom() - fittedZoom) > 0.00001) throw new Error("Fit did not restore the image");
+    await user.click(viewport.querySelector('[aria-label="缩小预览"]')!);
+    const zoomBeforeParameters = zoom();
+    localChanges.push(...localObserver.takeRecords()); localObserver.disconnect();
+    if (localChanges.length || viewport.querySelector('[data-png-split-bound]') !== range || viewport.querySelector('img') !== sourceImage
+      || canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRequests !== previewRequestsBeforeZoom) throw new Error("Preview zoom rebuilt content, changed settings, or requested new bounds");
+    check();
+    const threshold = doc.querySelector<HTMLInputElement>('[aria-label="透明度阈值"]')!;
+    const savedBeforeInvalid = localStorage.getItem(PNG_SPLIT_SETTINGS_KEY);
+    await user.clear(threshold);
+    if (localStorage.getItem(PNG_SPLIT_SETTINGS_KEY) !== savedBeforeInvalid) throw new Error("Empty field overwrote saved settings");
+    await user.type(threshold, "255");
+    if (!doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!.disabled) throw new Error("Out-of-range input submitted an older valid value");
+    if (JSON.parse(localStorage.getItem(PNG_SPLIT_SETTINGS_KEY) ?? '{}').alphaThreshold === 255) throw new Error("Invalid threshold overwrote saved settings");
+    await user.clear(threshold); await user.type(threshold, "8");
+    const minSize = doc.querySelector<HTMLInputElement>('[aria-label="最小尺寸"]')!;
+    await user.clear(minSize); await user.type(minSize, "17");
+    await waitFor(() => { if (doc.querySelectorAll('[data-png-split-bound]').length !== 1) throw new Error("Minimum size did not update bounds"); });
+    await user.clear(minSize); await user.type(minSize, "16");
+    await waitFor(() => { if (doc.querySelectorAll('[data-png-split-bound]').length !== 3) throw new Error("Preview did not restore bounds"); });
+    if (Math.abs(zoom() - zoomBeforeParameters) > 0.00001) throw new Error("Parameter editing reset the preview zoom");
+    const previewsBefore = Number(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRequests);
+    await user.clear(minSize); await user.type(minSize, "17");
+    await waitFor(() => { if (Number(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRequests) <= previewsBefore) throw new Error("Delayed preview not requested"); });
+    await user.clear(minSize); await user.type(minSize, "16");
+    await new Promise(resolve => setTimeout(resolve, 400));
+    if (doc.querySelectorAll('[data-png-split-bound]').length !== 3) throw new Error("Stale preview overwrote the latest parameters");
+    if (requests() !== 1 || read().images.length !== 2 || !button("撤销").disabled) throw new Error("Preview created slices or undo history");
+    const gap = doc.querySelector<HTMLInputElement>('[aria-label="间距"]')!;
+    await user.clear(gap); await user.type(gap, "7");
+    if (JSON.parse(localStorage.getItem(PNG_SPLIT_SETTINGS_KEY)!).gap !== 7) throw new Error("Valid edit was not saved immediately");
+    check();
+    canvasMutations += observer.takeRecords().length;
+    observer.disconnect();
+    if (canvasMutations !== 0) throw new Error(`Parameter input mutated canvas DOM ${canvasMutations} times`);
+    await user.click(doc.querySelector<HTMLButtonElement>('.ant-modal-close')!);
+    await waitFor(() => { if (doc.querySelector('[data-png-split-parameters]')) throw new Error("Closed settings stayed open"); });
+    await settings(true);
+    const confirmedGap = doc.querySelector<HTMLInputElement>('[aria-label="间距"]')!;
+    if (confirmedGap.value !== "7" || requests() !== 1) throw new Error("Closing lost saved settings or opening settings executed split");
+    await waitFor(() => { if (doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!.disabled) throw new Error("Preview not ready for confirmation"); });
+    await user.clear(confirmedGap); await user.type(confirmedGap, "9");
+    await user.click(doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!);
+    await waitFor(() => { if (doc.querySelector('[data-png-split-parameters]')) throw new Error("Confirmed settings stayed open"); });
+    await waitFor(() => { if (read().images.length !== 5) throw new Error("Single-image split not applied"); });
+    if (requests() !== 2) throw new Error("Confirmation must execute exactly one split");
+    if (read().groups.length !== 1 || read().groups[0].itemIds.length !== 3 || read().pngSplits?.[0].options.gap !== 9) throw new Error("Group or final parameter lost");
+    await user.click(button("撤销"));
+    await waitFor(() => { if (read().images.length !== 2 || read().pngSplits) throw new Error("Whole operation not undone"); });
+    await user.click(button("重做"));
+    await waitFor(() => { if (read().images.length !== 5 || read().groups.length !== 1) throw new Error("Whole operation not redone"); });
+    await split();
+    await waitFor(() => { if (!doc.body.textContent?.includes("所选图片已拆分。")) throw new Error("Repeat still pending"); });
+    if (read().images.length !== 5 || read().groups.length !== 1) throw new Error("Repeat duplicated slices");
+    await settings();
+    await waitFor(() => { if (doc.querySelectorAll('[data-png-split-bound]').length !== 3) throw new Error("Manual editor preview not ready"); });
+    const regionCanvas = doc.querySelector<SVGSVGElement>('[data-png-region-editor]')!;
+    const regionHost = doc.querySelector<HTMLElement>('[data-png-split-image]')!;
+    const drawButton = () => [...doc.querySelectorAll<HTMLButtonElement>('[data-png-region-tools] button')].find(item => item.textContent?.includes("自由锚点"))!;
+    if (!doc.querySelector('[data-png-split-parameters] [data-png-region-tools]') || regionHost.querySelector('[data-png-region-tools]')) throw new Error("Region tools must be above the right-side settings");
+    const regionCount = () => regionCanvas.querySelectorAll('[data-png-manual-region]').length;
+    const regionRequests = () => Number(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRequests);
+    const submittedRegions = () => JSON.parse(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngPreviewRegions!);
+    const clickPoint = async (x: number, y: number) => {
+      const point = new DOMPoint(x, y).matrixTransform(regionCanvas.getScreenCTM()!);
+      await user.pointer({ target: regionCanvas, coords: { clientX: point.x, clientY: point.y }, keys: '[MouseLeft]' });
+    };
+    const manualScope = captureCanvasNodeExecutions(canvasElement);
+    let manualCanvasChanges = 0;
+    const manualObserver = new MutationObserver(records => { manualCanvasChanges += records.length; });
+    manualObserver.observe(canvasElement.querySelector('[data-ui-sketch-scene]')!, { subtree: true, attributes: true, childList: true, characterData: true });
+    const beforeDrawing = regionRequests();
+    await user.click(drawButton());
+    await clickPoint(0, 0); await clickPoint(18, 0);
+    await user.keyboard('{Enter}');
+    if (regionCount() || regionCanvas.dataset.drawing !== 'true') throw new Error("Two points closed a region");
+    await clickPoint(18, 18); await clickPoint(0, 18);
+    if (!doc.querySelector<HTMLButtonElement>('.ant-modal-footer .ant-btn-primary')!.disabled) throw new Error("Split allowed an unfinished region");
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    let guideChanges = 0;
+    const guideObserver = new MutationObserver(records => { guideChanges += records.length; });
+    guideObserver.observe(regionCanvas.querySelector('[data-png-region-guide]')!, { attributes: true, attributeFilter: ['d'] });
+    const nearFirst = new DOMPoint(0, 0).matrixTransform(regionCanvas.getScreenCTM()!);
+    for (let i = 0; i < 20; i++) regionCanvas.dispatchEvent(new PointerEvent('pointermove', { bubbles: true, clientX: nearFirst.x + i / 20, clientY: nearFirst.y }));
+    await waitFor(() => { if (!regionCanvas.querySelector('[data-close-ready]')) throw new Error("First anchor did not highlight for closure"); });
+    guideChanges += guideObserver.takeRecords().length; guideObserver.disconnect();
+    if (guideChanges !== 1 || regionRequests() !== beforeDrawing) throw new Error("Pointer movement was not coalesced or triggered server preview");
+    await clickPoint(0, 0);
+    await waitFor(() => { if (regionCount() !== 1 || submittedRegions().length !== 1) throw new Error("Clicking the first anchor did not close and preview the region"); });
+    if (regionCanvas.getAttribute('data-drawing') !== 'false') throw new Error("Closed region left drawing active");
+    await user.click(regionHost.querySelector('[aria-label="放大预览"]')!);
+    await user.click(drawButton());
+    await clickPoint(19, 0); await clickPoint(43, 0); await clickPoint(43, 20); await clickPoint(19, 20);
+    await user.keyboard('{Enter}');
+    await waitFor(() => { if (regionCount() !== 2 || submittedRegions().length !== 2) throw new Error("Enter did not close the second zoomed region"); });
+    const secondRegion = submittedRegions()[1];
+    if (Math.abs(secondRegion[0][0] - 19) > 0.001 || Math.abs(secondRegion[0][1]) > 0.001) throw new Error("Zoom changed source-image anchor coordinates");
+    const beforeCancel = regionRequests();
+    await user.click(drawButton()); await clickPoint(1, 1); await user.keyboard('{Escape}');
+    if (!doc.querySelector('[data-png-split-parameters]') || regionCanvas.getAttribute('data-drawing') !== 'false' || regionCount() !== 2 || regionRequests() !== beforeCancel) throw new Error("Escape closed the dialog, submitted a draft, or lost closed regions");
+    const firstRegion = regionCanvas.querySelector<SVGPolygonElement>('[data-png-manual-region]')!;
+    const savedPoints = firstRegion.getAttribute('points');
+    await user.click(firstRegion);
+    await user.pointer([{ target: firstRegion, keys: '[MouseLeft>]' }, { target: firstRegion, coords: { clientX: nearFirst.x + 100, clientY: nearFirst.y + 80 } }, { keys: '[/MouseLeft]' }]);
+    if (firstRegion.getAttribute('points') !== savedPoints) throw new Error("Closed polygon was edited by dragging");
+    regionCanvas.focus(); await user.keyboard('{Delete}');
+    await waitFor(() => { if (regionCount() !== 1 || submittedRegions().length !== 1) throw new Error("Selected region was not deleted"); });
+    await user.click(regionCanvas.querySelector('[data-png-manual-region]')!);
+    await user.click(doc.querySelector('[data-png-region-tools] [aria-label="删除"]')!);
+    await waitFor(() => { if (regionCount() || submittedRegions().length) throw new Error("Delete button left a region behind"); });
+    manualScope(); manualCanvasChanges += manualObserver.takeRecords().length; manualObserver.disconnect();
+    if (manualCanvasChanges || requests() !== 3) throw new Error("Region editing modified the main canvas or executed splitting");
+    // Force the existing thin fixture component into a manual region; this fixture's
+    // response stays three pieces. Exact masked RGBA is covered by API/algorithm tests.
+    await user.click(drawButton());
+    await clickPoint(19, 0); await clickPoint(38, 0); await clickPoint(38, 3); await clickPoint(19, 3);
+    await user.keyboard('{Enter}');
+    await waitFor(() => { if (submittedRegions().length !== 1) throw new Error("Final manual region not previewed"); });
+    await confirm();
+    await waitFor(() => { if (!doc.querySelector('[role="alert"]') || !doc.querySelector('[data-png-manual-region]')) throw new Error("Failed split lost its manual region"); });
+    if (read().images.length !== 5 || requests() !== 4) throw new Error("Failed manual split changed the draft");
+    await confirm();
+    await waitFor(() => { if (read().images.length !== 8) throw new Error("Manual split did not append image nodes"); });
+    if (requests() !== 5 || JSON.parse(canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngSplitRegions!).length !== 1
+      || read().pngSplits?.[1].sources[0].regions?.length !== 1) throw new Error("Execution lost the manual region");
+    await user.click(button("撤销"));
+    await waitFor(() => { if (read().images.length !== 5) throw new Error("Manual split was not undone as a whole"); });
+    await user.click(button("重做"));
+    await waitFor(() => { if (read().images.length !== 8 || read().pngSplits?.[1].sources[0].regions?.length !== 1) throw new Error("Manual split provenance was not restored"); });
+    canvasElement.querySelector<HTMLElement>('[data-png-split-story]')!.dataset.pngSplitChecks = "passed";
   },
 };

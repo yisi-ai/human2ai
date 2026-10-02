@@ -4,8 +4,6 @@ import { join, resolve } from "node:path";
 import { expect, it } from "vitest";
 
 import { applyMigrations, openDatabase } from "../../src/database/migrate.ts";
-import { ProjectSessionRepository } from "../../src/database/project-session-repository.ts";
-import { SpatialSessionRepository } from "../../src/database/spatial-session-repository.ts";
 import { StyleLibraryRepository } from "../../src/database/style-library-repository.ts";
 import { createSpatialDraft } from "../../src/domain/spatial/index.ts";
 
@@ -16,8 +14,12 @@ it("upgrades style categories while preserving references, session bindings and 
   }
   const database = openDatabase(":memory:", directory);
   try {
-    const sessions = new ProjectSessionRepository(database);
-    const spatial = new SpatialSessionRepository(database);
+    const seedSession = (sessionType: "image-composition" | "ui-layout" | "spatial", id: string) => {
+      database.prepare("INSERT INTO sessions (id, session_type, title, lifecycle_stage, revision, created_at, updated_at) VALUES (?, ?, ?, 'draft', 1, ?, ?)").run(id, sessionType, id, timestamp, timestamp);
+      const table = sessionType === "image-composition" ? "composition_sessions" : sessionType === "ui-layout" ? "ui_sessions" : "spatial_sessions";
+      database.prepare(`INSERT INTO ${table} (session_id) VALUES (?)`).run(id);
+      return { id };
+    };
     const style = { id: "old-visual" };
     const otherStyle = { id: "old-ui" };
     const timestamp = "2026-09-01T00:00:00.000Z";
@@ -33,13 +35,14 @@ it("upgrades style categories while preserving references, session bindings and 
       VALUES ('old-reference', ?, ?, 'reference.png', 'image/png', 68, 1, 1, 0, ?)`)
       .run(style.id, `styles/${style.id}/reference.png`, timestamp);
     for (const sessionType of ["image-composition", "ui-layout", "spatial"] as const) {
-      const session = sessions.createSession({ sessionType, title: sessionType });
+      const session = seedSession(sessionType, `legacy-${sessionType}`);
       database.prepare("UPDATE sessions SET style_id = ?, revision = revision + 1 WHERE id = ?").run(style.id, session.id);
-      if (sessionType === "spatial") spatial.createDraftVersion(session.id, { expectedLatestRevision: 0, draft: createSpatialDraft() });
+      if (sessionType === "spatial") database.prepare(`INSERT INTO spatial_draft_versions (id, session_id, revision, draft_json, created_at)
+        VALUES ('old-spatial-draft', ?, 1, ?, ?)`).run(session.id, JSON.stringify(createSpatialDraft()), timestamp);
     }
-    sessions.createSession({ sessionType: "spatial", title: "Unbound" });
+    seedSession("spatial", "unbound");
     const tables = ["style_entries", "style_reference_images", "sessions", "spatial_draft_versions"];
-    const before = tables.map(table => database.prepare(`SELECT * FROM ${table} ORDER BY id`).all());
+    const before = tables.map(table => database.prepare(`SELECT * FROM ${table} ORDER BY id`).all().map(row => table === "sessions" ? { ...row as Record<string, unknown>, deleted_at: null } : row));
 
     expect(applyMigrations(database, resolve("migrations"))).toContain("0009_spatial_styles.sql");
     expect(tables.map(table => database.prepare(`SELECT * FROM ${table} ORDER BY id`).all())).toEqual(before);

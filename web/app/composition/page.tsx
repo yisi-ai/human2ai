@@ -85,6 +85,7 @@ import { useCompositionSpatialReferences } from "../../components/CompositionSpa
 import { Human2AiShell } from "../../components/Human2AiShell";
 import { buildSessionCliCommand } from "../../lib/session-connection";
 import { useCanvasHistory } from "../../lib/use-canvas-history";
+import { useStorageProtection } from "../../lib/use-storage-protection";
 import styles from "./page.module.css";
 
 type CanvasViewportActionType = CompositionCanvasViewportAction["type"];
@@ -118,6 +119,7 @@ async function loadCompositionSession(
 
 function formatServiceError(error: unknown, t: TFunction): string {
   if (error instanceof Human2AiApiError) {
+    if (error.code === "DRAFT_VERSION_EXPIRED") return t("errors.historyExpired");
     if (error.code === "DRAFT_REVISION_CONFLICT") {
       return t("composition.session.revisionConflict", {
         revision: error.details.actualLatestRevision,
@@ -210,6 +212,7 @@ function CompositionPageContent() {
     setSelectedIds([]);
     setSelectedPlanIds([]);
   }, loading || revisionConflictRef.current);
+  const storageProtection = useStorageProtection(sessionId, history);
   const spatialReferences = useCompositionSpatialReferences({ draft, sessionId, ensureSession: ensureCompositionSession, updateDraft });
   const editing = !loading;
   const states = compositionStates(draft);
@@ -345,6 +348,7 @@ function CompositionPageContent() {
             if (saveContextVersion !== saveContextVersionRef.current) return;
           }
 
+          await storageProtection?.renew();
           const saved = await saveCompositionDraft(
             targetSessionId,
             latestRevision,
@@ -386,7 +390,7 @@ function CompositionPageContent() {
     }, AUTO_SAVE_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [dirty, draft, latestRevision, loading, router, saving, sessionId, t]);
+  }, [dirty, draft, latestRevision, loading, router, saving, sessionId, storageProtection, t]);
 
   useEffect(() => {
     if (!sessionId || loading || dirty || saving) return;
@@ -967,6 +971,7 @@ function CompositionPageContent() {
               nodeEditorLabels={{
                 title: t("canvasNodeEditor.title"),
                 note: t("notes.element.label"),
+                noteHelp: t("notes.element.nodeHelp"),
                 notePlaceholder: t("notes.element.nodePlaceholder"),
                 shotScale: t("composition.depth.label"),
                 shotScaleAuto: t("composition.depth.auto"),
@@ -982,6 +987,7 @@ function CompositionPageContent() {
                 textKind: t("composition.toolNames.textRegion"),
                 imageKind: t("canvas.imageNode.label"),
                 nodeDescription: t("canvas.node.nodeDescription"),
+                nodeDescriptionHelp: t("canvas.node.nodeDescriptionHelp"),
                 originUser: t("canvas.node.originUser"),
                 originAgent: t("canvas.node.originAgent"),
                 originImport: t("canvas.node.originImport"),
@@ -1000,6 +1006,8 @@ function CompositionPageContent() {
               }}
               imageEditorLabels={{
                 content: t("canvas.imageEditor.content"),
+                sourceDimensions: (width, height) => t("canvas.imageEditor.sourceDimensions", { width, height }),
+                sourceFileSize: (size, unit) => t("canvas.imageEditor.sourceFileSize", { size, unit }),
                 upload: t("canvas.imageEditor.upload"),
                 download: t("canvas.imageEditor.download"),
                 downloading: t("canvas.imageEditor.downloading"),
